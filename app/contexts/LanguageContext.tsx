@@ -6,7 +6,7 @@ import { translations, Language, TranslationKeys, dataTranslations } from "../tr
 interface LanguageContextType {
     language: Language;
     setLanguage: (lang: Language) => void;
-    t: (key: keyof TranslationKeys) => string;
+    t: (key: keyof TranslationKeys, params?: Record<string, string | number>) => string;
     tData: (text: string) => string;
 }
 
@@ -30,8 +30,14 @@ export function LanguageProvider({ children }: { children: ReactNode }) {
         document.documentElement.lang = lang;
     };
 
-    const t = (key: keyof TranslationKeys): string => {
-        return translations[language][key] || key;
+    const t = (key: keyof TranslationKeys, params?: Record<string, string | number>): string => {
+        let text = translations[language][key] || key;
+        if (params) {
+            Object.entries(params).forEach(([k, v]) => {
+                text = text.replace(new RegExp(`\\{${k}\\}`, 'g'), String(v));
+            });
+        }
+        return text;
     };
 
     const tData = (text: string): string => {
