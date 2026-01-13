@@ -6,7 +6,7 @@ import { useLanguage } from "../contexts/LanguageContext";
 import { useRouter } from "next/navigation";
 import { doc, setDoc, Timestamp } from "firebase/firestore";
 import { db } from "../lib/firebase";
-import { User as UserIcon, CheckIcon } from "../components/ui/Icons";
+import { UserIcon, CheckIcon } from "../components/ui/Icons";
 
 export default function RegisterPage() {
     const { user, userData } = useAuth();
