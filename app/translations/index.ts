@@ -32,6 +32,8 @@ export interface TranslationKeys {
     predictiveAreaCount: string;
     predictiveWithinHours: string;
     predictiveWithinDays: string;
+    temperature: string;
+    vibration: string;
 
     // Mock Predictions
     predBearingFailure: string;
@@ -363,6 +365,8 @@ const th: TranslationKeys = {
     predictiveAreaCount: "{count} จุด",
     predictiveWithinHours: "{hours} ชั่วโมง",
     predictiveWithinDays: "{days} วัน",
+    temperature: "อุณหภูมิ",
+    vibration: "แรงสั่นสะเทือน",
 
     // Mock Predictions
     predBearingFailure: "ลูกปืนมีโอกาสเสียหาย",
@@ -694,6 +698,8 @@ const en: TranslationKeys = {
     predictiveAreaCount: "{count} Areas",
     predictiveWithinHours: "{hours} hours",
     predictiveWithinDays: "{days} days",
+    temperature: "Temperature",
+    vibration: "Vibration",
 
     // Mock Predictions
     predBearingFailure: "Bearing Failure Likely",
