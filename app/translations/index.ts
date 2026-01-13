@@ -1,0 +1,1036 @@
+export type Language = "th" | "en";
+
+export interface TranslationKeys {
+    // App
+    appTitle: string;
+    appSubtitle: string;
+
+    // Navigation
+    navDashboard: string;
+    navMachines: string;
+    navParts: string;
+    navMaintenance: string;
+    navSchedule: string;
+    navAnalytics: string;
+    navPredictive: string;
+
+    // Predictive Page
+    predictiveSubtitle: string;
+    predictiveAnalyzing: string;
+    predictiveCriticalTitle: string;
+    predictiveUpcomingTitle: string;
+    predictiveHealthTitle: string;
+    predictiveReliable: string;
+    predictiveRiskAnalysis: string;
+    predictiveRealtimeLogic: string;
+    predictiveProb: string;
+    predictivePredictedWithin: string;
+    predictiveAvgTemp: string;
+    predictiveAvgVib: string;
+    predictiveViewReports: string;
+    predictiveMachineCount: string;
+    predictiveAreaCount: string;
+    predictiveWithinHours: string;
+    predictiveWithinDays: string;
+
+    // Mock Predictions
+    predBearingFailure: string;
+    predBeltTension: string;
+    predOverheating: string;
+
+    statusHighRisk: string;
+    statusMonitoring: string;
+    statusHealthy: string;
+
+    // Stats
+    statTotalParts: string;
+    statMachines: string;
+    statZones: string;
+    statMaintenanceRecords: string;
+
+    // Actions
+    actionAddPart: string;
+    actionRecordMaintenance: string;
+    actionMaintenanceHistory: string;
+    actionExport: string;
+    actionClearFilters: string;
+    actionSave: string;
+    actionCancel: string;
+    actionClose: string;
+    actionEdit: string;
+    actionDelete: string;
+    actionSearch: string;
+    actionSaveChanges: string;
+
+    // Filters
+    filterTitle: string;
+    filterMachine: string;
+    filterZone: string;
+    filterPartName: string;
+    filterAll: string;
+    filterShowResults: string;
+    filterOf: string;
+    filterRecords: string;
+
+    // Table Headers
+    tableImage: string;
+    tableMachine: string;
+    tablePartName: string;
+    tableModelSpec: string;
+    tableBrand: string;
+    tableZone: string;
+    tableStatus: string;
+    tableDate: string;
+    tableActions: string;
+    tableQuantity: string;
+    tableLocation: string;
+    tableNotes: string;
+    tableManagement: string;
+    tableTitleParts: string;
+
+    // Add Part Modal
+    addPartTitle: string;
+    addPartMachine: string;
+    addPartName: string;
+    addPartSelectPart: string;
+    addPartNewPart: string;
+    addPartModelSpec: string;
+    addPartZone: string;
+    addPartBrand: string;
+    addPartQuantity: string;
+    addPartUnit: string;
+    addPartLocation: string;
+    addPartImage: string;
+    addPartChooseFile: string;
+    addPartNoFile: string;
+    addPartImageHint: string;
+    addPartCategory: string;
+    addPartSelectCategory: string;
+    addPartNotes: string;
+
+    // Machine Settings Labels
+    labelFileSize: string;
+    labelMachineSettings: string;
+    labelBrandModel: string;
+    labelSerialNumber: string;
+    labelInstallationDate: string;
+    labelOperatingHours: string;
+    labelCapacity: string;
+    labelPowerRating: string;
+    labelMaintenanceCycle: string;
+    labelHours: string;
+    labelPower: string;
+    labelInstall: string;
+    labelMonths: string;
+    labelDescription: string;
+
+    // Maintenance Record Modal
+    maintenanceTitle: string;
+    maintenanceGeneralInfo: string;
+    maintenanceMachine: string;
+    maintenanceSelectMachine: string;
+    maintenanceDescription: string;
+    maintenanceType: string;
+    maintenanceSelectType: string;
+    maintenancePriority: string;
+    maintenancePriorityNormal: string;
+    maintenancePriorityHigh: string;
+    maintenancePriorityUrgent: string;
+
+    maintenanceOperationInfo: string;
+    maintenanceDate: string;
+    maintenanceDuration: string;
+    maintenanceTechnician: string;
+    maintenanceStatus: string;
+    maintenanceStatusPending: string;
+    maintenanceStatusInProgress: string;
+    maintenanceStatusCompleted: string;
+
+    maintenanceMotorGearInfo: string;
+    maintenanceMotorSize: string;
+    maintenanceMotorSizeHint: string;
+    maintenanceVibration: string;
+    maintenanceAxisX: string;
+    maintenanceAxisY: string;
+    maintenanceAxisZ: string;
+    maintenanceVibrationValue: string;
+    maintenanceVibrationNormal: string;
+    maintenanceVibrationMedium: string;
+    maintenanceVibrationAbnormal: string;
+
+    maintenanceVoltage: string;
+    maintenanceSelectVoltage: string;
+    maintenanceCurrent: string;
+    maintenanceCurrentIdle: string;
+    maintenanceCurrentLoad: string;
+    maintenanceTemperature: string;
+    maintenanceTemperatureHint: string;
+
+    // Shaft/Dial Gauge
+    maintenanceShaftInfo: string;
+    maintenanceShaftBend: string;
+    maintenanceShaftBendValue: string;
+    maintenanceDialGauge: string;
+    maintenanceDialGaugeValue: string;
+
+    maintenanceDetailsNotes: string;
+    maintenanceDetailDescription: string;
+    maintenanceAdditionalNotes: string;
+    maintenanceSaveRecord: string;
+
+    // Maintenance Types
+    typePreventive: string;
+    typeCorrective: string;
+    typeOilChange: string;
+    typePartReplacement: string;
+    typeInspection: string;
+
+    // Categories
+    categoryMotor: string;
+    categoryGear: string;
+    categoryBelt: string;
+    categoryBearing: string;
+    categoryPump: string;
+    categoryValve: string;
+    categoryElectrical: string;
+    categoryOil: string;
+    categoryPneumatic: string;
+    categoryTool: string;
+    categoryOther: string;
+
+    // Zones
+    zoneTop: string;
+    zoneBottom: string;
+    zoneLeft: string;
+    zoneRight: string;
+    zoneFront: string;
+    zoneBack: string;
+    zoneInside: string;
+
+    // Status Messages
+    msgLoading: string;
+    msgNoData: string;
+    msgSaveSuccess: string;
+    msgSaveError: string;
+    msgConfirmDelete: string;
+    msgSaving: string;
+    msgDeleteSuccess: string;
+    msgDeleteError: string;
+    msgCurrentImagePreserved: string;
+    msgDbConnected: string;
+    msgDbReady: string;
+    msgDbConnectError: string;
+    msgDbErrorDetail: string;
+    msgAddPartSuccess: string;
+    msgEditPartSuccess: string;
+    msgAddPartDetail: string;
+    msgEditPartDetail: string;
+    msgNoPermission: string;
+    msgNoPermissionDetail: string;
+    msgTimeout: string;
+    msgTimeoutDetail: string;
+    msgError: string;
+    validateInput: string;
+    validateSelectMachine: string;
+    validateSelectPart: string;
+
+    // Additional Actions/Labels
+    actionMaintenance: string;
+    statusReadOnly: string;
+    labelMachinePart: string;
+    editPartTitle: string;
+    confirmDeleteTitle: string;
+    confirmDeleteMessage: string;
+    confirmDeleteMessageDetail: string;
+    statusLowStock: string;
+
+    // Placeholders
+    placeholderMachine: string;
+    placeholderZone: string;
+    placeholderBrand: string;
+    placeholderLocation: string;
+    placeholderNotes: string;
+    placeholderTechnician: string;
+    placeholderDuration: string;
+    placeholderTemperature: string;
+    placeholderCurrentIdle: string;
+    placeholderCurrentLoad: string;
+    placeholderVibration: string;
+    placeholderDescription: string;
+    placeholderAdditionalNotes: string;
+    placeholderModelSpec: string;
+    placeholderMotorSize: string;
+    placeholderShaftBend: string;
+    placeholderDialGauge: string;
+    placeholderPartName: string;
+
+    // Spare Parts Dashboard
+    partsInventoryTitle: string;
+    partsItemsCount: string;
+    partsCategoriesCount: string;
+    partsLowStockAlert: string;
+    partsLowStockDesc: string;
+    partsNoSpec: string;
+    partsInStock: string;
+    partsWithdraw: string;
+    partsReceive: string;
+    partsHistory: string;
+    partsNoParts: string;
+    partsNoPartsDesc: string;
+    partsAddFirst: string;
+    partsLoginToManage: string;
+
+    // Stock Actions
+    stockWithdrawTitle: string;
+    stockReceiveTitle: string;
+    stockQuantity: string;
+    stockMachine: string;
+    stockZone: string;
+    stockNotes: string;
+    stockEvidence: string;
+    stockEvidenceHint: string;
+    stockSupplier: string;
+    stockPrice: string;
+    stockRefDoc: string;
+    stockConfirmWithdraw: string;
+    stockConfirmReceive: string;
+
+    // Stock History
+    historyTitle: string;
+    historyNoData: string;
+    historyPerformedBy: string;
+    historyPerformedAt: string;
+    historyClose: string;
+
+    // Schedule & Calendar
+    scheduleCalendarView: string;
+    scheduleListView: string;
+    calendarToday: string;
+    calendarMon: string;
+    calendarTue: string;
+    calendarWed: string;
+    calendarThu: string;
+    calendarFri: string;
+    calendarSat: string;
+    calendarSun: string;
+    calendarNoTasks: string;
+
+    // Notifications
+    notificationTitle: string;
+    notificationEmpty: string;
+    notificationLowStockMessage: string;
+    notificationPmUpcomingTitle: string;
+    notificationPmUpcomingMessage: string;
+    notificationPmOverdueTitle: string;
+    notificationPmOverdueMessage: string;
+    notificationLowStock: string;
+    notificationUpcomingPM: string;
+    notificationDueToday: string;
+    notificationRequestTitle: string;
+    notificationRequestDesc: string;
+    notificationEnable: string;
+}
+
+const th: TranslationKeys = {
+    // App
+    appTitle: "ระบบจัดการอะไหล่เครื่องจักร Art of Baking",
+    appSubtitle: "ระบบจัดการอะไหล่เครื่องจักร และซ่อมบำรุง PM TEAM REALTIME DATABASE",
+
+    // Navigation
+    navDashboard: "แดชบอร์ด",
+    navMachines: "เครื่องจักร",
+    navParts: "อะไหล่",
+    navMaintenance: "ซ่อมบำรุง",
+    navSchedule: "ตารางงาน",
+    navAnalytics: "วิเคราะห์",
+    navPredictive: "ทำนายผล",
+
+    // Predictive Page
+    predictiveSubtitle: "การพยากรณ์การซ่อมบำรุงด้วย AI",
+    predictiveAnalyzing: "AI กำลังวิเคราะห์...",
+    predictiveCriticalTitle: "การคาดการณ์วิกฤต",
+    predictiveUpcomingTitle: "ปัญหาที่กำลังจะเกิดขึ้น",
+    predictiveHealthTitle: "สุขภาพของระบบ",
+    predictiveReliable: "เสถียรภาพ",
+    predictiveRiskAnalysis: "การวิเคราะห์ความเสี่ยง",
+    predictiveRealtimeLogic: "ข้อมูลเซนเซอร์ Real-time",
+    predictiveProb: "ความน่าจะเป็น",
+    predictivePredictedWithin: "คาดการณ์ภายใน",
+    predictiveAvgTemp: "อุณหภูมิเฉลี่ย",
+    predictiveAvgVib: "แรงสั่นสะเทือนเฉลี่ย",
+    predictiveViewReports: "ดูรายงานเซนเซอร์",
+    predictiveMachineCount: "{count} เครื่อง",
+    predictiveAreaCount: "{count} จุด",
+    predictiveWithinHours: "{hours} ชั่วโมง",
+    predictiveWithinDays: "{days} วัน",
+
+    // Mock Predictions
+    predBearingFailure: "ลูกปืนมีโอกาสเสียหาย",
+    predBeltTension: "แรงตึงสายพานลดลง",
+    predOverheating: "มอเตอร์ร้อนเกินไป",
+
+    statusHighRisk: "ความเสี่ยงสูง",
+    statusMonitoring: "กำลังตรวจสอบ",
+    statusHealthy: "ปกติ",
+
+    // Stats
+    statTotalParts: "อะไหล่ทั้งหมด",
+    statMachines: "จำนวนเครื่องจักร",
+    statZones: "จำนวนโซน",
+    statMaintenanceRecords: "จำนวนซ่อมบำรุง",
+
+    // Actions
+    actionAddPart: "เพิ่มอะไหล่",
+    actionRecordMaintenance: "บันทึกซ่อมบำรุง",
+    actionMaintenanceHistory: "ประวัติซ่อมบำรุง",
+    actionExport: "ส่งออก",
+    actionClearFilters: "ล้างตัวกรอง",
+    actionSave: "บันทึก",
+    actionCancel: "ยกเลิก",
+    actionClose: "ปิด",
+    actionEdit: "แก้ไข",
+    actionDelete: "ลบ",
+    actionSearch: "ค้นหา",
+    actionSaveChanges: "บันทึกการเปลี่ยนแปลง",
+
+    // Filters
+    filterTitle: "ค้นหาและกรองข้อมูล",
+    filterMachine: "ชื่อเครื่องจักร",
+    filterZone: "โซน",
+    filterPartName: "ชื่ออะไหล่",
+    filterAll: "ทั้งหมด",
+    filterShowResults: "แสดงผล:",
+    filterOf: "จาก",
+    filterRecords: "รายการ",
+
+    // Table Headers
+    tableImage: "รูปภาพ",
+    tableMachine: "เครื่องจักร",
+    tablePartName: "ชื่ออะไหล่",
+    tableModelSpec: "รุ่น/สเปค",
+    tableBrand: "ยี่ห้อ",
+    tableZone: "โซน",
+    tableStatus: "สถานะ",
+    tableDate: "วันที่",
+    tableActions: "จัดการ",
+    tableQuantity: "จำนวน",
+    tableLocation: "สถานที่",
+    tableNotes: "หมายเหตุ",
+    tableManagement: "การจัดการ",
+    tableTitleParts: "รายการอะไหล่เครื่องจักร",
+
+    // Add Part Modal
+    addPartTitle: "เพิ่มชื่ออะไหล่เครื่องจักร",
+    addPartMachine: "เครื่องจักร",
+    addPartName: "ชื่ออะไหล่",
+    addPartSelectPart: "เลือกชื่ออะไหล่",
+    addPartNewPart: "+ เพิ่มชื่ออะไหล่ใหม่",
+    addPartModelSpec: "รุ่น/สเปค",
+    addPartZone: "โซน",
+    addPartBrand: "ยี่ห้อ",
+    addPartQuantity: "จำนวน",
+    addPartUnit: "หน่วยนับ",
+    addPartLocation: "สถานที่",
+    addPartImage: "รูปภาพอะไหล่",
+    addPartChooseFile: "Choose File",
+    addPartNoFile: "No file chosen",
+    addPartImageHint: "เลือกไฟล์รูปภาพ (JPG, PNG, GIF) ขนาดไม่เกิน 5MB",
+    addPartCategory: "หมวดหมู่",
+    addPartSelectCategory: "เลือกหมวดหมู่",
+    addPartNotes: "หมายเหตุ",
+
+    // Machine Settings Labels
+    labelFileSize: "ขนาดไฟล์",
+    labelMachineSettings: "ตั้งค่าเครื่องจักร",
+    labelBrandModel: "ยี่ห้อและรุ่น",
+    labelSerialNumber: "หมายเลขซีเรียล",
+    labelInstallationDate: "วันที่ติดตั้ง",
+    labelOperatingHours: "ชั่วโมงการทำงาน",
+    labelCapacity: "กำลังการผลิต",
+    labelPowerRating: "กำลังไฟฟ้า",
+    labelMaintenanceCycle: "รอบการบำรุงรักษา",
+    labelHours: "ชั่วโมง",
+    labelPower: "ไฟฟ้า",
+    labelInstall: "ติดตั้ง",
+    labelMonths: "เดือน",
+    labelDescription: "คำอธิบายเพิ่มเติม",
+
+    // Maintenance Record Modal
+    maintenanceTitle: "บันทึกซ่อมบำรุงและการเปลี่ยนถ่ายน้ำมันเกียร์",
+    maintenanceGeneralInfo: "ข้อมูลทั่วไป",
+    maintenanceMachine: "เครื่องจักร",
+    maintenanceSelectMachine: "เลือกเครื่องจักร",
+    maintenanceDescription: "รายการซ่อมบำรุง",
+    maintenanceType: "ประเภทการซ่อมบำรุง",
+    maintenanceSelectType: "เลือกประเภท",
+    maintenancePriority: "ระดับความสำคัญ",
+    maintenancePriorityNormal: "ปกติ",
+    maintenancePriorityHigh: "สูง",
+    maintenancePriorityUrgent: "เร่งด่วน",
+
+    maintenanceOperationInfo: "ข้อมูลการดำเนินการ",
+    maintenanceDate: "วันที่ซ่อมบำรุง",
+    maintenanceDuration: "ระยะเวลาซ่อม (นาที)",
+    maintenanceTechnician: "ช่างผู้รับผิดชอบ",
+    maintenanceStatus: "สถานะ",
+    maintenanceStatusPending: "รอดำเนินการ",
+    maintenanceStatusInProgress: "กำลังดำเนินการ",
+    maintenanceStatusCompleted: "เสร็จสิ้น",
+
+    maintenanceMotorGearInfo: "ข้อมูลมอเตอร์และเกียร์",
+    maintenanceMotorSize: "ขนาดมอเตอร์",
+    maintenanceMotorSizeHint: "(บันทึกครั้งแรกเท่านั้น)",
+    maintenanceVibration: "ค่าแรงสั่นสะเทือน",
+    maintenanceAxisX: "แกน X",
+    maintenanceAxisY: "แกน Y",
+    maintenanceAxisZ: "แกน Z",
+    maintenanceVibrationValue: "ค่าที่วัดได้ (mm/s)",
+    maintenanceVibrationNormal: "ค่าปกติ",
+    maintenanceVibrationMedium: "ค่าปานกลาง",
+    maintenanceVibrationAbnormal: "ค่าผิดปกติ",
+
+    maintenanceVoltage: "แรงดันไฟฟ้า (3 เฟส)",
+    maintenanceSelectVoltage: "เลือกแรงดัน",
+    maintenanceCurrent: "กระแสที่วัดได้ (A)",
+    maintenanceCurrentIdle: "ขณะรันตัวเปล่า (A)",
+    maintenanceCurrentLoad: "ขณะมีโหลด 100% (A)",
+    maintenanceTemperature: "ค่าความร้อนที่วัดได้ (°C)",
+    maintenanceTemperatureHint: "(สำหรับวิเคราะห์อายุการใช้งาน)",
+
+    // Shaft/Dial Gauge (New)
+    maintenanceShaftInfo: "ข้อมูลเพลาและไดอัลเกจ",
+    maintenanceShaftBend: "ค่าเพลา (คด/งอ)",
+    maintenanceShaftBendValue: "ค่าที่วัดได้",
+    maintenanceDialGauge: "ค่าไดอัลเกจ",
+    maintenanceDialGaugeValue: "ค่าที่วัดได้",
+
+    maintenanceDetailsNotes: "รายละเอียดและหมายเหตุ",
+    maintenanceDetailDescription: "รายละเอียดการซ่อมบำรุง",
+    maintenanceAdditionalNotes: "หมายเหตุเพิ่มเติม",
+    maintenanceSaveRecord: "บันทึกข้อมูลซ่อมบำรุง",
+
+    // Maintenance Types
+    typePreventive: "บำรุงรักษาเชิงป้องกัน",
+    typeCorrective: "ซ่อมแก้ไข",
+    typeOilChange: "เปลี่ยนถ่ายน้ำมัน",
+    typePartReplacement: "เปลี่ยนอะไหล่",
+    typeInspection: "ตรวจสอบ",
+
+    // Categories
+    categoryMotor: "มอเตอร์",
+    categoryGear: "เกียร์",
+    categoryBelt: "สายพาน",
+    categoryBearing: "ลูกปืน/Bearing",
+    categoryPump: "ปั๊ม",
+    categoryValve: "วาล์ว",
+    categoryElectrical: "ไฟฟ้า",
+    categoryOil: "น้ำมัน/จารบี",
+    categoryPneumatic: "ลม (Pneumatic)",
+    categoryTool: "เครื่องมือ",
+    categoryOther: "อื่นๆ",
+
+    // Zones
+    zoneTop: "Top",
+    zoneBottom: "Bottom",
+    zoneLeft: "Left",
+    zoneRight: "Right",
+    zoneFront: "Front",
+    zoneBack: "Back",
+    zoneInside: "Inside",
+
+    // Status Messages
+    msgLoading: "กำลังโหลด...",
+    msgNoData: "ไม่พบข้อมูล",
+    msgSaveSuccess: "บันทึกข้อมูลสำเร็จ",
+    msgSaveError: "เกิดข้อผิดพลาดในการบันทึก",
+    msgConfirmDelete: "ยืนยันการลบข้อมูล?",
+    msgSaving: "กำลังบันทึก...",
+    msgDeleteSuccess: "ลบข้อมูลสำเร็จ",
+    msgDeleteError: "เกิดข้อผิดพลาดในการลบ",
+    msgCurrentImagePreserved: "ใช้รูปภาพเดิมที่มีอยู่",
+    msgDbConnected: "เชื่อมต่อสำเร็จ!",
+    msgDbReady: "ระบบฐานข้อมูลพร้อมใช้งานแล้ว",
+    msgDbConnectError: "การเชื่อมต่อล้มเหลว!",
+    msgDbErrorDetail: "ไม่สามารถเข้าถึงฐานข้อมูลได้ โปรดตรวจสอบการเชื่อมต่อ",
+    msgAddPartSuccess: "เพิ่มอะไหล่สำเร็จ!",
+    msgEditPartSuccess: "แก้ไขอะไหล่สำเร็จ!",
+    msgAddPartDetail: "เพิ่ม \"{name}\" เรียบร้อยแล้ว",
+    msgEditPartDetail: "แก้ไข \"{name}\" เรียบร้อยแล้ว",
+    msgNoPermission: "ไม่มีสิทธิ์เข้าถึง",
+    msgNoPermissionDetail: "กรุณาตรวจสอบ Firestore security rules",
+    msgTimeout: "หมดเวลาเชื่อมต่อ",
+    msgTimeoutDetail: "ตรวจสอบการเชื่อมต่ออินเทอร์เน็ตและ Firebase config",
+    msgError: "เกิดข้อผิดพลาด",
+    validateInput: "กรุณากรอกข้อมูล",
+    validateSelectMachine: "กรุณาระบุชื่อเครื่องจักร",
+    validateSelectPart: "กรุณาเลือกชื่ออะไหล่",
+
+    // Additional Actions/Labels
+    actionMaintenance: "ซ่อมบำรุง",
+    statusReadOnly: "อ่านอย่างเดียว",
+    labelMachinePart: "ข้อมูลเครื่องจักรและอะไหล่",
+    editPartTitle: "แก้ไขข้อมูลอะไหล่",
+    confirmDeleteTitle: "ยืนยันการลบ",
+    confirmDeleteMessage: "คุณแน่ใจหรือไม่ว่าต้องการลบรายการนี้?",
+    confirmDeleteMessageDetail: "การลบรายการ: {name} จะไม่สามารถย้อนกลับได้",
+    statusLowStock: "อะไหล่เหลือน้อย",
+
+    // Placeholders
+    placeholderMachine: "เช่น Pie Line",
+    placeholderZone: "เช่น Cross Roller",
+    placeholderBrand: "เช่น SEW / NORD",
+    placeholderLocation: "เช่น FZ",
+    placeholderNotes: "เช่น มอเตอร์กับ CrossRoller สายพาน Timing [2] เปลี่ยนมีตที่รันชาร์ 220 0.29I",
+    placeholderTechnician: "ชื่อช่างผู้ดำเนินการ",
+    placeholderDuration: "เช่น 30",
+    placeholderTemperature: "เช่น 65.5",
+    placeholderCurrentIdle: "เช่น 1.05",
+    placeholderCurrentLoad: "เช่น 2.50",
+    placeholderVibration: "ค่าที่วัดได้ (mm/s)",
+    placeholderDescription: "ระบุรายการที่ต้องซ่อมบำรุง",
+    placeholderAdditionalNotes: "ข้อสังเกต คำแนะนำ หรือข้อมูลเพิ่มเติม",
+    placeholderModelSpec: "เช่น SK71S/4 TF 0.37kw 105A • SK0721 XF-71 L/4 TF",
+    placeholderMotorSize: "เช่น 0.37 kW, 1.5 HP",
+    placeholderShaftBend: "เช่น 0.02 mm",
+    placeholderDialGauge: "เช่น 0.05 mm",
+    placeholderPartName: "เช่น ลูกปืน 6200, น้ำมัน CLP 220",
+
+    // Spare Parts Dashboard
+    partsInventoryTitle: "คลังอะไหล่ (Spare Parts)",
+    partsItemsCount: "{count} รายการ",
+    partsCategoriesCount: "{count} หมวดหมู่",
+    partsLowStockAlert: "รายการอะไหล่เหลือน้อย ({count})",
+    partsLowStockDesc: "รายการต่อไปนี้มีจำนวนคงเหลือน้อยกว่ากำหนด กรุณาเติมสต็อก (Restock Needed)",
+    partsNoSpec: "ไม่มีรายละเอียดสเปค",
+    partsInStock: "คงเหลือ",
+    partsWithdraw: "เบิกของออก",
+    partsReceive: "รับของเข้า",
+    partsHistory: "ประวัติรายการ",
+    partsNoParts: "ไม่พบรายการอะไหล่",
+    partsNoPartsDesc: "เริ่มเพิ่มอะไหล่ที่ใช้บ่อย เช่น ลูกปืน น้ำมัน หรือสายพาน เพื่อติดตามสต็อก",
+    partsAddFirst: "เพิ่มชิ้นแรก",
+    partsLoginToManage: "เข้าสู่ระบบเพื่อจัดการ",
+
+    // Stock Actions
+    stockWithdrawTitle: "เบิกของออก (Withdraw)",
+    stockReceiveTitle: "รับของเข้า (Receive Stock)",
+    stockQuantity: "จำนวน",
+    stockMachine: "ใช้กับเครื่องจักร",
+    stockZone: "ระบุโซน (Zone)",
+    stockNotes: "หมายเหตุ (Notes)",
+    stockEvidence: "รูปหลังเปลี่ยน (Proof of Change)",
+    stockEvidenceHint: "ถ่ายรูปงานที่เปลี่ยนเสร็จแล้วเพื่อเป็นหลักฐาน",
+    stockSupplier: "ผู้จัดจำหน่าย (Supplier)",
+    stockPrice: "ราคาต่อหน่วย (Unit Price)",
+    stockRefDoc: "เอกสารอ้างอิง (Ref. Doc)",
+    stockConfirmWithdraw: "ยืนยันการเบิก",
+    stockConfirmReceive: "ยืนยันการรับเข้า",
+
+    // Stock History
+    historyTitle: "ประวัติการทำรายการ",
+    historyNoData: "ไม่พบประวัติการทำรายการ",
+    historyPerformedBy: "ดำเนินการโดย",
+    historyPerformedAt: "เมื่อเวลา",
+    historyClose: "ปิดประวัติ",
+
+    // Schedule & Calendar
+    scheduleCalendarView: "มุมมองปฏิทิน",
+    scheduleListView: "มุมมองรายการ",
+    calendarToday: "วันนี้",
+    calendarMon: "จ.",
+    calendarTue: "อ.",
+    calendarWed: "พ.",
+    calendarThu: "พฤ.",
+    calendarFri: "ศ.",
+    calendarSat: "ส.",
+    calendarSun: "อา.",
+    calendarNoTasks: "ไม่มีรายการซ่อมบำรุง",
+
+    // Notifications
+    notificationTitle: "การแจ้งเตือน",
+    notificationEmpty: "ไม่มีการแจ้งเตือนใหม่",
+    notificationLowStockMessage: "{part} เหลือเพียง {qty} {unit}",
+    notificationPmUpcomingTitle: "แผนซ่อมบำรุงที่กำลังจะมาถึง",
+    notificationPmUpcomingMessage: "{machine} มีกำหนดซ่อมในอีก {days} วัน",
+    notificationPmOverdueTitle: "แผนซ่อมบำรุงเกินกำหนด",
+    notificationPmOverdueMessage: "{machine} เกินกำหนดซ่อมตั้งแต่วันที่ {date}",
+    notificationLowStock: "อะไหล่เหลือน้อย: {name}",
+    notificationUpcomingPM: "ซ่อมบำรุงใน {days} วัน: {name}",
+    notificationDueToday: "ถึงกำหนดซ่อมวันนี้: {name}",
+    notificationRequestTitle: "เปิดการแจ้งเตือน",
+    notificationRequestDesc: "รับการแจ้งเตือนทันเมื่อมีอะไหล่ใกล้หมดหรือถึงกำหนดซ่อมบำรุง",
+    notificationEnable: "เปิดใช้งาน",
+};
+
+const en: TranslationKeys = {
+    // App
+    appTitle: "Machine Parts Management - Art of Baking",
+    appSubtitle: "Machine Parts & Maintenance Management - PM TEAM REALTIME DATABASE",
+
+    // Navigation
+    navDashboard: "Dashboard",
+    navMachines: "Machines",
+    navParts: "Parts",
+    navMaintenance: "Maintenance",
+    navSchedule: "Schedule",
+    navAnalytics: "Analytics",
+    navPredictive: "Predictive",
+
+    // Predictive Page
+    predictiveSubtitle: "AI-Powered Maintenance Forecasting",
+    predictiveAnalyzing: "AI Analyzing...",
+    predictiveCriticalTitle: "Critical Predictions",
+    predictiveUpcomingTitle: "Upcoming Issues",
+    predictiveHealthTitle: "System Health",
+    predictiveReliable: "Reliable",
+    predictiveRiskAnalysis: "Risk Analysis",
+    predictiveRealtimeLogic: "Real-time Sensor Logic",
+    predictiveProb: "Probability",
+    predictivePredictedWithin: "Predicted within",
+    predictiveAvgTemp: "Avg. Temp",
+    predictiveAvgVib: "Avg. Vibration",
+    predictiveViewReports: "View Sensor Reports",
+    predictiveMachineCount: "{count} Machine",
+    predictiveAreaCount: "{count} Areas",
+    predictiveWithinHours: "{hours} hours",
+    predictiveWithinDays: "{days} days",
+
+    // Mock Predictions
+    predBearingFailure: "Bearing Failure Likely",
+    predBeltTension: "Belt Tension Degradation",
+    predOverheating: "Motor Overheating",
+
+    statusHighRisk: "High Risk",
+    statusMonitoring: "Monitoring",
+    statusHealthy: "Healthy",
+
+    // Stats
+    statTotalParts: "Total Parts",
+    statMachines: "Machines",
+    statZones: "Zones",
+    statMaintenanceRecords: "Maintenance Records",
+
+    // Actions
+    actionAddPart: "Add Part",
+    actionRecordMaintenance: "Record Maintenance",
+    actionMaintenanceHistory: "Maintenance History",
+    actionExport: "Export",
+    actionClearFilters: "Clear Filters",
+    actionSave: "Save",
+    actionCancel: "Cancel",
+    actionClose: "Close",
+    actionEdit: "Edit",
+    actionDelete: "Delete",
+    actionSearch: "Search",
+    actionSaveChanges: "Save Changes",
+
+    // Filters
+    filterTitle: "Search and Filter",
+    filterMachine: "Machine Name",
+    filterZone: "Zone",
+    filterPartName: "Part Name",
+    filterAll: "All",
+    filterShowResults: "Showing:",
+    filterOf: "of",
+    filterRecords: "records",
+
+    // Table Headers
+    tableImage: "IMAGE",
+    tableMachine: "MACHINE",
+    tablePartName: "PART NAME",
+    tableModelSpec: "MODEL/SPEC",
+    tableBrand: "BRAND",
+    tableZone: "ZONE",
+    tableStatus: "STATUS",
+    tableDate: "DATE",
+    tableActions: "ACTIONS",
+    tableQuantity: "Quantity",
+    tableLocation: "Location",
+    tableNotes: "Notes",
+    tableManagement: "Management",
+    tableTitleParts: "Machine Parts",
+
+    // Add Part Modal
+    addPartTitle: "Add Machine Part",
+    addPartMachine: "Machine",
+    addPartName: "Part Name",
+    addPartSelectPart: "Select Part Name",
+    addPartNewPart: "+ Add New Part Name",
+    addPartModelSpec: "Model/Spec",
+    addPartZone: "Zone",
+    addPartBrand: "Brand",
+    addPartQuantity: "Quantity",
+    addPartUnit: "Unit",
+    addPartLocation: "Location",
+    addPartImage: "Part Image",
+    addPartChooseFile: "Choose File",
+    addPartNoFile: "No file chosen",
+    addPartImageHint: "Select image file (JPG, PNG, GIF) max 5MB",
+    addPartCategory: "Category",
+    addPartSelectCategory: "Select Category",
+    addPartNotes: "Notes",
+
+    // Machine Settings Labels
+    labelFileSize: "File Size",
+    labelMachineSettings: "Machine Settings",
+    labelBrandModel: "Brand & Model",
+    labelSerialNumber: "Serial Number",
+    labelInstallationDate: "Installation Date",
+    labelOperatingHours: "Operating Hours",
+    labelCapacity: "Capacity",
+    labelPowerRating: "Power Rating",
+    labelMaintenanceCycle: "Maintenance Cycle",
+    labelHours: "Hours",
+    labelPower: "Power",
+    labelInstall: "Install",
+    labelMonths: "Months",
+    labelDescription: "Additional Description",
+
+    // Maintenance Record Modal
+    maintenanceTitle: "Maintenance & Oil Change Record",
+    maintenanceGeneralInfo: "General Information",
+    maintenanceMachine: "Machine",
+    maintenanceSelectMachine: "Select Machine",
+    maintenanceDescription: "Maintenance Description",
+    maintenanceType: "Maintenance Type",
+    maintenanceSelectType: "Select Type",
+    maintenancePriority: "Priority Level",
+    maintenancePriorityNormal: "Normal",
+    maintenancePriorityHigh: "High",
+    maintenancePriorityUrgent: "Urgent",
+
+    maintenanceOperationInfo: "Operation Details",
+    maintenanceDate: "Maintenance Date",
+    maintenanceDuration: "Duration (minutes)",
+    maintenanceTechnician: "Technician",
+    maintenanceStatus: "Status",
+    maintenanceStatusPending: "Pending",
+    maintenanceStatusInProgress: "In Progress",
+    maintenanceStatusCompleted: "Completed",
+
+    maintenanceMotorGearInfo: "Motor & Gear Information",
+    maintenanceMotorSize: "Motor Size",
+    maintenanceMotorSizeHint: "(First record only)",
+    maintenanceVibration: "Vibration Values",
+    maintenanceAxisX: "Axis X",
+    maintenanceAxisY: "Axis Y",
+    maintenanceAxisZ: "Axis Z",
+    maintenanceVibrationValue: "Measured Value (mm/s)",
+    maintenanceVibrationNormal: "Normal",
+    maintenanceVibrationMedium: "Medium",
+    maintenanceVibrationAbnormal: "Abnormal",
+
+    maintenanceVoltage: "Voltage (3 Phase)",
+    maintenanceSelectVoltage: "Select Voltage",
+    maintenanceCurrent: "Current (A)",
+    maintenanceCurrentIdle: "Idle Current (A)",
+    maintenanceCurrentLoad: "Load 100% Current (A)",
+    maintenanceTemperature: "Temperature (°C)",
+    maintenanceTemperatureHint: "(For lifespan analysis)",
+
+    // Shaft/Dial Gauge
+    maintenanceShaftInfo: "Shaft & Dial Gauge Data",
+    maintenanceShaftBend: "Shaft Bend/Crooked",
+    maintenanceShaftBendValue: "Measured Value",
+    maintenanceDialGauge: "Dial Gauge",
+    maintenanceDialGaugeValue: "Measured Value",
+
+    maintenanceDetailsNotes: "Details and Notes",
+    maintenanceDetailDescription: "Maintenance Details",
+    maintenanceAdditionalNotes: "Additional Notes",
+    maintenanceSaveRecord: "Save Maintenance Record",
+
+    // Maintenance Types
+    typePreventive: "Preventive Maintenance",
+    typeCorrective: "Corrective Repair",
+    typeOilChange: "Oil Change",
+    typePartReplacement: "Part Replacement",
+    typeInspection: "Inspection",
+
+    // Categories
+    categoryMotor: "Motor",
+    categoryGear: "Gear",
+    categoryBelt: "Belt",
+    categoryBearing: "Bearing",
+    categoryPump: "Pump",
+    categoryValve: "Valve",
+    categoryElectrical: "Electrical",
+    categoryOil: "Oil/Grease",
+    categoryPneumatic: "Pneumatic",
+    categoryTool: "Tool",
+    categoryOther: "Other",
+
+    // Zones
+    zoneTop: "Top",
+    zoneBottom: "Bottom",
+    zoneLeft: "Left",
+    zoneRight: "Right",
+    zoneFront: "Front",
+    zoneBack: "Back",
+    zoneInside: "Inside",
+
+    // Status Messages
+    msgLoading: "Loading...",
+    msgNoData: "No data found",
+    msgSaveSuccess: "Data saved successfully",
+    msgSaveError: "Error saving data",
+    msgConfirmDelete: "Confirm delete?",
+    msgSaving: "Saving...",
+    msgDeleteSuccess: "Deleted successfully",
+    msgDeleteError: "Error deleting data",
+    msgCurrentImagePreserved: "Current Image Preserved",
+    msgDbConnected: "Successfully Connected!",
+    msgDbReady: "Database system is ready for use",
+    msgDbConnectError: "Connection Failed!",
+    msgDbErrorDetail: "Unable to access database. Please check your connection.",
+    msgAddPartSuccess: "Part added successfully!",
+    msgEditPartSuccess: "Part edited successfully!",
+    msgAddPartDetail: "Added \"{name}\" successfully.",
+    msgEditPartDetail: "Edited \"{name}\" successfully.",
+    msgNoPermission: "No permission",
+    msgNoPermissionDetail: "Please check Firestore security rules",
+    msgTimeout: "Connection timed out",
+    msgTimeoutDetail: "Check internet connection and Firebase config",
+    msgError: "An error occurred",
+    validateInput: "Please fill in the information",
+    validateSelectMachine: "Please specify machine name",
+    validateSelectPart: "Please select part name",
+
+    // Additional Actions/Labels
+    actionMaintenance: "Maintenance",
+    statusReadOnly: "Read Only",
+    labelMachinePart: "Machine & Part Information",
+    editPartTitle: "Edit Part Details",
+    confirmDeleteTitle: "Confirm Deletion",
+    confirmDeleteMessage: "Are you sure you want to delete this item?",
+    confirmDeleteMessageDetail: "Deleting: {name} cannot be undone.",
+    statusLowStock: "Low Stock",
+
+    // Placeholders
+    placeholderMachine: "e.g. Pie Line",
+    placeholderZone: "e.g. Cross Roller",
+    placeholderBrand: "e.g. SEW / NORD",
+    placeholderLocation: "e.g. FZ",
+    placeholderNotes: "e.g. Motor with CrossRoller timing belt [2] changed meter run char 220 0.29I",
+    placeholderTechnician: "Technician name",
+    placeholderDuration: "e.g. 30",
+    placeholderTemperature: "e.g. 65.5",
+    placeholderCurrentIdle: "e.g. 1.05",
+    placeholderCurrentLoad: "e.g. 2.50",
+    placeholderVibration: "Measured value (mm/s)",
+    placeholderDescription: "Specify maintenance items",
+    placeholderAdditionalNotes: "Observations, recommendations, or additional info",
+    placeholderModelSpec: "e.g. SK71S/4 TF 0.37kw 105A • SK0721 XF-71 L/4 TF",
+    placeholderMotorSize: "e.g. 0.37 kW, 1.5 HP",
+    placeholderShaftBend: "e.g. 0.02 mm",
+    placeholderDialGauge: "e.g. 0.05 mm",
+    placeholderPartName: "e.g. Bearing 6200, Oil CLP 220",
+
+    // Spare Parts Dashboard
+    partsInventoryTitle: "Spare Parts Inventory",
+    partsItemsCount: "{count} Items",
+    partsCategoriesCount: "{count} Categories",
+
+    // Schedule & Calendar
+    scheduleCalendarView: "Calendar View",
+    scheduleListView: "List View",
+    calendarToday: "Today",
+    calendarMon: "Mon",
+    calendarTue: "Tue",
+    calendarWed: "Wed",
+    calendarThu: "Thu",
+    calendarFri: "Fri",
+    calendarSat: "Sat",
+    calendarSun: "Sun",
+    calendarNoTasks: "No maintenance tasks",
+
+    // Notifications
+    notificationTitle: "Notifications",
+    notificationEmpty: "No new notifications",
+    notificationLowStockMessage: "{part} only {qty} {unit} remaining",
+    notificationPmUpcomingTitle: "Upcoming Maintenance",
+    notificationPmUpcomingMessage: "{machine} is due in {days} days",
+    notificationPmOverdueTitle: "Overdue Maintenance",
+    notificationPmOverdueMessage: "{machine} is overdue since {date}",
+    notificationLowStock: "Low Stock: {name}",
+    notificationUpcomingPM: "Maintenance in {days} days: {name}",
+    notificationDueToday: "Due Today: {name}",
+    notificationRequestTitle: "Enable Notifications",
+    notificationRequestDesc: "Get notified immediately when parts are low or maintenance is due.",
+    notificationEnable: "Enable",
+    partsLowStockAlert: "Low Stock Alert ({count})",
+    partsLowStockDesc: "The following items are below threshold. Restock needed.",
+    partsNoSpec: "No spec details",
+    partsInStock: "In Stock",
+    partsWithdraw: "Withdraw",
+    partsReceive: "Receive",
+    partsHistory: "History",
+    partsNoParts: "No Parts Found",
+    partsNoPartsDesc: "Start adding consumables like Bearings, Oil, or Filters to track your inventory.",
+    partsAddFirst: "Add First Item",
+    partsLoginToManage: "Login to Manage",
+
+    // Stock Actions
+    stockWithdrawTitle: "Withdraw Item",
+    stockReceiveTitle: "Receive Stock",
+    stockQuantity: "Quantity",
+    stockMachine: "Select Machine",
+    stockZone: "Specify Zone",
+    stockNotes: "Notes",
+    stockEvidence: "Proof of Change Image",
+    stockEvidenceHint: "Upload a photo of the completed change for evidence",
+    stockSupplier: "Supplier",
+    stockPrice: "Unit Price",
+    stockRefDoc: "Ref. Document",
+    stockConfirmWithdraw: "Confirm Withdraw",
+    stockConfirmReceive: "Confirm Receive",
+
+    // Stock History
+    historyTitle: "Transaction History",
+    historyNoData: "No transactions found",
+    historyPerformedBy: "Performed By",
+    historyPerformedAt: "Performed At",
+    historyClose: "Close History",
+};
+
+export const translations: Record<Language, TranslationKeys> = {
+    th,
+    en,
+};
+
+// Data-level translations for common terms found in the database
+export const dataTranslations: Record<string, string> = {
+    // Part Names
+    "สายพาน": "Timing Belt",
+    "Motor + Gear": "Motor + Gearbox",
+    "ลูกปืน": "Bearing",
+    "โซ่": "Chain",
+    "เฟือง": "Sprocket / Gear",
+    "ซีล": "Oil Seal",
+    "น็อต": "Bolt / Nut",
+    "ใบมีด": "Blade / Cutter",
+    "เซนเซอร์": "Sensor",
+    "สวิตซ์": "Switch",
+
+    // Notes / Locations
+    "ชุดรีดโดเข้า": "Dough Infeed Roller Set",
+    "ชุดรีดโดออก": "Dough Outfeed Roller Set",
+    "ฝั่ง": "Side",
+    "ซ้าย": "Left",
+    "ขวา": "Right",
+    "หน้า": "Front",
+    "หลัง": "Back",
+    "ตัว": "Unit(s)",
+    "เปลี่ยน": "Change / Replace",
+    "ซ่อม": "Repair",
+    "ตรวจเช็ค": "Inspect",
+    "ปกติ": "Normal",
+    "ชำรุด": "Damaged",
+    "จุดอัดจาระบี": "Grease Point",
+    "สายพานลำเลียง": "Conveyor Belt",
+    "มอเตอร์": "Motor",
+    "เฟรม": "Frame",
+    "ใช้พ่นสายพาน": "Belt Spray Usage",
+    "ตับ": "Set(s) / Segment(s)",
+    "หัว": "Head / Unit",
+};

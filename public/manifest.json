@@ -1,0 +1,23 @@
+{
+    "name": "Art of Baking Maintenance Team",
+    "short_name": "AOB Maintenance",
+    "description": "Management system for machine maintenance and parts",
+    "start_url": "/",
+    "display": "standalone",
+    "background_color": "#0f172a",
+    "theme_color": "#0f172a",
+    "icons": [
+        {
+            "src": "https://ui-avatars.com/api/?name=AOB&background=3b82f6&color=fff&size=192",
+            "sizes": "192x192",
+            "type": "image/png",
+            "purpose": "any maskable"
+        },
+        {
+            "src": "https://ui-avatars.com/api/?name=AOB&background=3b82f6&color=fff&size=512",
+            "sizes": "512x512",
+            "type": "image/png",
+            "purpose": "any maskable"
+        }
+    ]
+}

@@ -1,0 +1,531 @@
+"use client";
+
+import React, { useState, useEffect } from "react";
+import Header from "./components/Header";
+import MobileNav from "./components/MobileNav";
+import StatCard from "./components/ui/StatCard";
+import AddPartModal from "./components/forms/AddPartModal";
+import MaintenanceRecordModal from "./components/forms/MaintenanceRecordModal";
+import ConfirmModal from "./components/ui/ConfirmModal"; // Import ConfirmModal
+import { useLanguage } from "./contexts/LanguageContext";
+import { useAuth } from "./contexts/AuthContext";
+import { useToast } from "./contexts/ToastContext";
+import { getDashboardStats, getParts, deletePart } from "./lib/firebaseService";
+import {
+  BoxIcon,
+  SettingsIcon,
+  MapPinIcon,
+  AlertTriangleIcon,
+  PlusIcon,
+  EditIcon,
+  HistoryIcon,
+  DownloadIcon,
+  SearchIcon,
+  RefreshIcon,
+  ChevronDownIcon,
+  MaximizeIcon,
+  MinimizeIcon,
+} from "./components/ui/Icons";
+import { Part, PartFilters, DashboardStats } from "./types";
+import Image from "next/image";
+
+export default function Dashboard() {
+  const { t, language, setLanguage, tData } = useLanguage();
+  const { user } = useAuth();
+  const { success } = useToast();
+  const [addPartModalOpen, setAddPartModalOpen] = useState(false);
+  const [maintenanceModalOpen, setMaintenanceModalOpen] = useState(false);
+
+  // Confirm Modal State
+  const [confirmModalOpen, setConfirmModalOpen] = useState(false);
+  const [partToDelete, setPartToDelete] = useState<Part | null>(null);
+  const [selectedPart, setSelectedPart] = useState<Part | null>(null);
+
+  // Table Fullscreen State
+  const [isTableFullscreen, setIsTableFullscreen] = useState(false);
+  const tableSectionRef = React.useRef<HTMLDivElement>(null);
+  const [loading, setLoading] = useState(true);
+
+  // Handlers for action buttons
+  const handleEditPart = (part: Part) => {
+    setSelectedPart(part);
+    setAddPartModalOpen(true);
+  };
+
+  const handleMaintenancePart = (part: Part) => {
+    // Ideally pass part details to maintenance modal
+    setMaintenanceModalOpen(true);
+  };
+
+  const handleDeleteClick = (part: Part) => {
+    setPartToDelete(part);
+    setConfirmModalOpen(true);
+  };
+
+  const confirmDeletePart = async () => {
+    if (!partToDelete) return;
+    try {
+      await deletePart(partToDelete.id);
+      fetchData(); // Refresh list
+    } catch (error) {
+      console.error("Failed to delete part", error);
+      alert("Failed to delete part");
+    }
+  };
+  const [stats, setStats] = useState<DashboardStats>({
+    totalParts: 0,
+    totalMachines: 0,
+    totalZones: 0,
+    maintenanceRecords: 0,
+    pendingMaintenance: 0,
+    upcomingSchedule: 0,
+  });
+  const [parts, setParts] = useState<Part[]>([]);
+  const [filters, setFilters] = useState<PartFilters>({
+    machineId: "",
+    zone: "",
+    partName: "",
+  });
+  const fetchData = async () => {
+    // Check session storage to see if we've already shown the startup notification
+    const hasShownNotification = typeof window !== 'undefined' && sessionStorage.getItem('db_notification_shown');
+
+    try {
+      setLoading(true);
+      const [statsData, partsData] = await Promise.all([
+        getDashboardStats(),
+        getParts()
+      ]);
+      setStats(statsData);
+      setParts(partsData);
+
+      // Trigger success toast only once per session
+      if (!hasShownNotification) {
+        success(t("msgDbConnected"), t("msgDbReady"));
+        sessionStorage.setItem('db_notification_shown', 'true');
+      }
+    } catch (error) {
+      console.error("Error fetching dashboard data:", error);
+      // Trigger error toast only once per session if initial load failed
+      if (!hasShownNotification) {
+        useToast().error(t("msgDbConnectError"), t("msgDbErrorDetail"));
+        sessionStorage.setItem('db_notification_shown', 'true');
+      }
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  useEffect(() => {
+    fetchData();
+  }, []);
+
+  // Auto-fullscreen logic
+  useEffect(() => {
+    if (loading || isTableFullscreen) return; // Removed isTableFullscreen check to allow re-triggering? No, if it's already full, don't trigger. 
+    // Wait, if it's full, setting it to true again does nothing. 
+    // If user minimized it (isTableFullscreen = false), we want it to trigger again ONLY if they scroll away and back?
+    // The IntersectionObserver only fires changes. If they minimize while in view, checking "isTableFullscreen" in dependency might cause loop if we are not careful?
+    // Actually, if they minimize, `isTableFullscreen` becomes false. The effect re-runs.
+    // Observer is re-created. Checks entry. If intersecting -> sets true immediately. 
+    // This basically implies "You cannot minimize it while it's in view", it will pop back up.
+    // That might be annoying. But user said "Every time scroll down to".
+    // Usually "Scroll down to" implies entering the view.
+    // If I keep `isTableFullscreen` in the dependency array and early return, then when they close it, the effect runs, sees `isTableFullscreen` is false, creates observer. Observer sees it's visible, triggers true.
+    // User won't be able to close it!
+    // I should probably ONLY trigger if it *crosses* the threshold (not just "is visible upon mount").
+    // But IntersectionObserver fires initial check.
+
+    // To solve "Cannot close":
+    // 1. Only auto-trigger if they are SCROLLING INTO view.
+    // 2. If they are already there and close it, don't reopen.
+    // Logic: `hasTriggered` per intersection instance?
+    // Or, remove `isTableFullscreen` from dependency array?
+    // If I remove `isTableFullscreen` from dependency, the effect only runs on mount (or updates to `loading`).
+    // The observer callback closes over `setIsTableFullscreen`. That's fine.
+    // If they close it, `isTableFullscreen` becomes false. Changes state. Re-renders. Effect doesn't run.
+    // Observer is still alive.
+    // If they scroll out and back in, observer callback fires. `entries[0].isIntersecting` becomes true. `setIsTableFullscreen(true)`.
+    // THIS IS WHAT WE WANT.
+    // So removing `isTableFullscreen` from dependency array is key?
+    // Wait, the observer variable needs to be cleaned up.
+    // If I remove `isTableFullscreen` from deps, I should make sure I don't stale-closure something important? No, `setIsTableFullscreen` is stable.
+
+    // Let's try removing `isTableFullscreen` from the early return and dependency array.
+
+    const observer = new IntersectionObserver(
+      (entries) => {
+        if (entries[0].isIntersecting) {
+          // If we are already fullscreen, do nothing (react handles this, but good to be explicit/efficient)
+          setIsTableFullscreen(true);
+        }
+      },
+      {
+        threshold: 0.1,
+      }
+    );
+
+    if (tableSectionRef.current) {
+      observer.observe(tableSectionRef.current);
+    }
+
+    return () => observer.disconnect();
+  }, [loading]); // Run once when loading finishes.
+
+  // Derive unique values for filters from real data
+  const availableMachines = Array.from(new Set(parts.map(p => p.machineName || p.machineId))).filter(Boolean).sort();
+  const availableZones = Array.from(new Set(parts.map(p => p.zone))).filter(Boolean).sort();
+  const availablePartNames = Array.from(new Set(parts.map(p => p.partName))).filter(Boolean).sort();
+
+  // Filter parts based on current filters
+  const filteredParts = parts.filter((part) => {
+    // Machine filter: match by ID OR name for maximum compatibility
+    if (filters.machineId && part.machineId !== filters.machineId && part.machineName !== filters.machineId) return false;
+    if (filters.zone && part.zone !== filters.zone) return false;
+    if (filters.partName && part.partName !== filters.partName) return false;
+    return true;
+  });
+
+  const handleFilterChange = (key: keyof PartFilters, value: string) => {
+    setFilters((prev) => ({ ...prev, [key]: value }));
+  };
+
+  const clearFilters = () => {
+    setFilters({ machineId: "", zone: "", partName: "" });
+  };
+
+  // Count unique values for filter badges
+  const uniqueMachinesCount = availableMachines.length;
+  const uniqueZonesCount = availableZones.length;
+  const uniquePartNamesCount = availablePartNames.length;
+
+  return (
+    <div className="min-h-screen bg-bg-primary">
+      <Header />
+
+      <main className="main-container px-4 py-6 sm:px-6">
+        {/* Stats Section */}
+        <section className="mb-6">
+          <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-4">
+            <StatCard
+              icon={<BoxIcon size={20} />}
+              value={stats.totalParts}
+              label={t("statTotalParts")}
+              iconBgColor="bg-primary/20"
+              iconTextColor="text-primary-light"
+              delay={0}
+            />
+            <StatCard
+              icon={<SettingsIcon size={20} />}
+              value={stats.totalMachines}
+              label={t("statMachines")}
+              iconBgColor="bg-accent-yellow/20"
+              iconTextColor="text-accent-yellow"
+              delay={50}
+            />
+            <StatCard
+              icon={<MapPinIcon size={20} />}
+              value={stats.totalZones}
+              label={t("statZones")}
+              iconBgColor="bg-accent-cyan/20"
+              iconTextColor="text-accent-cyan"
+              delay={100}
+            />
+            <StatCard
+              icon={<AlertTriangleIcon size={20} />}
+              value={stats.maintenanceRecords}
+              label={t("statMaintenanceRecords")}
+              iconBgColor="bg-accent-red/20"
+              iconTextColor="text-accent-red"
+              delay={150}
+            />
+          </div>
+        </section>
+
+        {/* Quick Actions */}
+        <section className="mb-6">
+          <div className="flex flex-wrap gap-4 mt-8">
+            <button
+              onClick={() => setAddPartModalOpen(true)}
+              className="flex-1 min-w-[200px] btn btn-active bg-accent-green text-bg-primary hover:bg-accent-green/90 border-none h-14 text-lg"
+            >
+              <PlusIcon size={24} className="mr-2" />
+              {t("actionAddPart")}
+            </button>
+            <button
+              onClick={() => setMaintenanceModalOpen(true)}
+              className="flex-1 min-w-[200px] btn btn-active bg-accent-yellow text-bg-primary hover:bg-accent-yellow/90 border-none h-14 text-lg"
+            >
+              <HistoryIcon size={24} className="mr-2" />
+              {t("actionRecordMaintenance")}
+            </button>
+            <button className="flex-1 min-w-[200px] btn btn-outline border-white/10 hover:bg-white/5 h-14 text-lg text-text-primary">
+              <RefreshIcon size={20} className="mr-2" />
+              {t("actionMaintenanceHistory")}
+            </button>
+            <button className="flex-1 min-w-[200px] btn btn-outline border-white/10 hover:bg-white/5 h-14 text-lg text-text-primary">
+              <DownloadIcon size={20} className="mr-2" />
+              {t("actionExport")}
+            </button>
+          </div>
+        </section>
+
+        {/* Filter Section */}
+        <section className="mb-6 animate-fade-in-up" style={{ animationDelay: "200ms" }}>
+          <div className="filter-section">
+            <h3 className="filter-title">
+              <SearchIcon size={16} />
+              {t("filterTitle")}
+            </h3>
+
+            <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 mb-4">
+              {/* Machine Filter */}
+              <div>
+                <label className="flex items-center gap-2 text-xs text-text-muted mb-1.5">
+                  <SettingsIcon size={12} />
+                  {t("filterMachine")}
+                  <span className="badge badge-primary ml-auto">{uniqueMachinesCount}</span>
+                </label>
+                <select
+                  value={filters.machineId}
+                  onChange={(e) => handleFilterChange("machineId", e.target.value)}
+                  className="input select text-sm"
+                >
+                  <option value="">{t("filterAll")}</option>
+                  {availableMachines.map((name) => (
+                    <option key={name} value={name}>{name}</option>
+                  ))}
+                </select>
+              </div>
+
+              {/* Zone Filter */}
+              <div>
+                <label className="flex items-center gap-2 text-xs text-text-muted mb-1.5">
+                  <MapPinIcon size={12} />
+                  {t("filterZone")}
+                  <span className="badge badge-primary ml-auto">{uniqueZonesCount}</span>
+                </label>
+                <select
+                  value={filters.zone}
+                  onChange={(e) => handleFilterChange("zone", e.target.value)}
+                  className="input select text-sm"
+                >
+                  <option value="">{t("filterAll")}</option>
+                  {availableZones.map((z) => (
+                    <option key={z} value={z}>{z}</option>
+                  ))}
+                </select>
+              </div>
+
+              {/* Part Name Filter */}
+              <div>
+                <label className="flex items-center gap-2 text-xs text-text-muted mb-1.5">
+                  <BoxIcon size={12} />
+                  {t("filterPartName")}
+                  <span className="badge badge-primary ml-auto">{uniquePartNamesCount}</span>
+                </label>
+                <select
+                  value={filters.partName}
+                  onChange={(e) => handleFilterChange("partName", e.target.value)}
+                  className="input select text-sm"
+                >
+                  <option value="">{t("filterAll")}</option>
+                  {availablePartNames.map((p) => (
+                    <option key={p} value={p}>{p}</option>
+                  ))}
+                </select>
+              </div>
+            </div>
+
+            <div className="flex items-center justify-between">
+              <p className="text-sm text-text-muted">
+                {t("filterShowResults")}{" "}
+                <span className="text-primary-light font-semibold">{filteredParts.length}</span>
+                {" "}{t("filterOf")}{" "}
+                <span className="text-text-primary font-semibold">{loading ? "..." : parts.length}</span>
+                {" "}{t("filterRecords")}
+              </p>
+              <button
+                onClick={clearFilters}
+                className="btn btn-outline text-sm py-1.5 px-3"
+              >
+                <RefreshIcon size={14} />
+                {t("actionClearFilters")}
+              </button>
+            </div>
+          </div>
+        </section>
+
+        {/* Machine Parts Table */}
+        <section
+          ref={tableSectionRef}
+          className={`animate-fade-in-up transition-all duration-300 ${isTableFullscreen ? "fixed inset-0 z-50 bg-bg-primary p-4 flex flex-col" : ""}`}
+          style={{ animationDelay: "300ms" }}
+        >
+          <div className={`card p-0 overflow-hidden ${isTableFullscreen ? "flex-1 flex flex-col h-full rounded-xl border border-border-light shadow-2xl" : ""}`}>
+            <div className="px-4 py-3 border-b border-border-light flex items-center justify-between bg-bg-secondary">
+              <div className="flex items-center gap-2">
+                <SettingsIcon size={18} className="text-text-muted" />
+                <h2 className="font-semibold text-text-primary">{t("tableTitleParts")}</h2>
+              </div>
+              <button
+                onClick={() => setIsTableFullscreen(!isTableFullscreen)}
+                className="text-text-muted hover:text-primary transition-colors p-1 hover:bg-bg-tertiary rounded-lg"
+                title={isTableFullscreen ? "Exit Fullscreen" : "Fullscreen"}
+              >
+                {isTableFullscreen ? <MinimizeIcon size={20} /> : <MaximizeIcon size={20} />}
+              </button>
+            </div>
+
+            <div className={`table-container ${isTableFullscreen ? "flex-1 overflow-auto bg-bg-secondary" : ""}`}>
+              <table className="table w-full">
+                <thead>
+                  <tr className="bg-bg-tertiary">
+                    <th className={`px-4 py-4 text-left text-xs font-semibold text-text-muted uppercase tracking-wider ${isTableFullscreen ? "sticky top-0 z-20 bg-bg-tertiary shadow-sm" : ""}`}>{t("tableImage")}</th>
+                    <th className={`px-4 py-4 text-left text-xs font-semibold text-text-muted uppercase tracking-wider ${isTableFullscreen ? "sticky top-0 z-20 bg-bg-tertiary shadow-sm" : ""}`}>{t("tableMachine")}</th>
+                    <th className={`px-4 py-4 text-left text-xs font-semibold text-text-muted uppercase tracking-wider ${isTableFullscreen ? "sticky top-0 z-20 bg-bg-tertiary shadow-sm" : ""}`}>{t("tablePartName")}</th>
+                    <th className={`px-4 py-4 text-left text-xs font-semibold text-text-muted uppercase tracking-wider ${isTableFullscreen ? "sticky top-0 z-20 bg-bg-tertiary shadow-sm" : ""}`}>{t("tableModelSpec")}</th>
+                    <th className={`px-4 py-4 text-left text-xs font-semibold text-text-muted uppercase tracking-wider ${isTableFullscreen ? "sticky top-0 z-20 bg-bg-tertiary shadow-sm" : ""}`}>{t("tableBrand")}</th>
+                    <th className={`px-4 py-4 text-left text-xs font-semibold text-text-muted uppercase tracking-wider ${isTableFullscreen ? "sticky top-0 z-20 bg-bg-tertiary shadow-sm" : ""}`}>{t("tableZone")}</th>
+                    <th className={`px-4 py-4 text-left text-xs font-semibold text-text-muted uppercase tracking-wider ${isTableFullscreen ? "sticky top-0 z-20 bg-bg-tertiary shadow-sm" : ""}`}>{t("tableQuantity")}</th>
+                    <th className={`px-4 py-4 text-left text-xs font-semibold text-text-muted uppercase tracking-wider ${isTableFullscreen ? "sticky top-0 z-20 bg-bg-tertiary shadow-sm" : ""}`}>{t("tableLocation")}</th>
+                    <th className={`px-4 py-4 text-left text-xs font-semibold text-text-muted uppercase tracking-wider ${isTableFullscreen ? "sticky top-0 z-20 bg-bg-tertiary shadow-sm" : ""}`}>{t("tableNotes")}</th>
+                    <th className={`px-4 py-4 text-right text-xs font-semibold text-text-muted uppercase tracking-wider ${isTableFullscreen ? "sticky top-0 z-20 bg-bg-tertiary shadow-sm" : ""}`}>{t("tableManagement")}</th>
+                  </tr>
+                </thead>
+                <tbody className="divide-y divide-border-light">
+                  {!loading && filteredParts.map((part, index) => (
+                    <tr
+                      key={part.id}
+                      className="animate-fade-in hover:bg-bg-tertiary/30 transition-colors"
+                      style={{ animationDelay: `${index * 30}ms` }}
+                    >
+                      <td className="py-3 px-4">
+                        <div className="w-12 h-12 rounded-lg bg-bg-tertiary overflow-hidden flex items-center justify-center border border-border-light relative group">
+                          {part.imageUrl ? (
+                            <Image
+                              src={part.imageUrl}
+                              alt={part.partName}
+                              width={48}
+                              height={48}
+                              className="object-cover w-full h-full"
+                            />
+                          ) : (
+                            <BoxIcon size={20} className="text-text-muted" />
+                          )}
+                        </div>
+                      </td>
+                      <td className="py-3 px-4 font-medium text-text-primary">
+                        {part.machineName || "-"}
+                      </td>
+                      <td className="py-3 px-4 text-text-secondary font-medium">
+                        {tData(part.partName)}
+                      </td>
+                      <td className="py-3 px-4 hidden md:table-cell text-text-muted text-xs max-w-[150px] truncate" title={part.modelSpec}>
+                        {part.modelSpec || "-"}
+                      </td>
+                      <td className="py-3 px-4 hidden lg:table-cell text-text-secondary text-sm">
+                        {part.brand || "-"}
+                      </td>
+                      <td className="py-3 px-4 text-text-secondary text-sm">
+                        {tData(part.zone || "-")}
+                      </td>
+                      <td className="py-3 px-4">
+                        <span className="text-sm font-semibold text-text-primary">{part.quantity || 0}</span>
+                      </td>
+                      <td className="py-3 px-4 hidden xl:table-cell text-text-secondary text-sm">
+                        {part.location || "-"}
+                      </td>
+                      <td className="py-3 px-4 hidden 2xl:table-cell text-text-muted text-xs max-w-[200px] truncate" title={part.notes}>
+                        {tData(part.notes || "-")}
+                      </td>
+                      <td className="py-3 px-4 text-center">
+                        <div className="flex items-center justify-center gap-2">
+                          {user ? (
+                            <>
+                              <button
+                                onClick={() => handleEditPart(part)}
+                                className="p-1.5 rounded-lg text-accent-cyan hover:bg-accent-cyan/10 transition-colors"
+                                title={t("actionEdit")}
+                              >
+                                <EditIcon size={16} />
+                              </button>
+                              <button
+                                onClick={() => handleMaintenancePart(part)}
+                                className="p-1.5 rounded-lg text-accent-yellow hover:bg-accent-yellow/10 transition-colors"
+                                title={t("actionMaintenance")}
+                              >
+                                {/* Changed to 'Wrench' visual if available, or SettingsIcon as placeholder but logic updated */}
+                                <SettingsIcon size={16} />
+                              </button>
+                              <button
+                                onClick={() => handleDeleteClick(part)}
+                                className="p-1.5 rounded-lg text-accent-red hover:bg-accent-red/10 transition-colors"
+                                title={t("actionDelete")}
+                              >
+                                <BoxIcon size={16} className="rotate-45" />
+                              </button>
+                            </>
+                          ) : (
+                            <span className="text-xs text-text-muted italic opacity-50">{t("statusReadOnly")}</span>
+                          )}
+                        </div>
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+
+              {loading && (
+                <div className="flex justify-center py-12">
+                  <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary"></div>
+                </div>
+              )}
+
+              {!loading && filteredParts.length === 0 && (
+                <div className="empty-state py-12">
+                  <BoxIcon size={48} className="text-text-muted mb-3" />
+                  <p className="text-text-muted">{t("msgNoData")}</p>
+                </div>
+              )}
+            </div>
+          </div>
+        </section>
+      </main>
+
+      {/* Mobile Navigation */}
+      <MobileNav />
+
+      {/* Modals */}
+      <AddPartModal
+        isOpen={addPartModalOpen}
+        onClose={() => {
+          setAddPartModalOpen(false);
+          setSelectedPart(null); // Clear selected part on close
+        }}
+        onSuccess={fetchData}
+        partToEdit={selectedPart}
+      />
+      <MaintenanceRecordModal
+        isOpen={maintenanceModalOpen}
+        onClose={() => setMaintenanceModalOpen(false)}
+        onSuccess={fetchData}
+      />
+
+      <ConfirmModal
+        isOpen={confirmModalOpen}
+        onClose={() => setConfirmModalOpen(false)}
+        onConfirm={confirmDeletePart}
+        title={t("confirmDeleteTitle")}
+        message={
+          partToDelete
+            ? t("confirmDeleteMessageDetail").replace("{name}", `${partToDelete.machineName} - ${tData(partToDelete.partName)}`)
+            : t("confirmDeleteMessage")
+        }
+        confirmText={t("actionDelete")}
+        cancelText={t("actionCancel")}
+        isDestructive={true}
+      />
+    </div>
+  );
+}

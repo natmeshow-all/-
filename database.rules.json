@@ -1,0 +1,47 @@
+{
+    "rules": {
+        "machines": {
+            ".read": true,
+            ".write": "auth != null"
+        },
+        "parts": {
+            ".read": true,
+            ".write": "auth != null"
+        },
+        "maintenance_records": {
+            ".read": true,
+            ".write": "auth != null",
+            ".indexOn": [
+                "date",
+                "machineId"
+            ]
+        },
+        "schedules": {
+            ".read": true,
+            ".write": "auth != null"
+        },
+        "spare_parts": {
+            ".read": true,
+            ".write": "auth != null"
+        },
+        "stock_transactions": {
+            ".read": true,
+            ".write": "auth != null",
+            ".indexOn": [
+                "partId"
+            ]
+        },
+        "image_hashes": {
+            ".read": true,
+            ".write": "auth != null"
+        },
+        "sensor_readings": {
+            ".read": true,
+            ".write": "auth != null",
+            ".indexOn": [
+                "machineId",
+                "timestamp"
+            ]
+        }
+    }
+}
