@@ -23,19 +23,19 @@ export default function Header({ className = "" }: HeaderProps) {
 
     return (
         <header className={`sticky top-0 z-30 bg-bg-secondary/80 backdrop-blur-xl border-b border-border-light ${className}`}>
-            <div className="px-4 py-3 sm:px-6">
+            <div className="px-3 py-2 sm:px-6 sm:py-3">
                 <div className="flex items-center justify-between">
                     {/* Logo & Title */}
-                    <div className="flex items-center gap-3">
-                        <div className="relative">
-                            <div className="w-10 h-10 sm:w-12 sm:h-12 rounded-xl bg-gradient-to-br from-primary to-accent-purple flex items-center justify-center shadow-lg">
-                                <FlaskIcon className="text-white" size={24} />
+                    <div className="flex items-center gap-2 sm:gap-3">
+                        <div className="relative shrink-0">
+                            <div className="w-8 h-8 sm:w-12 sm:h-12 rounded-lg sm:rounded-xl bg-gradient-to-br from-primary to-accent-purple flex items-center justify-center shadow-lg">
+                                <FlaskIcon className="text-white" size={18} />
                             </div>
                             {/* Glow effect */}
-                            <div className="absolute inset-0 rounded-xl bg-primary/30 blur-lg -z-10" />
+                            <div className="absolute inset-0 rounded-lg sm:rounded-xl bg-primary/30 blur-lg -z-10" />
                         </div>
-                        <div className="flex flex-col">
-                            <h1 className="text-base sm:text-lg font-bold gradient-text leading-tight">
+                        <div className="flex flex-col min-w-0">
+                            <h1 className="text-sm sm:text-lg font-bold gradient-text leading-tight truncate max-w-[120px] sm:max-w-none">
                                 {t("appTitle")}
                             </h1>
                             <p className="text-[10px] sm:text-xs text-text-muted hidden sm:block">
@@ -44,9 +44,11 @@ export default function Header({ className = "" }: HeaderProps) {
                         </div>
                     </div>
 
-                    <div className="flex items-center gap-3">
-                        {/* Firebase Status */}
-                        <FirebaseStatus />
+                    <div className="flex items-center gap-1.5 sm:gap-3">
+                        {/* Firebase Status - Hidden on mobile */}
+                        <div className="hidden sm:block">
+                            <FirebaseStatus />
+                        </div>
 
                         {/* Notifications */}
                         <NotificationBell />
@@ -54,30 +56,30 @@ export default function Header({ className = "" }: HeaderProps) {
                         {/* Scanner Button (Phase 4) */}
                         <button
                             onClick={() => setIsScannerOpen(true)}
-                            className="p-2 rounded-xl text-text-muted hover:text-text-primary hover:bg-bg-tertiary transition-colors"
+                            className="p-1.5 sm:p-2 rounded-lg sm:rounded-xl text-text-muted hover:text-text-primary hover:bg-bg-tertiary transition-colors"
                             title="Scan QR Code"
                         >
-                            <CameraIcon size={20} />
+                            <CameraIcon size={18} className="sm:w-5 sm:h-5" />
                         </button>
 
                         {/* Language Switcher */}
-                        <div className="lang-switcher">
+                        <div className="lang-switcher scale-90 sm:scale-100 origin-right">
                             <button
                                 onClick={() => setLanguage("th")}
                                 className={`lang-btn ${language === "th" ? "active" : ""}`}
                             >
-                                <span className="flex items-center gap-1">
+                                <span className="flex items-center gap-0.5 sm:gap-1">
                                     <span className="text-xs">🇹🇭</span>
-                                    <span>TH</span>
+                                    <span className="text-xs sm:text-sm">TH</span>
                                 </span>
                             </button>
                             <button
                                 onClick={() => setLanguage("en")}
                                 className={`lang-btn ${language === "en" ? "active" : ""}`}
                             >
-                                <span className="flex items-center gap-1">
+                                <span className="flex items-center gap-0.5 sm:gap-1">
                                     <span className="text-xs">🇬🇧</span>
-                                    <span>EN</span>
+                                    <span className="text-xs sm:text-sm">EN</span>
                                 </span>
                             </button>
                         </div>
