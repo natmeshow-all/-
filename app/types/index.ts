@@ -140,6 +140,7 @@ export interface AddPartFormData {
     zone: string;
     brand: string;
     quantity: number;
+    minStockThreshold: number;
     location: string;
     category: PartCategory;
     imageFile?: File;

@@ -15,6 +15,7 @@ import {
     FileTextIcon,
     CheckIcon,
     EditIcon,
+    AlertTriangleIcon,
 } from "../ui/Icons";
 import { mockMachines, mockPartNames } from "../../data/mockData";
 import { AddPartFormData, PartCategory, Part } from "../../types";
@@ -50,6 +51,7 @@ export default function AddPartModal({ isOpen, onClose, onSuccess, partToEdit }:
         zone: "",
         brand: "",
         quantity: 1,
+        minStockThreshold: 1, // Default to 1
         location: "",
         category: "other",
         notes: "",
@@ -77,6 +79,7 @@ export default function AddPartModal({ isOpen, onClose, onSuccess, partToEdit }:
                 zone: partToEdit.zone || "",
                 brand: partToEdit.brand || "",
                 quantity: partToEdit.quantity || 1,
+                minStockThreshold: partToEdit.minStockThreshold || 1,
                 location: partToEdit.location || "",
                 category: partToEdit.category || "other",
                 notes: partToEdit.notes || "",
@@ -91,6 +94,7 @@ export default function AddPartModal({ isOpen, onClose, onSuccess, partToEdit }:
                 zone: "",
                 brand: "",
                 quantity: 1,
+                minStockThreshold: 1,
                 location: "",
                 category: "other",
                 notes: "",
@@ -118,7 +122,7 @@ export default function AddPartModal({ isOpen, onClose, onSuccess, partToEdit }:
         } else {
             setFormData(prev => ({
                 ...prev,
-                [name]: name === "quantity" ? parseInt(value) || 1 : value,
+                [name]: (name === "quantity" || name === "minStockThreshold") ? parseInt(value) || 0 : value,
             }));
         }
     };
@@ -312,8 +316,8 @@ export default function AddPartModal({ isOpen, onClose, onSuccess, partToEdit }:
                     </div>
                 </div>
 
-                {/* Quantity & Location */}
-                <div className="form-grid form-grid-2">
+                {/* Quantity & Min Stock */}
+                <div className="form-grid form-grid-3">
                     <div>
                         <label className="label">
                             <HashIcon size={14} />
@@ -326,6 +330,21 @@ export default function AddPartModal({ isOpen, onClose, onSuccess, partToEdit }:
                             onChange={handleInputChange}
                             min={1}
                             className="input"
+                        />
+                    </div>
+                    <div>
+                        <label className="label">
+                            <AlertTriangleIcon size={14} />
+                            Min Stock
+                        </label>
+                        <input
+                            type="number"
+                            name="minStockThreshold"
+                            value={formData.minStockThreshold}
+                            onChange={handleInputChange}
+                            min={0}
+                            className="input"
+                            placeholder="Min Limit"
                         />
                     </div>
                     <div>
