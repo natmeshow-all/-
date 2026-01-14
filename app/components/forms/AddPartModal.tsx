@@ -2,7 +2,7 @@ import React, { useState, useEffect } from "react";
 import { useLanguage } from "../../contexts/LanguageContext";
 import { useToast } from "../../contexts/ToastContext";
 import Modal from "../ui/Modal";
-import { addPart, updatePart } from "../../lib/firebaseService";
+import { addPart, updatePart, getMachines } from "../../lib/firebaseService";
 import {
     PlusIcon,
     SettingsIcon,
@@ -17,8 +17,8 @@ import {
     EditIcon,
     AlertTriangleIcon,
 } from "../ui/Icons";
-import { mockMachines, mockPartNames } from "../../data/mockData";
-import { AddPartFormData, PartCategory, Part } from "../../types";
+import { mockPartNames } from "../../data/mockData";
+import { AddPartFormData, PartCategory, Part, Machine } from "../../types";
 import Image from "next/image";
 
 interface AddPartModalProps {
@@ -43,6 +43,8 @@ export default function AddPartModal({ isOpen, onClose, onSuccess, partToEdit }:
     const { t } = useLanguage();
     const toast = useToast();
     const [isSubmitting, setIsSubmitting] = useState(false);
+    const [machines, setMachines] = useState<Machine[]>([]);
+    const [isLoadingMachines, setIsLoadingMachines] = useState(false);
     const [formData, setFormData] = useState<AddPartFormData>({
         machineId: "",
         machineName: "",
@@ -107,17 +109,37 @@ export default function AddPartModal({ isOpen, onClose, onSuccess, partToEdit }:
         }
     }, [partToEdit, isOpen]);
 
+    // Fetch machines when modal opens
+    useEffect(() => {
+        if (isOpen) {
+            const fetchMachinesData = async () => {
+                setIsLoadingMachines(true);
+                try {
+                    const data = await getMachines();
+                    setMachines(data);
+                } catch (error) {
+                    console.error("Error fetching machines:", error);
+                } finally {
+                    setIsLoadingMachines(false);
+                }
+            };
+            fetchMachinesData();
+        }
+    }, [isOpen]);
+
     const handleInputChange = (
         e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement | HTMLTextAreaElement>
     ) => {
         const { name, value } = e.target;
 
         if (name === "machineId") {
-            const machine = mockMachines.find(m => m.id === value);
+            const machine = machines.find(m => m.id === value);
             setFormData(prev => ({
                 ...prev,
                 machineId: value,
                 machineName: machine?.name || "",
+                zone: machine?.zone || prev.zone,
+                location: machine?.location || prev.location,
             }));
         } else {
             setFormData(prev => ({
@@ -235,16 +257,18 @@ export default function AddPartModal({ isOpen, onClose, onSuccess, partToEdit }:
                             <SettingsIcon size={14} />
                             {t("addPartMachine")}
                         </label>
-                        <input
-                            type="text"
-                            name="machineName"
-                            value={formData.machineName}
+                        <select
+                            name="machineId"
+                            value={formData.machineId}
                             onChange={handleInputChange}
-                            placeholder={t("placeholderMachine")}
-                            className="input"
-                            readOnly={!!partToEdit} // Maybe make machine read-only on edit to prevent accidental moves? Or allow it.
-                        // Let's allow editing for flexibility
-                        />
+                            className="input select"
+                            disabled={!!partToEdit || isLoadingMachines}
+                        >
+                            <option value="">{isLoadingMachines ? "Loading..." : t("addPartSelectMachine") || "Select Machine"}</option>
+                            {machines.map(m => (
+                                <option key={m.id} value={m.id}>{m.name}</option>
+                            ))}
+                        </select>
                     </div>
                     <div>
                         <label className="label">

@@ -56,6 +56,7 @@ export interface TranslationKeys {
 
     // Actions
     actionAddPart: string;
+    actionAddMachine: string;
     actionRecordMaintenance: string;
     actionMaintenanceHistory: string;
     actionExport: string;
@@ -113,10 +114,12 @@ export interface TranslationKeys {
     addPartImageHint: string;
     addPartCategory: string;
     addPartSelectCategory: string;
+    addPartSelectMachine: string;
     addPartNotes: string;
 
     // Machine Settings Labels
     labelFileSize: string;
+    labelMachineName: string;
     labelMachineSettings: string;
     labelBrandModel: string;
     labelSerialNumber: string;
@@ -394,6 +397,7 @@ const th: TranslationKeys = {
 
     // Actions
     actionAddPart: "เพิ่มอะไหล่",
+    actionAddMachine: "เพิ่มเครื่องจักร",
     actionRecordMaintenance: "บันทึกซ่อมบำรุง",
     actionMaintenanceHistory: "ประวัติซ่อมบำรุง",
     actionExport: "ส่งออก",
@@ -451,10 +455,12 @@ const th: TranslationKeys = {
     addPartImageHint: "เลือกไฟล์รูปภาพ (JPG, PNG, GIF) ขนาดไม่เกิน 5MB",
     addPartCategory: "หมวดหมู่",
     addPartSelectCategory: "เลือกหมวดหมู่",
+    addPartSelectMachine: "เลือกเครื่องจักร",
     addPartNotes: "หมายเหตุ",
 
     // Machine Settings Labels
     labelFileSize: "ขนาดไฟล์",
+    labelMachineName: "ชื่อเครื่องจักร",
     labelMachineSettings: "ตั้งค่าเครื่องจักร",
     labelBrandModel: "ยี่ห้อและรุ่น",
     labelSerialNumber: "หมายเลขซีเรียล",
@@ -732,6 +738,7 @@ const en: TranslationKeys = {
 
     // Actions
     actionAddPart: "Add Part",
+    actionAddMachine: "Add Machine",
     actionRecordMaintenance: "Record Maintenance",
     actionMaintenanceHistory: "Maintenance History",
     actionExport: "Export",
@@ -789,10 +796,12 @@ const en: TranslationKeys = {
     addPartImageHint: "Select image file (JPG, PNG, GIF) max 5MB",
     addPartCategory: "Category",
     addPartSelectCategory: "Select Category",
+    addPartSelectMachine: "Select Machine",
     addPartNotes: "Notes",
 
     // Machine Settings Labels
     labelFileSize: "File Size",
+    labelMachineName: "Machine Name",
     labelMachineSettings: "Machine Settings",
     labelBrandModel: "Brand & Model",
     labelSerialNumber: "Serial Number",

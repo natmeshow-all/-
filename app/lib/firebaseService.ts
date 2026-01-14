@@ -35,18 +35,43 @@ const COLLECTIONS = {
 // ==================== MACHINES ====================
 
 export async function getMachines(): Promise<Machine[]> {
-    // 1. Fetch parts to derive machines
+    const machinesMap = new Map<string, Machine>();
+
+    // 1. Fetch explicit machine data first
+    const machinesRef = ref(database, COLLECTIONS.MACHINES);
+    const machinesSnapshot = await get(machinesRef);
+
+    if (machinesSnapshot.exists()) {
+        machinesSnapshot.forEach((child) => {
+            const data = child.val();
+            const machineId = child.key!;
+            const machineName = data.name || machineId;
+
+            machinesMap.set(machineName, {
+                id: machineId,
+                name: machineName,
+                description: data.description || "",
+                zone: data.zone || "No Zone",
+                location: data.location || "",
+                status: data.status || "active",
+                imageUrl: data.imageUrl || "",
+                serialNumber: data.serialNumber || "",
+                installationDate: data.installationDate || "",
+                brandModel: data.brandModel || "",
+                operatingHours: data.operatingHours || 0,
+                capacity: data.capacity || "",
+                powerRating: data.powerRating || "",
+                maintenanceCycle: data.maintenanceCycle || 0,
+                createdAt: data.createdAt ? new Date(data.createdAt) : new Date(),
+                updatedAt: data.updatedAt ? new Date(data.updatedAt) : new Date(),
+            });
+        });
+    }
+
+    // 2. Fetch parts to discover legacy/inferred machines
     const partsRef = ref(database, COLLECTIONS.PARTS);
     const partsSnapshot = await get(partsRef);
 
-    // 2. Fetch explicit machine data (custom images, etc.)
-    const machinesRef = ref(database, COLLECTIONS.MACHINES);
-    const machinesSnapshot = await get(machinesRef);
-    const explicitMachines = machinesSnapshot.exists() ? machinesSnapshot.val() : {};
-
-    const machinesMap = new Map<string, Machine>();
-
-    // Process parts to find machines
     if (partsSnapshot.exists()) {
         partsSnapshot.forEach((childSnapshot) => {
             const part = childSnapshot.val();
@@ -55,61 +80,32 @@ export async function getMachines(): Promise<Machine[]> {
             const location = part.location || "";
 
             if (machineName) {
-                // Check if we already have this machine
                 if (!machinesMap.has(machineName)) {
-                    // Check if we have explicit data for this machine name
-                    let explicitData = null;
-                    let machineId = machineName;
-
-                    for (const [key, value] of Object.entries(explicitMachines)) {
-                        const mData = value as any;
-                        if (key === machineName || mData.name === machineName) {
-                            explicitData = mData;
-                            machineId = key;
-                            break;
-                        }
-                    }
-
+                    // Create new inferred machine
                     machinesMap.set(machineName, {
-                        id: machineId,
+                        id: machineName,
                         name: machineName,
-                        description: explicitData ? explicitData.description : "",
+                        description: "",
                         zone: zone,
                         location: location,
                         status: "active",
-                        imageUrl: (explicitData && explicitData.imageUrl)
-                            ? explicitData.imageUrl
-                            : (part.imageUrl || ""),
-                        serialNumber: explicitData ? explicitData.serialNumber : "",
-                        installationDate: explicitData ? explicitData.installationDate : "",
-                        brandModel: explicitData ? explicitData.brandModel : "",
-                        operatingHours: explicitData ? explicitData.operatingHours : 0,
-                        capacity: explicitData ? explicitData.capacity : "",
-                        powerRating: explicitData ? explicitData.powerRating : "",
-                        maintenanceCycle: explicitData ? explicitData.maintenanceCycle : 0,
-                        createdAt: explicitData?.createdAt ? new Date(explicitData.createdAt) : new Date(),
-                        updatedAt: explicitData?.updatedAt ? new Date(explicitData.updatedAt) : new Date(),
+                        imageUrl: part.imageUrl || "",
+                        serialNumber: "",
+                        installationDate: "",
+                        brandModel: "",
+                        operatingHours: 0,
+                        capacity: "",
+                        powerRating: "",
+                        maintenanceCycle: 0,
+                        createdAt: new Date(),
+                        updatedAt: new Date(),
                     });
                 } else {
+                    // Enrich existing machine if it lacks image/zone/location
                     const existing = machinesMap.get(machineName)!;
-
-                    // Update location/zone if missing
+                    if (!existing.imageUrl && part.imageUrl) existing.imageUrl = part.imageUrl;
+                    if (existing.zone === "No Zone" && zone && zone !== "No Zone") existing.zone = zone;
                     if (!existing.location && location) existing.location = location;
-                    if (!existing.zone && zone) existing.zone = zone;
-
-                    // Re-check for explicit data to potentially update image if not already set by explicit
-                    let isExplicit = false;
-                    for (const [key, value] of Object.entries(explicitMachines)) {
-                        const mData = value as any;
-                        if (key === machineName || mData.name === machineName) {
-                            isExplicit = true;
-                            break;
-                        }
-                    }
-
-                    if (!isExplicit && !existing.imageUrl && part.imageUrl) {
-                        existing.imageUrl = part.imageUrl;
-                    }
                 }
             }
         });

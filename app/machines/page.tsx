@@ -4,15 +4,20 @@ import React from "react";
 import Header from "../components/Header";
 import MobileNav from "../components/MobileNav";
 import { useLanguage } from "../contexts/LanguageContext";
-import { SettingsIcon } from "../components/ui/Icons";
+import { PlusIcon, SettingsIcon, TrashIcon } from "../components/ui/Icons";
 import MachineSettingsModal from "../components/forms/MachineSettingsModal";
+import AddMachineModal from "../components/forms/AddMachineModal";
+import ConfirmModal from "../components/ui/ConfirmModal";
 
 export default function MachinesPage() {
     const { t } = useLanguage();
     const [machines, setMachines] = React.useState<any[]>([]);
     const [loading, setLoading] = React.useState(true);
     const [settingsModalOpen, setSettingsModalOpen] = React.useState(false);
+    const [addModalOpen, setAddModalOpen] = React.useState(false);
+    const [deleteConfirmOpen, setDeleteConfirmOpen] = React.useState(false);
     const [selectedMachine, setSelectedMachine] = React.useState<any>(null);
+    const [machineToDelete, setMachineToDelete] = React.useState<any>(null);
 
     const fetchMachines = async () => {
         try {
@@ -36,6 +41,23 @@ export default function MachinesPage() {
         setSettingsModalOpen(true);
     };
 
+    const handleOpenDelete = (machine: any) => {
+        setMachineToDelete(machine);
+        setDeleteConfirmOpen(true);
+    };
+
+    const handleDeleteMachine = async () => {
+        if (!machineToDelete) return;
+        try {
+            const { deleteMachine } = await import("../lib/firebaseService");
+            await deleteMachine(machineToDelete.id);
+            fetchMachines();
+        } catch (error) {
+            console.error("Delete failed", error);
+            alert("Failed to delete machine");
+        }
+    };
+
     return (
         <div className="min-h-screen bg-bg-primary">
             <Header />
@@ -54,6 +76,13 @@ export default function MachinesPage() {
                             </p>
                         </div>
                     </div>
+                    <button
+                        onClick={() => setAddModalOpen(true)}
+                        className="btn btn-primary h-8"
+                    >
+                        <PlusIcon size={16} />
+                        {t("actionAddMachine") || "เพิ่มเครื่องจักร"}
+                    </button>
                 </div>
 
                 {/* Loading State */}
@@ -73,6 +102,7 @@ export default function MachinesPage() {
                                 index={index}
                                 onRefresh={fetchMachines}
                                 onOpenSettings={() => handleOpenSettings(machine)}
+                                onOpenDelete={() => handleOpenDelete(machine)}
                             />
                         ))}
                     </div>
@@ -95,12 +125,29 @@ export default function MachinesPage() {
                     onSuccess={fetchMachines}
                 />
             )}
+
+            <AddMachineModal
+                isOpen={addModalOpen}
+                onClose={() => setAddModalOpen(false)}
+                onSuccess={fetchMachines}
+            />
+
+            <ConfirmModal
+                isOpen={deleteConfirmOpen}
+                onClose={() => setDeleteConfirmOpen(false)}
+                onConfirm={handleDeleteMachine}
+                title={t("confirmDeleteTitle") || "Confirm Delete"}
+                message={(t("confirmDeleteMessageDetail") || "Are you sure you want to delete {name}?").replace("{name}", machineToDelete?.name || "")}
+                confirmText={t("actionDelete") || "Delete"}
+                cancelText={t("actionCancel") || "Cancel"}
+                isDestructive={true}
+            />
         </div>
     );
 }
 
 // Sub-component for Machine Card
-function MachineCard({ machine, index, onRefresh, onOpenSettings }: { machine: any, index: number, onRefresh: () => void, onOpenSettings: () => void }) {
+function MachineCard({ machine, index, onRefresh, onOpenSettings, onOpenDelete }: { machine: any, index: number, onRefresh: () => void, onOpenSettings: () => void, onOpenDelete: () => void }) {
     const { t } = useLanguage();
     const [uploading, setUploading] = React.useState(false);
 
@@ -119,6 +166,10 @@ function MachineCard({ machine, index, onRefresh, onOpenSettings }: { machine: a
         } finally {
             setUploading(false);
         }
+    };
+
+    const handleDelete = () => {
+        onOpenDelete();
     };
 
     return (
@@ -230,6 +281,18 @@ function MachineCard({ machine, index, onRefresh, onOpenSettings }: { machine: a
                         </svg>
                     )}
                 </label>
+
+                {/* Delete Button */}
+                <button
+                    onClick={(e) => {
+                        e.stopPropagation();
+                        handleDelete();
+                    }}
+                    className="w-10 h-10 rounded-full bg-white/10 backdrop-blur-md border border-white/20 flex items-center justify-center text-white hover:bg-accent-red hover:border-accent-red hover:scale-105 transition-all duration-300 shadow-lg"
+                    title={t("actionDelete")}
+                >
+                    <TrashIcon size={20} />
+                </button>
             </div>
         </div>
     );
