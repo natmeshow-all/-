@@ -11,6 +11,7 @@ import { useLanguage } from "./contexts/LanguageContext";
 import { useAuth } from "./contexts/AuthContext";
 import { useToast } from "./contexts/ToastContext";
 import { getDashboardStats, getParts, deletePart } from "./lib/firebaseService";
+import MachineDetailsModal from "./components/machines/MachineDetailsModal"; // Import MachineDetailsModal
 import {
   BoxIcon,
   SettingsIcon,
@@ -40,6 +41,10 @@ export default function Dashboard() {
   const [confirmModalOpen, setConfirmModalOpen] = useState(false);
   const [partToDelete, setPartToDelete] = useState<Part | null>(null);
   const [selectedPart, setSelectedPart] = useState<Part | null>(null);
+  const [machineModalOpen, setMachineModalOpen] = useState(false);
+  const [viewMachineId, setViewMachineId] = useState<string | undefined>(undefined);
+  const [viewMachineName, setViewMachineName] = useState<string | undefined>(undefined);
+  const [triggerPart, setTriggerPart] = useState<Part | null>(null);
 
   // Table Fullscreen State
   const [isTableFullscreen, setIsTableFullscreen] = useState(false);
@@ -72,6 +77,14 @@ export default function Dashboard() {
       alert("Failed to delete part");
     }
   };
+
+  const openMachineDetails = (part: Part) => {
+    setViewMachineId(part.machineId);
+    setViewMachineName(part.machineName);
+    setTriggerPart(part);
+    setMachineModalOpen(true);
+  };
+
   const [stats, setStats] = useState<DashboardStats>({
     totalParts: 0,
     totalMachines: 0,
@@ -401,7 +414,10 @@ export default function Dashboard() {
                       style={{ animationDelay: `${index * 30}ms` }}
                     >
                       <td className="py-3 px-4">
-                        <div className="w-12 h-12 rounded-lg bg-bg-tertiary overflow-hidden flex items-center justify-center border border-border-light relative group">
+                        <div
+                          className="w-12 h-12 rounded-lg bg-bg-tertiary overflow-hidden flex items-center justify-center border border-border-light relative group cursor-pointer hover:border-primary/50 transition-colors"
+                          onClick={() => openMachineDetails(part)}
+                        >
                           {part.imageUrl ? (
                             <Image
                               src={part.imageUrl}
@@ -416,7 +432,12 @@ export default function Dashboard() {
                         </div>
                       </td>
                       <td className="py-3 px-4 font-medium text-text-primary">
-                        {part.machineName || "-"}
+                        <span
+                          className="cursor-pointer hover:text-primary transition-colors"
+                          onClick={() => openMachineDetails(part)}
+                        >
+                          {part.machineName || "-"}
+                        </span>
                       </td>
                       <td className="py-3 px-4 text-text-secondary font-medium">
                         {tData(part.partName)}
@@ -525,6 +546,26 @@ export default function Dashboard() {
         confirmText={t("actionDelete")}
         cancelText={t("actionCancel")}
         isDestructive={true}
+      />
+
+      <MachineDetailsModal
+        isOpen={machineModalOpen}
+        onClose={() => setMachineModalOpen(false)}
+        machineId={viewMachineId}
+        machineName={viewMachineName}
+        initialPart={triggerPart || undefined}
+        onEditPart={(part) => {
+          setMachineModalOpen(false);
+          handleEditPart(part);
+        }}
+        onRepairPart={(part) => {
+          setMachineModalOpen(false);
+          handleMaintenancePart(part);
+        }}
+        onDeletePart={(part) => {
+          setMachineModalOpen(false);
+          handleDeleteClick(part);
+        }}
       />
     </div>
   );

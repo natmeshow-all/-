@@ -4,6 +4,7 @@ export interface TranslationKeys {
     // App
     appTitle: string;
     appSubtitle: string;
+    machineDetailsSubtitle: string;
 
     // Navigation
     navDashboard: string;
@@ -49,6 +50,9 @@ export interface TranslationKeys {
     statMachines: string;
     statZones: string;
     statMaintenanceRecords: string;
+    statStockNormal: string;
+    statStockLow: string;
+    statTotalZones: string;
 
     // Actions
     actionAddPart: string;
@@ -338,6 +342,7 @@ const th: TranslationKeys = {
     // App
     appTitle: "ระบบจัดการอะไหล่เครื่องจักร Art of Baking",
     appSubtitle: "ระบบจัดการอะไหล่เครื่องจักร และซ่อมบำรุง PM TEAM REALTIME DATABASE",
+    machineDetailsSubtitle: "รายละเอียดและอะไหล่ทั้งหมด",
 
     // Navigation
     navDashboard: "แดชบอร์ด",
@@ -379,10 +384,13 @@ const th: TranslationKeys = {
     statusHealthy: "ปกติ",
 
     // Stats
-    statTotalParts: "อะไหล่ทั้งหมด",
+    statTotalParts: "จำนวนอะไหล่ทั้งหมด",
     statMachines: "จำนวนเครื่องจักร",
     statZones: "จำนวนโซน",
     statMaintenanceRecords: "จำนวนซ่อมบำรุง",
+    statStockNormal: "สต็อกปกติ",
+    statStockLow: "สต็อกต่ำ (Low)",
+    statTotalZones: "โซนทั้งหมด",
 
     // Actions
     actionAddPart: "เพิ่มอะไหล่",
@@ -672,6 +680,7 @@ const en: TranslationKeys = {
     // App
     appTitle: "Machine Parts Management - Art of Baking",
     appSubtitle: "Machine Parts & Maintenance Management - PM TEAM REALTIME DATABASE",
+    machineDetailsSubtitle: "Details and All Parts",
 
     // Navigation
     navDashboard: "Dashboard",
@@ -713,10 +722,13 @@ const en: TranslationKeys = {
     statusHealthy: "Healthy",
 
     // Stats
-    statTotalParts: "Total Parts",
+    statTotalParts: "Part Names",
     statMachines: "Machines",
     statZones: "Zones",
     statMaintenanceRecords: "Maintenance Records",
+    statStockNormal: "In Stock",
+    statStockLow: "Low Stock",
+    statTotalZones: "Total Zones",
 
     // Actions
     actionAddPart: "Add Part",

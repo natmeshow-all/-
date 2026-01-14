@@ -277,6 +277,16 @@ export async function getPartsByMachine(machineId: string): Promise<Part[]> {
     return parts;
 }
 
+// Fallback: Fetch all parts and filter by machine name (client-side filtering)
+// This is useful when the Firebase index is not set up
+export async function getPartsByMachineName(machineName: string): Promise<Part[]> {
+    const allParts = await getParts();
+    return allParts.filter(p =>
+        p.machineName?.toLowerCase() === machineName.toLowerCase() ||
+        (p as any).machine?.toLowerCase() === machineName.toLowerCase()
+    );
+}
+
 export async function addPart(
     part: Omit<Part, "id" | "createdAt" | "updatedAt">,
     imageFile?: File

@@ -7,11 +7,13 @@ import { soundManager } from "../../lib/soundService";
 interface ModalProps {
     isOpen: boolean;
     onClose: () => void;
-    title: string;
+    title?: string;
     titleIcon?: React.ReactNode;
     children: React.ReactNode;
     footer?: React.ReactNode;
     size?: "sm" | "md" | "lg" | "xl";
+    hideHeader?: boolean;
+    noPadding?: boolean;
 }
 
 const sizeClasses = {
@@ -29,12 +31,15 @@ export default function Modal({
     children,
     footer,
     size = "lg",
+    hideHeader = false,
+    noPadding = false,
 }: ModalProps) {
     const modalRef = useRef<HTMLDivElement>(null);
     const [isVisible, setIsVisible] = useState(false);
     const [isExiting, setIsExiting] = useState(false);
     const [shouldRender, setShouldRender] = useState(false);
 
+    // Handle lifecycle for animations
     // Handle lifecycle for animations
     useEffect(() => {
         if (isOpen) {
@@ -45,6 +50,11 @@ export default function Modal({
                 setIsVisible(true);
             });
             document.body.style.overflow = "hidden";
+
+            // Cleanup function ensuring overflow is reset if unmounted while open
+            return () => {
+                document.body.style.overflow = "";
+            };
         } else {
             setIsVisible(false);
             setIsExiting(true);
@@ -117,26 +127,28 @@ export default function Modal({
                 `}
             >
                 {/* Header */}
-                <div className="modal-header flex items-center gap-3 p-6 border-b border-border-light">
-                    {titleIcon && (
-                        <div className="flex-shrink-0">
-                            {titleIcon}
-                        </div>
-                    )}
-                    <h2 id="modal-title" className="modal-title text-xl font-bold text-text-primary flex-1">
-                        {title}
-                    </h2>
-                    <button
-                        onClick={handleClose}
-                        className="p-2 rounded-lg text-text-muted hover:text-white hover:bg-white/10 transition-colors"
-                        aria-label="Close modal"
-                    >
-                        <XIcon size={20} />
-                    </button>
-                </div>
+                {!hideHeader && (
+                    <div className="modal-header flex items-center gap-3 p-6 border-b border-border-light">
+                        {titleIcon && (
+                            <div className="flex-shrink-0">
+                                {titleIcon}
+                            </div>
+                        )}
+                        <h2 id="modal-title" className="modal-title text-xl font-bold text-text-primary flex-1">
+                            {title}
+                        </h2>
+                        <button
+                            onClick={handleClose}
+                            className="p-2 rounded-lg text-text-muted hover:text-white hover:bg-white/10 transition-colors"
+                            aria-label="Close modal"
+                        >
+                            <XIcon size={20} />
+                        </button>
+                    </div>
+                )}
 
                 {/* Body */}
-                <div className="modal-body p-6 overflow-y-auto custom-scrollbar">
+                <div className={`modal-body ${noPadding ? '' : 'p-6'} overflow-y-auto custom-scrollbar`}>
                     {children}
                 </div>
 

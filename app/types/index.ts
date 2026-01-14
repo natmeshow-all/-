@@ -28,6 +28,7 @@ export interface Part {
     brand: string;
     zone: string;
     quantity: number;
+    minStockThreshold: number; // Low stock alert level
     location?: string;
     category: PartCategory;
     imageUrl?: string;

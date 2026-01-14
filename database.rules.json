@@ -6,7 +6,10 @@
         },
         "parts": {
             ".read": true,
-            ".write": "auth != null"
+            ".write": "auth != null",
+            ".indexOn": [
+                "machineId"
+            ]
         },
         "maintenance_records": {
             ".read": true,
