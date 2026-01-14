@@ -106,6 +106,51 @@ body {
   background: var(--color-text-muted);
 }
 
+/* Profile Avatar Glow Animation */
+@keyframes spin-slow {
+  from {
+    transform: rotate(0deg);
+  }
+
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+.user-avatar-glow {
+  position: relative;
+  padding: 2.5px;
+  /* Spacing for the glow ring */
+  border-radius: 50%;
+  overflow: hidden;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: rgba(255, 255, 255, 0.05);
+}
+
+.user-avatar-glow::before {
+  content: '';
+  position: absolute;
+  width: 180%;
+  height: 180%;
+  background: conic-gradient(from 0deg,
+      transparent,
+      #3B82F6,
+      #8B5CF6,
+      #06B6D4,
+      #10B981,
+      transparent 40%);
+  animation: spin-slow 4s linear infinite;
+  z-index: 0;
+}
+
+.user-avatar-glow img {
+  position: relative;
+  z-index: 1;
+  border: 1px solid rgba(255, 255, 255, 0.1) !important;
+}
+
 /* Selection */
 ::selection {
   background: var(--color-primary);
@@ -976,4 +1021,48 @@ body {
   .main-container {
     padding-bottom: 2rem;
   }
+}
+
+/* Profile Avatar Glow Animation */
+@keyframes spin-slow {
+  from {
+    transform: rotate(0deg);
+  }
+
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+.user-avatar-glow {
+  position: relative;
+  padding: 2.5px;
+  border-radius: 50%;
+  overflow: hidden;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: rgba(255, 255, 255, 0.05);
+}
+
+.user-avatar-glow::before {
+  content: '';
+  position: absolute;
+  width: 180%;
+  height: 180%;
+  background: conic-gradient(from 0deg,
+      transparent,
+      #3B82F6,
+      #8B5CF6,
+      #06B6D4,
+      #10B981,
+      transparent 40%);
+  animation: spin-slow 4s linear infinite;
+  z-index: 0;
+}
+
+.user-avatar-glow img {
+  position: relative;
+  z-index: 1;
+  border: 1px solid rgba(255, 255, 255, 0.1) !important;
 }

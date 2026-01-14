@@ -35,10 +35,10 @@ export default function Header({ className = "" }: HeaderProps) {
                             <div className="absolute inset-0 rounded-lg sm:rounded-xl bg-primary/30 blur-lg -z-10" />
                         </div>
                         <div className="flex flex-col min-w-0">
-                            <h1 className="text-sm sm:text-lg font-bold gradient-text leading-tight truncate max-w-[120px] sm:max-w-none">
+                            <h1 className="text-[11px] sm:text-lg font-extrabold gradient-text leading-tight tracking-tight whitespace-nowrap sm:whitespace-normal">
                                 {t("appTitle")}
                             </h1>
-                            <p className="text-[10px] sm:text-xs text-text-muted hidden sm:block">
+                            <p className="text-[8px] sm:text-xs text-text-muted mt-0.5 sm:mt-0 font-medium line-clamp-1 sm:line-clamp-none">
                                 {t("appSubtitle")}
                             </p>
                         </div>
@@ -50,20 +50,22 @@ export default function Header({ className = "" }: HeaderProps) {
                             <FirebaseStatus />
                         </div>
 
-                        {/* Notifications */}
-                        <NotificationBell />
+                        {/* Notifications & Scanner */}
+                        <div className="flex items-center gap-1 sm:gap-2">
+                            <NotificationBell />
 
-                        {/* Scanner Button (Phase 4) */}
-                        <button
-                            onClick={() => setIsScannerOpen(true)}
-                            className="p-1.5 sm:p-2 rounded-lg sm:rounded-xl text-text-muted hover:text-text-primary hover:bg-bg-tertiary transition-colors"
-                            title="Scan QR Code"
-                        >
-                            <CameraIcon size={18} className="sm:w-5 sm:h-5" />
-                        </button>
+                            {/* Scanner Button (Phase 4) */}
+                            <button
+                                onClick={() => setIsScannerOpen(true)}
+                                className="p-1.5 sm:p-2 rounded-lg sm:rounded-xl text-text-muted hover:text-text-primary hover:bg-bg-tertiary transition-colors"
+                                title="Scan QR Code"
+                            >
+                                <CameraIcon size={16} className="sm:w-5 sm:h-5" />
+                            </button>
+                        </div>
 
                         {/* Language Switcher */}
-                        <div className="lang-switcher scale-90 sm:scale-100 origin-right">
+                        <div className="lang-switcher scale-75 sm:scale-100 origin-right ml-[-4px] sm:ml-0">
                             <button
                                 onClick={() => setLanguage("th")}
                                 className={`lang-btn ${language === "th" ? "active" : ""}`}
@@ -89,14 +91,16 @@ export default function Header({ className = "" }: HeaderProps) {
                             <div className="relative">
                                 <button
                                     onClick={() => setShowProfileMenu(!showProfileMenu)}
-                                    className="relative"
+                                    className="relative group p-1"
                                 >
-                                    <img
-                                        src={user.photoURL || "https://ui-avatars.com/api/?name=" + user.displayName}
-                                        alt={user.displayName || "User"}
-                                        className="w-9 h-9 sm:w-10 sm:h-10 rounded-full border-2 border-primary/50 hover:border-primary transition-colors cursor-pointer"
-                                    />
-                                    <div className="absolute bottom-0 right-0 w-2.5 h-2.5 bg-accent-green border-2 border-bg-secondary rounded-full"></div>
+                                    <div className="user-avatar-glow">
+                                        <img
+                                            src={user.photoURL || "https://ui-avatars.com/api/?name=" + user.displayName}
+                                            alt={user.displayName || "User"}
+                                            className="w-9 h-9 sm:w-10 sm:h-10 rounded-full transition-transform group-hover:scale-95 cursor-pointer"
+                                        />
+                                    </div>
+                                    <div className="absolute bottom-1 right-1 w-2.5 h-2.5 bg-accent-green border-2 border-bg-secondary rounded-full z-20"></div>
                                 </button>
 
                                 {showProfileMenu && (

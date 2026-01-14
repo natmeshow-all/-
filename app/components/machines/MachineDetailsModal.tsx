@@ -182,8 +182,8 @@ export default function MachineDetailsModal({
                                 </div>
                             </div>
 
-                            {/* Parts List Header */}
-                            <div className="flex flex-col md:flex-row items-start md:items-center justify-between bg-[#1E293B]/40 p-4 rounded-2xl border border-white/5 shadow-md gap-4">
+                            {/* Standalone Filter/Header Section */}
+                            <div className="flex flex-col md:flex-row items-start md:items-center justify-between bg-[#1E293B]/60 p-4 md:p-6 rounded-2xl md:rounded-[2rem] border border-white/5 shadow-md gap-4">
                                 <h3 className="font-bold text-md md:text-lg text-white flex items-center gap-3">
                                     <div className="p-2 rounded-lg bg-blue-500/10 text-blue-400">
                                         <BoxIcon size={20} />
@@ -212,9 +212,9 @@ export default function MachineDetailsModal({
                                 </div>
                             </div>
 
-                            {/* Parts Grid - High Fidelity Cards */}
+                            {/* Parts List Area - NO OUTER CARD on mobile, just mapping cards */}
                             {displayedParts.length > 0 ? (
-                                <div className="grid grid-cols-1 gap-4 md:gap-6">
+                                <div className="space-y-4 md:space-y-6">
                                     {displayedParts.map(part => {
                                         const isLowStock = part.quantity <= (part.minStockThreshold || 0);
                                         return (

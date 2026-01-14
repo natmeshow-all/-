@@ -137,6 +137,18 @@ export default function Dashboard() {
     fetchData();
   }, []);
 
+  // Body scroll lock for fullscreen
+  useEffect(() => {
+    if (isTableFullscreen) {
+      document.body.style.overflow = 'hidden';
+    } else {
+      document.body.style.overflow = '';
+    }
+    return () => {
+      document.body.style.overflow = '';
+    };
+  }, [isTableFullscreen]);
+
   // Auto-fullscreen logic
   useEffect(() => {
     if (loading || isTableFullscreen) return; // Removed isTableFullscreen check to allow re-triggering? No, if it's already full, don't trigger. 
@@ -173,8 +185,10 @@ export default function Dashboard() {
     const observer = new IntersectionObserver(
       (entries) => {
         if (entries[0].isIntersecting) {
-          // If we are already fullscreen, do nothing (react handles this, but good to be explicit/efficient)
-          setIsTableFullscreen(true);
+          // Only auto-fullscreen on mobile/tablets (< 768px)
+          if (window.innerWidth < 768) {
+            setIsTableFullscreen(true);
+          }
         }
       },
       {
@@ -386,14 +400,15 @@ export default function Dashboard() {
           </div>
         </section>
 
-        {/* Machine Parts Table */}
+        {/* Machine Parts Section */}
         <section
           ref={tableSectionRef}
-          className={`animate-fade-in-up transition-all duration-300 ${isTableFullscreen ? "fixed inset-0 z-50 bg-bg-primary p-4 flex flex-col" : ""}`}
+          className={`animate-fade-in-up transition-all duration-300 ${isTableFullscreen ? "fixed inset-0 z-50 bg-bg-primary p-0 flex flex-col" : "mb-6"}`}
           style={{ animationDelay: "300ms" }}
         >
-          <div className={`card p-0 overflow-hidden ${isTableFullscreen ? "flex-1 flex flex-col h-full rounded-xl border border-border-light shadow-2xl" : ""}`}>
-            <div className="px-4 py-3 border-b border-border-light flex items-center justify-between bg-bg-secondary">
+          {/* Header Card - Separate on mobile if not fullscreen */}
+          <div className={`card overflow-hidden mb-4 ${isTableFullscreen ? "rounded-none border-0 flex-1 flex flex-col mb-0" : ""}`}>
+            <div className="px-4 py-3 border-b border-border-light flex items-center justify-between bg-bg-secondary flex-none">
               <div className="flex items-center gap-2">
                 <SettingsIcon size={18} className="text-text-muted" />
                 <h2 className="font-semibold text-text-primary">{t("tableTitleParts")}</h2>
@@ -407,10 +422,272 @@ export default function Dashboard() {
               </button>
             </div>
 
-            <div className={`table-container ${isTableFullscreen ? "flex-1 overflow-auto bg-bg-secondary" : ""}`}>
-              {/* Mobile Card View (Image Centric) */}
-              <div className="md:hidden space-y-4 p-4">
-                {!loading && filteredParts.map((part, index) => (
+            {/* Desktop Table View inside the same card */}
+            <div className={`hidden md:block w-full ${isTableFullscreen ? "flex-1 flex flex-col overflow-hidden" : ""}`}>
+              <div className={`table-container ${isTableFullscreen ? "flex-1 overflow-auto bg-bg-secondary custom-scrollbar" : ""}`} style={isTableFullscreen ? { WebkitOverflowScrolling: 'touch' } : {}}>
+                <table className="table w-full">
+                  <thead>
+                    <tr className="bg-bg-tertiary">
+                      <th className={`px-4 py-4 text-left text-xs font-semibold text-text-muted uppercase tracking-wider ${isTableFullscreen ? "sticky top-0 z-20 bg-bg-tertiary shadow-sm" : ""}`}>{t("tableImage")}</th>
+                      <th className={`px-4 py-4 text-left text-xs font-semibold text-text-muted uppercase tracking-wider ${isTableFullscreen ? "sticky top-0 z-20 bg-bg-tertiary shadow-sm" : ""}`}>{t("tableMachine")}</th>
+                      <th className={`px-4 py-4 text-left text-xs font-semibold text-text-muted uppercase tracking-wider ${isTableFullscreen ? "sticky top-0 z-20 bg-bg-tertiary shadow-sm" : ""}`}>{t("tablePartName")}</th>
+                      <th className={`px-4 py-4 text-left text-xs font-semibold text-text-muted uppercase tracking-wider ${isTableFullscreen ? "sticky top-0 z-20 bg-bg-tertiary shadow-sm" : ""}`}>{t("tableModelSpec")}</th>
+                      <th className={`px-4 py-4 text-left text-xs font-semibold text-text-muted uppercase tracking-wider ${isTableFullscreen ? "sticky top-0 z-20 bg-bg-tertiary shadow-sm" : ""}`}>{t("tableBrand")}</th>
+                      <th className={`px-4 py-4 text-left text-xs font-semibold text-text-muted uppercase tracking-wider ${isTableFullscreen ? "sticky top-0 z-20 bg-bg-tertiary shadow-sm" : ""}`}>{t("tableZone")}</th>
+                      <th className={`px-4 py-4 text-left text-xs font-semibold text-text-muted uppercase tracking-wider ${isTableFullscreen ? "sticky top-0 z-20 bg-bg-tertiary shadow-sm" : ""}`}>{t("tableQuantity")}</th>
+                      <th className={`px-4 py-4 text-left text-xs font-semibold text-text-muted uppercase tracking-wider ${isTableFullscreen ? "sticky top-0 z-20 bg-bg-tertiary shadow-sm" : ""}`}>{t("tableLocation")}</th>
+                      <th className={`px-4 py-4 text-left text-xs font-semibold text-text-muted uppercase tracking-wider ${isTableFullscreen ? "sticky top-0 z-20 bg-bg-tertiary shadow-sm" : ""}`}>{t("tableNotes")}</th>
+                      <th className={`px-4 py-4 text-right text-xs font-semibold text-text-muted uppercase tracking-wider ${isTableFullscreen ? "sticky top-0 z-20 bg-bg-tertiary shadow-sm" : ""}`}>{t("tableManagement")}</th>
+                    </tr>
+                  </thead>
+                  <tbody className="divide-y divide-border-light">
+                    {!loading && filteredParts.map((part, index) => (
+                      <tr
+                        key={part.id}
+                        className="animate-fade-in hover:bg-bg-tertiary/30 transition-colors"
+                        style={{ animationDelay: `${index * 30}ms` }}
+                      >
+                        <td className="py-3 px-4">
+                          <div
+                            className="w-12 h-12 rounded-lg bg-bg-tertiary overflow-hidden flex items-center justify-center border border-border-light relative group cursor-pointer hover:border-primary/50 transition-colors"
+                            onClick={() => openMachineDetails(part)}
+                          >
+                            {part.imageUrl ? (
+                              <Image
+                                src={part.imageUrl}
+                                alt={part.partName}
+                                width={48}
+                                height={48}
+                                className="object-cover w-full h-full"
+                              />
+                            ) : (
+                              <BoxIcon size={20} className="text-text-muted" />
+                            )}
+                          </div>
+                        </td>
+                        <td className="py-3 px-4 font-medium text-text-primary">
+                          <span
+                            className="cursor-pointer hover:text-primary transition-colors"
+                            onClick={() => openMachineDetails(part)}
+                          >
+                            {part.machineName || "-"}
+                          </span>
+                        </td>
+                        <td className="py-3 px-4 text-text-secondary font-medium">
+                          {tData(part.partName)}
+                        </td>
+                        <td className="py-3 px-4 hidden md:table-cell text-text-muted text-xs max-w-[150px] truncate" title={part.modelSpec}>
+                          {part.modelSpec || "-"}
+                        </td>
+                        <td className="py-3 px-4 hidden lg:table-cell text-text-secondary text-sm">
+                          {part.brand || "-"}
+                        </td>
+                        <td className="py-3 px-4 text-text-secondary text-sm">
+                          {tData(part.zone || "-")}
+                        </td>
+                        <td className="py-3 px-4">
+                          <span className="text-sm font-semibold text-text-primary">{part.quantity || 0}</span>
+                        </td>
+                        <td className="py-3 px-4 hidden xl:table-cell text-text-secondary text-sm">
+                          {part.location || "-"}
+                        </td>
+                        <td className="py-3 px-4 hidden 2xl:table-cell text-text-muted text-xs max-w-[200px] truncate" title={part.notes}>
+                          {tData(part.notes || "-")}
+                        </td>
+                        <td className="py-3 px-4 text-center">
+                          <div className="flex items-center justify-center gap-2">
+                            {user ? (
+                              <>
+                                <button
+                                  onClick={() => handleEditPart(part)}
+                                  className="p-1.5 rounded-lg text-accent-cyan hover:bg-accent-cyan/10 transition-colors"
+                                  title={t("actionEdit")}
+                                >
+                                  <EditIcon size={16} />
+                                </button>
+                                <button
+                                  onClick={() => handleMaintenancePart(part)}
+                                  className="p-1.5 rounded-lg text-accent-yellow hover:bg-accent-yellow/10 transition-colors"
+                                  title={t("actionMaintenance")}
+                                >
+                                  <SettingsIcon size={16} />
+                                </button>
+                                <button
+                                  onClick={() => handleDeleteClick(part)}
+                                  className="p-1.5 rounded-lg text-accent-red hover:bg-accent-red/10 transition-colors"
+                                  title={t("actionDelete")}
+                                >
+                                  <BoxIcon size={16} className="rotate-45" />
+                                </button>
+                              </>
+                            ) : (
+                              <span className="text-xs text-text-muted italic opacity-50">{t("statusReadOnly")}</span>
+                            )}
+                          </div>
+                        </td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
+            </div>
+
+            {/* Fullscreen Mobile View Content - Inside specialized container when fullscreen */}
+            {isTableFullscreen && (
+              <div className="md:hidden flex-1 overflow-auto bg-bg-primary p-4 space-y-4" style={{ WebkitOverflowScrolling: 'touch' }}>
+                {loading ? (
+                  <div className="flex justify-center py-12">
+                    <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary"></div>
+                  </div>
+                ) : filteredParts.length > 0 ? (
+                  filteredParts.map((part, index) => (
+                    <div
+                      key={part.id}
+                      className="relative w-full h-[320px] rounded-2xl overflow-hidden shadow-lg border border-white/10 group active:scale-[0.99] transition-transform animate-fade-in"
+                      style={{ animationDelay: `${index * 50}ms` }}
+                    >
+                      {/* Background Image */}
+                      <div
+                        className="absolute inset-0 bg-bg-tertiary"
+                        onClick={() => {
+                          if (part.imageUrl) {
+                            setLightboxImage(part.imageUrl);
+                          }
+                        }}
+                      >
+                        {part.imageUrl ? (
+                          <Image
+                            src={part.imageUrl}
+                            alt={part.partName}
+                            fill
+                            className="object-cover w-full h-full"
+                            sizes="(max-width: 768px) 100vw, 33vw"
+                          />
+                        ) : (
+                          <div className="w-full h-full flex flex-col items-center justify-center text-text-muted bg-bg-secondary">
+                            <BoxIcon size={48} className="opacity-20 mb-2" />
+                            <span className="text-xs opacity-50">No Image</span>
+                          </div>
+                        )}
+
+                        {/* Gradient Overlay for text visibility */}
+                        <div className="absolute inset-x-0 bottom-0 h-3/4 bg-gradient-to-t from-bg-primary via-bg-primary/80 to-transparent pointer-events-none" />
+                      </div>
+
+                      {/* Content Overlay - Glassmorphism */}
+                      <div className="absolute inset-x-0 bottom-0 p-4 flex flex-col justify-end h-full pointer-events-none">
+                        <div className="pointer-events-auto">
+                          {/* Badge Top Right */}
+                          <div className="absolute top-4 right-4 z-10 flex flex-col items-end gap-2">
+                            <div className="flex flex-col items-end gap-1">
+                              <span className="badge badge-primary font-bold shadow-lg backdrop-blur-md bg-primary/80 border border-white/20">
+                                x{part.quantity}
+                              </span>
+                              <span className="text-[10px] text-white/60 bg-black/40 backdrop-blur-sm px-1.5 py-0.5 rounded border border-white/5 uppercase tracking-tighter">
+                                {t("tableQuantity")}
+                              </span>
+                            </div>
+
+                            {/* Location Badge */}
+                            <div className="flex flex-col items-end gap-1">
+                              <span className="badge bg-accent-cyan/80 text-bg-primary font-bold shadow-lg backdrop-blur-md border border-white/20">
+                                {part.location || "-"}
+                              </span>
+                              <span className="text-[10px] text-white/60 bg-black/40 backdrop-blur-sm px-1.5 py-0.5 rounded border border-white/5 uppercase tracking-tighter">
+                                {t("tableLocation")}
+                              </span>
+                            </div>
+
+                            {/* small red delete button */}
+                            <button
+                              onClick={(e) => {
+                                e.stopPropagation();
+                                handleDeleteClick(part);
+                              }}
+                              className="w-8 h-8 rounded-full bg-accent-red/20 text-accent-red border border-accent-red/30 flex items-center justify-center hover:bg-accent-red hover:text-white transition-all shadow-lg active:scale-90"
+                              title={t("actionDelete")}
+                            >
+                              <BoxIcon size={14} className="rotate-45" />
+                            </button>
+                          </div>
+
+                          {/* Main Info */}
+                          <div className="mb-4">
+                            <h3 className="text-2xl font-bold text-white drop-shadow-lg leading-tight mb-1">
+                              {tData(part.partName)}
+                            </h3>
+                            <div className="flex items-center gap-2 text-sm text-primary-light drop-shadow-md">
+                              <SettingsIcon size={14} />
+                              <span className="font-semibold">{part.machineName}</span>
+                            </div>
+                          </div>
+
+                          {/* Individual Detail Tags - Frosted Glass Pills */}
+                          <div className="flex flex-wrap gap-1.5 mb-3">
+                            <div className="bg-white/10 backdrop-blur-md border border-white/20 rounded-md px-1.5 py-0.5 flex flex-col min-w-[60px]">
+                              <span className="text-[8px] text-white/50 uppercase tracking-tighter font-bold">{t("tableBrand")}</span>
+                              <span className="text-[10px] text-white font-medium truncate max-w-[80px]">{part.brand || "-"}</span>
+                            </div>
+                            <div className="bg-white/10 backdrop-blur-md border border-white/20 rounded-md px-1.5 py-0.5 flex flex-col min-w-[90px]">
+                              <span className="text-[8px] text-white/50 uppercase tracking-tighter font-bold">{t("tableModelSpec")}</span>
+                              <span className="text-[10px] text-white font-medium truncate max-w-[140px]" title={part.modelSpec}>{part.modelSpec || "-"}</span>
+                            </div>
+                            <div className="bg-white/10 backdrop-blur-md border border-white/20 rounded-md px-1.5 py-0.5 flex flex-col min-w-[40px]">
+                              <span className="text-[8px] text-white/50 uppercase tracking-tighter font-bold">{t("tableZone")}</span>
+                              <span className="text-[10px] text-white font-medium">{tData(part.zone || "-")}</span>
+                            </div>
+
+                            {part.notes && (
+                              <div className="w-full bg-white/5 backdrop-blur-sm border border-white/10 rounded-lg p-1.5 flex gap-1.5 items-start mt-0.5">
+                                <AlertTriangleIcon size={10} className="text-accent-yellow shrink-0 mt-0.5" />
+                                <div className="flex flex-col">
+                                  <span className="text-[8px] text-white/40 uppercase tracking-widest font-bold">{t("tableNotes")}</span>
+                                  <span className="text-[10px] text-white/80 italic line-clamp-1">"{tData(part.notes)}"</span>
+                                </div>
+                              </div>
+                            )}
+                          </div>
+
+                          {/* Actions */}
+                          <div className="flex gap-2">
+                            <button
+                              onClick={() => handleEditPart(part)}
+                              className="flex-1 btn bg-white/10 backdrop-blur-md border border-white/20 hover:bg-primary transition-all text-[11px] h-8 text-white rounded-lg px-2"
+                            >
+                              <EditIcon size={12} className="mr-1" />
+                              {t("actionEdit")}
+                            </button>
+                            <button
+                              onClick={() => handleMaintenancePart(part)}
+                              className="flex-1 btn bg-white/10 backdrop-blur-md border border-white/20 hover:bg-accent-yellow hover:text-black transition-all text-[11px] h-8 text-white rounded-lg px-2"
+                            >
+                              <SettingsIcon size={12} className="mr-1" />
+                              {t("actionMaintenance")}
+                            </button>
+                          </div>
+                        </div>
+                      </div>
+                    </div>
+                  ))
+                ) : (
+                  <div className="empty-state py-12">
+                    <BoxIcon size={48} className="text-text-muted mb-3" />
+                    <p className="text-text-muted">{t("msgNoData")}</p>
+                  </div>
+                )}
+              </div>
+            )}
+          </div>
+
+          {/* Normal Mobile List View (Not Fullscreen) - Standalone Cards */}
+          {!isTableFullscreen && (
+            <div className="md:hidden space-y-4">
+              {loading ? (
+                <div className="flex justify-center py-12">
+                  <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary"></div>
+                </div>
+              ) : filteredParts.length > 0 ? (
+                filteredParts.map((part, index) => (
                   <div
                     key={part.id}
                     className="relative w-full h-[320px] rounded-2xl overflow-hidden shadow-lg border border-white/10 group active:scale-[0.99] transition-transform animate-fade-in"
@@ -446,7 +723,6 @@ export default function Dashboard() {
 
                     {/* Content Overlay - Glassmorphism */}
                     <div className="absolute inset-x-0 bottom-0 p-4 flex flex-col justify-end h-full pointer-events-none">
-
                       <div className="pointer-events-auto">
                         {/* Badge Top Right */}
                         <div className="absolute top-4 right-4 z-10 flex flex-col items-end gap-2">
@@ -543,132 +819,15 @@ export default function Dashboard() {
                       </div>
                     </div>
                   </div>
-                ))}
-              </div>
-
-              {/* Desktop Table View */}
-              <div className="hidden md:block w-full">
-                <table className="table w-full">
-                  <thead>
-                    <tr className="bg-bg-tertiary">
-                      <th className={`px-4 py-4 text-left text-xs font-semibold text-text-muted uppercase tracking-wider ${isTableFullscreen ? "sticky top-0 z-20 bg-bg-tertiary shadow-sm" : ""}`}>{t("tableImage")}</th>
-                      <th className={`px-4 py-4 text-left text-xs font-semibold text-text-muted uppercase tracking-wider ${isTableFullscreen ? "sticky top-0 z-20 bg-bg-tertiary shadow-sm" : ""}`}>{t("tableMachine")}</th>
-                      <th className={`px-4 py-4 text-left text-xs font-semibold text-text-muted uppercase tracking-wider ${isTableFullscreen ? "sticky top-0 z-20 bg-bg-tertiary shadow-sm" : ""}`}>{t("tablePartName")}</th>
-                      <th className={`px-4 py-4 text-left text-xs font-semibold text-text-muted uppercase tracking-wider ${isTableFullscreen ? "sticky top-0 z-20 bg-bg-tertiary shadow-sm" : ""}`}>{t("tableModelSpec")}</th>
-                      <th className={`px-4 py-4 text-left text-xs font-semibold text-text-muted uppercase tracking-wider ${isTableFullscreen ? "sticky top-0 z-20 bg-bg-tertiary shadow-sm" : ""}`}>{t("tableBrand")}</th>
-                      <th className={`px-4 py-4 text-left text-xs font-semibold text-text-muted uppercase tracking-wider ${isTableFullscreen ? "sticky top-0 z-20 bg-bg-tertiary shadow-sm" : ""}`}>{t("tableZone")}</th>
-                      <th className={`px-4 py-4 text-left text-xs font-semibold text-text-muted uppercase tracking-wider ${isTableFullscreen ? "sticky top-0 z-20 bg-bg-tertiary shadow-sm" : ""}`}>{t("tableQuantity")}</th>
-                      <th className={`px-4 py-4 text-left text-xs font-semibold text-text-muted uppercase tracking-wider ${isTableFullscreen ? "sticky top-0 z-20 bg-bg-tertiary shadow-sm" : ""}`}>{t("tableLocation")}</th>
-                      <th className={`px-4 py-4 text-left text-xs font-semibold text-text-muted uppercase tracking-wider ${isTableFullscreen ? "sticky top-0 z-20 bg-bg-tertiary shadow-sm" : ""}`}>{t("tableNotes")}</th>
-                      <th className={`px-4 py-4 text-right text-xs font-semibold text-text-muted uppercase tracking-wider ${isTableFullscreen ? "sticky top-0 z-20 bg-bg-tertiary shadow-sm" : ""}`}>{t("tableManagement")}</th>
-                    </tr>
-                  </thead>
-                  <tbody className="divide-y divide-border-light">
-                    {!loading && filteredParts.map((part, index) => (
-                      <tr
-                        key={part.id}
-                        className="animate-fade-in hover:bg-bg-tertiary/30 transition-colors"
-                        style={{ animationDelay: `${index * 30}ms` }}
-                      >
-                        <td className="py-3 px-4">
-                          <div
-                            className="w-12 h-12 rounded-lg bg-bg-tertiary overflow-hidden flex items-center justify-center border border-border-light relative group cursor-pointer hover:border-primary/50 transition-colors"
-                            onClick={() => openMachineDetails(part)}
-                          >
-                            {part.imageUrl ? (
-                              <Image
-                                src={part.imageUrl}
-                                alt={part.partName}
-                                width={48}
-                                height={48}
-                                className="object-cover w-full h-full"
-                              />
-                            ) : (
-                              <BoxIcon size={20} className="text-text-muted" />
-                            )}
-                          </div>
-                        </td>
-                        <td className="py-3 px-4 font-medium text-text-primary">
-                          <span
-                            className="cursor-pointer hover:text-primary transition-colors"
-                            onClick={() => openMachineDetails(part)}
-                          >
-                            {part.machineName || "-"}
-                          </span>
-                        </td>
-                        <td className="py-3 px-4 text-text-secondary font-medium">
-                          {tData(part.partName)}
-                        </td>
-                        <td className="py-3 px-4 hidden md:table-cell text-text-muted text-xs max-w-[150px] truncate" title={part.modelSpec}>
-                          {part.modelSpec || "-"}
-                        </td>
-                        <td className="py-3 px-4 hidden lg:table-cell text-text-secondary text-sm">
-                          {part.brand || "-"}
-                        </td>
-                        <td className="py-3 px-4 text-text-secondary text-sm">
-                          {tData(part.zone || "-")}
-                        </td>
-                        <td className="py-3 px-4">
-                          <span className="text-sm font-semibold text-text-primary">{part.quantity || 0}</span>
-                        </td>
-                        <td className="py-3 px-4 hidden xl:table-cell text-text-secondary text-sm">
-                          {part.location || "-"}
-                        </td>
-                        <td className="py-3 px-4 hidden 2xl:table-cell text-text-muted text-xs max-w-[200px] truncate" title={part.notes}>
-                          {tData(part.notes || "-")}
-                        </td>
-                        <td className="py-3 px-4 text-center">
-                          <div className="flex items-center justify-center gap-2">
-                            {user ? (
-                              <>
-                                <button
-                                  onClick={() => handleEditPart(part)}
-                                  className="p-1.5 rounded-lg text-accent-cyan hover:bg-accent-cyan/10 transition-colors"
-                                  title={t("actionEdit")}
-                                >
-                                  <EditIcon size={16} />
-                                </button>
-                                <button
-                                  onClick={() => handleMaintenancePart(part)}
-                                  className="p-1.5 rounded-lg text-accent-yellow hover:bg-accent-yellow/10 transition-colors"
-                                  title={t("actionMaintenance")}
-                                >
-                                  {/* Changed to 'Wrench' visual if available, or SettingsIcon as placeholder but logic updated */}
-                                  <SettingsIcon size={16} />
-                                </button>
-                                <button
-                                  onClick={() => handleDeleteClick(part)}
-                                  className="p-1.5 rounded-lg text-accent-red hover:bg-accent-red/10 transition-colors"
-                                  title={t("actionDelete")}
-                                >
-                                  <BoxIcon size={16} className="rotate-45" />
-                                </button>
-                              </>
-                            ) : (
-                              <span className="text-xs text-text-muted italic opacity-50">{t("statusReadOnly")}</span>
-                            )}
-                          </div>
-                        </td>
-                      </tr>
-                    ))}
-                  </tbody>
-                </table>
-              </div>
-
-              {loading && (
-                <div className="flex justify-center py-12">
-                  <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary"></div>
-                </div>
-              )}
-
-              {!loading && filteredParts.length === 0 && (
+                ))
+              ) : (
                 <div className="empty-state py-12">
                   <BoxIcon size={48} className="text-text-muted mb-3" />
                   <p className="text-text-muted">{t("msgNoData")}</p>
                 </div>
               )}
             </div>
-          </div>
+          )}
         </section>
       </main>
 
