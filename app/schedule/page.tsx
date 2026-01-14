@@ -4,106 +4,76 @@ import React, { useState, useEffect } from "react";
 import Header from "../components/Header";
 import MobileNav from "../components/MobileNav";
 import { useLanguage } from "../contexts/LanguageContext";
-import { CalendarIcon, ClockIcon, SettingsIcon, AlertTriangleIcon, BoxIcon, FolderIcon, ActivityIcon } from "../components/ui/Icons";
-import CalendarGrid from "../components/calendar/CalendarGrid";
-import SpeedometerCalendar from "../components/calendar/SpeedometerCalendar";
-
-// Sample schedule data - using string dates to avoid hydration issues
-const scheduleData = [
-    {
-        id: "s1",
-        machine: "Mix 2",
-        type: "เปลี่ยนน้ำมันเกียร์",
-        dueDateStr: "15 มกราคม 2569",
-        daysUntil: 3,
-        status: "upcoming",
-    },
-    {
-        id: "s2",
-        machine: "Oven 1",
-        type: "ตรวจสอบ Bearing",
-        dueDateStr: "20 มกราคม 2569",
-        daysUntil: 8,
-        status: "upcoming",
-    },
-    {
-        id: "s3",
-        machine: "Cooling Tunnel",
-        type: "บำรุงรักษาคอมเพรสเซอร์",
-        dueDateStr: "12 มกราคม 2569",
-        daysUntil: 0,
-        status: "due",
-    },
-    {
-        id: "s4",
-        machine: "Packaging Line",
-        type: "เปลี่ยนสายพาน",
-        dueDateStr: "25 มกราคม 2569",
-        daysUntil: 13,
-        status: "upcoming",
-    },
-    {
-        id: "s5",
-        machine: "Pie Line",
-        type: "ตรวจสอบมอเตอร์",
-        dueDateStr: "1 กุมภาพันธ์ 2569",
-        daysUntil: 20,
-        status: "scheduled",
-    },
-];
+import { CalendarIcon, ClockIcon, SettingsIcon, AlertTriangleIcon, BoxIcon, FolderIcon, CheckCircleIcon, PlusIcon } from "../components/ui/Icons";
+import { getPMPlans } from "../lib/firebaseService";
+import { PMPlan } from "../types";
+import PMExecutionModal from "../components/pm/PMExecutionModal";
+import PMConfigModal from "../components/pm/PMConfigModal";
+import PMHistoryModal from "../components/pm/PMHistoryModal";
+import { getMachines } from "../lib/firebaseService";
+import { Machine } from "../types";
+import Modal from "../components/ui/Modal";
 
 export default function SchedulePage() {
     const { t } = useLanguage();
     const [mounted, setMounted] = useState(false);
-    const [viewMode, setViewMode] = useState<"list" | "calendar" | "speedometer">("speedometer");
-    const [selectedDate, setSelectedDate] = useState(new Date());
+    const [plans, setPlans] = useState<PMPlan[]>([]);
+    const [loading, setLoading] = useState(true);
+    const [selectedPlan, setSelectedPlan] = useState<PMPlan | null>(null);
+    const [executionModalOpen, setExecutionModalOpen] = useState(false);
+    const [historyModalOpen, setHistoryModalOpen] = useState(false);
+    const [configModalOpen, setConfigModalOpen] = useState(false);
+    const [machineSelectOpen, setMachineSelectOpen] = useState(false);
+    const [selectedMachine, setSelectedMachine] = useState<Machine | null>(null);
+    const [allMachines, setAllMachines] = useState<Machine[]>([]);
 
-    // Transform scheduleData to Calendar Events
-
-    // Transform scheduleData to Calendar Events
-    const calendarEvents = scheduleData.map(item => {
-        // Parse "15 มกราคม 2569" to Date object carefully for demo (In real app, data should be Date objects)
-        // For this demo, let's just generate dates based on 'daysUntil' from today to ensure they show up in current view
-        const date = new Date();
-        date.setDate(date.getDate() + item.daysUntil);
-
-        return {
-            id: item.id,
-            title: `${item.machine} - ${item.type}`,
-            date: date,
-            type: item.type,
-            status: item.status as "upcoming" | "due" | "scheduled"
-        };
-    });
-
-    // Filter events for the selected date in Speedometer view
-    const selectedDateEvents = scheduleData.filter(item => {
-        // Mock logic: check against the mock dates we generated
-        // In reality, match item.dueDateStr or real Date objects
-        const itemDate = new Date();
-        itemDate.setDate(itemDate.getDate() + item.daysUntil);
-        return itemDate.toDateString() === selectedDate.toDateString();
-    });
-
-    useEffect(() => {
-        setMounted(true);
-    }, []);
-
-    const getStatusBadge = (status: string, daysUntil: number) => {
-        if (status === "due" || daysUntil <= 0) {
-            return <span className="badge badge-danger">วันนี้!</span>;
-        } else if (daysUntil <= 7) {
-            return <span className="badge badge-warning">ใกล้ถึงกำหนด</span>;
-        } else {
-            return <span className="badge badge-success">กำหนดไว้</span>;
+    const fetchData = async () => {
+        setLoading(true);
+        try {
+            const [plansData, machinesData] = await Promise.all([
+                getPMPlans(),
+                getMachines()
+            ]);
+            setPlans(plansData);
+            setAllMachines(machinesData);
+        } catch (error) {
+            console.error("Error fetching data:", error);
+        } finally {
+            setLoading(false);
         }
     };
 
-    const getDaysText = (daysUntil: number) => {
-        if (daysUntil <= 0) return "วันนี้";
-        if (daysUntil === 1) return "พรุ่งนี้";
-        return `อีก ${daysUntil} วัน`;
+    useEffect(() => {
+        setMounted(true);
+        fetchData();
+    }, []);
+
+    const getStatusInfo = (nextDueDate: Date) => {
+        const now = new Date();
+        now.setHours(0, 0, 0, 0);
+        const due = new Date(nextDueDate);
+        due.setHours(0, 0, 0, 0);
+
+        const diffTime = due.getTime() - now.getTime();
+        const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
+
+        if (diffDays < 0) return { label: "เกินกำหนด", color: "text-accent-red", bg: "bg-accent-red/20", border: "border-accent-red/30", days: diffDays };
+        if (diffDays === 0) return { label: "วันนี้!", color: "text-accent-yellow", bg: "bg-accent-yellow/20", border: "border-accent-yellow/30", days: diffDays };
+        if (diffDays <= 7) return { label: "เร็วๆ นี้", color: "text-accent-blue", bg: "bg-accent-blue/20", border: "border-accent-blue/30", days: diffDays };
+        return { label: "ตามกำหนด", color: "text-accent-green", bg: "bg-accent-green/20", border: "border-accent-green/30", days: diffDays };
     };
+
+    const handleExecuteClick = (plan: PMPlan) => {
+        setSelectedPlan(plan);
+        setExecutionModalOpen(true);
+    };
+
+    const handleHistoryClick = (plan: PMPlan) => {
+        setSelectedPlan(plan);
+        setHistoryModalOpen(true);
+    };
+
+    if (!mounted) return null;
 
     return (
         <div className="min-h-screen bg-bg-primary">
@@ -118,169 +88,175 @@ export default function SchedulePage() {
                         </div>
                         <div>
                             <h1 className="text-xl font-bold text-text-primary">{t("navSchedule")}</h1>
-                            <p className="text-sm text-text-muted">{t("appSubtitle")}</p>
+                            <p className="text-sm text-text-muted">รายการแผนงานซ่อมบำรุงเชิงป้องกัน (PM)</p>
                         </div>
                     </div>
 
-                    {/* View Switcher */}
-                    <div className="flex bg-bg-tertiary p-1 rounded-lg border border-white/10 self-start sm:self-auto overflow-x-auto max-w-full">
+                    <div className="flex items-center gap-2">
                         <button
-                            onClick={() => setViewMode("speedometer")}
-                            className={`px-3 py-1.5 rounded-md text-sm font-medium transition-all whitespace-nowrap ${viewMode === "speedometer"
-                                ? "bg-bg-primary text-text-primary shadow-sm"
-                                : "text-text-muted hover:text-text-primary"
-                                }`}
+                            onClick={() => setMachineSelectOpen(true)}
+                            className="flex items-center gap-2 px-3 py-1.5 rounded-lg bg-accent-blue/20 text-accent-blue hover:bg-accent-blue/30 transition-all shadow-md active:scale-95 border border-accent-blue/30"
+                            title="จัดการแผน PM"
                         >
-                            <div className="flex items-center gap-2">
-                                <ActivityIcon size={14} />
-                                <span>3D View</span>
-                            </div>
-                        </button>
-                        <button
-                            onClick={() => setViewMode("calendar")}
-                            className={`px-3 py-1.5 rounded-md text-sm font-medium transition-all whitespace-nowrap ${viewMode === "calendar"
-                                ? "bg-bg-primary text-text-primary shadow-sm"
-                                : "text-text-muted hover:text-text-primary"
-                                }`}
-                        >
-                            <div className="flex items-center gap-2">
-                                <CalendarIcon size={14} />
-                                {t("scheduleCalendarView")}
-                            </div>
-                        </button>
-                        <button
-                            onClick={() => setViewMode("list")}
-                            className={`px-3 py-1.5 rounded-md text-sm font-medium transition-all whitespace-nowrap ${viewMode === "list"
-                                ? "bg-bg-primary text-text-primary shadow-sm"
-                                : "text-text-muted hover:text-text-primary"
-                                }`}
-                        >
-                            <div className="flex items-center gap-2">
-                                <FolderIcon size={14} />
-                                {t("scheduleListView")}
-                            </div>
+                            <SettingsIcon size={16} />
+                            <span className="text-xs font-bold whitespace-nowrap">จัดการแผน PM</span>
                         </button>
                     </div>
                 </div>
 
                 {/* Alert for due items */}
-                {scheduleData.some(s => s.daysUntil <= 0) && (
-                    <div className="mb-6 p-4 bg-accent-red/10 border border-accent-red/30 rounded-xl flex items-center gap-3 animate-pulse-glow">
-                        <AlertTriangleIcon size={24} className="text-accent-red shrink-0" />
-                        <div>
-                            <p className="font-semibold text-accent-red">มีการบำรุงรักษาที่ถึงกำหนดแล้ว!</p>
-                            <p className="text-sm text-text-muted">กรุณาดำเนินการตามกำหนด</p>
+                {plans.some(p => {
+                    const diffDays = Math.ceil((p.nextDueDate.getTime() - new Date().getTime()) / (1000 * 60 * 60 * 24));
+                    return diffDays <= 0;
+                }) && (
+                        <div className="mb-6 p-4 bg-accent-red/10 border border-accent-red/30 rounded-xl flex items-center gap-3 animate-pulse-glow">
+                            <AlertTriangleIcon size={24} className="text-accent-red shrink-0" />
+                            <div>
+                                <p className="font-semibold text-accent-red">มีรายการที่ถึงกำหนดหรือเกินกำหนดซ่อมบำรุง!</p>
+                                <p className="text-sm text-text-muted">กรุณาดำเนินการและบันทึกผลการทำงาน</p>
+                            </div>
                         </div>
-                    </div>
-                )}
+                    )}
 
                 {/* Schedule Timeline */}
-                {/* Content based on View Mode */}
-                {viewMode === "speedometer" ? (
-                    <div className="space-y-6">
-                        <SpeedometerCalendar
-                            selectedDate={selectedDate}
-                            onDateSelect={setSelectedDate}
-                            events={calendarEvents}
-                        />
-
-                        {/* Event Details for Selected Day - HIDDEN in Speedometer View as it's integrated */}
-                        {/* <div className="bg-bg-secondary/50 rounded-xl border border-white/5 p-4 min-h-[200px]">
-                            <h3 className="text-lg font-bold text-text-primary mb-4 flex items-center gap-2">
-                                <CalendarIcon size={18} className="text-primary" />
-                                {selectedDate.toLocaleDateString('th-TH', { dateStyle: 'full' })}
-                            </h3>
-
-                            {selectedDateEvents.length > 0 ? (
-                                <div className="space-y-4">
-                                    {selectedDateEvents.map((item, index) => (
-                                        <div
-                                            key={item.id}
-                                            className={`card animate-fade-in-up ${item.daysUntil <= 0 ? "border-accent-red/50" : ""}`}
-                                            style={{ animationDelay: `${index * 50}ms` }}
-                                        >
-                                            <div className="flex items-start justify-between">
-                                                <div className="flex items-center gap-3">
-                                                    <div className={`w-12 h-12 rounded-xl flex items-center justify-center ${item.daysUntil <= 0 ? "bg-accent-red/20" : "bg-accent-green/20"}`}>
-                                                        <SettingsIcon size={24} className={item.daysUntil <= 0 ? "text-accent-red" : "text-accent-green"} />
-                                                    </div>
-                                                    <div>
-                                                        <h3 className="font-semibold text-text-primary">{item.machine}</h3>
-                                                        <p className="text-sm text-text-muted">{item.type}</p>
-                                                    </div>
-                                                </div>
-                                                {getStatusBadge(item.status, item.daysUntil)}
-                                            </div>
-                                        </div>
-                                    ))}
-                                </div>
-                            ) : (
-                                <div className="flex flex-col items-center justify-center h-[120px] text-text-muted opacity-50">
-                                    <ClockIcon size={32} className="mb-2" />
-                                    <p>ไม่มีรายการบำรุงรักษา</p>
-                                </div>
-                            )}
-                        </div> */}
-                    </div>
-                ) : viewMode === "calendar" ? (
-                    <CalendarGrid events={calendarEvents} />
-                ) : (
-                    <div className="space-y-4">
-                        {scheduleData
-                            .sort((a, b) => a.daysUntil - b.daysUntil)
-                            .map((item, index) => (
+                <div className="space-y-4">
+                    {loading ? (
+                        <div className="flex flex-col items-center justify-center py-20 opacity-50">
+                            <div className="w-8 h-8 border-2 border-accent-blue border-t-transparent rounded-full animate-spin mb-4" />
+                            <p>กำลังโหลดแผนงาน...</p>
+                        </div>
+                    ) : plans.length > 0 ? (
+                        plans.map((item, index) => {
+                            const status = getStatusInfo(item.nextDueDate);
+                            return (
                                 <div
                                     key={item.id}
-                                    className={`card hover-lift animate-fade-in-up ${item.daysUntil <= 0 ? "border-accent-red/50" : ""
+                                    className={`card hover-lift animate-fade-in-up border-l-4 ${status.days < 0 ? "border-l-accent-red" :
+                                        status.days === 0 ? "border-l-accent-yellow" :
+                                            status.days <= 7 ? "border-l-accent-blue" :
+                                                "border-l-accent-green"
                                         }`}
                                     style={{ animationDelay: `${index * 50}ms` }}
                                 >
                                     <div className="flex items-start justify-between">
                                         <div className="flex items-center gap-3">
-                                            <div className={`w-12 h-12 rounded-xl flex items-center justify-center ${item.daysUntil <= 0 ? "bg-accent-red/20" :
-                                                item.daysUntil <= 7 ? "bg-accent-yellow/20" :
-                                                    "bg-accent-green/20"
-                                                }`}>
-                                                <SettingsIcon size={24} className={
-                                                    item.daysUntil <= 0 ? "text-accent-red" :
-                                                        item.daysUntil <= 7 ? "text-accent-yellow" :
-                                                            "text-accent-green"
-                                                } />
+                                            <div className={`w-12 h-12 rounded-xl flex items-center justify-center ${status.bg}`}>
+                                                <SettingsIcon size={24} className={status.color} />
                                             </div>
                                             <div>
-                                                <h3 className="font-semibold text-text-primary">{item.machine}</h3>
-                                                <p className="text-sm text-text-muted">{item.type}</p>
+                                                <h3 className="font-semibold text-text-primary">{item.taskName}</h3>
+                                                <p className="text-sm text-text-muted">{item.machineName}</p>
                                             </div>
                                         </div>
-                                        {getStatusBadge(item.status, item.daysUntil)}
+                                        <span className={`badge ${status.bg} ${status.color} border ${status.border} shadow-sm px-2.5 py-1 text-[10px] font-bold uppercase`}>
+                                            {status.label}
+                                        </span>
                                     </div>
 
-                                    <div className="flex items-center gap-4 mt-3 pt-3 border-t border-border-light text-sm">
-                                        <div className="flex items-center gap-2 text-text-muted">
-                                            <CalendarIcon size={14} />
-                                            <span>{item.dueDateStr}</span>
-                                        </div>
-                                        {mounted && (
+                                    <div className="flex items-center justify-between mt-4 pt-4 border-t border-white/5">
+                                        <div className="flex flex-wrap gap-4 text-xs">
+                                            <div className="flex items-center gap-2 text-text-muted">
+                                                <CalendarIcon size={14} />
+                                                <span>กำหนด: {item.nextDueDate.toLocaleDateString('th-TH', { day: 'numeric', month: 'short', year: 'numeric' })}</span>
+                                            </div>
                                             <div className="flex items-center gap-2 text-text-muted">
                                                 <ClockIcon size={14} />
-                                                <span className={
-                                                    item.daysUntil <= 0 ? "text-accent-red font-semibold" :
-                                                        item.daysUntil <= 7 ? "text-accent-yellow" :
-                                                            "text-text-muted"
-                                                }>
-                                                    {getDaysText(item.daysUntil)}
+                                                <span className={status.days <= 0 ? "text-accent-red font-bold" : ""}>
+                                                    {status.days < 0 ? `เกินมา ${Math.abs(status.days)} วัน` :
+                                                        status.days === 0 ? "วันนี้" :
+                                                            `อีก ${status.days} วัน`}
                                                 </span>
                                             </div>
-                                        )}
+                                        </div>
+
+                                        <div className="flex items-center gap-2">
+                                            <button
+                                                onClick={() => handleHistoryClick(item)}
+                                                className="w-10 h-10 rounded-lg bg-bg-tertiary text-text-muted hover:text-accent-blue border border-white/5 flex items-center justify-center transition-all active:scale-90"
+                                                title="ดูประวัติ"
+                                            >
+                                                <ClockIcon size={18} />
+                                            </button>
+                                            <button
+                                                onClick={() => handleExecuteClick(item)}
+                                                className={`flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-bold transition-all shadow-md active:scale-95 ${status.days <= 0
+                                                    ? "bg-accent-blue text-white hover:bg-accent-blue/90"
+                                                    : "bg-bg-tertiary text-text-primary hover:bg-white/10"
+                                                    }`}
+                                            >
+                                                <CheckCircleIcon size={16} />
+                                                <span>ปิดงาน</span>
+                                            </button>
+                                        </div>
                                     </div>
                                 </div>
-                            ))}
-                    </div>
-                )}
-
-                {/* Coming Soon Notice */}
-
+                            );
+                        })
+                    ) : (
+                        <div className="flex flex-col items-center justify-center py-20 text-text-muted opacity-50 bg-bg-secondary/30 rounded-3xl border border-dashed border-white/10">
+                            <BoxIcon size={48} className="mb-4" />
+                            <p>ไม่มีแผนงานซ่อมบำรุงในขณะนี้</p>
+                        </div>
+                    )}
+                </div>
             </main>
+
+            {selectedPlan && (
+                <PMExecutionModal
+                    isOpen={executionModalOpen}
+                    onClose={() => setExecutionModalOpen(false)}
+                    plan={selectedPlan}
+                    onSuccess={fetchData}
+                />
+            )}
+
+            {selectedPlan && (
+                <PMHistoryModal
+                    isOpen={historyModalOpen}
+                    onClose={() => setHistoryModalOpen(false)}
+                    plan={selectedPlan}
+                />
+            )}
+
+            {/* Machine Selection Modal */}
+            <Modal
+                isOpen={machineSelectOpen}
+                onClose={() => setMachineSelectOpen(false)}
+                title="เลือกเครื่องจักรสำหรับแผน PM"
+            >
+                <div className="space-y-3 max-h-[60vh] overflow-y-auto custom-scrollbar p-1">
+                    {allMachines.map(machine => (
+                        <button
+                            key={machine.id}
+                            onClick={() => {
+                                setSelectedMachine(machine);
+                                setMachineSelectOpen(false);
+                                setConfigModalOpen(true);
+                            }}
+                            className="w-full flex items-center gap-4 p-4 rounded-xl bg-bg-tertiary border border-white/5 hover:border-accent-blue/50 hover:bg-accent-blue/5 transition-all group text-left"
+                        >
+                            <div className="w-12 h-12 rounded-lg bg-bg-secondary flex items-center justify-center text-accent-blue group-hover:scale-110 transition-transform">
+                                <SettingsIcon size={24} />
+                            </div>
+                            <div className="flex-1">
+                                <h3 className="font-bold text-text-primary group-hover:text-accent-blue transition-colors">{machine.name}</h3>
+                                <p className="text-xs text-text-muted">{machine.zone} • {machine.location}</p>
+                            </div>
+                            <PlusIcon size={18} className="text-text-muted group-hover:text-accent-blue" />
+                        </button>
+                    ))}
+                </div>
+            </Modal>
+
+            {/* Config Modal */}
+            {selectedMachine && (
+                <PMConfigModal
+                    isOpen={configModalOpen}
+                    onClose={() => setConfigModalOpen(false)}
+                    machine={selectedMachine}
+                    onSuccess={fetchData}
+                />
+            )}
 
             <MobileNav />
         </div>

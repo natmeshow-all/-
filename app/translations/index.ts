@@ -243,6 +243,7 @@ export interface TranslationKeys {
     validateInput: string;
     validateSelectMachine: string;
     validateSelectPart: string;
+    msgNoParts: string;
 
     // Additional Actions/Labels
     actionMaintenance: string;
@@ -584,6 +585,7 @@ const th: TranslationKeys = {
     validateInput: "กรุณากรอกข้อมูล",
     validateSelectMachine: "กรุณาระบุชื่อเครื่องจักร",
     validateSelectPart: "กรุณาเลือกชื่ออะไหล่",
+    msgNoParts: "ไม่พบรายการอะไหล่สำหรับเครื่องจักรนี้",
 
     // Additional Actions/Labels
     actionMaintenance: "ซ่อมบำรุง",
@@ -925,6 +927,7 @@ const en: TranslationKeys = {
     validateInput: "Please fill in the information",
     validateSelectMachine: "Please specify machine name",
     validateSelectPart: "Please select part name",
+    msgNoParts: "No parts found for this machine",
 
     // Additional Actions/Labels
     actionMaintenance: "Maintenance",

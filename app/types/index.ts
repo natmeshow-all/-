@@ -98,6 +98,23 @@ export interface MaintenanceRecord {
     motorGearData?: MotorGearData;
     details?: string;
     notes?: string;
+    evidenceImageUrl?: string; // Photo after work completion
+    pmPlanId?: string; // Reference to the PMPlan if this was a PM task
+    createdAt: Date;
+    updatedAt: Date;
+}
+
+export interface PMPlan {
+    id: string;
+    machineId: string;
+    machineName: string;
+    taskName: string;
+    cycleMonths: 1 | 2 | 3 | 6 | 9 | 12;
+    startDate: Date;
+    nextDueDate: Date;
+    lastCompletedDate?: Date;
+    status: "active" | "paused";
+    notes?: string;
     createdAt: Date;
     updatedAt: Date;
 }

@@ -18,7 +18,7 @@ import {
     deleteObject,
 } from "firebase/storage";
 import { database, storage } from "./firebase";
-import { Machine, Part, MaintenanceRecord, SparePart, StockTransaction, MaintenanceSchedule } from "../types";
+import { Machine, Part, MaintenanceRecord, SparePart, StockTransaction, MaintenanceSchedule, PMPlan } from "../types";
 
 // Collection names
 const COLLECTIONS = {
@@ -26,6 +26,7 @@ const COLLECTIONS = {
     PARTS: "parts",
     MAINTENANCE_RECORDS: "maintenance_records",
     SCHEDULES: "schedules",
+    PM_PLANS: "pm_plans",
 };
 
 // ==================== MACHINES ====================
@@ -372,6 +373,11 @@ export async function getMaintenanceRecordsByMachine(machineId: string): Promise
     return allRecords.filter(r => r.machineId === machineId);
 }
 
+export async function getMaintenanceRecordsByPMPlan(planId: string): Promise<MaintenanceRecord[]> {
+    const allRecords = await getMaintenanceRecords();
+    return allRecords.filter(r => r.pmPlanId === planId);
+}
+
 export async function addMaintenanceRecord(
     record: Omit<MaintenanceRecord, "id" | "createdAt" | "updatedAt">
 ): Promise<string> {
@@ -499,6 +505,106 @@ export async function upsertSchedule(
             nextDue: schedule.nextDue.toISOString(),
         });
         return targetRef.key!;
+    }
+}
+
+export async function getPMPlans(): Promise<PMPlan[]> {
+    const plansRef = ref(database, COLLECTIONS.PM_PLANS);
+    const snapshot = await get(plansRef);
+
+    if (!snapshot.exists()) return [];
+
+    const plans: PMPlan[] = [];
+    snapshot.forEach((child) => {
+        const data = child.val();
+        plans.push({
+            id: child.key!,
+            ...data,
+            startDate: new Date(data.startDate),
+            nextDueDate: new Date(data.nextDueDate),
+            lastCompletedDate: data.lastCompletedDate ? new Date(data.lastCompletedDate) : undefined,
+            createdAt: new Date(data.createdAt),
+            updatedAt: new Date(data.updatedAt),
+        });
+    });
+
+    return plans.sort((a, b) => a.nextDueDate.getTime() - b.nextDueDate.getTime());
+}
+
+export async function addPMPlan(plan: Omit<PMPlan, "id" | "createdAt" | "updatedAt">): Promise<string> {
+    const plansRef = ref(database, COLLECTIONS.PM_PLANS);
+    const newPlanRef = push(plansRef);
+
+    await set(newPlanRef, cleanObject({
+        ...plan,
+        startDate: plan.startDate.toISOString(),
+        nextDueDate: plan.nextDueDate.toISOString(),
+        lastCompletedDate: plan.lastCompletedDate?.toISOString() || null,
+        createdAt: new Date().toISOString(),
+        updatedAt: new Date().toISOString(),
+    }));
+
+    return newPlanRef.key!;
+}
+
+export async function updatePMPlan(id: string, data: Partial<PMPlan>): Promise<void> {
+    const planRef = ref(database, `${COLLECTIONS.PM_PLANS}/${id}`);
+    const updateData: any = { ...data, updatedAt: new Date().toISOString() };
+
+    if (data.startDate) updateData.startDate = data.startDate.toISOString();
+    if (data.nextDueDate) updateData.nextDueDate = data.nextDueDate.toISOString();
+    if (data.lastCompletedDate) updateData.lastCompletedDate = data.lastCompletedDate.toISOString();
+
+    await update(planRef, cleanObject(updateData));
+}
+
+export async function deletePMPlan(id: string): Promise<void> {
+    const planRef = ref(database, `${COLLECTIONS.PM_PLANS}/${id}`);
+    await remove(planRef);
+}
+
+export async function uploadEvidenceImage(file: File): Promise<string> {
+    const fileName = `evidence/pm_${Date.now()}_${file.name}`;
+    const sRef = storageRef(storage, fileName);
+    await uploadBytes(sRef, file);
+    return await getDownloadURL(sRef);
+}
+
+export async function completePMTask(
+    planId: string,
+    record: Omit<MaintenanceRecord, "id" | "createdAt" | "updatedAt">,
+    evidenceFile?: File
+): Promise<void> {
+    // 1. Upload evidence if provided
+    let imageUrl = record.evidenceImageUrl || "";
+    if (evidenceFile) {
+        imageUrl = await uploadEvidenceImage(evidenceFile);
+    }
+
+    // 2. Add Maintenance Record
+    await addMaintenanceRecord({
+        ...record,
+        evidenceImageUrl: imageUrl,
+        pmPlanId: planId,
+    });
+
+    // 3. Update PM Plan for next cycle
+    const planRef = ref(database, `${COLLECTIONS.PM_PLANS}/${planId}`);
+    const planSnapshot = await get(planRef);
+
+    if (planSnapshot.exists()) {
+        const planData = planSnapshot.val();
+        const cycleMonths = planData.cycleMonths || 1;
+
+        // Calculate next due date from TODAY
+        const nextDue = new Date();
+        nextDue.setMonth(nextDue.getMonth() + cycleMonths);
+
+        await update(planRef, {
+            lastCompletedDate: new Date().toISOString(),
+            nextDueDate: nextDue.toISOString(),
+            updatedAt: new Date().toISOString(),
+        });
     }
 }
 
