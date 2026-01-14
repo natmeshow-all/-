@@ -225,7 +225,7 @@ export default function Dashboard() {
         <section className="mb-6">
           <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-4">
             <StatCard
-              icon={<BoxIcon size={20} />}
+              icon={<BoxIcon size={14} />}
               value={stats.totalParts}
               label={t("statTotalParts")}
               iconBgColor="bg-primary/20"
@@ -233,7 +233,7 @@ export default function Dashboard() {
               delay={0}
             />
             <StatCard
-              icon={<SettingsIcon size={20} />}
+              icon={<SettingsIcon size={14} />}
               value={stats.totalMachines}
               label={t("statMachines")}
               iconBgColor="bg-accent-yellow/20"
@@ -241,7 +241,7 @@ export default function Dashboard() {
               delay={50}
             />
             <StatCard
-              icon={<MapPinIcon size={20} />}
+              icon={<MapPinIcon size={14} />}
               value={stats.totalZones}
               label={t("statZones")}
               iconBgColor="bg-accent-cyan/20"
@@ -249,7 +249,7 @@ export default function Dashboard() {
               delay={100}
             />
             <StatCard
-              icon={<AlertTriangleIcon size={20} />}
+              icon={<AlertTriangleIcon size={14} />}
               value={stats.maintenanceRecords}
               label={t("statMaintenanceRecords")}
               iconBgColor="bg-accent-red/20"
@@ -261,27 +261,27 @@ export default function Dashboard() {
 
         {/* Quick Actions */}
         <section className="mb-6">
-          <div className="flex flex-wrap gap-4 mt-8">
+          <div className="flex flex-wrap gap-2 mt-4">
             <button
               onClick={() => setAddPartModalOpen(true)}
-              className="flex-1 min-w-[200px] btn btn-active bg-accent-green text-bg-primary hover:bg-accent-green/90 border-none h-14 text-lg"
+              className="flex-1 min-w-[140px] btn btn-active bg-accent-green text-bg-primary hover:bg-accent-green/90 border-none h-10 text-sm font-semibold"
             >
-              <PlusIcon size={24} className="mr-2" />
+              <PlusIcon size={18} className="mr-1.5" />
               {t("actionAddPart")}
             </button>
             <button
               onClick={() => setMaintenanceModalOpen(true)}
-              className="flex-1 min-w-[200px] btn btn-active bg-accent-yellow text-bg-primary hover:bg-accent-yellow/90 border-none h-14 text-lg"
+              className="flex-1 min-w-[140px] btn btn-active bg-accent-yellow text-bg-primary hover:bg-accent-yellow/90 border-none h-10 text-sm font-semibold"
             >
-              <HistoryIcon size={24} className="mr-2" />
+              <HistoryIcon size={18} className="mr-1.5" />
               {t("actionRecordMaintenance")}
             </button>
-            <button className="flex-1 min-w-[200px] btn btn-outline border-white/10 hover:bg-white/5 h-14 text-lg text-text-primary">
-              <RefreshIcon size={20} className="mr-2" />
+            <button className="flex-1 min-w-[140px] btn btn-outline border-white/10 hover:bg-white/5 h-10 text-sm font-semibold text-text-primary">
+              <RefreshIcon size={16} className="mr-1.5" />
               {t("actionMaintenanceHistory")}
             </button>
-            <button className="flex-1 min-w-[200px] btn btn-outline border-white/10 hover:bg-white/5 h-14 text-lg text-text-primary">
-              <DownloadIcon size={20} className="mr-2" />
+            <button className="flex-1 min-w-[140px] btn btn-outline border-white/10 hover:bg-white/5 h-10 text-sm font-semibold text-text-primary">
+              <DownloadIcon size={16} className="mr-1.5" />
               {t("actionExport")}
             </button>
           </div>
