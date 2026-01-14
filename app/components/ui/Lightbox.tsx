@@ -1,6 +1,6 @@
 
 import React from 'react';
-import { XIcon, MaximizeIcon } from './Icons';
+import { XIcon } from './Icons';
 
 interface LightboxProps {
     isOpen: boolean;

@@ -9,8 +9,7 @@ import {
     remove,
     query,
     orderByChild,
-    equalTo,
-    serverTimestamp as rtdbTimestamp
+    equalTo
 } from "firebase/database";
 import {
     ref as storageRef,
