@@ -239,16 +239,41 @@ export default function MachineDetailsModal({
                                                         </div>
                                                     )}
 
-                                                    {isLowStock && (
-                                                        <div className="absolute top-3 right-3 md:top-4 md:right-4 bg-red-500/90 text-white text-[10px] font-bold px-3 py-1 rounded-full backdrop-blur-sm shadow-lg flex items-center gap-1">
-                                                            <AlertTriangleIcon size={10} />
-                                                            {t("statusLowStock")}
-                                                        </div>
-                                                    ) || (
-                                                            <div className="absolute top-3 right-3 md:top-4 md:right-4 bg-green-500/90 text-white text-[10px] font-bold px-3 py-1 rounded-full backdrop-blur-sm shadow-lg">
+                                                    {/* Top Right Badges */}
+                                                    <div className="absolute top-3 right-3 md:top-4 md:right-4 flex flex-col items-end gap-2">
+                                                        {isLowStock ? (
+                                                            <div className="bg-red-500/90 text-white text-[10px] font-bold px-3 py-1 rounded-full backdrop-blur-sm shadow-lg flex items-center gap-1">
+                                                                <AlertTriangleIcon size={10} />
+                                                                {t("statusLowStock")}
+                                                            </div>
+                                                        ) : (
+                                                            <div className="bg-green-500/90 text-white text-[10px] font-bold px-3 py-1 rounded-full backdrop-blur-sm shadow-lg">
                                                                 {t("partsInStock")}
                                                             </div>
                                                         )}
+
+                                                        {/* Location Badge */}
+                                                        <div className="flex flex-col items-end gap-0.5">
+                                                            <div className="bg-blue-400/90 text-[#0F172A] text-[10px] font-bold px-3 py-1 rounded-full backdrop-blur-sm shadow-lg">
+                                                                {part.location || "-"}
+                                                            </div>
+                                                            <div className="text-[8px] text-white/60 bg-black/40 backdrop-blur-sm px-1.5 py-0.5 rounded border border-white/5 uppercase tracking-tighter">
+                                                                {t("tableLocation")}
+                                                            </div>
+                                                        </div>
+
+                                                        {/* Small Red Delete Button */}
+                                                        <button
+                                                            onClick={(e) => {
+                                                                e.stopPropagation();
+                                                                onDeletePart?.(part);
+                                                            }}
+                                                            className="w-7 h-7 md:w-8 md:h-8 rounded-full bg-red-500/20 text-red-400 border border-red-500/30 flex items-center justify-center hover:bg-red-500 hover:text-white transition-all shadow-lg active:scale-95"
+                                                            title={t("actionDelete")}
+                                                        >
+                                                            <TrashIcon size={14} />
+                                                        </button>
+                                                    </div>
                                                 </div>
 
                                                 {/* Content Area */}
@@ -280,10 +305,6 @@ export default function MachineDetailsModal({
                                                                 </span>
                                                                 <span className="text-white/30 text-xs font-normal">{(part as any).unit || "ชิ้น"}</span>
                                                             </div>
-                                                        </div>
-                                                        <div>
-                                                            <div className="text-white/30 text-[10px] font-bold uppercase mb-1">{t("tableLocation")}</div>
-                                                            <div className="text-white font-medium truncate">{part.location || "-"}</div>
                                                         </div>
                                                     </div>
 

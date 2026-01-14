@@ -280,10 +280,6 @@ export default function Dashboard() {
               <RefreshIcon size={14} className="mr-1" />
               {t("actionMaintenanceHistory")}
             </button>
-            <button className="flex-1 min-w-[120px] btn btn-outline border-white/10 hover:bg-white/5 h-8 text-[11px] font-bold text-text-primary">
-              <DownloadIcon size={14} className="mr-1" />
-              {t("actionExport")}
-            </button>
           </div>
         </section>
 
@@ -294,31 +290,31 @@ export default function Dashboard() {
               className="flex items-center justify-between cursor-pointer"
               onClick={() => setIsFilterExpanded(!isFilterExpanded)}
             >
-              <h3 className="filter-title mb-0">
-                <SearchIcon size={16} />
+              <h3 className="filter-title mb-0 text-xs">
+                <SearchIcon size={12} />
                 {t("filterTitle")}
               </h3>
               <button
-                className={`transition-all duration-300 p-1.5 rounded-full ${!isFilterExpanded ? "bg-primary/20 text-primary shadow-[0_0_15px_rgba(99,102,241,0.6)] animate-pulse" : "text-text-muted hover:text-primary hover:bg-white/5"}`}
+                className={`transition-all duration-300 p-1 rounded-full ${!isFilterExpanded ? "bg-primary/20 text-primary shadow-[0_0_15px_rgba(99,102,241,0.6)] animate-pulse" : "text-text-muted hover:text-primary hover:bg-white/5"}`}
               >
-                <ChevronDownIcon size={20} className={`transition-transform duration-200 ${isFilterExpanded ? "rotate-180" : ""}`} />
+                <ChevronDownIcon size={12} className={`transition-transform duration-200 ${isFilterExpanded ? "rotate-180" : ""}`} />
               </button>
             </div>
 
             {isFilterExpanded && (
-              <div className="mt-4 animate-fade-in">
-                <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 mb-4">
+              <div className="mt-2 animate-fade-in">
+                <div className="grid grid-cols-1 sm:grid-cols-3 gap-2 mb-3">
                   {/* Machine Filter */}
                   <div>
-                    <label className="flex items-center gap-2 text-xs text-text-muted mb-1.5">
-                      <SettingsIcon size={12} />
+                    <label className="flex items-center gap-1.5 text-[10px] text-text-muted mb-1">
+                      <SettingsIcon size={10} />
                       {t("filterMachine")}
-                      <span className="badge badge-primary ml-auto">{uniqueMachinesCount}</span>
+                      <span className="badge badge-primary ml-auto text-[9px] py-0 px-1">{uniqueMachinesCount}</span>
                     </label>
                     <select
                       value={filters.machineId}
                       onChange={(e) => handleFilterChange("machineId", e.target.value)}
-                      className="input select text-sm"
+                      className="input select text-[10px] py-0 px-2 h-[37px] leading-none"
                     >
                       <option value="">{t("filterAll")}</option>
                       {availableMachines.map((name) => (
@@ -329,15 +325,15 @@ export default function Dashboard() {
 
                   {/* Zone Filter */}
                   <div>
-                    <label className="flex items-center gap-2 text-xs text-text-muted mb-1.5">
-                      <MapPinIcon size={12} />
+                    <label className="flex items-center gap-1.5 text-[10px] text-text-muted mb-1">
+                      <MapPinIcon size={10} />
                       {t("filterZone")}
-                      <span className="badge badge-primary ml-auto">{uniqueZonesCount}</span>
+                      <span className="badge badge-primary ml-auto text-[9px] py-0 px-1">{uniqueZonesCount}</span>
                     </label>
                     <select
                       value={filters.zone}
                       onChange={(e) => handleFilterChange("zone", e.target.value)}
-                      className="input select text-sm"
+                      className="input select text-[10px] py-0 px-2 h-[37px] leading-none"
                     >
                       <option value="">{t("filterAll")}</option>
                       {availableZones.map((z) => (
@@ -348,15 +344,15 @@ export default function Dashboard() {
 
                   {/* Part Name Filter */}
                   <div>
-                    <label className="flex items-center gap-2 text-xs text-text-muted mb-1.5">
-                      <BoxIcon size={12} />
+                    <label className="flex items-center gap-1.5 text-[10px] text-text-muted mb-1">
+                      <BoxIcon size={10} />
                       {t("filterPartName")}
-                      <span className="badge badge-primary ml-auto">{uniquePartNamesCount}</span>
+                      <span className="badge badge-primary ml-auto text-[9px] py-0 px-1">{uniquePartNamesCount}</span>
                     </label>
                     <select
                       value={filters.partName}
                       onChange={(e) => handleFilterChange("partName", e.target.value)}
-                      className="input select text-sm"
+                      className="input select text-[10px] py-0 px-2 h-[37px] leading-none"
                     >
                       <option value="">{t("filterAll")}</option>
                       {availablePartNames.map((p) => (
@@ -366,8 +362,8 @@ export default function Dashboard() {
                   </div>
                 </div>
 
-                <div className="flex items-center justify-between pt-2 border-t border-white/5">
-                  <p className="text-sm text-text-muted">
+                <div className="flex items-center justify-between pt-1.5 border-t border-white/5">
+                  <p className="text-[11px] text-text-muted">
                     {t("filterShowResults")}{" "}
                     <span className="text-primary-light font-semibold">{filteredParts.length}</span>
                     {" "}{t("filterOf")}{" "}
@@ -379,9 +375,9 @@ export default function Dashboard() {
                       e.stopPropagation();
                       clearFilters();
                     }}
-                    className="btn btn-outline text-sm py-1.5 px-3"
+                    className="btn btn-outline text-[10px] py-1 px-2 h-6"
                   >
-                    <RefreshIcon size={14} />
+                    <RefreshIcon size={10} />
                     {t("actionClearFilters")}
                   </button>
                 </div>
@@ -453,7 +449,7 @@ export default function Dashboard() {
 
                       <div className="pointer-events-auto">
                         {/* Badge Top Right */}
-                        <div className="absolute top-4 right-4 z-10">
+                        <div className="absolute top-4 right-4 z-10 flex flex-col items-end gap-2">
                           <div className="flex flex-col items-end gap-1">
                             <span className="badge badge-primary font-bold shadow-lg backdrop-blur-md bg-primary/80 border border-white/20">
                               x{part.quantity}
@@ -462,6 +458,28 @@ export default function Dashboard() {
                               {t("tableQuantity")}
                             </span>
                           </div>
+
+                          {/* Location Badge */}
+                          <div className="flex flex-col items-end gap-1">
+                            <span className="badge bg-accent-cyan/80 text-bg-primary font-bold shadow-lg backdrop-blur-md border border-white/20">
+                              {part.location || "-"}
+                            </span>
+                            <span className="text-[10px] text-white/60 bg-black/40 backdrop-blur-sm px-1.5 py-0.5 rounded border border-white/5 uppercase tracking-tighter">
+                              {t("tableLocation")}
+                            </span>
+                          </div>
+
+                          {/* small red delete button */}
+                          <button
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              handleDeleteClick(part);
+                            }}
+                            className="w-8 h-8 rounded-full bg-accent-red/20 text-accent-red border border-accent-red/30 flex items-center justify-center hover:bg-accent-red hover:text-white transition-all shadow-lg active:scale-90"
+                            title={t("actionDelete")}
+                          >
+                            <BoxIcon size={14} className="rotate-45" />
+                          </button>
                         </div>
 
                         {/* Main Info */}
@@ -491,11 +509,6 @@ export default function Dashboard() {
                           <div className="bg-white/10 backdrop-blur-md border border-white/20 rounded-md px-1.5 py-0.5 flex flex-col min-w-[40px]">
                             <span className="text-[8px] text-white/50 uppercase tracking-tighter font-bold">{t("tableZone")}</span>
                             <span className="text-[10px] text-white font-medium">{tData(part.zone || "-")}</span>
-                          </div>
-                          {/* Location */}
-                          <div className="bg-white/10 backdrop-blur-md border border-white/20 rounded-md px-1.5 py-0.5 flex flex-col min-w-[40px]">
-                            <span className="text-[8px] text-white/50 uppercase tracking-tighter font-bold">{t("tableLocation")}</span>
-                            <span className="text-[10px] text-white font-medium">{part.location || "-"}</span>
                           </div>
 
                           {/* Notes - Separate Refined Block */}
