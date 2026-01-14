@@ -452,65 +452,78 @@ export default function Dashboard() {
                     <div className="absolute inset-x-0 bottom-0 p-4 flex flex-col justify-end h-full pointer-events-none">
 
                       <div className="pointer-events-auto">
-                        {/* Badge Top Right (on the image area essentially) */}
+                        {/* Badge Top Right */}
                         <div className="absolute top-4 right-4 z-10">
-                          <span className="badge badge-primary font-bold shadow-lg backdrop-blur-md bg-opacity-90">
-                            x{part.quantity}
-                          </span>
+                          <div className="flex flex-col items-end gap-1">
+                            <span className="badge badge-primary font-bold shadow-lg backdrop-blur-md bg-primary/80 border border-white/20">
+                              x{part.quantity}
+                            </span>
+                            <span className="text-[10px] text-white/60 bg-black/40 backdrop-blur-sm px-1.5 py-0.5 rounded border border-white/5 uppercase tracking-tighter">
+                              {t("tableQuantity")}
+                            </span>
+                          </div>
                         </div>
 
                         {/* Main Info */}
-                        <div className="mb-3">
-                          <div className="flex items-center gap-2 mb-1">
-                            <h3 className="text-xl font-bold text-white drop-shadow-md leading-tight">
-                              {tData(part.partName)}
-                            </h3>
-                          </div>
-                          <div className="flex items-center gap-2 text-sm text-gray-300">
-                            <SettingsIcon size={14} className="text-primary-light" />
-                            <span className="font-medium text-primary-light shadow-black drop-shadow-sm">{part.machineName}</span>
-                            <span className="text-gray-500">•</span>
-                            <span className="text-gray-300">{tData(part.zone)}</span>
+                        <div className="mb-4">
+                          <h3 className="text-2xl font-bold text-white drop-shadow-lg leading-tight mb-1">
+                            {tData(part.partName)}
+                          </h3>
+                          <div className="flex items-center gap-2 text-sm text-primary-light drop-shadow-md">
+                            <SettingsIcon size={14} />
+                            <span className="font-semibold">{part.machineName}</span>
                           </div>
                         </div>
 
-                        {/* Details Grid & Tags */}
-                        <div className="flex flex-wrap gap-2 mb-3">
-                          <span className="px-2 py-1 rounded-md bg-white/10 backdrop-blur-md border border-white/10 text-xs text-white/90">
-                            {part.brand || "No Brand"}
-                          </span>
-                          {part.modelSpec && (
-                            <span className="px-2 py-1 rounded-md bg-white/10 backdrop-blur-md border border-white/10 text-xs text-white/90 truncate max-w-[150px]">
-                              {part.modelSpec}
-                            </span>
+                        {/* Individual Detail Tags - Frosted Glass Pills */}
+                        <div className="flex flex-wrap gap-1.5 mb-3">
+                          {/* Brand */}
+                          <div className="bg-white/10 backdrop-blur-md border border-white/20 rounded-md px-1.5 py-0.5 flex flex-col min-w-[60px]">
+                            <span className="text-[8px] text-white/50 uppercase tracking-tighter font-bold">{t("tableBrand")}</span>
+                            <span className="text-[10px] text-white font-medium truncate max-w-[80px]">{part.brand || "-"}</span>
+                          </div>
+                          {/* Model */}
+                          <div className="bg-white/10 backdrop-blur-md border border-white/20 rounded-md px-1.5 py-0.5 flex flex-col min-w-[90px]">
+                            <span className="text-[8px] text-white/50 uppercase tracking-tighter font-bold">{t("tableModelSpec")}</span>
+                            <span className="text-[10px] text-white font-medium truncate max-w-[140px]" title={part.modelSpec}>{part.modelSpec || "-"}</span>
+                          </div>
+                          {/* Zone */}
+                          <div className="bg-white/10 backdrop-blur-md border border-white/20 rounded-md px-1.5 py-0.5 flex flex-col min-w-[40px]">
+                            <span className="text-[8px] text-white/50 uppercase tracking-tighter font-bold">{t("tableZone")}</span>
+                            <span className="text-[10px] text-white font-medium">{tData(part.zone || "-")}</span>
+                          </div>
+                          {/* Location */}
+                          <div className="bg-white/10 backdrop-blur-md border border-white/20 rounded-md px-1.5 py-0.5 flex flex-col min-w-[40px]">
+                            <span className="text-[8px] text-white/50 uppercase tracking-tighter font-bold">{t("tableLocation")}</span>
+                            <span className="text-[10px] text-white font-medium">{part.location || "-"}</span>
+                          </div>
+
+                          {/* Notes - Separate Refined Block */}
+                          {part.notes && (
+                            <div className="w-full bg-white/5 backdrop-blur-sm border border-white/10 rounded-lg p-1.5 flex gap-1.5 items-start mt-0.5">
+                              <AlertTriangleIcon size={10} className="text-accent-yellow shrink-0 mt-0.5" />
+                              <div className="flex flex-col">
+                                <span className="text-[8px] text-white/40 uppercase tracking-widest font-bold">{t("tableNotes")}</span>
+                                <span className="text-[10px] text-white/80 italic line-clamp-1">"{tData(part.notes)}"</span>
+                              </div>
+                            </div>
                           )}
-                          <span className="px-2 py-1 rounded-md bg-white/10 backdrop-blur-md border border-white/10 text-xs text-white/90">
-                            {part.location || "No Loc"}
-                          </span>
                         </div>
-
-                        {/* Notes (Glass Box) */}
-                        {part.notes && (
-                          <div className="mb-4 p-3 rounded-xl bg-white/5 backdrop-blur-md border border-white/10 text-xs text-white/80 italic flex gap-2">
-                            <AlertTriangleIcon size={14} className="text-accent-yellow shrink-0 mt-0.5" />
-                            <span>"{tData(part.notes)}"</span>
-                          </div>
-                        )}
 
                         {/* Actions */}
-                        <div className="grid grid-cols-2 gap-3 pt-2">
+                        <div className="flex gap-2">
                           <button
                             onClick={() => handleEditPart(part)}
-                            className="btn bg-bg-tertiary/80 backdrop-blur-md border border-white/10 hover:bg-primary hover:text-white hover:border-primary text-sm h-10 shadow-lg text-white"
+                            className="flex-1 btn bg-white/10 backdrop-blur-md border border-white/20 hover:bg-primary transition-all text-[11px] h-8 text-white rounded-lg px-2"
                           >
-                            <EditIcon size={16} className="mr-2" />
+                            <EditIcon size={12} className="mr-1" />
                             {t("actionEdit")}
                           </button>
                           <button
                             onClick={() => handleMaintenancePart(part)}
-                            className="btn bg-bg-tertiary/80 backdrop-blur-md border border-white/10 hover:bg-accent-yellow hover:text-black hover:border-accent-yellow text-sm h-10 shadow-lg text-white"
+                            className="flex-1 btn bg-white/10 backdrop-blur-md border border-white/20 hover:bg-accent-yellow hover:text-black transition-all text-[11px] h-8 text-white rounded-lg px-2"
                           >
-                            <SettingsIcon size={16} className="mr-2" />
+                            <SettingsIcon size={12} className="mr-1" />
                             {t("actionMaintenance")}
                           </button>
                         </div>
