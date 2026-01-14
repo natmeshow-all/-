@@ -61,6 +61,7 @@ export interface TranslationKeys {
     actionClose: string;
     actionEdit: string;
     actionDelete: string;
+    actionRepair: string;
     actionSearch: string;
     actionSaveChanges: string;
 
@@ -394,6 +395,7 @@ const th: TranslationKeys = {
     actionClose: "ปิด",
     actionEdit: "แก้ไข",
     actionDelete: "ลบ",
+    actionRepair: "ซ่อม",
     actionSearch: "ค้นหา",
     actionSaveChanges: "บันทึกการเปลี่ยนแปลง",
 
@@ -727,6 +729,7 @@ const en: TranslationKeys = {
     actionClose: "Close",
     actionEdit: "Edit",
     actionDelete: "Delete",
+    actionRepair: "Repair",
     actionSearch: "Search",
     actionSaveChanges: "Save Changes",
 

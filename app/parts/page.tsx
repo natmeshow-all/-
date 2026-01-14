@@ -6,8 +6,10 @@ import MobileNav from "../components/MobileNav";
 import AddSparePartModal from "../components/forms/AddSparePartModal";
 import StockActionModal from "../components/forms/StockActionModal";
 import StockHistoryModal from "../components/forms/StockHistoryModal";
+import PartDetailsModal from "../components/parts/PartDetailsModal";
+import ConfirmModal from "../components/ui/ConfirmModal";
 import { useLanguage } from "../contexts/LanguageContext";
-import { getSpareParts } from "../lib/firebaseService";
+import { getSpareParts, deleteSparePart } from "../lib/firebaseService";
 import { SparePart } from "../types";
 import { useAuth } from "../contexts/AuthContext";
 import { BoxIcon, PlusIcon, SearchIcon, FilterIcon, ArrowUpIcon, ArrowDownIcon, AlertIcon, HistoryIcon } from "../components/ui/Icons";
@@ -18,7 +20,13 @@ export default function PartsPage() {
     const [addModalOpen, setAddModalOpen] = useState(false);
     const [stockActionModalOpen, setStockActionModalOpen] = useState(false);
     const [historyModalOpen, setHistoryModalOpen] = useState(false);
-    const [selectedPart, setSelectedPart] = useState<SparePart | null>(null);
+    const [detailsModalOpen, setDetailsModalOpen] = useState(false);
+    const [confirmDeleteOpen, setConfirmDeleteOpen] = useState(false);
+
+    const [selectedPart, setSelectedPart] = useState<SparePart | null>(null); // For actions
+    const [viewPart, setViewPart] = useState<SparePart | null>(null); // For details view
+    const [partToDelete, setPartToDelete] = useState<SparePart | null>(null);
+
     const [actionType, setActionType] = useState<"restock" | "withdraw">("withdraw");
 
     const [searchQuery, setSearchQuery] = useState("");
@@ -50,6 +58,45 @@ export default function PartsPage() {
     const openHistoryModal = (part: SparePart) => {
         setSelectedPart(part);
         setHistoryModalOpen(true);
+    };
+
+    const openDetailsModal = (part: SparePart) => {
+        setViewPart(part);
+        setDetailsModalOpen(true);
+    };
+
+    const handleEditPart = (part: SparePart) => {
+        setDetailsModalOpen(false);
+        // TODO: Implement Edit Modal or pre-fill Add Modal
+        console.log("Edit part:", part);
+    };
+
+    const handleDeleteClick = (part: SparePart) => {
+        setPartToDelete(part);
+        setConfirmDeleteOpen(true);
+        setDetailsModalOpen(false);
+    };
+
+    const confirmDelete = async () => {
+        if (partToDelete) {
+            try {
+                setLoading(true);
+                await deleteSparePart(partToDelete.id);
+                await fetchParts();
+            } catch (error) {
+                console.error("Error deleting part:", error);
+            } finally {
+                setLoading(false);
+                setConfirmDeleteOpen(false);
+                setPartToDelete(null);
+            }
+        }
+    };
+
+    const handleRepairPart = (part: SparePart) => {
+        setDetailsModalOpen(false);
+        // Open stock modal for withdraw as repair action
+        openStockModal(part, "withdraw");
     };
 
     const filteredParts = parts.filter(part =>
@@ -167,7 +214,10 @@ export default function PartsPage() {
                                         <div key={part.id} className="card p-0 overflow-hidden hover:shadow-xl hover:shadow-primary/5 transition-all duration-300 group border border-white/5 bg-bg-secondary/30">
                                             <div className="p-4 flex gap-4">
                                                 {/* Image */}
-                                                <div className="w-20 h-20 rounded-xl bg-bg-tertiary shrink-0 overflow-hidden border border-white/5 relative group-hover:border-primary/30 transition-colors">
+                                                <div
+                                                    className="w-20 h-20 rounded-xl bg-bg-tertiary shrink-0 overflow-hidden border border-white/5 relative group-hover:border-primary/30 transition-colors cursor-pointer"
+                                                    onClick={() => openDetailsModal(part)}
+                                                >
                                                     {part.imageUrl ? (
                                                         <img src={part.imageUrl} alt={part.name} className="w-full h-full object-cover" />
                                                     ) : (
@@ -186,7 +236,12 @@ export default function PartsPage() {
                                                 <div className="flex-1 min-w-0 flex flex-col justify-between">
                                                     <div className="flex justify-between items-start gap-2">
                                                         <div className="min-w-0">
-                                                            <h3 className="font-bold text-text-primary truncate">{part.name}</h3>
+                                                            <h3
+                                                                className="font-bold text-text-primary truncate cursor-pointer hover:text-primary transition-colors"
+                                                                onClick={() => openDetailsModal(part)}
+                                                            >
+                                                                {part.name}
+                                                            </h3>
                                                             <p className="text-xs text-text-muted truncate mb-1">{part.description || t("partsNoSpec")}</p>
                                                         </div>
                                                         <button
@@ -302,6 +357,26 @@ export default function PartsPage() {
                 isOpen={historyModalOpen}
                 onClose={() => setHistoryModalOpen(false)}
                 part={selectedPart}
+            />
+
+            <PartDetailsModal
+                isOpen={detailsModalOpen}
+                onClose={() => setDetailsModalOpen(false)}
+                part={viewPart}
+                onEdit={handleEditPart}
+                onDelete={handleDeleteClick}
+                onRepair={handleRepairPart}
+            />
+
+            <ConfirmModal
+                isOpen={confirmDeleteOpen}
+                onClose={() => setConfirmDeleteOpen(false)}
+                onConfirm={confirmDelete}
+                title={t("actionDelete") || "Delete Part"}
+                message={t("msgConfirmDelete") || "Are you sure you want to delete this part? This action cannot be undone."}
+                isDestructive={true}
+                confirmText={t("actionDelete") || "Delete"}
+                cancelText={t("actionCancel") || "Cancel"}
             />
         </div>
     );

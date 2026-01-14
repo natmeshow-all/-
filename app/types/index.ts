@@ -179,6 +179,8 @@ export interface SparePart {
     name: string;
     description?: string; // Spec details
     category: string; // bearing, oil, etc.
+    brand?: string; // Brand name (e.g. SKF, NSK)
+    notes?: string; // Additional notes
     quantity: number;
     unit: string; // pcs, liters, etc.
     minStockThreshold: number; // Low stock alert level
