@@ -522,14 +522,35 @@ async function calculateFileHash(file: File): Promise<string> {
 // Helper: Find existing image by hash
 async function findImageByHash(hash: string): Promise<any | null> {
     const hashesRef = ref(database, "image_hashes");
-    const q = query(hashesRef, orderByChild("hash"), equalTo(hash));
-    const snapshot = await get(q);
 
-    if (snapshot.exists()) {
-        // Return the first match
-        const key = Object.keys(snapshot.val())[0];
-        return { key, ...snapshot.val()[key] };
+    try {
+        // Attempt 1: Server-side filtering (Requires Index)
+        const q = query(hashesRef, orderByChild("hash"), equalTo(hash));
+        const snapshot = await get(q);
+
+        if (snapshot.exists()) {
+            // Return the first match
+            const key = Object.keys(snapshot.val())[0];
+            return { key, ...snapshot.val()[key] };
+        }
+    } catch (error) {
+        // Attempt 2: Fallback to Client-side filtering if index is missing
+        console.warn("Firebase Index missing for 'hash'. Falling back to client-side filtering.");
+        try {
+            const snapshot = await get(hashesRef);
+            if (snapshot.exists()) {
+                const allData = snapshot.val();
+                for (const [key, val] of Object.entries(allData)) {
+                    if ((val as any).hash === hash) {
+                        return { key, ...val as any };
+                    }
+                }
+            }
+        } catch (innerError) {
+            console.error("Error in fallback image search:", innerError);
+        }
     }
+
     return null;
 }
 
