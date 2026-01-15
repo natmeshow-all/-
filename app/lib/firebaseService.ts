@@ -254,28 +254,36 @@ export async function getParts(): Promise<Part[]> {
     return parts.sort((a, b) => b.updatedAt.getTime() - a.updatedAt.getTime());
 }
 
+// Fallback: Fetch all parts and filter by machine name (client-side filtering)
 export async function getPartsByMachine(machineId: string): Promise<Part[]> {
-    const partsRef = ref(database, COLLECTIONS.PARTS);
-    // Note: RTDB querying is limited. If machineId is stored, we can query.
-    // However, legacy data might store machine name string instead of ID.
-    const q = query(partsRef, orderByChild("machineId"), equalTo(machineId));
-    const snapshot = await get(q);
+    try {
+        const partsRef = ref(database, COLLECTIONS.PARTS);
+        const snapshot = await get(partsRef);
 
-    if (!snapshot.exists()) return [];
+        if (!snapshot.exists()) return [];
 
-    const parts: Part[] = [];
-    snapshot.forEach((childSnapshot) => {
-        const data = childSnapshot.val();
-        parts.push({
-            id: childSnapshot.key!,
-            ...data,
-            imageUrl: data.image || data.image_url || data.imageUrl || "",
-            createdAt: data.createdAt ? new Date(data.createdAt) : new Date(),
-            updatedAt: data.updatedAt ? new Date(data.updatedAt) : new Date(),
+        const parts: Part[] = [];
+        snapshot.forEach((childSnapshot) => {
+            const data = childSnapshot.val();
+            // Client-side filtering for machineId to avoid index error
+            // Also handle legacy 'machine' field if needed, but primarily machineId
+            if (data.machineId === machineId) {
+                const imageUrl = data.image || data.image_url || data.imageUrl || "";
+                parts.push({
+                    id: childSnapshot.key!,
+                    ...data,
+                    imageUrl,
+                    createdAt: data.createdAt ? new Date(data.createdAt) : new Date(),
+                    updatedAt: data.updatedAt ? new Date(data.updatedAt) : new Date(),
+                });
+            }
         });
-    });
 
-    return parts;
+        return parts.sort((a, b) => b.updatedAt.getTime() - a.updatedAt.getTime());
+    } catch (error) {
+        console.error("Error fetching parts by machine:", error);
+        return [];
+    }
 }
 
 // Fallback: Fetch all parts and filter by machine name (client-side filtering)
@@ -575,45 +583,76 @@ export async function uploadEvidenceImage(file: File): Promise<string> {
     return await getDownloadURL(sRef);
 }
 
-export async function completePMTask(
+export const completePMTask = async (
     planId: string,
     record: Omit<MaintenanceRecord, "id" | "createdAt" | "updatedAt">,
     evidenceFile?: File
-): Promise<void> {
-    // 1. Upload evidence if provided
-    let imageUrl = record.evidenceImageUrl || "";
-    if (evidenceFile) {
-        imageUrl = await uploadEvidenceImage(evidenceFile);
+): Promise<void> => {
+    try {
+        let imageUrl = "";
+        let imageHash = "";
+
+        if (evidenceFile) {
+            // Calculate hash and check existence
+            // For now, simplify image upload logic similar to above or reuse
+            // Using direct storage upload for simplicity here as main function seems to rely on separate helpers
+            // But per file structure, we have deduplication logic.
+            // Let's use uploadEvidenceImage directly.
+            imageUrl = await uploadEvidenceImage(evidenceFile);
+        }
+
+        // Add Maintenance Record
+        const recordRef = push(ref(database, COLLECTIONS.MAINTENANCE_RECORDS));
+        const now = new Date();
+        const recordData = {
+            ...record,
+            id: recordRef.key,
+            pmPlanId: planId, // Changed from planId to pmPlanId to match MaintenanceRecord type
+            evidenceImageUrl: imageUrl, // Changed from imageUrl to evidenceImageUrl
+            // imageHash, // This field is not in MaintenanceRecord type
+            createdAt: now.toISOString(),
+            updatedAt: now.toISOString(),
+        };
+        await set(recordRef, recordData);
+
+        // Update PM Plan (Status, Last Completed, Next Due)
+        const planRef = ref(database, `${COLLECTIONS.PM_PLANS}/${planId}`);
+        const planSnapshot = await get(planRef);
+        const plan = planSnapshot.val() as PMPlan;
+
+        if (plan) {
+            const lastCompleted = new Date();
+            const nextDue = new Date(plan.nextDueDate);
+
+            // Calculate next due date
+            if (plan.scheduleType === 'weekly') {
+                // Weekly logic: Add 7 days to the current "nextDueDate" to preserve the day of week cycle
+                // Or typically, simple maintenance adds interval to completion date. 
+                // But strictly scheduled tasks usually stick to the schedule (e.g. Every Monday).
+                // If we successfully did it, next one is next week's same day.
+                nextDue.setDate(nextDue.getDate() + 7);
+            } else {
+                // Monthly default
+                const cycle = plan.cycleMonths || 1;
+                nextDue.setMonth(nextDue.getMonth() + cycle);
+            }
+
+            // Increment count
+            const completedCount = (plan.completedCount || 0) + 1;
+
+            await update(planRef, {
+                lastCompletedDate: lastCompleted.toISOString(),
+                nextDueDate: nextDue.toISOString(),
+                status: "active",
+                completedCount,
+                updatedAt: now.toISOString(),
+            });
+        }
+    } catch (error) {
+        console.error("Error completing PM task:", error);
+        throw error;
     }
-
-    // 2. Add Maintenance Record
-    await addMaintenanceRecord({
-        ...record,
-        evidenceImageUrl: imageUrl,
-        pmPlanId: planId,
-    });
-
-    // 3. Update PM Plan for next cycle
-    const planRef = ref(database, `${COLLECTIONS.PM_PLANS}/${planId}`);
-    const planSnapshot = await get(planRef);
-
-    if (planSnapshot.exists()) {
-        const planData = planSnapshot.val();
-        const cycleMonths = planData.cycleMonths || 1;
-
-        // Calculate next due date from TODAY
-        const nextDue = new Date();
-        nextDue.setMonth(nextDue.getMonth() + cycleMonths);
-
-        await update(planRef, {
-            lastCompletedDate: new Date().toISOString(),
-            nextDueDate: nextDue.toISOString(),
-            updatedAt: new Date().toISOString(),
-        });
-    }
-}
-
-// ==================== STORAGE ====================
+};
 
 // ==================== STORAGE & DEDUPLICATION ====================
 

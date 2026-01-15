@@ -113,12 +113,26 @@ export interface PMPlan {
     id: string;
     machineId: string;
     machineName: string;
-    taskName: string;
-    cycleMonths: 1 | 2 | 3 | 6 | 9 | 12;
+    taskName: string; // Creates the main header/description
+    checklistItems?: string[]; // Flexible sub-tasks
+
+    // Scheduling
+    cycleMonths?: number; // kept for backward compatibility or monthly usage
+    scheduleType?: "monthly" | "weekly";
+    weeklyDay?: 0 | 1 | 2 | 3 | 4 | 5 | 6; // 0=Sunday
+
     startDate: Date;
     nextDueDate: Date;
     lastCompletedDate?: Date;
+
     status: "active" | "paused";
+    priority?: "normal" | "high" | "urgent";
+
+    // Location/Context
+    locationType?: "machine_zone" | "custom";
+    customLocation?: string;
+
+    completedCount?: number;
     notes?: string;
     createdAt: Date;
     updatedAt: Date;
@@ -244,4 +258,5 @@ export interface PartFilters {
     machineId: string;
     zone: string;
     partName: string;
+    location: string;
 }

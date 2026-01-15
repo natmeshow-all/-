@@ -10,7 +10,7 @@ import ConfirmModal from "./components/ui/ConfirmModal"; // Import ConfirmModal
 import { useLanguage } from "./contexts/LanguageContext";
 import { useAuth } from "./contexts/AuthContext";
 import { useToast } from "./contexts/ToastContext";
-import { getDashboardStats, getParts, deletePart } from "./lib/firebaseService";
+import { getDashboardStats, getParts, deletePart, getMachines } from "./lib/firebaseService";
 import MachineDetailsModal from "./components/machines/MachineDetailsModal"; // Import MachineDetailsModal
 import Lightbox from "./components/ui/Lightbox"; // Import Lightbox
 import {
@@ -102,19 +102,23 @@ export default function Dashboard() {
     machineId: "",
     zone: "",
     partName: "",
+    location: "",
   });
+  const [allMachines, setAllMachines] = useState<any[]>([]);
   const fetchData = async () => {
     // Check session storage to see if we've already shown the startup notification
     const hasShownNotification = typeof window !== 'undefined' && sessionStorage.getItem('db_notification_shown');
 
     try {
       setLoading(true);
-      const [statsData, partsData] = await Promise.all([
+      const [statsData, partsData, machinesData] = await Promise.all([
         getDashboardStats(),
-        getParts()
+        getParts(),
+        getMachines()
       ]);
       setStats(statsData);
       setParts(partsData);
+      setAllMachines(machinesData);
 
       // Trigger success toast only once per session
       if (!hasShownNotification) {
@@ -203,10 +207,63 @@ export default function Dashboard() {
     return () => observer.disconnect();
   }, [loading]); // Run once when loading finishes.
 
-  // Derive unique values for filters from real data
-  const availableMachines = Array.from(new Set(parts.map(p => p.machineName || p.machineId))).filter(Boolean).sort();
-  const availableZones = Array.from(new Set(parts.map(p => p.zone))).filter(Boolean).sort();
-  const availablePartNames = Array.from(new Set(parts.map(p => p.partName))).filter(Boolean).sort();
+  // Derive unique values for filters from real data with cascading logic
+
+  // 0. Location Counts (for the filter buttons)
+  const locationCounts = React.useMemo(() => {
+    return {
+      ALL: parts.length,
+      FZ: parts.filter(p => p.location?.toUpperCase() === 'FZ' || allMachines.find(m => (m.name === p.machineName || m.id === p.machineId) && m.location?.toUpperCase() === 'FZ')).length,
+      RTE: parts.filter(p => p.location?.toUpperCase() === 'RTE' || allMachines.find(m => (m.name === p.machineName || m.id === p.machineId) && m.location?.toUpperCase() === 'RTE')).length,
+      UT: parts.filter(p => p.location?.toUpperCase() === 'UT' || p.location?.toUpperCase() === 'UTILITY' || allMachines.find(m => (m.name === p.machineName || m.id === p.machineId) && (m.location?.toUpperCase() === 'UT' || m.location?.toUpperCase() === 'UTILITY'))).length,
+    };
+  }, [parts, allMachines]);
+
+  // 1. Available Machines: Filtered by location
+  const availableMachines = React.useMemo(() => {
+    let filteredMachines = allMachines;
+    if (filters.location) {
+      if (filters.location === 'UT') {
+        filteredMachines = allMachines.filter(m => m.location?.toUpperCase() === 'UT' || m.location?.toUpperCase() === 'UTILITY');
+      } else {
+        filteredMachines = allMachines.filter(m => m.location?.toUpperCase() === filters.location);
+      }
+    }
+    return filteredMachines.map(m => m.name || m.id).sort();
+  }, [allMachines, filters.location]);
+
+  // 2. Available Zones: Filtered by location AND selected machine
+  const availableZones = React.useMemo(() => {
+    return Array.from(new Set(
+      parts
+        .filter(p => {
+          if (!filters.location) return true;
+          const machine = allMachines.find(m => m.name === p.machineName || m.id === p.machineId);
+          const mLoc = machine?.location?.toUpperCase();
+          if (filters.location === 'UT') return mLoc === 'UT' || mLoc === 'UTILITY';
+          return mLoc === filters.location;
+        })
+        .filter(p => !filters.machineId || p.machineName === filters.machineId || p.machineId === filters.machineId)
+        .map(p => p.zone)
+    )).filter(Boolean).sort();
+  }, [parts, allMachines, filters.location, filters.machineId]);
+
+  // 3. Available Part Names: Filtered by location, machine AND zone
+  const availablePartNames = React.useMemo(() => {
+    return Array.from(new Set(
+      parts
+        .filter(p => {
+          if (!filters.location) return true;
+          const machine = allMachines.find(m => m.name === p.machineName || m.id === p.machineId);
+          const mLoc = machine?.location?.toUpperCase();
+          if (filters.location === 'UT') return mLoc === 'UT' || mLoc === 'UTILITY';
+          return mLoc === filters.location;
+        })
+        .filter(p => !filters.machineId || p.machineName === filters.machineId || p.machineId === filters.machineId)
+        .filter(p => !filters.zone || p.zone === filters.zone)
+        .map(p => p.partName)
+    )).filter(Boolean).sort();
+  }, [parts, allMachines, filters.location, filters.machineId, filters.zone]);
 
   // Filter parts based on current filters
   const filteredParts = parts.filter((part) => {
@@ -214,15 +271,41 @@ export default function Dashboard() {
     if (filters.machineId && part.machineId !== filters.machineId && part.machineName !== filters.machineId) return false;
     if (filters.zone && part.zone !== filters.zone) return false;
     if (filters.partName && part.partName !== filters.partName) return false;
+
+    // Location filter: Check machine's location
+    if (filters.location) {
+      const machine = allMachines.find(m => m.id === part.machineId || m.name === part.machineName);
+      const mLoc = machine?.location?.toUpperCase();
+      if (filters.location === 'UT') {
+        if (mLoc !== 'UT' && mLoc !== 'UTILITY') return false;
+      } else {
+        if (mLoc !== filters.location) return false;
+      }
+    }
+
     return true;
   });
 
   const handleFilterChange = (key: keyof PartFilters, value: string) => {
-    setFilters((prev) => ({ ...prev, [key]: value }));
+    setFilters((prev) => {
+      const newFilters = { ...prev, [key]: value };
+      // Cascading Reset:
+      if (key === "location") {
+        newFilters.machineId = "";
+        newFilters.zone = "";
+        newFilters.partName = "";
+      } else if (key === "machineId") {
+        newFilters.zone = "";
+        newFilters.partName = "";
+      } else if (key === "zone") {
+        newFilters.partName = "";
+      }
+      return newFilters;
+    });
   };
 
   const clearFilters = () => {
-    setFilters({ machineId: "", zone: "", partName: "" });
+    setFilters({ machineId: "", zone: "", partName: "", location: "" });
   };
 
   // Count unique values for filter badges
@@ -317,6 +400,38 @@ export default function Dashboard() {
 
             {isFilterExpanded && (
               <div className="mt-2 animate-fade-in">
+                {/* Location Buttons */}
+                <div className="flex flex-wrap items-center gap-1.5 mb-4">
+                  {[
+                    { id: '', label: 'All', color: 'accent-purple' },
+                    { id: 'FZ', label: 'FZ', color: 'accent-cyan' },
+                    { id: 'RTE', label: 'RTE', color: 'green-500' },
+                    { id: 'UT', label: 'UT', color: 'accent-yellow' }
+                  ].map((loc) => (
+                    <button
+                      key={loc.id}
+                      onClick={() => handleFilterChange("location", loc.id)}
+                      className={`
+                        relative px-3 py-1.5 rounded-lg transition-all duration-300
+                        border backdrop-blur-md flex items-center gap-1.5
+                        ${filters.location === loc.id
+                          ? `bg-${loc.color}/20 border-${loc.color}/40 text-white scale-105`
+                          : 'bg-white/5 border-white/10 text-text-muted hover:bg-white/10'}
+                      `}
+                    >
+                      <span className="text-[10px] font-bold tracking-tight">{loc.label}</span>
+                      <span className={`
+                        px-1 py-0.5 rounded text-[8px] font-black
+                        ${filters.location === loc.id
+                          ? `bg-${loc.color} text-bg-primary`
+                          : 'bg-white/10 text-text-muted'}
+                      `}>
+                        {loc.id === '' ? locationCounts.ALL : (locationCounts as any)[loc.id]}
+                      </span>
+                    </button>
+                  ))}
+                </div>
+
                 <div className="grid grid-cols-1 sm:grid-cols-3 gap-2 mb-3">
                   {/* Machine Filter */}
                   <div>
@@ -407,18 +522,18 @@ export default function Dashboard() {
           style={{ animationDelay: "300ms" }}
         >
           {/* Header Card - Separate on mobile if not fullscreen */}
-          <div className={`card overflow-hidden mb-4 ${isTableFullscreen ? "rounded-none border-0 flex-1 flex flex-col mb-0" : ""}`}>
-            <div className="px-4 py-3 border-b border-border-light flex items-center justify-between bg-bg-secondary flex-none">
+          <div className={`${isTableFullscreen ? "rounded-none border-0 flex-1 flex flex-col mb-0" : "mb-2"}`}>
+            <div className={`flex items-center justify-between flex-none ${isTableFullscreen ? "px-4 py-3 border-b border-border-light bg-bg-secondary" : "px-2 py-1"}`}>
               <div className="flex items-center gap-2">
-                <SettingsIcon size={18} className="text-text-muted" />
-                <h2 className="font-semibold text-text-primary">{t("tableTitleParts")}</h2>
+                <SettingsIcon size={isTableFullscreen ? 18 : 14} className="text-text-muted" />
+                <h2 className={`${isTableFullscreen ? "font-semibold text-text-primary" : "text-sm font-medium text-text-secondary"}`}>{t("tableTitleParts")}</h2>
               </div>
               <button
                 onClick={() => setIsTableFullscreen(!isTableFullscreen)}
-                className={`transition-all duration-300 p-1.5 rounded-lg ${!isTableFullscreen ? "bg-primary/20 text-primary shadow-[0_0_15px_rgba(99,102,241,0.6)] animate-pulse" : "text-text-muted hover:text-primary hover:bg-bg-tertiary"}`}
+                className={`transition-all duration-300 p-1 rounded-lg ${!isTableFullscreen ? "bg-primary/10 text-primary/70 hover:text-primary hover:bg-primary/20" : "text-text-muted hover:text-primary hover:bg-bg-tertiary"}`}
                 title={isTableFullscreen ? "Exit Fullscreen" : "Fullscreen"}
               >
-                {isTableFullscreen ? <MinimizeIcon size={20} /> : <MaximizeIcon size={20} />}
+                {isTableFullscreen ? <MinimizeIcon size={20} /> : <MaximizeIcon size={14} />}
               </button>
             </div>
 

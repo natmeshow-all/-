@@ -18,6 +18,25 @@ export default function MachinesPage() {
     const [deleteConfirmOpen, setDeleteConfirmOpen] = React.useState(false);
     const [selectedMachine, setSelectedMachine] = React.useState<any>(null);
     const [machineToDelete, setMachineToDelete] = React.useState<any>(null);
+    const [selectedLocation, setSelectedLocation] = React.useState("ALL");
+
+    // Location counts
+    const counts = React.useMemo(() => {
+        return {
+            ALL: machines.length,
+            FZ: machines.filter(m => m.location?.toUpperCase() === 'FZ').length,
+            RTE: machines.filter(m => m.location?.toUpperCase() === 'RTE').length,
+            UT: machines.filter(m => m.location?.toUpperCase() === 'UT' || m.location?.toUpperCase() === 'UTILITY').length,
+        };
+    }, [machines]);
+
+    const filteredMachines = React.useMemo(() => {
+        if (selectedLocation === 'ALL') return machines;
+        if (selectedLocation === 'UT') {
+            return machines.filter(m => m.location?.toUpperCase() === 'UT' || m.location?.toUpperCase() === 'UTILITY');
+        }
+        return machines.filter(m => m.location?.toUpperCase() === selectedLocation);
+    }, [machines, selectedLocation]);
 
     const fetchMachines = async () => {
         try {
@@ -85,6 +104,41 @@ export default function MachinesPage() {
                     </button>
                 </div>
 
+                {/* Location Filters */}
+                <div className="flex flex-wrap items-center gap-2 mb-8">
+                    {[
+                        { id: 'ALL', label: 'All', color: 'accent-purple' },
+                        { id: 'FZ', label: 'FZ', color: 'accent-cyan' },
+                        { id: 'RTE', label: 'RTE', color: 'green-500' },
+                        { id: 'UT', label: 'UT', color: 'accent-yellow' }
+                    ].map((loc) => (
+                        <button
+                            key={loc.id}
+                            onClick={() => setSelectedLocation(loc.id)}
+                            className={`
+                                relative px-4 py-2 rounded-xl transition-all duration-300
+                                border backdrop-blur-md flex items-center gap-2
+                                ${selectedLocation === loc.id
+                                    ? `bg-${loc.color}/20 border-${loc.color}/40 text-white shadow-lg scale-105`
+                                    : 'bg-white/5 border-white/10 text-text-muted hover:bg-white/10 hover:border-white/20'}
+                            `}
+                        >
+                            <span className={`text-sm font-bold tracking-wide`}>{loc.label}</span>
+                            <span className={`
+                                px-1.5 py-0.5 rounded-md text-[10px] font-black
+                                ${selectedLocation === loc.id
+                                    ? `bg-${loc.color} text-bg-primary`
+                                    : 'bg-white/10 text-text-muted'}
+                            `}>
+                                {(counts as any)[loc.id]}
+                            </span>
+                            {selectedLocation === loc.id && (
+                                <div className={`absolute -bottom-1 left-1/2 -translate-x-1/2 w-1 h-1 rounded-full bg-${loc.color}`}></div>
+                            )}
+                        </button>
+                    ))}
+                </div>
+
                 {/* Loading State */}
                 {loading && (
                     <div className="flex justify-center py-12">
@@ -95,7 +149,7 @@ export default function MachinesPage() {
                 {/* Machine Grid */}
                 {!loading && (
                     <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
-                        {machines.map((machine, index) => (
+                        {filteredMachines.map((machine, index) => (
                             <MachineCard
                                 key={machine.id || index}
                                 machine={machine}
@@ -172,9 +226,25 @@ function MachineCard({ machine, index, onRefresh, onOpenSettings, onOpenDelete }
         onOpenDelete();
     };
 
+    const locationKey = machine.location?.toUpperCase() || "";
+    const getStyles = () => {
+        switch (locationKey) {
+            case 'FZ':
+                return { border: 'border-accent-cyan/30', shadow: 'hover:shadow-accent-cyan/20', code: 'text-accent-cyan' };
+            case 'RTE':
+                return { border: 'border-green-500/30', shadow: 'hover:shadow-green-500/20', code: 'text-green-400' };
+            case 'UTILITY':
+            case 'UT':
+                return { border: 'border-accent-yellow/30', shadow: 'hover:shadow-accent-yellow/20', code: 'text-accent-yellow' };
+            default:
+                return { border: 'border-white/10', shadow: 'hover:shadow-primary/10', code: 'text-primary-light' };
+        }
+    };
+    const styles = getStyles();
+
     return (
         <div
-            className="group relative h-80 rounded-2xl overflow-hidden shadow-lg hover:shadow-2xl hover:shadow-primary/10 transition-all duration-500 animate-fade-in-up border border-white/5"
+            className={`group relative h-80 rounded-2xl overflow-hidden shadow-lg hover:shadow-2xl ${styles.shadow} transition-all duration-500 animate-fade-in-up border ${styles.border}`}
             style={{ animationDelay: `${index * 50}ms` }}
         >
             {/* Full Background Image */}
@@ -199,7 +269,7 @@ function MachineCard({ machine, index, onRefresh, onOpenSettings, onOpenDelete }
                 <div className="flex items-start justify-between mb-2">
                     <div className="flex flex-col">
                         {machine.code && (
-                            <span className="text-[10px] font-bold text-primary-light uppercase tracking-wider mb-0.5">
+                            <span className={`text-[10px] font-bold ${styles.code} uppercase tracking-wider mb-0.5`}>
                                 {machine.code}
                             </span>
                         )}

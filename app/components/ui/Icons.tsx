@@ -418,3 +418,18 @@ export const CheckCircleIcon: React.FC<IconProps> = ({ className = "", size = 24
         <polyline points="22 4 12 14.01 9 11.01" />
     </svg>
 );
+
+export const ShieldCheckIcon: React.FC<IconProps> = ({ className = "", size = 24 }) => (
+    <svg className={className} width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+        <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10" />
+        <path d="m9 12 2 2 4-4" />
+    </svg>
+);
+
+export const FileCheckIcon: React.FC<IconProps> = ({ className = "", size = 24 }) => (
+    <svg className={className} width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+        <path d="M14.5 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V7.5L14.5 2z" />
+        <polyline points="14 2 14 8 20 8" />
+        <path d="m9 15 2 2 4-4" />
+    </svg>
+);

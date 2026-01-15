@@ -9,11 +9,12 @@ import {
     WrenchIcon,
     CalendarIcon,
     ActivityIcon,
+    CheckCircleIcon,
 } from "./ui/Icons";
 
 interface NavItem {
     href: string;
-    labelKey: "navDashboard" | "navMachines" | "navParts" | "navMaintenance" | "navSchedule" | "navPredictive";
+    labelKey: "navDashboard" | "navMachines" | "navParts" | "navMaintenance" | "navSchedule" | "navPredictive" | "navAudit";
     icon: React.FC<{ className?: string; size?: number }>;
 }
 
@@ -24,6 +25,7 @@ const navItems: NavItem[] = [
     { href: "/maintenance", labelKey: "navMaintenance", icon: WrenchIcon },
     { href: "/schedule", labelKey: "navSchedule", icon: CalendarIcon },
     { href: "/predictive", labelKey: "navPredictive", icon: ActivityIcon },
+    { href: "/audit", labelKey: "navAudit", icon: CheckCircleIcon },
 ];
 
 export default function MobileNav() {
@@ -72,8 +74,8 @@ export default function MobileNav() {
 
             <nav
                 className={`mobile-nav lg:hidden transition-all duration-500 ease-out ${isVisible
-                        ? "translate-y-0 opacity-100"
-                        : "translate-y-[calc(100%+2rem)] opacity-0"
+                    ? "translate-y-0 opacity-100"
+                    : "translate-y-[calc(100%+2rem)] opacity-0"
                     }`}
             >
                 {navItems.map((item) => {

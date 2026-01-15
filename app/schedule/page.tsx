@@ -4,8 +4,8 @@ import React, { useState, useEffect } from "react";
 import Header from "../components/Header";
 import MobileNav from "../components/MobileNav";
 import { useLanguage } from "../contexts/LanguageContext";
-import { CalendarIcon, ClockIcon, SettingsIcon, AlertTriangleIcon, BoxIcon, FolderIcon, CheckCircleIcon, PlusIcon } from "../components/ui/Icons";
-import { getPMPlans } from "../lib/firebaseService";
+import { CalendarIcon, ClockIcon, SettingsIcon, AlertTriangleIcon, BoxIcon, FolderIcon, CheckCircleIcon, PlusIcon, EditIcon, TrashIcon } from "../components/ui/Icons";
+import { getPMPlans, deletePMPlan } from "../lib/firebaseService";
 import { PMPlan } from "../types";
 import PMExecutionModal from "../components/pm/PMExecutionModal";
 import PMConfigModal from "../components/pm/PMConfigModal";
@@ -26,6 +26,22 @@ export default function SchedulePage() {
     const [machineSelectOpen, setMachineSelectOpen] = useState(false);
     const [selectedMachine, setSelectedMachine] = useState<Machine | null>(null);
     const [allMachines, setAllMachines] = useState<Machine[]>([]);
+    const [selectedLocation, setSelectedLocation] = useState<string>("All");
+
+    const locations = ["All", "Utility", "FZ", "RTE"];
+
+    const filteredMachines = allMachines.filter(machine => {
+        if (selectedLocation === "All") return true;
+        // User requested FZ, RTE, UT.
+        // We filter by strict location match first, but if data isn't exact,
+        // we might consider relaxing it later. 
+        // For now, simple exact match on location field.
+        return machine.location === selectedLocation;
+    });
+
+    // Delete Confirmation State
+    const [deleteModalOpen, setDeleteModalOpen] = useState(false);
+    const [planToDelete, setPlanToDelete] = useState<PMPlan | null>(null);
 
     const fetchData = async () => {
         setLoading(true);
@@ -71,6 +87,34 @@ export default function SchedulePage() {
     const handleHistoryClick = (plan: PMPlan) => {
         setSelectedPlan(plan);
         setHistoryModalOpen(true);
+    };
+
+    const handleEditClick = (plan: PMPlan) => {
+        const machine = allMachines.find(m => m.id === plan.machineId || m.name === plan.machineName);
+        if (machine) {
+            setSelectedMachine(machine);
+            setSelectedPlan(plan);
+            setConfigModalOpen(true);
+        }
+    };
+
+    const handleDeleteClick = (plan: PMPlan) => {
+        setPlanToDelete(plan);
+        setDeleteModalOpen(true);
+    };
+
+    const confirmDelete = async () => {
+        if (!planToDelete) return;
+
+        try {
+            await deletePMPlan(planToDelete.id);
+            setDeleteModalOpen(false);
+            setPlanToDelete(null);
+            fetchData();
+        } catch (error) {
+            console.error("Error deleting PM plan:", error);
+            alert("ไม่สามารถลบแผนงานได้");
+        }
     };
 
     if (!mounted) return null;
@@ -128,6 +172,16 @@ export default function SchedulePage() {
                     ) : plans.length > 0 ? (
                         plans.map((item, index) => {
                             const status = getStatusInfo(item.nextDueDate);
+
+                            // Priority Styles
+                            const priorityColor = item.priority === 'urgent' ? 'border-accent-red bg-accent-red/5'
+                                : item.priority === 'high' ? 'border-accent-yellow bg-accent-yellow/5'
+                                    : 'border-white/5 bg-transparent';
+
+                            const priorityBadge = item.priority === 'urgent' ? { label: 'Urgent', color: 'bg-accent-red text-white' }
+                                : item.priority === 'high' ? { label: 'High', color: 'bg-accent-yellow text-white' }
+                                    : null;
+
                             return (
                                 <div
                                     key={item.id}
@@ -135,22 +189,65 @@ export default function SchedulePage() {
                                         status.days === 0 ? "border-l-accent-yellow" :
                                             status.days <= 7 ? "border-l-accent-blue" :
                                                 "border-l-accent-green"
-                                        }`}
+                                        } ${priorityColor} border-y border-r`}
                                     style={{ animationDelay: `${index * 50}ms` }}
                                 >
                                     <div className="flex items-start justify-between">
                                         <div className="flex items-center gap-3">
-                                            <div className={`w-12 h-12 rounded-xl flex items-center justify-center ${status.bg}`}>
+                                            <div className={`w-12 h-12 rounded-xl flex items-center justify-center ${status.bg} relative`}>
                                                 <SettingsIcon size={24} className={status.color} />
+                                                {item.completedCount && item.completedCount > 0 && (
+                                                    <span className="absolute -top-1 -right-1 w-5 h-5 bg-accent-blue text-white text-[10px] font-bold rounded-full flex items-center justify-center shadow-sm border border-bg-primary">
+                                                        {item.completedCount}
+                                                    </span>
+                                                )}
                                             </div>
                                             <div>
-                                                <h3 className="font-semibold text-text-primary">{item.taskName}</h3>
-                                                <p className="text-sm text-text-muted">{item.machineName}</p>
+                                                <div className="flex items-center gap-2">
+                                                    <h3 className="font-semibold text-text-primary">{item.taskName}</h3>
+                                                    {priorityBadge && (
+                                                        <span className={`text-[9px] px-1.5 py-0.5 rounded-full uppercase font-bold tracking-wider ${priorityBadge.color}`}>
+                                                            {priorityBadge.label}
+                                                        </span>
+                                                    )}
+                                                </div>
+                                                <p className="text-sm text-text-muted flex items-center gap-2">
+                                                    {item.machineName}
+                                                    {item.checklistItems && item.checklistItems.length > 0 && (
+                                                        <span className="text-xs bg-bg-tertiary px-1.5 rounded text-text-muted border border-white/5">
+                                                            {item.checklistItems.length} items
+                                                        </span>
+                                                    )}
+                                                </p>
                                             </div>
                                         </div>
-                                        <span className={`badge ${status.bg} ${status.color} border ${status.border} shadow-sm px-2.5 py-1 text-[10px] font-bold uppercase`}>
-                                            {status.label}
-                                        </span>
+                                        <div className="flex items-center gap-2">
+                                            <div className="flex items-center gap-1">
+                                                <button
+                                                    onClick={(e) => {
+                                                        e.stopPropagation();
+                                                        handleEditClick(item);
+                                                    }}
+                                                    className="p-1.5 rounded-lg text-text-muted hover:text-accent-blue hover:bg-accent-blue/10 transition-all"
+                                                    title="แก้ไขแผนงาน"
+                                                >
+                                                    <EditIcon size={14} />
+                                                </button>
+                                                <button
+                                                    onClick={(e) => {
+                                                        e.stopPropagation();
+                                                        handleDeleteClick(item);
+                                                    }}
+                                                    className="p-1.5 rounded-lg text-text-muted hover:text-accent-red hover:bg-accent-red/10 transition-all"
+                                                    title="ลบแผนงาน"
+                                                >
+                                                    <TrashIcon size={14} />
+                                                </button>
+                                            </div>
+                                            <span className={`badge ${status.bg} ${status.color} border ${status.border} shadow-sm px-2.5 py-1 text-[10px] font-bold uppercase`}>
+                                                {status.label}
+                                            </span>
+                                        </div>
                                     </div>
 
                                     <div className="flex items-center justify-between mt-4 pt-4 border-t border-white/5">
@@ -159,14 +256,21 @@ export default function SchedulePage() {
                                                 <CalendarIcon size={14} />
                                                 <span>กำหนด: {item.nextDueDate.toLocaleDateString('th-TH', { day: 'numeric', month: 'short', year: 'numeric' })}</span>
                                             </div>
-                                            <div className="flex items-center gap-2 text-text-muted">
-                                                <ClockIcon size={14} />
-                                                <span className={status.days <= 0 ? "text-accent-red font-bold" : ""}>
-                                                    {status.days < 0 ? `เกินมา ${Math.abs(status.days)} วัน` :
-                                                        status.days === 0 ? "วันนี้" :
-                                                            `อีก ${status.days} วัน`}
-                                                </span>
-                                            </div>
+                                            {item.scheduleType === 'weekly' ? (
+                                                <div className="flex items-center gap-2 text-text-muted">
+                                                    <ClockIcon size={14} />
+                                                    <span>ทุกวัน{['อา', 'จ', 'อ', 'พ', 'พฤ', 'ศ', 'ส'][item.weeklyDay || 0]}</span>
+                                                </div>
+                                            ) : (
+                                                <div className="flex items-center gap-2 text-text-muted">
+                                                    <ClockIcon size={14} />
+                                                    <span className={status.days <= 0 ? "text-accent-red font-bold" : ""}>
+                                                        {status.days < 0 ? `เกินมา ${Math.abs(status.days)} วัน` :
+                                                            status.days === 0 ? "วันนี้" :
+                                                                `อีก ${status.days} วัน`}
+                                                    </span>
+                                                </div>
+                                            )}
                                         </div>
 
                                         <div className="flex items-center gap-2">
@@ -199,7 +303,7 @@ export default function SchedulePage() {
                         </div>
                     )}
                 </div>
-            </main>
+            </main >
 
             {selectedPlan && (
                 <PMExecutionModal
@@ -208,15 +312,18 @@ export default function SchedulePage() {
                     plan={selectedPlan}
                     onSuccess={fetchData}
                 />
-            )}
+            )
+            }
 
-            {selectedPlan && (
-                <PMHistoryModal
-                    isOpen={historyModalOpen}
-                    onClose={() => setHistoryModalOpen(false)}
-                    plan={selectedPlan}
-                />
-            )}
+            {
+                selectedPlan && (
+                    <PMHistoryModal
+                        isOpen={historyModalOpen}
+                        onClose={() => setHistoryModalOpen(false)}
+                        plan={selectedPlan}
+                    />
+                )
+            }
 
             {/* Machine Selection Modal */}
             <Modal
@@ -224,41 +331,101 @@ export default function SchedulePage() {
                 onClose={() => setMachineSelectOpen(false)}
                 title="เลือกเครื่องจักรสำหรับแผน PM"
             >
-                <div className="space-y-3 max-h-[60vh] overflow-y-auto custom-scrollbar p-1">
-                    {allMachines.map(machine => (
+                {/* Location Filter */}
+                <div className="flex gap-2 mb-4 overflow-x-auto pb-2 custom-scrollbar">
+                    {locations.map(loc => (
                         <button
-                            key={machine.id}
-                            onClick={() => {
-                                setSelectedMachine(machine);
-                                setMachineSelectOpen(false);
-                                setConfigModalOpen(true);
-                            }}
-                            className="w-full flex items-center gap-4 p-4 rounded-xl bg-bg-tertiary border border-white/5 hover:border-accent-blue/50 hover:bg-accent-blue/5 transition-all group text-left"
+                            key={loc}
+                            onClick={() => setSelectedLocation(loc)}
+                            className={`px-3 py-1.5 rounded-lg text-sm font-medium transition-all whitespace-nowrap ${selectedLocation === loc
+                                ? "bg-accent-blue text-white shadow-md"
+                                : "bg-bg-tertiary text-text-muted hover:bg-white/5 hover:text-text-primary border border-white/5"
+                                }`}
                         >
-                            <div className="w-12 h-12 rounded-lg bg-bg-secondary flex items-center justify-center text-accent-blue group-hover:scale-110 transition-transform">
-                                <SettingsIcon size={24} />
-                            </div>
-                            <div className="flex-1">
-                                <h3 className="font-bold text-text-primary group-hover:text-accent-blue transition-colors">{machine.name}</h3>
-                                <p className="text-xs text-text-muted">{machine.zone} • {machine.location}</p>
-                            </div>
-                            <PlusIcon size={18} className="text-text-muted group-hover:text-accent-blue" />
+                            {loc === "All" ? "ทั้งหมด" : loc}
                         </button>
                     ))}
+                </div>
+
+                <div className="space-y-3 max-h-[60vh] overflow-y-auto custom-scrollbar p-1">
+                    {filteredMachines.length > 0 ? (
+                        filteredMachines.map(machine => (
+                            <button
+                                key={machine.id}
+                                onClick={() => {
+                                    setSelectedMachine(machine);
+                                    setMachineSelectOpen(false);
+                                    setConfigModalOpen(true);
+                                }}
+                                className="w-full flex items-center gap-4 p-4 rounded-xl bg-bg-tertiary border border-white/5 hover:border-accent-blue/50 hover:bg-accent-blue/5 transition-all group text-left"
+                            >
+                                <div className="w-12 h-12 rounded-lg bg-bg-secondary flex items-center justify-center text-accent-blue group-hover:scale-110 transition-transform">
+                                    <SettingsIcon size={24} />
+                                </div>
+                                <div className="flex-1">
+                                    <h3 className="font-bold text-text-primary group-hover:text-accent-blue transition-colors">{machine.name}</h3>
+                                    <p className="text-xs text-text-muted">{machine.zone} • {machine.location || '-'}</p>
+                                </div>
+                                <PlusIcon size={18} className="text-text-muted group-hover:text-accent-blue" />
+                            </button>
+                        ))
+                    ) : (
+                        <div className="text-center py-8 text-text-muted opacity-60">
+                            <p>ไม่พบเครื่องจักรในสถานที่นี้</p>
+                        </div>
+                    )}
                 </div>
             </Modal>
 
             {/* Config Modal */}
-            {selectedMachine && (
-                <PMConfigModal
-                    isOpen={configModalOpen}
-                    onClose={() => setConfigModalOpen(false)}
-                    machine={selectedMachine}
-                    onSuccess={fetchData}
-                />
-            )}
+            {
+                selectedMachine && (
+                    <PMConfigModal
+                        isOpen={configModalOpen}
+                        onClose={() => setConfigModalOpen(false)}
+                        machine={selectedMachine}
+                        plan={selectedPlan || undefined} // Pass detailed plan if editing
+                        onSuccess={fetchData}
+                    />
+                )
+            }
+
+
+            {/* Delete Confirmation Modal */}
+            <Modal
+                isOpen={deleteModalOpen}
+                onClose={() => setDeleteModalOpen(false)}
+                title="ยืนยันการลบแผนงาน"
+            >
+                <div className="space-y-4">
+                    <div className="flex flex-col items-center justify-center p-6 text-center">
+                        <div className="w-16 h-16 rounded-full bg-accent-red/10 flex items-center justify-center mb-4">
+                            <TrashIcon size={32} className="text-accent-red" />
+                        </div>
+                        <h3 className="text-lg font-bold text-text-primary mb-2">คุณแน่ใจหรือไม่?</h3>
+                        <p className="text-text-muted">
+                            คุณต้องการลบแผนงาน <span className="text-accent-red font-semibold">"{planToDelete?.taskName}"</span> ใช่หรือไม่?
+                            การกระทำนี้ไม่สามารถเรียกคืนได้
+                        </p>
+                    </div>
+                    <div className="flex gap-3">
+                        <button
+                            onClick={() => setDeleteModalOpen(false)}
+                            className="flex-1 py-3 rounded-xl bg-bg-tertiary text-text-primary font-bold hover:bg-white/10"
+                        >
+                            ยกเลิก
+                        </button>
+                        <button
+                            onClick={confirmDelete}
+                            className="flex-1 py-3 rounded-xl bg-accent-red text-white font-bold hover:bg-accent-red/90"
+                        >
+                            ยืนยันลบ
+                        </button>
+                    </div>
+                </div>
+            </Modal>
 
             <MobileNav />
-        </div>
+        </div >
     );
 }

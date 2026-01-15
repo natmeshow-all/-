@@ -3,7 +3,7 @@
 import React, { useState } from "react";
 import { useLanguage } from "../../contexts/LanguageContext";
 import { addMachine } from "../../lib/firebaseService";
-import machinesData from "../../data/machines_import.json";
+import machinesData from "../../data/machines_import_7.json";
 import Header from "../../components/Header";
 import MobileNav from "../../components/MobileNav";
 
@@ -14,7 +14,7 @@ export default function ImportPage() {
     const [log, setLog] = useState<string[]>([]);
 
     const handleImport = async () => {
-        if (!confirm("Are you sure you want to import 31 machines?")) return;
+        if (!confirm(`Are you sure you want to import ${machinesData.length} NEW machines (Batch 7 - UT)?`)) return;
 
         setLoading(true);
         setLog([]);
@@ -43,8 +43,8 @@ export default function ImportPage() {
             <Header />
             <main className="main-container px-4 py-12">
                 <div className="max-w-2xl mx-auto bg-bg-secondary rounded-2xl p-8 border border-white/10 shadow-xl">
-                    <h1 className="text-2xl font-bold mb-2">Machine Data Import</h1>
-                    <p className="text-text-muted mb-6">Import 31 machines from machines_import.json</p>
+                    <h1 className="text-2xl font-bold mb-2">Machine Data Import (Batch 7)</h1>
+                    <p className="text-text-muted mb-6">Import {machinesData.length} machines from machines_import_7.json (UT)</p>
 
                     <div className="mb-8">
                         <div className="flex justify-between mb-2 text-sm font-medium">

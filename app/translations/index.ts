@@ -14,6 +14,7 @@ export interface TranslationKeys {
     navSchedule: string;
     navAnalytics: string;
     navPredictive: string;
+    navAudit: string;
 
     // Predictive Page
     predictiveSubtitle: string;
@@ -44,6 +45,19 @@ export interface TranslationKeys {
     statusHighRisk: string;
     statusMonitoring: string;
     statusHealthy: string;
+    statusOverdue: string;
+    statusOnTime: string;
+
+    // Audit Page
+    auditSubtitle: string;
+    auditCompliance: string;
+    auditTraceability: string;
+    auditCriticalStock: string;
+    auditReliability: string;
+    auditPmCompletion: string;
+    auditOnTimeRate: string;
+    auditActiveIssues: string;
+    auditAvailability: string;
 
     // Stats
     statTotalParts: string;
@@ -361,6 +375,7 @@ const th: TranslationKeys = {
     navSchedule: "ตารางงาน",
     navAnalytics: "วิเคราะห์",
     navPredictive: "ทำนายผล",
+    navAudit: "Audit",
 
     // Predictive Page
     predictiveSubtitle: "การพยากรณ์การซ่อมบำรุงด้วย AI",
@@ -391,6 +406,19 @@ const th: TranslationKeys = {
     statusHighRisk: "ความเสี่ยงสูง",
     statusMonitoring: "กำลังตรวจสอบ",
     statusHealthy: "ปกติ",
+    statusOverdue: "เกินกำหนด",
+    statusOnTime: "ตรงเวลา",
+
+    // Audit Page
+    auditSubtitle: "สรุปข้อมูลสำหรับการตรวจประเมิน (Audit Summary)",
+    auditCompliance: "ความสอดคล้องของแผน PM",
+    auditTraceability: "การตรวจสอบย้อนกลับ",
+    auditCriticalStock: "อะไหล่สำรองที่สำคัญ",
+    auditReliability: "ความเชื่อมั่นเครื่องจักร",
+    auditPmCompletion: "อัตราการทำ PM สำเร็จ",
+    auditOnTimeRate: "อัตราการทำตรงเวลา",
+    auditActiveIssues: "ปัญหาที่ยังไม่แก้ไข",
+    auditAvailability: "ความพร้อมใช้งาน",
 
     // Stats
     statTotalParts: "จำนวนอะไหล่ทั้งหมด",
@@ -708,6 +736,7 @@ const en: TranslationKeys = {
     navSchedule: "Schedule",
     navAnalytics: "Analytics",
     navPredictive: "Predictive",
+    navAudit: "Audit",
 
     // Predictive Page
     predictiveSubtitle: "AI-Powered Maintenance Forecasting",
@@ -738,6 +767,19 @@ const en: TranslationKeys = {
     statusHighRisk: "High Risk",
     statusMonitoring: "Monitoring",
     statusHealthy: "Healthy",
+    statusOverdue: "Overdue",
+    statusOnTime: "On-time",
+
+    // Audit Page
+    auditSubtitle: "Audit Summary & Compliance Dashboard",
+    auditCompliance: "PM Compliance Tracker",
+    auditTraceability: "Maintenance Traceability",
+    auditCriticalStock: "Critical Spare Parts",
+    auditReliability: "Machine Reliability",
+    auditPmCompletion: "PM Completion Rate",
+    auditOnTimeRate: "On-time Completion Rate",
+    auditActiveIssues: "Active Issues",
+    auditAvailability: "Availability",
 
     // Stats
     statTotalParts: "Part Names",
