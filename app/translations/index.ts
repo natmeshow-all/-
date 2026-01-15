@@ -120,19 +120,24 @@ export interface TranslationKeys {
     // Machine Settings Labels
     labelFileSize: string;
     labelMachineName: string;
+    labelMachineCode: string;
     labelMachineSettings: string;
+    labelBrand: string;
+    labelModel: string;
     labelBrandModel: string;
     labelSerialNumber: string;
     labelInstallationDate: string;
     labelOperatingHours: string;
     labelCapacity: string;
     labelPowerRating: string;
+    labelPerformance: string;
     labelMaintenanceCycle: string;
     labelHours: string;
     labelPower: string;
     labelInstall: string;
     labelMonths: string;
     labelDescription: string;
+    labelRemark: string;
 
     // Maintenance Record Modal
     maintenanceTitle: string;
@@ -462,19 +467,24 @@ const th: TranslationKeys = {
     // Machine Settings Labels
     labelFileSize: "ขนาดไฟล์",
     labelMachineName: "ชื่อเครื่องจักร",
+    labelMachineCode: "รหัสเครื่องจักร",
     labelMachineSettings: "ตั้งค่าเครื่องจักร",
+    labelBrand: "ยี่ห้อ",
+    labelModel: "รุ่น",
     labelBrandModel: "ยี่ห้อและรุ่น",
     labelSerialNumber: "หมายเลขซีเรียล",
     labelInstallationDate: "วันที่ติดตั้ง",
     labelOperatingHours: "ชั่วโมงการทำงาน",
     labelCapacity: "กำลังการผลิต",
     labelPowerRating: "กำลังไฟฟ้า",
+    labelPerformance: "ประสิทธิภาพ (Capacity/kW)",
     labelMaintenanceCycle: "รอบการบำรุงรักษา",
     labelHours: "ชั่วโมง",
     labelPower: "ไฟฟ้า",
     labelInstall: "ติดตั้ง",
     labelMonths: "เดือน",
     labelDescription: "คำอธิบายเพิ่มเติม",
+    labelRemark: "หมายเหตุ (Class)",
 
     // Maintenance Record Modal
     maintenanceTitle: "บันทึกซ่อมบำรุงและการเปลี่ยนถ่ายน้ำมันเกียร์",
@@ -804,19 +814,24 @@ const en: TranslationKeys = {
     // Machine Settings Labels
     labelFileSize: "File Size",
     labelMachineName: "Machine Name",
+    labelMachineCode: "Machine Code",
     labelMachineSettings: "Machine Settings",
+    labelBrand: "Brand",
+    labelModel: "Model",
     labelBrandModel: "Brand & Model",
     labelSerialNumber: "Serial Number",
     labelInstallationDate: "Installation Date",
     labelOperatingHours: "Operating Hours",
     labelCapacity: "Capacity",
     labelPowerRating: "Power Rating",
+    labelPerformance: "Performance (Capacity/kW)",
     labelMaintenanceCycle: "Maintenance Cycle",
     labelHours: "Hours",
     labelPower: "Power",
     labelInstall: "Install",
     labelMonths: "Months",
     labelDescription: "Additional Description",
+    labelRemark: "Remark (Class)",
 
     // Maintenance Record Modal
     maintenanceTitle: "Maintenance & Oil Change Record",

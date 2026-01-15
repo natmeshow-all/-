@@ -2,18 +2,23 @@
 
 export interface Machine {
     id: string;
+    code?: string;
     name: string;
-    description?: string;
-    zone: string;
+    brand?: string;
+    model?: string;
+    serialNumber?: string;
+    performance?: string;
     location?: string;
+    zone: string;
+    remark?: string;
+    description?: string;
     status: "active" | "maintenance" | "inactive";
     imageUrl?: string;
-    serialNumber?: string;
     installationDate?: string;
-    brandModel?: string;
+    brandModel?: string; // Legacy field, keeping for compatibility
     operatingHours?: number;
-    capacity?: string;
-    powerRating?: string;
+    capacity?: string; // Legacy field, keeping for compatibility
+    powerRating?: string; // Legacy field, keeping for compatibility
     maintenanceCycle?: number;
     createdAt: Date;
     updatedAt: Date;

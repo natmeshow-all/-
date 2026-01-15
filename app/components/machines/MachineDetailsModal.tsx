@@ -186,6 +186,36 @@ export default function MachineDetailsModal({
                         </div>
                     ) : (
                         <div className="space-y-4 md:space-y-6">
+                            {/* Machine Info Summary */}
+                            <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+                                {machine?.code && (
+                                    <div className="bg-[#1E293B]/40 p-3 rounded-xl border border-white/5">
+                                        <div className="text-[10px] text-text-muted uppercase font-bold mb-1">{t("labelMachineCode")}</div>
+                                        <div className="text-sm font-bold text-white">{machine.code}</div>
+                                    </div>
+                                )}
+                                {(machine?.brand || machine?.model) && (
+                                    <div className="bg-[#1E293B]/40 p-3 rounded-xl border border-white/5 md:col-span-1">
+                                        <div className="text-[10px] text-text-muted uppercase font-bold mb-1">{t("labelBrand")}/{t("labelModel")}</div>
+                                        <div className="text-sm font-bold text-white leading-tight">
+                                            {machine.brand} {machine.model}
+                                        </div>
+                                    </div>
+                                )}
+                                {machine?.performance && (
+                                    <div className="bg-[#1E293B]/40 p-3 rounded-xl border border-white/5">
+                                        <div className="text-[10px] text-text-muted uppercase font-bold mb-1">{t("labelPerformance")}</div>
+                                        <div className="text-sm font-bold text-primary-light">{machine.performance} kW</div>
+                                    </div>
+                                )}
+                                {machine?.location && (
+                                    <div className="bg-[#1E293B]/40 p-3 rounded-xl border border-white/5">
+                                        <div className="text-[10px] text-text-muted uppercase font-bold mb-1">{t("tableLocation")}</div>
+                                        <div className="text-sm font-bold text-accent-cyan">{machine.location}</div>
+                                    </div>
+                                )}
+                            </div>
+
                             {/* Stats */}
                             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                                 <div className="bg-[#1E293B]/60 p-4 md:p-6 rounded-2xl md:rounded-[2rem] border border-white/5 flex items-center justify-between shadow-lg">

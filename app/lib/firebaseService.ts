@@ -51,6 +51,11 @@ export async function getMachines(): Promise<Machine[]> {
             machinesMap.set(machineName, {
                 id: machineId,
                 name: machineName,
+                code: data.code || "",
+                brand: data.brand || "",
+                model: data.model || "",
+                performance: data.performance || "",
+                remark: data.remark || "",
                 description: data.description || "",
                 zone: data.zone || "No Zone",
                 location: data.location || "",

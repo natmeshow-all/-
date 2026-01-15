@@ -197,45 +197,54 @@ function MachineCard({ machine, index, onRefresh, onOpenSettings, onOpenDelete }
             {/* Content Content - Positioned at bottom */}
             <div className="absolute inset-x-0 bottom-0 p-5 translate-y-2 group-hover:translate-y-0 transition-transform duration-300">
                 <div className="flex items-start justify-between mb-2">
-                    <h3 className="text-2xl font-bold text-white tracking-tight drop-shadow-md">{machine.name}</h3>
+                    <div className="flex flex-col">
+                        {machine.code && (
+                            <span className="text-[10px] font-bold text-primary-light uppercase tracking-wider mb-0.5">
+                                {machine.code}
+                            </span>
+                        )}
+                        <h3 className="text-xl font-bold text-white tracking-tight drop-shadow-md">{machine.name}</h3>
+                    </div>
                     <span className="badge badge-success shadow-lg backdrop-blur-md bg-green-500/20 border-green-500/30 text-green-400">
-                        Active
+                        {machine.status === 'active' ? 'Active' : machine.status}
                     </span>
                 </div>
 
-                {machine.brandModel && (
-                    <p className="text-sm text-white/70 mb-3 font-medium">{machine.brandModel}</p>
-                )}
+                <div className="flex flex-wrap items-center gap-2 mb-3">
+                    {/* Brand & Model Prioritized */}
+                    {(machine.brand || machine.model) ? (
+                        <p className="text-xs text-white/80 font-medium">
+                            {machine.brand} {machine.model}
+                        </p>
+                    ) : machine.brandModel && (
+                        <p className="text-xs text-white/70 font-medium">{machine.brandModel}</p>
+                    )}
+                </div>
 
                 <div className="flex flex-wrap items-center gap-2">
                     {machine.location && (
-                        <span className="px-2.5 py-1 rounded-lg bg-white/10 backdrop-blur-md border border-white/10 text-xs font-medium text-white/90">
+                        <span className="px-2.5 py-1 rounded-lg bg-white/10 backdrop-blur-md border border-white/10 text-[10px] font-medium text-white/90">
                             {machine.location}
                         </span>
                     )}
-                    {machine.serialNumber && (
-                        <span className="px-2.5 py-1 rounded-lg bg-accent-purple/20 backdrop-blur-md border border-accent-purple/30 text-xs font-medium text-accent-purple">
-                            {t("labelSerialNumber")}: {machine.serialNumber}
+                    {machine.zone && machine.zone !== "No Zone" && (
+                        <span className="px-2.5 py-1 rounded-lg bg-accent-cyan/20 backdrop-blur-md border border-accent-cyan/30 text-[10px] font-medium text-accent-cyan">
+                            {machine.zone}
                         </span>
                     )}
-                    {machine.operatingHours > 0 && (
-                        <span className="px-2.5 py-1 rounded-lg bg-primary/20 backdrop-blur-md border border-primary/30 text-xs font-medium text-primary-light">
-                            {t("labelOperatingHours")}: {machine.operatingHours} {t("labelHours")}
+                    {machine.remark && (
+                        <span className="px-2.5 py-1 rounded-lg bg-accent-yellow/20 backdrop-blur-md border border-accent-yellow/30 text-[10px] font-bold text-accent-yellow">
+                            Class {machine.remark}
                         </span>
                     )}
-                    {machine.powerRating && (
-                        <span className="px-2.5 py-1 rounded-lg bg-accent-yellow/20 backdrop-blur-md border border-accent-yellow/30 text-xs font-medium text-accent-yellow">
-                            {t("labelPowerRating")}: {machine.powerRating}
+                    {machine.performance && (
+                        <span className="px-2.5 py-1 rounded-lg bg-primary/20 backdrop-blur-md border border-primary/30 text-[10px] font-medium text-primary-light">
+                            {machine.performance} kW
                         </span>
                     )}
-                    {machine.installationDate && (
-                        <span className="px-2.5 py-1 rounded-lg bg-accent-cyan/20 backdrop-blur-md border border-accent-cyan/30 text-xs font-medium text-accent-cyan">
-                            {t("labelInstall")}: {machine.installationDate}
-                        </span>
-                    )}
-                    {machine.maintenanceCycle > 0 && (
-                        <span className="px-2.5 py-1 rounded-lg bg-accent-green/20 backdrop-blur-md border border-accent-green/30 text-xs font-medium text-accent-green">
-                            {t("labelMaintenanceCycle")}: {machine.maintenanceCycle} {t("labelMonths")}
+                    {machine.serialNumber && machine.serialNumber !== "-" && (
+                        <span className="px-2.5 py-1 rounded-lg bg-accent-purple/20 backdrop-blur-md border border-accent-purple/30 text-[10px] font-medium text-accent-purple">
+                            SN: {machine.serialNumber}
                         </span>
                     )}
                 </div>

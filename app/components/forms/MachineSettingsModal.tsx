@@ -27,12 +27,16 @@ export default function MachineSettingsModal({ isOpen, onClose, machine, onSucce
     const { success, error: toastError } = useToast();
     const [loading, setLoading] = useState(false);
     const [formData, setFormData] = useState<Partial<Machine>>({
+        code: "",
+        brand: "",
+        model: "",
         serialNumber: "",
+        performance: "",
+        location: "",
+        zone: "",
+        remark: "",
         installationDate: "",
-        brandModel: "",
         operatingHours: 0,
-        capacity: "",
-        powerRating: "",
         maintenanceCycle: 0,
         description: "",
     });
@@ -40,12 +44,16 @@ export default function MachineSettingsModal({ isOpen, onClose, machine, onSucce
     useEffect(() => {
         if (machine) {
             setFormData({
+                code: machine.code || "",
+                brand: machine.brand || "",
+                model: machine.model || "",
                 serialNumber: machine.serialNumber || "",
+                performance: machine.performance || "",
+                location: machine.location || "",
+                zone: machine.zone || "",
+                remark: machine.remark || "",
                 installationDate: machine.installationDate || "",
-                brandModel: machine.brandModel || "",
                 operatingHours: machine.operatingHours || 0,
-                capacity: machine.capacity || "",
-                powerRating: machine.powerRating || "",
                 maintenanceCycle: machine.maintenanceCycle || 0,
                 description: machine.description || "",
             });
@@ -105,18 +113,50 @@ export default function MachineSettingsModal({ isOpen, onClose, machine, onSucce
 
                 <form onSubmit={handleSubmit} className="p-6">
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-6">
-                        {/* Brand & Model */}
+                        {/* Machine Code */}
                         <div className="space-y-2">
                             <label className="flex items-center gap-2 text-sm font-medium text-text-secondary">
-                                <CpuIcon size={14} className="text-primary" />
-                                {t("labelBrandModel") || "Brand & Model"}
+                                <HashIcon size={14} className="text-primary" />
+                                {t("labelMachineCode") || "Machine Code"}
                             </label>
                             <input
                                 type="text"
-                                name="brandModel"
-                                value={formData.brandModel}
+                                name="code"
+                                value={formData.code}
                                 onChange={handleChange}
-                                placeholder="e.g. SEW Eurodrive S67"
+                                placeholder="e.g. HT05"
+                                className="input w-full bg-bg-tertiary"
+                            />
+                        </div>
+
+                        {/* Brand */}
+                        <div className="space-y-2">
+                            <label className="flex items-center gap-2 text-sm font-medium text-text-secondary">
+                                <CpuIcon size={14} className="text-primary" />
+                                {t("labelBrand") || "Brand"}
+                            </label>
+                            <input
+                                type="text"
+                                name="brand"
+                                value={formData.brand}
+                                onChange={handleChange}
+                                placeholder="e.g. WachTel"
+                                className="input w-full bg-bg-tertiary"
+                            />
+                        </div>
+
+                        {/* Model */}
+                        <div className="space-y-2">
+                            <label className="flex items-center gap-2 text-sm font-medium text-text-secondary">
+                                <CpuIcon size={14} className="text-primary" />
+                                {t("labelModel") || "Model"}
+                            </label>
+                            <input
+                                type="text"
+                                name="model"
+                                value={formData.model}
+                                onChange={handleChange}
+                                placeholder="e.g. Infra ce 416/77 A1"
                                 className="input w-full bg-bg-tertiary"
                             />
                         </div>
@@ -137,48 +177,66 @@ export default function MachineSettingsModal({ isOpen, onClose, machine, onSucce
                             />
                         </div>
 
-                        {/* Installation Date */}
-                        <div className="space-y-2">
-                            <label className="flex items-center gap-2 text-sm font-medium text-text-secondary">
-                                <CalendarIcon size={14} className="text-primary" />
-                                {t("labelInstallationDate") || "Installation Date"}
-                            </label>
-                            <input
-                                type="date"
-                                name="installationDate"
-                                value={formData.installationDate}
-                                onChange={handleChange}
-                                className="input w-full bg-bg-tertiary"
-                            />
-                        </div>
-
-                        {/* Operating Hours */}
-                        <div className="space-y-2">
-                            <label className="flex items-center gap-2 text-sm font-medium text-text-secondary">
-                                <ClockIcon size={14} className="text-primary" />
-                                {t("labelOperatingHours") || "Operating Hours"}
-                            </label>
-                            <input
-                                type="number"
-                                name="operatingHours"
-                                value={formData.operatingHours}
-                                onChange={handleChange}
-                                className="input w-full bg-bg-tertiary"
-                            />
-                        </div>
-
-                        {/* Power Rating */}
+                        {/* Performance */}
                         <div className="space-y-2">
                             <label className="flex items-center gap-2 text-sm font-medium text-text-secondary">
                                 <ZapIcon size={14} className="text-primary" />
-                                {t("labelPowerRating") || "Power Rating (kW/Amp)"}
+                                {t("labelPerformance") || "Performance (Capacity/kW)"}
                             </label>
                             <input
                                 type="text"
-                                name="powerRating"
-                                value={formData.powerRating}
+                                name="performance"
+                                value={formData.performance}
                                 onChange={handleChange}
-                                placeholder="e.g. 380V 3P, Max 80A"
+                                placeholder="e.g. 46"
+                                className="input w-full bg-bg-tertiary"
+                            />
+                        </div>
+
+                        {/* Location */}
+                        <div className="space-y-2">
+                            <label className="flex items-center gap-2 text-sm font-medium text-text-secondary">
+                                <div className="text-primary text-xs font-bold w-3.5 h-3.5 flex items-center justify-center border border-primary rounded-sm">L</div>
+                                {t("tableLocation") || "Location"}
+                            </label>
+                            <input
+                                type="text"
+                                name="location"
+                                value={formData.location}
+                                onChange={handleChange}
+                                placeholder="e.g. RTE"
+                                className="input w-full bg-bg-tertiary"
+                            />
+                        </div>
+
+                        {/* Zone */}
+                        <div className="space-y-2">
+                            <label className="flex items-center gap-2 text-sm font-medium text-text-secondary">
+                                <div className="text-primary text-xs font-bold w-3.5 h-3.5 flex items-center justify-center border border-primary rounded-sm">Z</div>
+                                {t("filterZone") || "Zone"}
+                            </label>
+                            <input
+                                type="text"
+                                name="zone"
+                                value={formData.zone}
+                                onChange={handleChange}
+                                placeholder="e.g. Baking Room"
+                                className="input w-full bg-bg-tertiary"
+                            />
+                        </div>
+
+                        {/* Remark (Class) */}
+                        <div className="space-y-2">
+                            <label className="flex items-center gap-2 text-sm font-medium text-text-secondary">
+                                <SettingsIcon size={14} className="text-primary" />
+                                {t("labelRemark") || "Remark (Class)"}
+                            </label>
+                            <input
+                                type="text"
+                                name="remark"
+                                value={formData.remark}
+                                onChange={handleChange}
+                                placeholder="e.g. A or B"
                                 className="input w-full bg-bg-tertiary"
                             />
                         </div>
@@ -204,22 +262,6 @@ export default function MachineSettingsModal({ isOpen, onClose, machine, onSucce
                             </select>
                         </div>
 
-                        {/* Capacity */}
-                        <div className="md:col-span-2 space-y-2">
-                            <label className="flex items-center gap-2 text-sm font-medium text-text-secondary">
-                                <CpuIcon size={14} className="text-primary" />
-                                {t("labelCapacity") || "Capacity / Production Rate"}
-                            </label>
-                            <input
-                                type="text"
-                                name="capacity"
-                                value={formData.capacity}
-                                onChange={handleChange}
-                                placeholder="e.g. 500kg/day"
-                                className="input w-full bg-bg-tertiary"
-                            />
-                        </div>
-
                         {/* Description */}
                         <div className="md:col-span-2 space-y-2">
                             <label className="text-sm font-medium text-text-secondary">
@@ -229,7 +271,7 @@ export default function MachineSettingsModal({ isOpen, onClose, machine, onSucce
                                 name="description"
                                 value={formData.description}
                                 onChange={handleChange}
-                                rows={3}
+                                rows={2}
                                 className="input w-full bg-bg-tertiary py-3 resize-none"
                             ></textarea>
                         </div>
