@@ -4,9 +4,9 @@ import React, { useState, useEffect } from "react";
 import Modal from "../ui/Modal";
 import { useLanguage } from "../../contexts/LanguageContext";
 import { Machine, Part } from "../../types";
-import { CalendarIcon, ClockIcon, CheckCircleIcon, SettingsIcon, ActivityIcon } from "../ui/Icons";
+import { CalendarIcon, ClockIcon, CheckCircleIcon, SettingsIcon, ActivityIcon, MapPinIcon, ChevronDownIcon } from "../ui/Icons";
 import { PMPlan } from "../../types";
-import { addPMPlan, updatePMPlan, getPartsByMachine } from "../../lib/firebaseService";
+import { addPMPlan, updatePMPlan, getParts } from "../../lib/firebaseService";
 
 interface PMConfigModalProps {
     isOpen: boolean;
@@ -25,20 +25,71 @@ const CYCLE_OPTIONS = [
     { label: "12 เดือน", value: 12 },
 ];
 
+// Part-Checklist Mapping (รายการซ่อมบำรุงตามประเภทอะไหล่)
+const PART_CHECKLIST_MAP: Record<string, string[]> = {
+    // ระบบขับเคลื่อน
+    "Motor": ["ตรวจเช็คกระแสไฟฟ้า (Amp)", "ตรวจแรงดันไฟฟ้า (Volt)", "วัดอุณหภูมิ", "วัดค่าสั่นสะเทือน (X/Y/Z)", "ตรวจสภาพมอเตอร์"],
+    "Motor + Gear": ["เปลี่ยนถ่ายน้ำมันเกียร์", "ตรวจเช็คกระแสไฟฟ้า", "วัดอุณหภูมิ", "ตรวจสภาพฟันเกียร์"],
+    "Gear Motor": ["เปลี่ยนถ่ายน้ำมันเกียร์", "ตรวจระดับน้ำมัน", "ตรวจเสียงผิดปกติ"],
+    "Servo Motor": ["ตรวจเช็คพารามิเตอร์", "ตรวจ Encoder", "ตรวจสายไฟ"],
+    "Blower Motor": ["ตรวจใบพัด", "ตรวจสั่นสะเทือน", "ทำความสะอาดพัดลม"],
+    "Bearing": ["ตรวจเช็คสภาพแบริ่ง", "เปลี่ยนจารบี", "วัดค่าสั่นสะเทือน"],
+    "Belt": ["ตรวจสภาพสายพาน", "ตรวจความตึงสายพาน", "ตรวจรอยแตกร้าว"],
+    "สายพาน": ["ตรวจสภาพสายพาน", "ตรวจความตึงสายพาน", "ตรวจรอยแตกร้าว"],
+    "Chain": ["ฉีดสารหล่อลื่น", "ตรวจความตึงโซ่", "ตรวจสภาพข้อโซ่"],
+    "โซ่": ["ฉีดสารหล่อลื่น", "ตรวจความตึงโซ่", "ตรวจสภาพข้อโซ่"],
+
+    // ระบบไฟฟ้าและควบคุม
+    "VFD": ["ตรวจพารามิเตอร์", "ตรวจพัดลมระบายความร้อน", "ตรวจสายไฟ", "ทำความสะอาด"],
+    "Temperature Sensor": ["Calibrate เซ็นเซอร์", "ตรวจค่าที่อ่านได้", "ตรวจสายสัญญาณ"],
+    "Metal Detector": ["ตรวจความไว", "Calibrate เครื่อง", "ทดสอบ Test Piece"],
+
+    // ระบบนิวเมติกส์
+    "Pump": ["ตรวจแรงดัน", "ตรวจรอยรั่วซึม", "ตรวจซีล"],
+    "Valve": ["ตรวจการเปิด-ปิด", "ตรวจรอยรั่ว", "ตรวจสภาพซีล"],
+    "Pneumatic Valve": ["ตรวจการเปิด-ปิด", "ตรวจรอยรั่ว", "ตรวจสภาพซีล"],
+    "Compressor": ["ตรวจแรงดัน", "เปลี่ยนไส้กรอง", "ตรวจระดับน้ำมัน", "ไล่น้ำในถังลม"],
+
+    // ระบบทำความเย็น
+    "Evaporator": ["ทำความสะอาดแผงคอยล์", "ตรวจละลายน้ำแข็ง", "ตรวจพัดลม"],
+    "Chiller": ["ตรวจอุณหภูมิน้ำ", "ตรวจสารทำความเย็น", "ทำความสะอาดคอนเดนเซอร์"],
+    "Fancoil Unit": ["ทำความสะอาดไส้กรอง", "ตรวจพัดลม", "ตรวจท่อน้ำ"],
+    "Air Condition": ["ทำความสะอาดไส้กรอง", "ล้างคอยล์", "ตรวจสารทำความเย็น"],
+    "Refrigerator": ["ตรวจอุณหภูมิ", "ทำความสะอาดคอนเดนเซอร์", "ตรวจซีลประตู"],
+    "Cooling Tunnel": ["ตรวจอุณหภูมิ", "ทำความสะอาดสายพาน", "ตรวจระบบทำความเย็น"],
+
+    // เครื่องจักรการผลิต
+    "Mixer": ["ทำความสะอาดโถผสม", "ตรวจใบกวน", "เช็คน้ำมันเกียร์"],
+    "Spiral Mixer": ["ทำความสะอาดโถผสม", "ตรวจใบกวน", "เช็คน้ำมันเกียร์"],
+    "Oven": ["ตรวจอุณหภูมิ", "ทำความสะอาดห้องอบ", "ตรวจหัวเผา"],
+    "Rack Oven": ["ตรวจอุณหภูมิ", "ทำความสะอาดห้องอบ", "ตรวจหัวเผา"],
+    "Deck Oven": ["ตรวจอุณหภูมิ", "ทำความสะอาดห้องอบ", "ตรวจหัวเผา"],
+    "Combi Oven": ["ตรวจอุณหภูมิ", "ทำความสะอาดห้องอบ", "ตรวจระบบไอน้ำ"],
+    "Proofer": ["ตรวจอุณหภูมิ-ความชื้น", "ทำความสะอาดถาด", "ตรวจระบบไอน้ำ"],
+    "Conveyor": ["ตรวจสายพาน", "ตรวจโรลเลอร์", "หล่อลื่นโซ่"],
+    "Slicer": ["ลับใบมีด", "ทำความสะอาด", "ตรวจตั้งระยะใบมีด"],
+    "Bread Slicer": ["ลับใบมีด", "ทำความสะอาด", "ตรวจตั้งระยะใบมีด"],
+    "Depositor": ["ทำความสะอาดหัวจ่าย", "ตรวจวาล์ว", "Calibrate ปริมาณจ่าย"],
+    "Packaging Machine": ["ตรวจซีล", "ตรวจอุณหภูมิ Sealing", "ทำความสะอาด"],
+    "Vacuum Cooler": ["ตรวจสุญญากาศ", "ตรวจซีลประตู", "ทำความสะอาดถาด"],
+};
+
 export default function PMConfigModal({ isOpen, onClose, machine, plan, onSuccess }: PMConfigModalProps) {
     const { t } = useLanguage();
     const [loading, setLoading] = useState(false);
 
-    // Form State
-    const [taskName, setTaskName] = useState(plan?.taskName || "");
+    // Form State - Changed taskName to dropdown-based
+    const [selectedMaintenanceType, setSelectedMaintenanceType] = useState(plan?.taskName || "");
+    const [customMaintenanceName, setCustomMaintenanceName] = useState("");
     const [checklistItems, setChecklistItems] = useState<string[]>(plan?.checklistItems || []);
     const [newItem, setNewItem] = useState("");
 
-    const [priority, setPriority] = useState<"normal" | "high" | "urgent">(plan?.priority || "normal");
+    // Selected part type for checklist suggestions
+    const [selectedPartType, setSelectedPartType] = useState("");
 
     const [scheduleType, setScheduleType] = useState<"monthly" | "weekly">(plan?.scheduleType || "monthly");
     const [cycleMonths, setCycleMonths] = useState<number>(plan?.cycleMonths || 1);
-    const [weeklyDay, setWeeklyDay] = useState<number>(plan?.weeklyDay || 1); // Default to Monday
+    const [weeklyDay, setWeeklyDay] = useState<number>(plan?.weeklyDay || 1);
 
     const [startDate, setStartDate] = useState(
         plan?.startDate
@@ -46,30 +97,48 @@ export default function PMConfigModal({ isOpen, onClose, machine, plan, onSucces
             : new Date().toISOString().split('T')[0]
     );
 
-    // Location State
-    const [locationType, setLocationType] = useState<"machine_zone" | "custom">(plan?.locationType || "machine_zone");
-    const [customLocation, setCustomLocation] = useState(plan?.customLocation || "");
+    // Location State - Now using zones from database
+    const [selectedZone, setSelectedZone] = useState(plan?.customLocation || machine.zone || "");
+    const [customLocation, setCustomLocation] = useState("");
+    const [useCustomLocation, setUseCustomLocation] = useState(plan?.locationType === "custom");
 
-    // Parts State
-    const [machineParts, setMachineParts] = useState<Part[]>([]);
-    const [loadingParts, setLoadingParts] = useState(false);
+    // Data from database
+    const [allPartNames, setAllPartNames] = useState<string[]>([]);
+    const [allZones, setAllZones] = useState<string[]>([]);
+    const [loadingData, setLoadingData] = useState(false);
 
     useEffect(() => {
-        if (isOpen && machine.id) {
-            fetchParts();
+        if (isOpen) {
+            fetchPartsData();
         }
-    }, [isOpen, machine.id]);
+    }, [isOpen]);
 
-    const fetchParts = async () => {
-        setLoadingParts(true);
+    // Initialize form when editing existing plan
+    useEffect(() => {
+        if (plan) {
+            setSelectedMaintenanceType(plan.taskName || "");
+            setChecklistItems(plan.checklistItems || []);
+            setSelectedZone(plan.customLocation || machine.zone || "");
+            setUseCustomLocation(plan.locationType === "custom");
+        }
+    }, [plan, machine.zone]);
+
+    const fetchPartsData = async () => {
+        setLoadingData(true);
         try {
-            // Import dynamically to avoid circular dependencies if any, or just use standard import
-            const parts = await getPartsByMachine(machine.id);
-            setMachineParts(parts);
+            const parts = await getParts();
+
+            // Extract unique part names
+            const uniquePartNames = Array.from(new Set(parts.map(p => p.partName).filter(Boolean))).sort();
+            setAllPartNames(uniquePartNames);
+
+            // Extract unique zones
+            const uniqueZones = Array.from(new Set(parts.map(p => p.zone).filter(Boolean))).sort();
+            setAllZones(uniqueZones);
         } catch (error) {
-            console.error("Error fetching parts:", error);
+            console.error("Error fetching parts data:", error);
         } finally {
-            setLoadingParts(false);
+            setLoadingData(false);
         }
     };
 
@@ -84,51 +153,67 @@ export default function PMConfigModal({ isOpen, onClose, machine, plan, onSucces
         setChecklistItems(checklistItems.filter((_, i) => i !== index));
     };
 
-    const handleAddPartToChecklist = (partName: string) => {
-        setChecklistItems([...checklistItems, `ตรวจสอบ/เปลี่ยน ${partName}`]);
+    // Add suggested checklist item
+    const handleAddSuggestedItem = (item: string) => {
+        if (!checklistItems.includes(item)) {
+            setChecklistItems([...checklistItems, item]);
+        }
+    };
+
+    // Get suggested checklist items based on selected part type
+    const getSuggestedItems = (): string[] => {
+        if (!selectedPartType) return [];
+
+        // Try exact match first
+        if (PART_CHECKLIST_MAP[selectedPartType]) {
+            return PART_CHECKLIST_MAP[selectedPartType];
+        }
+
+        // Try partial match
+        for (const [key, items] of Object.entries(PART_CHECKLIST_MAP)) {
+            if (selectedPartType.toLowerCase().includes(key.toLowerCase()) ||
+                key.toLowerCase().includes(selectedPartType.toLowerCase())) {
+                return items;
+            }
+        }
+
+        return [];
+    };
+
+    const getTaskName = () => {
+        if (selectedMaintenanceType === "อื่นๆ") {
+            return customMaintenanceName;
+        }
+        return selectedMaintenanceType;
+    };
+
+    const getLocation = () => {
+        if (useCustomLocation) {
+            return customLocation;
+        }
+        return selectedZone;
     };
 
     const handleSubmit = async (e: React.FormEvent) => {
         e.preventDefault();
+        const taskName = getTaskName();
         if (!taskName) return;
         setLoading(true);
 
         try {
             const start = new Date(startDate);
-            const nextDue = new Date(start);
-
-            // Calculate next due date logic
-            if (scheduleType === 'monthly') {
-                nextDue.setMonth(nextDue.getMonth() + cycleMonths);
-            } else {
-                // Weekly logic - logic to find next occurrence of the specific day
-                const currentDay = start.getDay();
-                const daysUntilNext = (weeklyDay + 7 - currentDay) % 7;
-                // If daysUntilNext is 0, it means it's today. 
-                // Using 7 to ensure it's next week if we strictly want next cycle, 
-                // or 0/7 logic depends on if 'start date' equals 'first due date'.
-                // Let's assume startDate IS the first due date if it matches the day, or we find the next match.
-                // Simple logic: Start date is strictly the first due date user picks. 
-                // Next due calculation happens AFTER completion. 
-                // But here we are setting initial 'nextDueDate'. 
-                // Usually initial nextDueDate = startDate.
-            }
-            // Note: In this simple implementation, we trust startDate is the first due date.
-            // But verify: 
-            const finalNextDueDate = new Date(startDate); // First due is start date
+            const finalNextDueDate = new Date(startDate);
 
             const planData: any = {
                 taskName,
                 checklistItems,
-                priority,
                 scheduleType,
                 cycleMonths: scheduleType === 'monthly' ? cycleMonths : undefined,
                 weeklyDay: scheduleType === 'weekly' ? weeklyDay : undefined,
                 startDate: start,
-                nextDueDate: finalNextDueDate, // Set first occurrence
-                locationType,
-                customLocation: locationType === 'custom' ? customLocation : undefined,
-                // If it's a new plan, these are set. If update, these overwrite.
+                nextDueDate: finalNextDueDate,
+                locationType: useCustomLocation ? 'custom' : 'machine_zone',
+                customLocation: getLocation(),
             };
 
             if (plan) {
@@ -152,18 +237,14 @@ export default function PMConfigModal({ isOpen, onClose, machine, plan, onSucces
         }
     };
 
+    const suggestedItems = getSuggestedItems();
+
     return (
         <Modal isOpen={isOpen} onClose={onClose} title="ตั้งค่าแผนซ่อมบำรุงเชิงป้องกัน (PM)">
             <div className="space-y-6 max-h-[75vh] overflow-y-auto custom-scrollbar pr-2">
                 {/* Header Card */}
-                <div className={`flex items-center gap-4 p-4 rounded-xl border ${priority === 'urgent' ? 'bg-accent-red/10 border-accent-red/30' :
-                    priority === 'high' ? 'bg-accent-yellow/10 border-accent-yellow/30' :
-                        'bg-bg-tertiary border-white/5'
-                    }`}>
-                    <div className={`w-14 h-14 rounded-xl flex items-center justify-center shadow-inner ${priority === 'urgent' ? 'bg-accent-red text-white' :
-                        priority === 'high' ? 'bg-accent-yellow text-white' :
-                            'bg-bg-secondary text-accent-blue'
-                        }`}>
+                <div className="flex items-center gap-4 p-4 rounded-xl border bg-bg-tertiary border-white/5">
+                    <div className="w-14 h-14 rounded-xl flex items-center justify-center shadow-inner bg-bg-secondary text-accent-blue">
                         <SettingsIcon size={28} />
                     </div>
                     <div>
@@ -179,40 +260,51 @@ export default function PMConfigModal({ isOpen, onClose, machine, plan, onSucces
                 </div>
 
                 <form onSubmit={handleSubmit} className="space-y-6">
-                    {/* 1. Task Name & Priority */}
-                    <div className="grid grid-cols-1 sm:grid-cols-4 gap-4">
-                        <div className="sm:col-span-3 space-y-2">
-                            <label className="text-xs font-bold text-text-muted uppercase tracking-wider flex items-center gap-2">
-                                <ActivityIcon size={14} className="text-accent-blue" />
-                                ชื่อแผนการซ่อมบำรุง
-                            </label>
+                    {/* 1. Maintenance Type (การซ่อมบำรุง) - Full Width */}
+                    <div className="space-y-2">
+                        <label className="text-xs font-bold text-text-muted uppercase tracking-wider flex items-center gap-2">
+                            <ActivityIcon size={14} className="text-accent-blue" />
+                            การซ่อมบำรุง
+                        </label>
+                        <div className="relative">
+                            <select
+                                required
+                                className="input-field w-full text-lg font-semibold appearance-none cursor-pointer"
+                                value={selectedMaintenanceType}
+                                onChange={(e) => {
+                                    setSelectedMaintenanceType(e.target.value);
+                                    // Auto-set part type for checklist suggestions
+                                    if (e.target.value !== "อื่นๆ") {
+                                        setSelectedPartType(e.target.value);
+                                    }
+                                }}
+                            >
+                                <option value="">-- เลือกประเภทการซ่อมบำรุง --</option>
+                                {allPartNames.map(name => (
+                                    <option key={name} value={name}>{name}</option>
+                                ))}
+                                <option value="อื่นๆ">อื่นๆ (ระบุเอง)</option>
+                            </select>
+                            <div className="absolute right-3 top-1/2 -translate-y-1/2 pointer-events-none text-text-muted">
+                                <ChevronDownIcon size={16} />
+                            </div>
+                        </div>
+
+                        {/* Custom input when "อื่นๆ" is selected */}
+                        {selectedMaintenanceType === "อื่นๆ" && (
                             <input
                                 type="text"
                                 required
-                                placeholder="เช่น เปลี่ยนน้ำมันเครื่องประจำปี, ตรวจเช็คสายพาน"
-                                className="input-field w-full text-lg font-semibold"
-                                value={taskName}
-                                onChange={(e) => setTaskName(e.target.value)}
+                                placeholder="ระบุชื่อการซ่อมบำรุง..."
+                                className="input-field w-full mt-2 bg-accent-blue/5 border-accent-blue/30 focus:border-accent-blue"
+                                value={customMaintenanceName}
+                                onChange={(e) => setCustomMaintenanceName(e.target.value)}
+                                autoFocus
                             />
-                        </div>
-                        <div className="space-y-2">
-                            <label className="text-xs font-bold text-text-muted uppercase tracking-wider">ความเร่งด่วน</label>
-                            <select
-                                className={`input-field w-full font-bold ${priority === 'urgent' ? 'text-accent-red border-accent-red/50' :
-                                    priority === 'high' ? 'text-accent-yellow border-accent-yellow/50' :
-                                        'text-accent-green border-accent-green/50'
-                                    }`}
-                                value={priority}
-                                onChange={(e) => setPriority(e.target.value as any)}
-                            >
-                                <option value="normal">🟢 ปกติ</option>
-                                <option value="high">🟡 สำคัญ</option>
-                                <option value="urgent">🔴 เร่งด่วน</option>
-                            </select>
-                        </div>
+                        )}
                     </div>
 
-                    {/* 2. Checklist & Parts */}
+                    {/* 2. Checklist with Dependent Dropdown */}
                     <div className="space-y-3 bg-bg-secondary/30 p-4 rounded-xl border border-white/5">
                         <label className="text-xs font-bold text-text-muted uppercase tracking-wider flex items-center justify-between">
                             <div className="flex items-center gap-2">
@@ -224,7 +316,53 @@ export default function PMConfigModal({ isOpen, onClose, machine, plan, onSucces
                             </span>
                         </label>
 
-                        {/* Add Item Input */}
+                        {/* Part Type Selection for Checklist */}
+                        <div className="space-y-2">
+                            <label className="text-[10px] text-text-muted">เลือกประเภทอะไหล่เพื่อดูรายการแนะนำ:</label>
+                            <div className="relative">
+                                <select
+                                    className="input-field w-full text-sm appearance-none cursor-pointer"
+                                    value={selectedPartType}
+                                    onChange={(e) => setSelectedPartType(e.target.value)}
+                                >
+                                    <option value="">-- เลือกประเภทอะไหล่ --</option>
+                                    {Object.keys(PART_CHECKLIST_MAP).map(partType => (
+                                        <option key={partType} value={partType}>{partType}</option>
+                                    ))}
+                                </select>
+                                <div className="absolute right-3 top-1/2 -translate-y-1/2 pointer-events-none text-text-muted">
+                                    <ChevronDownIcon size={14} />
+                                </div>
+                            </div>
+                        </div>
+
+                        {/* Suggested Items */}
+                        {suggestedItems.length > 0 && (
+                            <div className="bg-accent-blue/5 border border-accent-blue/20 rounded-lg p-3">
+                                <p className="text-[10px] text-accent-blue font-bold mb-2">รายการแนะนำ (คลิกเพื่อเพิ่ม):</p>
+                                <div className="flex flex-wrap gap-2">
+                                    {suggestedItems.map((item, idx) => {
+                                        const isAdded = checklistItems.includes(item);
+                                        return (
+                                            <button
+                                                key={idx}
+                                                type="button"
+                                                onClick={() => handleAddSuggestedItem(item)}
+                                                disabled={isAdded}
+                                                className={`text-[11px] px-2 py-1 rounded-lg border transition-all ${isAdded
+                                                        ? 'bg-accent-green/20 border-accent-green/30 text-accent-green cursor-default'
+                                                        : 'bg-bg-tertiary border-white/10 hover:border-accent-blue hover:text-accent-blue cursor-pointer'
+                                                    }`}
+                                            >
+                                                {isAdded ? '✓' : '+'} {item}
+                                            </button>
+                                        );
+                                    })}
+                                </div>
+                            </div>
+                        )}
+
+                        {/* Manual Add Item Input */}
                         <div className="flex gap-2">
                             <input
                                 type="text"
@@ -261,31 +399,9 @@ export default function PMConfigModal({ isOpen, onClose, machine, plan, onSucces
                                 </div>
                             ))}
                         </div>
-
-                        {/* Quick Add Parts */}
-                        {machineParts.length > 0 && (
-                            <div className="mt-3 pt-3 border-t border-white/5">
-                                <p className="text-xs text-text-muted mb-2">เพิ่มรายการจากอะไหล่เครื่องจักร:</p>
-                                <div className="flex flex-wrap gap-2">
-                                    {machineParts.slice(0, 5).map(part => (
-                                        <button
-                                            key={part.id}
-                                            type="button"
-                                            onClick={() => handleAddPartToChecklist(part.partName)}
-                                            className="text-[10px] bg-bg-tertiary border border-white/10 hover:border-accent-blue hover:text-accent-blue px-2 py-1 rounded transition-colors"
-                                        >
-                                            + {part.partName}
-                                        </button>
-                                    ))}
-                                    {machineParts.length > 5 && (
-                                        <span className="text-[10px] text-text-muted self-center">+{machineParts.length - 5} more</span>
-                                    )}
-                                </div>
-                            </div>
-                        )}
                     </div>
 
-                    {/* 3. Schedule & Time */}
+                    {/* 3. Schedule & Time (Unchanged) */}
                     <div className="grid grid-cols-1 sm:grid-cols-2 gap-6">
                         {/* Schedule Type */}
                         <div className="space-y-4">
@@ -368,17 +484,36 @@ export default function PMConfigModal({ isOpen, onClose, machine, plan, onSucces
                                 />
                             </div>
 
+                            {/* Location - Using zones from database */}
                             <div className="space-y-2">
-                                <label className="text-xs font-bold text-text-muted uppercase tracking-wider">สถานที่ปฏิบัติงาน</label>
-                                <select
-                                    className="input-field w-full mb-2"
-                                    value={locationType}
-                                    onChange={(e) => setLocationType(e.target.value as any)}
-                                >
-                                    <option value="machine_zone">ตามเครื่องจักร ({machine.zone})</option>
-                                    <option value="custom">ระบุเอง (อื่นๆ)</option>
-                                </select>
-                                {locationType === 'custom' && (
+                                <label className="text-xs font-bold text-text-muted uppercase tracking-wider flex items-center gap-2">
+                                    <MapPinIcon size={14} className="text-accent-blue" />
+                                    สถานที่ปฏิบัติงาน
+                                </label>
+                                <div className="relative">
+                                    <select
+                                        className="input-field w-full appearance-none cursor-pointer"
+                                        value={useCustomLocation ? "custom" : selectedZone}
+                                        onChange={(e) => {
+                                            if (e.target.value === "custom") {
+                                                setUseCustomLocation(true);
+                                            } else {
+                                                setUseCustomLocation(false);
+                                                setSelectedZone(e.target.value);
+                                            }
+                                        }}
+                                    >
+                                        <option value="">-- เลือกโซน --</option>
+                                        {allZones.map(zone => (
+                                            <option key={zone} value={zone}>{zone}</option>
+                                        ))}
+                                        <option value="custom">อื่นๆ (ระบุเอง)</option>
+                                    </select>
+                                    <div className="absolute right-3 top-1/2 -translate-y-1/2 pointer-events-none text-text-muted">
+                                        <ChevronDownIcon size={14} />
+                                    </div>
+                                </div>
+                                {useCustomLocation && (
                                     <input
                                         type="text"
                                         placeholder="ระบุสถานที่..."
