@@ -12,17 +12,18 @@ import { useLanguage } from "../contexts/LanguageContext";
 import { getSpareParts, deleteSparePart } from "../lib/firebaseService";
 import { SparePart } from "../types";
 import { useAuth } from "../contexts/AuthContext";
-import { BoxIcon, PlusIcon, SearchIcon, FilterIcon, ArrowUpIcon, ArrowDownIcon, AlertIcon, HistoryIcon } from "../components/ui/Icons";
+import { useToast } from "../contexts/ToastContext";
+import { BoxIcon, PlusIcon, SearchIcon, FilterIcon, ArrowUpIcon, ArrowDownIcon, AlertIcon, HistoryIcon, TrashIcon } from "../components/ui/Icons";
 
 export default function PartsPage() {
     const { t } = useLanguage();
-    const { user, checkAuth } = useAuth();
+    const { user, checkAuth, isAdmin } = useAuth();
+    const { success, error } = useToast();
     const [addModalOpen, setAddModalOpen] = useState(false);
     const [stockActionModalOpen, setStockActionModalOpen] = useState(false);
     const [historyModalOpen, setHistoryModalOpen] = useState(false);
     const [detailsModalOpen, setDetailsModalOpen] = useState(false);
     const [confirmDeleteOpen, setConfirmDeleteOpen] = useState(false);
-
     const [selectedPart, setSelectedPart] = useState<SparePart | null>(null); // For actions
     const [viewPart, setViewPart] = useState<SparePart | null>(null); // For details view
     const [partToDelete, setPartToDelete] = useState<SparePart | null>(null);
@@ -75,6 +76,10 @@ export default function PartsPage() {
 
     const handleDeleteClick = (part: SparePart) => {
         if (!checkAuth()) return;
+        if (!isAdmin) {
+            error(t("msgNoEditPermission") || "คุณไม่มีสิทธ์แก้ไข");
+            return;
+        }
         setPartToDelete(part);
         setConfirmDeleteOpen(true);
         setDetailsModalOpen(false);
@@ -86,8 +91,10 @@ export default function PartsPage() {
                 setLoading(true);
                 await deleteSparePart(partToDelete.id);
                 await fetchParts();
-            } catch (error) {
-                console.error("Error deleting part:", error);
+                success(t("msgDeleteSuccess") || "ลบข้อมูลเรียบร้อยแล้ว");
+            } catch (err) {
+                console.error("Error deleting part:", err);
+                error(t("msgDeleteError") || "เกิดข้อผิดพลาดในการลบข้อมูล");
             } finally {
                 setLoading(false);
                 setConfirmDeleteOpen(false);
@@ -212,7 +219,21 @@ export default function PartsPage() {
                                 {/* Grid */}
                                 <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
                                     {items.map(part => (
-                                        <div key={part.id} className="card p-0 overflow-hidden hover:shadow-xl hover:shadow-primary/5 transition-all duration-300 group border border-white/5 bg-bg-secondary/30">
+                                        <div key={part.id} className="card p-0 overflow-hidden hover:shadow-xl hover:shadow-primary/5 transition-all duration-300 group border border-white/5 bg-bg-secondary/30 relative">
+                                            {/* Admin Delete Button */}
+                                            {isAdmin && (
+                                                <button
+                                                    onClick={(e) => {
+                                                        e.stopPropagation();
+                                                        handleDeleteClick(part);
+                                                    }}
+                                                    className="absolute top-2 right-2 z-10 p-1.5 rounded-lg bg-black/40 text-text-muted hover:bg-accent-red hover:text-white transition-all opacity-0 group-hover:opacity-100"
+                                                    title={t("actionDelete")}
+                                                >
+                                                    <TrashIcon size={14} />
+                                                </button>
+                                            )}
+
                                             <div className="p-4 flex gap-4">
                                                 {/* Image */}
                                                 <div
@@ -365,8 +386,8 @@ export default function PartsPage() {
                 isOpen={confirmDeleteOpen}
                 onClose={() => setConfirmDeleteOpen(false)}
                 onConfirm={confirmDelete}
-                title={t("actionDelete")}
-                message={t("msgConfirmDelete")}
+                title={t("titleConfirmDelete") || "ยืนยันการลบ"}
+                message={`${t("msgConfirmDelete") || "คุณแน่ใจหรือไม่ว่าต้องการลบ?"} ${partToDelete ? `"${partToDelete.name}"` : ""}`}
                 isDestructive={true}
                 confirmText={t("actionDelete")}
                 cancelText={t("actionCancel")}

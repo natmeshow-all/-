@@ -31,7 +31,7 @@ export default function MaintenancePage() {
 
     // Delete Confirmation State
     const [deleteConfirmOpen, setDeleteConfirmOpen] = useState(false);
-    const [recordToDelete, setRecordToDelete] = useState<string | null>(null);
+    const [recordToDelete, setRecordToDelete] = useState<MaintenanceRecord | null>(null);
     const [mounted, setMounted] = useState(false);
     const [records, setRecords] = useState<MaintenanceRecord[]>([]);
     const [loading, setLoading] = useState(true);
@@ -48,8 +48,8 @@ export default function MaintenancePage() {
         }
     };
 
-    const handleDeleteClick = (id: string) => {
-        setRecordToDelete(id);
+    const handleDeleteClick = (record: MaintenanceRecord) => {
+        setRecordToDelete(record);
         setDeleteConfirmOpen(true);
     };
 
@@ -57,9 +57,9 @@ export default function MaintenancePage() {
         if (!recordToDelete) return;
 
         try {
-            await deleteMaintenanceRecord(recordToDelete);
+            await deleteMaintenanceRecord(recordToDelete.id);
             // Optimistic update
-            setRecords(prev => prev.filter(r => r.id !== recordToDelete));
+            setRecords(prev => prev.filter(r => r.id !== recordToDelete.id));
             success(t("msgDeleteSuccess") || "ลบข้อมูลเรียบร้อยแล้ว");
         } catch (err) {
             console.error("Error deleting record:", err);
@@ -171,7 +171,7 @@ export default function MaintenancePage() {
                                             <button
                                                 onClick={(e) => {
                                                     e.stopPropagation();
-                                                    handleDeleteClick(record.id);
+                                                    handleDeleteClick(record);
                                                 }}
                                                 className="p-1.5 rounded-full hover:bg-accent-red/20 text-text-muted hover:text-accent-red transition-colors"
                                                 title={t("actionDelete")}
@@ -265,7 +265,7 @@ export default function MaintenancePage() {
                 onClose={() => setDeleteConfirmOpen(false)}
                 onConfirm={handleConfirmDelete}
                 title={t("titleConfirmDelete") || "ยืนยันการลบ"}
-                message={t("confirmDeleteMessage") || "คุณแน่ใจหรือไม่ว่าต้องการลบรายการนี้? การกระทำนี้ไม่สามารถยกเลิกได้"}
+                message={`${t("confirmDeleteMessage") || "คุณแน่ใจหรือไม่ว่าต้องการลบรายการนี้?"} ${recordToDelete ? `"${recordToDelete.machineName} - ${recordToDelete.description}"` : ""}`}
                 isDestructive={true}
                 confirmText={t("actionDelete") || "ลบ"}
             />

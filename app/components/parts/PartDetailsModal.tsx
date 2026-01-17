@@ -25,7 +25,7 @@ export default function PartDetailsModal({
     onRepair
 }: PartDetailsModalProps) {
     const { t } = useLanguage();
-    const { checkAuth } = useAuth();
+    const { checkAuth, isAdmin } = useAuth();
     const [lightboxOpen, setLightboxOpen] = useState(false);
 
     if (!part) return null;
@@ -158,13 +158,15 @@ export default function PartDetailsModal({
                             <WrenchIcon size={18} />
                             {t("actionRepair")}
                         </button>
-                        <button
-                            onClick={() => { if (checkAuth()) onDelete(part); }}
-                            className="btn bg-error/10 text-error hover:bg-error/20 border-error/20 flex items-center justify-center gap-2 h-12 text-sm rounded-xl font-medium transition-all"
-                        >
-                            <TrashIcon size={18} />
-                            {t("actionDelete")}
-                        </button>
+                        {isAdmin && (
+                            <button
+                                onClick={() => { if (checkAuth()) onDelete(part); }}
+                                className="btn bg-error/10 text-error hover:bg-error/20 border-error/20 flex items-center justify-center gap-2 h-12 text-sm rounded-xl font-medium transition-all"
+                            >
+                                <TrashIcon size={18} />
+                                {t("actionDelete")}
+                            </button>
+                        )}
                     </div>
                 </div>
             </Modal>
