@@ -26,6 +26,7 @@ import {
 import { UserProfile, PendingUser, UserRole } from "../types";
 import Modal from "../components/ui/Modal";
 import { useRouter } from "next/navigation";
+import FirebaseStatus from "../components/ui/FirebaseStatus";
 
 export default function UsersPage() {
     const { t } = useLanguage();
@@ -168,6 +169,13 @@ export default function UsersPage() {
                             </p>
                         </div>
                     </div>
+
+                    {/* Firebase Status - Admin Only - Right Aligned */}
+                    {isAdmin && (
+                        <div>
+                            <FirebaseStatus />
+                        </div>
+                    )}
                 </div>
 
                 {/* Tabs */}
@@ -195,89 +203,19 @@ export default function UsersPage() {
                     </button>
                 </div>
 
-                {loading ? (
-                    <div className="flex justify-center py-12">
-                        <div className="w-8 h-8 border-2 border-accent-blue border-t-transparent rounded-full animate-spin" />
-                    </div>
-                ) : activeTab === "users" ? (
-                    /* Users List */
-                    <div className="grid gap-4">
-                        {users.map((user) => (
-                            <div
-                                key={user.uid}
-                                className={`card p-4 transition-all ${!user.isActive ? 'opacity-50' : ''}`}
-                            >
-                                <div className="flex items-center gap-4">
-                                    {user.photoURL ? (
-                                        <img
-                                            src={user.photoURL}
-                                            alt={user.displayName}
-                                            className="w-12 h-12 rounded-full object-cover"
-                                        />
-                                    ) : (
-                                        <div className="w-12 h-12 rounded-full bg-accent-purple/20 flex items-center justify-center">
-                                            <UserIcon size={24} className="text-accent-purple" />
-                                        </div>
-                                    )}
-
-                                    <div className="flex-1 min-w-0">
-                                        <div className="flex items-center gap-2">
-                                            <h3 className="font-bold text-text-primary truncate">
-                                                {user.displayName}
-                                            </h3>
-                                            {user.nickname && (
-                                                <span className="text-xs text-text-muted">({user.nickname})</span>
-                                            )}
-                                        </div>
-                                        <p className="text-xs text-text-muted truncate">{user.email}</p>
-                                        <div className="flex items-center gap-2 mt-1">
-                                            <span className={`px-2 py-0.5 rounded text-[10px] font-bold border ${getRoleBadgeColor(user.role)}`}>
-                                                {getRoleLabel(user.role)}
-                                            </span>
-                                            {!user.isActive && (
-                                                <span className="px-2 py-0.5 rounded text-[10px] font-bold bg-accent-red/20 text-accent-red border border-accent-red/30">
-                                                    {t("userStatusDeactivated")}
-                                                </span>
-                                            )}
-                                        </div>
-                                    </div>
-
-                                    <div className="flex items-center gap-2">
-                                        <button
-                                            onClick={() => setEditingUser(user)}
-                                            className="p-2 rounded-lg bg-white/5 hover:bg-white/10 transition-colors"
-                                            title="แก้ไข"
-                                        >
-                                            <EditIcon size={16} className="text-text-muted" />
-                                        </button>
-                                        {user.uid !== userProfile?.uid && (
-                                            <button
-                                                onClick={() => handleToggleActive(user)}
-                                                className={`p-2 rounded-lg transition-colors ${user.isActive
-                                                    ? 'bg-accent-red/10 hover:bg-accent-red/20 text-accent-red'
-                                                    : 'bg-accent-green/10 hover:bg-accent-green/20 text-accent-green'
-                                                    }`}
-                                                title={user.isActive ? t("statusReadOnly") : t("actionMaintenance")}
-                                            >
-                                                {user.isActive ? <XIcon size={16} /> : <CheckIcon size={16} />}
-                                            </button>
-                                        )}
-                                    </div>
-                                </div>
-                            </div>
-                        ))}
-                    </div>
-                ) : (
-                    /* Pending Users List */
-                    <div className="grid gap-4">
-                        {pendingUsers.length === 0 ? (
-                            <div className="text-center py-12 text-text-muted">
-                                <UserIcon size={48} className="mx-auto mb-4 opacity-30" />
-                                <p>{t("userNoPending")}</p>
-                            </div>
-                        ) : (
-                            pendingUsers.map((user) => (
-                                <div key={user.uid} className="card p-4 border-l-4 border-l-accent-yellow">
+                {
+                    loading ? (
+                        <div className="flex justify-center py-12">
+                            <div className="w-8 h-8 border-2 border-accent-blue border-t-transparent rounded-full animate-spin" />
+                        </div>
+                    ) : activeTab === "users" ? (
+                        /* Users List */
+                        <div className="grid gap-4">
+                            {users.map((user) => (
+                                <div
+                                    key={user.uid}
+                                    className={`card p-4 transition-all ${!user.isActive ? 'opacity-50' : ''}`}
+                                >
                                     <div className="flex items-center gap-4">
                                         {user.photoURL ? (
                                             <img
@@ -286,48 +224,120 @@ export default function UsersPage() {
                                                 className="w-12 h-12 rounded-full object-cover"
                                             />
                                         ) : (
-                                            <div className="w-12 h-12 rounded-full bg-accent-yellow/20 flex items-center justify-center">
-                                                <UserIcon size={24} className="text-accent-yellow" />
+                                            <div className="w-12 h-12 rounded-full bg-accent-purple/20 flex items-center justify-center">
+                                                <UserIcon size={24} className="text-accent-purple" />
                                             </div>
                                         )}
 
                                         <div className="flex-1 min-w-0">
-                                            <h3 className="font-bold text-text-primary truncate">
-                                                {user.displayName}
-                                            </h3>
+                                            <div className="flex items-center gap-2">
+                                                <h3 className="font-bold text-text-primary truncate">
+                                                    {user.displayName}
+                                                </h3>
+                                                {user.nickname && (
+                                                    <span className="text-xs text-text-muted">({user.nickname})</span>
+                                                )}
+                                            </div>
                                             <p className="text-xs text-text-muted truncate">{user.email}</p>
-                                            <p className="text-[10px] text-text-muted mt-1">
-                                                ขอเข้าใช้งาน: {new Date(user.requestedAt).toLocaleDateString('th-TH')}
-                                            </p>
+                                            <div className="flex items-center gap-2 mt-1">
+                                                <span className={`px-2 py-0.5 rounded text-[10px] font-bold border ${getRoleBadgeColor(user.role)}`}>
+                                                    {getRoleLabel(user.role)}
+                                                </span>
+                                                {!user.isActive && (
+                                                    <span className="px-2 py-0.5 rounded text-[10px] font-bold bg-accent-red/20 text-accent-red border border-accent-red/30">
+                                                        {t("userStatusDeactivated")}
+                                                    </span>
+                                                )}
+                                            </div>
                                         </div>
 
                                         <div className="flex items-center gap-2">
                                             <button
-                                                onClick={() => {
-                                                    setApprovalModal(user);
-                                                    setApprovalRole("technician");
-                                                    setApprovalNickname("");
-                                                }}
-                                                className="px-3 py-2 rounded-lg bg-accent-green/20 hover:bg-accent-green/30 text-accent-green text-sm font-bold transition-colors"
+                                                onClick={() => setEditingUser(user)}
+                                                className="p-2 rounded-lg bg-white/5 hover:bg-white/10 transition-colors"
+                                                title="แก้ไข"
                                             >
-                                                <CheckIcon size={16} className="inline mr-1" />
-                                                {t("userActionApprove")}
+                                                <EditIcon size={16} className="text-text-muted" />
                                             </button>
-                                            <button
-                                                onClick={() => handleReject(user.uid)}
-                                                className="px-3 py-2 rounded-lg bg-accent-red/20 hover:bg-accent-red/30 text-accent-red text-sm font-bold transition-colors"
-                                            >
-                                                <XIcon size={16} className="inline mr-1" />
-                                                {t("userActionReject")}
-                                            </button>
+                                            {user.uid !== userProfile?.uid && (
+                                                <button
+                                                    onClick={() => handleToggleActive(user)}
+                                                    className={`p-2 rounded-lg transition-colors ${user.isActive
+                                                        ? 'bg-accent-red/10 hover:bg-accent-red/20 text-accent-red'
+                                                        : 'bg-accent-green/10 hover:bg-accent-green/20 text-accent-green'
+                                                        }`}
+                                                    title={user.isActive ? t("statusReadOnly") : t("actionMaintenance")}
+                                                >
+                                                    {user.isActive ? <XIcon size={16} /> : <CheckIcon size={16} />}
+                                                </button>
+                                            )}
                                         </div>
                                     </div>
                                 </div>
-                            ))
-                        )}
-                    </div>
-                )}
-            </main>
+                            ))}
+                        </div>
+                    ) : (
+                        /* Pending Users List */
+                        <div className="grid gap-4">
+                            {pendingUsers.length === 0 ? (
+                                <div className="text-center py-12 text-text-muted">
+                                    <UserIcon size={48} className="mx-auto mb-4 opacity-30" />
+                                    <p>{t("userNoPending")}</p>
+                                </div>
+                            ) : (
+                                pendingUsers.map((user) => (
+                                    <div key={user.uid} className="card p-4 border-l-4 border-l-accent-yellow">
+                                        <div className="flex items-center gap-4">
+                                            {user.photoURL ? (
+                                                <img
+                                                    src={user.photoURL}
+                                                    alt={user.displayName}
+                                                    className="w-12 h-12 rounded-full object-cover"
+                                                />
+                                            ) : (
+                                                <div className="w-12 h-12 rounded-full bg-accent-yellow/20 flex items-center justify-center">
+                                                    <UserIcon size={24} className="text-accent-yellow" />
+                                                </div>
+                                            )}
+
+                                            <div className="flex-1 min-w-0">
+                                                <h3 className="font-bold text-text-primary truncate">
+                                                    {user.displayName}
+                                                </h3>
+                                                <p className="text-xs text-text-muted truncate">{user.email}</p>
+                                                <p className="text-[10px] text-text-muted mt-1">
+                                                    ขอเข้าใช้งาน: {new Date(user.requestedAt).toLocaleDateString('th-TH')}
+                                                </p>
+                                            </div>
+
+                                            <div className="flex items-center gap-2">
+                                                <button
+                                                    onClick={() => {
+                                                        setApprovalModal(user);
+                                                        setApprovalRole("technician");
+                                                        setApprovalNickname("");
+                                                    }}
+                                                    className="px-3 py-2 rounded-lg bg-accent-green/20 hover:bg-accent-green/30 text-accent-green text-sm font-bold transition-colors"
+                                                >
+                                                    <CheckIcon size={16} className="inline mr-1" />
+                                                    {t("userActionApprove")}
+                                                </button>
+                                                <button
+                                                    onClick={() => handleReject(user.uid)}
+                                                    className="px-3 py-2 rounded-lg bg-accent-red/20 hover:bg-accent-red/30 text-accent-red text-sm font-bold transition-colors"
+                                                >
+                                                    <XIcon size={16} className="inline mr-1" />
+                                                    {t("userActionReject")}
+                                                </button>
+                                            </div>
+                                        </div>
+                                    </div>
+                                ))
+                            )}
+                        </div>
+                    )
+                }
+            </main >
 
             <MobileNav />
 
@@ -411,7 +421,7 @@ export default function UsersPage() {
                     />
                 )}
             </Modal>
-        </div>
+        </div >
     );
 }
 

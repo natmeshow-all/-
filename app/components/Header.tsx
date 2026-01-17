@@ -3,8 +3,8 @@
 import React from "react";
 import { useLanguage } from "../contexts/LanguageContext";
 import { FlaskIcon, ShieldCheckIcon, UserIcon } from "./ui/Icons";
-import FirebaseStatus from "./ui/FirebaseStatus";
 import Link from "next/link";
+import VersionDisplay from "./ui/VersionDisplay";
 
 import { useAuth } from "../contexts/AuthContext";
 import LoginButton from "./auth/LoginButton";
@@ -50,11 +50,6 @@ export default function Header({ className = "" }: HeaderProps) {
                     </div>
 
                     <div className="flex items-center gap-1.5 sm:gap-3">
-                        {/* Firebase Status - Hidden on mobile */}
-                        <div className="hidden sm:block">
-                            <FirebaseStatus />
-                        </div>
-
                         {/* Notifications */}
                         <div className="flex items-center gap-1 sm:gap-2">
                             <NotificationBell />
@@ -137,6 +132,8 @@ export default function Header({ className = "" }: HeaderProps) {
                                             >
                                                 {t("actionSignOut")}
                                             </button>
+
+                                            <VersionDisplay />
                                         </div>
                                     </>
                                 )}
