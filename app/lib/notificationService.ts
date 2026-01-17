@@ -1,4 +1,4 @@
-import { MaintenanceSchedule } from "../types";
+import { PMPlan } from "../types";
 
 export interface NotificationItem {
     id: string;
@@ -41,45 +41,69 @@ export const sendBrowserNotification = (title: string, body: string, icon?: stri
 /**
  * Logic to check for upcoming preventive maintenance
  */
-export function checkUpcomingPM(schedules: MaintenanceSchedule[]): NotificationItem[] {
+export function checkUpcomingPM(plans: PMPlan[]): NotificationItem[] {
     const notifications: NotificationItem[] = [];
     const now = new Date();
-    const next7Days = new Date();
-    next7Days.setDate(now.getDate() + 7);
+    now.setHours(0, 0, 0, 0);
 
-    schedules.forEach(schedule => {
-        const nextDue = new Date(schedule.nextDue);
+    const getDiffDays = (date: string | Date) => {
+        const d = new Date(date);
+        d.setHours(0, 0, 0, 0);
+        return Math.ceil((d.getTime() - now.getTime()) / (1000 * 60 * 60 * 24));
+    };
 
-        // If due date is within the next 7 days
-        if (nextDue <= next7Days && nextDue >= now) {
+    plans.forEach(plan => {
+        // Skip paused plans if necessary, though requirement didn't specify. Assuming "active".
+        if (plan.status !== 'active') return;
+
+        const diffDays = getDiffDays(plan.nextDueDate);
+
+        // 1. Today (diffDays === 0)
+        if (diffDays === 0) {
             notifications.push({
-                id: `pm_${schedule.machineId}_${nextDue.getTime()}`,
+                id: `pm_today_${plan.id}_${new Date().getTime()}`,
+                type: "due_today",
+                titleKey: "notificationPmTodayTitle",
+                messageKey: "notificationPmTodayMessage",
+                params: {
+                    machine: plan.machineName
+                },
+                timestamp: new Date(),
+                read: false,
+                link: `/schedule?machineId=${plan.machineId}` // Or just /schedule
+            });
+        }
+        // 2. Overdue (diffDays < 0)
+        else if (diffDays < 0) {
+            notifications.push({
+                id: `pm_overdue_${plan.id}_${new Date().getTime()}`,
+                type: "due_today", // High priority
+                titleKey: "notificationPmOverdueTitle",
+                messageKey: "notificationPmOverdueMessage",
+                params: {
+                    machine: plan.machineName,
+                    date: new Date(plan.nextDueDate).toLocaleDateString(),
+                    days: Math.abs(diffDays) // In case message supports {days}
+                },
+                timestamp: new Date(),
+                read: false,
+                link: `/schedule?machineId=${plan.machineId}`
+            });
+        }
+        // 3. Upcoming within 7 days (diffDays > 0 && diffDays <= 7)
+        else if (diffDays > 0 && diffDays <= 7) {
+            notifications.push({
+                id: `pm_upcoming_${plan.id}_${new Date().getTime()}`,
                 type: "upcoming_pm",
                 titleKey: "notificationPmUpcomingTitle",
                 messageKey: "notificationPmUpcomingMessage",
                 params: {
-                    machine: schedule.machineName,
-                    days: Math.ceil((nextDue.getTime() - now.getTime()) / (1000 * 60 * 60 * 24))
+                    machine: plan.machineName,
+                    days: diffDays
                 },
-                timestamp: now,
+                timestamp: new Date(),
                 read: false,
-                link: `/schedule?machineId=${schedule.machineId}`
-            });
-        }
-        // If overdue
-        else if (nextDue < now) {
-            notifications.push({
-                id: `pm_overdue_${schedule.machineId}_${nextDue.getTime()}`,
-                type: "due_today", // Reusing this type for priority
-                titleKey: "notificationPmOverdueTitle",
-                messageKey: "notificationPmOverdueMessage",
-                params: {
-                    machine: schedule.machineName,
-                    date: nextDue.toLocaleDateString()
-                },
-                timestamp: now,
-                read: false,
-                link: `/schedule?machineId=${schedule.machineId}`
+                link: `/schedule?machineId=${plan.machineId}`
             });
         }
     });

@@ -351,6 +351,8 @@ export interface TranslationKeys {
     notificationLowStockMessage: string;
     notificationPmUpcomingTitle: string;
     notificationPmUpcomingMessage: string;
+    notificationPmTodayTitle: string;
+    notificationPmTodayMessage: string;
     notificationPmOverdueTitle: string;
     notificationPmOverdueMessage: string;
     notificationLowStock: string;
@@ -712,6 +714,8 @@ const th: TranslationKeys = {
     notificationLowStockMessage: "{part} เหลือเพียง {qty} {unit}",
     notificationPmUpcomingTitle: "แผนซ่อมบำรุงที่กำลังจะมาถึง",
     notificationPmUpcomingMessage: "{machine} มีกำหนดซ่อมในอีก {days} วัน",
+    notificationPmTodayTitle: "ถึงกำหนดซ่อมบำรุงวันนี้",
+    notificationPmTodayMessage: "{machine} มีกำหนดซ่อมบำรุงวันนี้",
     notificationPmOverdueTitle: "แผนซ่อมบำรุงเกินกำหนด",
     notificationPmOverdueMessage: "{machine} เกินกำหนดซ่อมตั้งแต่วันที่ {date}",
     notificationLowStock: "อะไหล่เหลือน้อย: {name}",
@@ -1040,9 +1044,12 @@ const en: TranslationKeys = {
     notificationLowStockMessage: "{part} only {qty} {unit} remaining",
     notificationPmUpcomingTitle: "Upcoming Maintenance",
     notificationPmUpcomingMessage: "{machine} is due in {days} days",
+    notificationPmTodayTitle: "Maintenance Due Today",
+    notificationPmTodayMessage: "{machine} is due today",
     notificationPmOverdueTitle: "Overdue Maintenance",
     notificationPmOverdueMessage: "{machine} is overdue since {date}",
     notificationLowStock: "Low Stock: {name}",
+
     notificationUpcomingPM: "Maintenance in {days} days: {name}",
     notificationDueToday: "Due Today: {name}",
     notificationRequestTitle: "Enable Notifications",

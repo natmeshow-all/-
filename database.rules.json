@@ -1,46 +1,80 @@
 {
     "rules": {
+        // ===== ข้อมูลผู้ใช้ =====
+        "users": {
+            "$uid": {
+                ".read": "auth != null && (auth.uid == $uid || root.child('users').child(auth.uid).child('role').val() == 'admin')",
+                ".write": "auth != null && (auth.uid == $uid || root.child('users').child(auth.uid).child('role').val() == 'admin')"
+            },
+            ".read": "auth != null && root.child('users').child(auth.uid).child('role').val() == 'admin'"
+        },
+        // ===== ผู้ใช้รอ Approve =====
+        "pendingUsers": {
+            ".read": "auth != null && root.child('users').child(auth.uid).child('role').val() == 'admin'",
+            ".write": "auth != null",
+            "$uid": {
+                ".read": "auth != null && auth.uid == $uid"
+            }
+        },
+        // ===== เครื่องจักร =====
         "machines": {
             ".read": true,
-            ".write": "auth != null"
+            ".write": "auth != null && (root.child('users').child(auth.uid).child('role').val() == 'admin' || root.child('users').child(auth.uid).child('role').val() == 'supervisor')"
         },
+        // ===== Parts =====
         "parts": {
             ".read": true,
-            ".write": "auth != null",
+            ".write": "auth != null && (root.child('users').child(auth.uid).child('role').val() == 'admin' || root.child('users').child(auth.uid).child('role').val() == 'supervisor')",
             ".indexOn": [
                 "machineId"
             ]
         },
+        // ===== Maintenance Records =====
         "maintenance_records": {
             ".read": true,
-            ".write": "auth != null",
+            ".write": "auth != null && root.child('users').child(auth.uid).child('isApproved').val() == true && root.child('users').child(auth.uid).child('role').val() != 'viewer'",
             ".indexOn": [
                 "date",
-                "machineId"
+                "machineId",
+                "pmPlanId"
             ]
         },
+        // ===== PM Plans =====
+        "pm_plans": {
+            ".read": true,
+            ".write": "auth != null && (root.child('users').child(auth.uid).child('role').val() == 'admin' || root.child('users').child(auth.uid).child('role').val() == 'supervisor')",
+            ".indexOn": [
+                "machineId",
+                "nextDueDate"
+            ]
+        },
+        // ===== Schedules =====
         "schedules": {
             ".read": true,
-            ".write": "auth != null"
+            ".write": "auth != null && (root.child('users').child(auth.uid).child('role').val() == 'admin' || root.child('users').child(auth.uid).child('role').val() == 'supervisor')"
         },
+        // ===== Spare Parts =====
         "spare_parts": {
             ".read": true,
-            ".write": "auth != null"
+            ".write": "auth != null && (root.child('users').child(auth.uid).child('role').val() == 'admin' || root.child('users').child(auth.uid).child('role').val() == 'supervisor')"
         },
+        // ===== Stock Transactions =====
         "stock_transactions": {
             ".read": true,
-            ".write": "auth != null",
+            ".write": "auth != null && root.child('users').child(auth.uid).child('isApproved').val() == true",
             ".indexOn": [
                 "partId"
             ]
         },
+        // ===== Image Hashes =====
         "image_hashes": {
             ".read": true,
             ".write": "auth != null"
         },
+        // ===== Sensor Readings =====
         "sensor_readings": {
             ".read": true,
-            ".write": "auth != null",
+            ".write": "auth != null && root.child('users').child(auth.uid).child('isApproved').val() == true",
             ".indexOn": [
                 "machineId",
                 "timestamp"

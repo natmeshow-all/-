@@ -12,6 +12,7 @@ import { useAuth } from "./contexts/AuthContext";
 import { useToast } from "./contexts/ToastContext";
 import { getDashboardStats, getParts, deletePart, getMachines } from "./lib/firebaseService";
 import MachineDetailsModal from "./components/machines/MachineDetailsModal"; // Import MachineDetailsModal
+import GlobalMaintenanceHistoryModal from "./components/pm/GlobalMaintenanceHistoryModal";
 import Lightbox from "./components/ui/Lightbox"; // Import Lightbox
 import {
   BoxIcon,
@@ -37,6 +38,7 @@ export default function Dashboard() {
   const { success } = useToast();
   const [addPartModalOpen, setAddPartModalOpen] = useState(false);
   const [maintenanceModalOpen, setMaintenanceModalOpen] = useState(false);
+  const [historyModalOpen, setHistoryModalOpen] = useState(false);
 
   // Confirm Modal State
   const [confirmModalOpen, setConfirmModalOpen] = useState(false);
@@ -373,7 +375,10 @@ export default function Dashboard() {
               <HistoryIcon size={14} className="mr-1" />
               {t("actionRecordMaintenance")}
             </button>
-            <button className="flex-1 min-w-[120px] btn btn-outline border-white/10 hover:bg-white/5 h-8 text-[11px] font-bold text-text-primary">
+            <button
+              onClick={() => setHistoryModalOpen(true)}
+              className="flex-1 min-w-[120px] btn btn-active bg-accent-purple text-white hover:bg-accent-purple/90 border-none h-8 text-[11px] font-bold"
+            >
               <RefreshIcon size={14} className="mr-1" />
               {t("actionMaintenanceHistory")}
             </button>
@@ -998,6 +1003,11 @@ export default function Dashboard() {
           setMachineModalOpen(false);
           handleDeleteClick(part);
         }}
+      />
+
+      <GlobalMaintenanceHistoryModal
+        isOpen={historyModalOpen}
+        onClose={() => setHistoryModalOpen(false)}
       />
 
       <Lightbox

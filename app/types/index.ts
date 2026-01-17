@@ -1,5 +1,30 @@
 // TypeScript types for the Maintenance Dashboard
 
+// ===== User Management Types =====
+export type UserRole = "admin" | "supervisor" | "technician" | "viewer";
+
+export interface UserProfile {
+    uid: string;
+    email: string;
+    displayName: string;
+    nickname?: string;
+    role: UserRole;
+    department?: string;
+    isApproved: boolean;
+    isActive: boolean;
+    photoURL?: string;
+    createdAt: string;
+    updatedAt: string;
+}
+
+export interface PendingUser {
+    uid: string;
+    email: string;
+    displayName: string;
+    photoURL?: string;
+    requestedAt: string;
+}
+
 export interface Machine {
     id: string;
     code?: string;
@@ -89,6 +114,12 @@ export interface MotorGearData {
     shaftData?: ShaftDialGaugeData;
 }
 
+export interface ChecklistItemResult {
+    item: string;
+    completed: boolean;
+    value?: string;
+}
+
 export interface MaintenanceRecord {
     id: string;
     machineId: string;
@@ -102,6 +133,8 @@ export interface MaintenanceRecord {
     technician: string;
     motorGearData?: MotorGearData;
     details?: string;
+    checklist?: ChecklistItemResult[];
+    zone?: string; // Location of the machine 
     notes?: string;
     evidenceImageUrl?: string; // Photo after work completion
     pmPlanId?: string; // Reference to the PMPlan if this was a PM task

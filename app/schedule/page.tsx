@@ -73,8 +73,24 @@ export default function SchedulePage() {
         const diffTime = due.getTime() - now.getTime();
         const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
 
-        if (diffDays < 0) return { label: "เกินกำหนด", color: "text-accent-red", bg: "bg-accent-red/20", border: "border-accent-red/30", days: diffDays };
-        if (diffDays === 0) return { label: "วันนี้!", color: "text-accent-yellow", bg: "bg-accent-yellow/20", border: "border-accent-yellow/30", days: diffDays };
+        // Overdue -> Yellow/Orange (Warning)
+        if (diffDays < 0) return {
+            label: "เกินกำหนด",
+            color: "text-accent-yellow",
+            bg: "bg-accent-yellow/20",
+            border: "border-accent-yellow/30",
+            days: diffDays
+        };
+
+        // Today -> Red + Blink (Urgent)
+        if (diffDays === 0) return {
+            label: "วันนี้!",
+            color: "text-accent-red",
+            bg: "bg-accent-red/20",
+            border: "border-accent-red/30",
+            days: diffDays
+        };
+
         if (diffDays <= 7) return { label: "เร็วๆ นี้", color: "text-accent-blue", bg: "bg-accent-blue/20", border: "border-accent-blue/30", days: diffDays };
         return { label: "ตามกำหนด", color: "text-accent-green", bg: "bg-accent-green/20", border: "border-accent-green/30", days: diffDays };
     };
@@ -170,8 +186,36 @@ export default function SchedulePage() {
                             <p>กำลังโหลดแผนงาน...</p>
                         </div>
                     ) : plans.length > 0 ? (
-                        plans.map((item, index) => {
+                        [...plans].sort((a, b) => {
+                            const getDiffDays = (date: Date) => {
+                                const now = new Date();
+                                now.setHours(0, 0, 0, 0);
+                                const due = new Date(date);
+                                due.setHours(0, 0, 0, 0);
+                                return Math.ceil((due.getTime() - now.getTime()) / (1000 * 60 * 60 * 24));
+                            };
+
+                            const daysA = getDiffDays(a.nextDueDate);
+                            const daysB = getDiffDays(b.nextDueDate);
+
+                            // 1. Today (days === 0)
+                            const isTodayA = daysA === 0;
+                            const isTodayB = daysB === 0;
+                            if (isTodayA && !isTodayB) return -1;
+                            if (!isTodayA && isTodayB) return 1;
+
+                            // 2. Overdue (days < 0)
+                            const isOverdueA = daysA < 0;
+                            const isOverdueB = daysB < 0;
+                            if (isOverdueA && !isOverdueB) return -1;
+                            if (!isOverdueA && isOverdueB) return 1;
+
+                            // 3. Date Ascending
+                            return daysA - daysB;
+                        }).map((item, index) => {
                             const status = getStatusInfo(item.nextDueDate);
+                            const isToday = status.days === 0;
+                            const isOverdue = status.days < 0;
 
                             // Priority Styles
                             const priorityColor = item.priority === 'urgent' ? 'border-accent-red bg-accent-red/5'
@@ -185,11 +229,11 @@ export default function SchedulePage() {
                             return (
                                 <div
                                     key={item.id}
-                                    className={`card hover-lift animate-fade-in-up border-l-4 ${status.days < 0 ? "border-l-accent-red" :
-                                        status.days === 0 ? "border-l-accent-yellow" :
+                                    className={`card hover-lift animate-fade-in-up border-l-4 ${isOverdue ? "border-l-accent-yellow animate-warning-pulse" :
+                                        isToday ? "border-l-accent-red animate-urgent-pulse" :
                                             status.days <= 7 ? "border-l-accent-blue" :
                                                 "border-l-accent-green"
-                                        } ${priorityColor} border-y border-r`}
+                                        } ${priorityColor} border-y border-r transition-all duration-300`}
                                     style={{ animationDelay: `${index * 50}ms` }}
                                 >
                                     <div className="flex items-start justify-between">
@@ -204,7 +248,7 @@ export default function SchedulePage() {
                                             </div>
                                             <div>
                                                 <div className="flex items-center gap-2">
-                                                    <h3 className="font-semibold text-text-primary">{item.taskName}</h3>
+                                                    <h3 className="font-bold text-lg text-text-primary">{item.machineName}</h3>
                                                     {priorityBadge && (
                                                         <span className={`text-[9px] px-1.5 py-0.5 rounded-full uppercase font-bold tracking-wider ${priorityBadge.color}`}>
                                                             {priorityBadge.label}
@@ -212,7 +256,7 @@ export default function SchedulePage() {
                                                     )}
                                                 </div>
                                                 <p className="text-sm text-text-muted flex items-center gap-2">
-                                                    {item.machineName}
+                                                    {item.taskName}
                                                     {item.checklistItems && item.checklistItems.length > 0 && (
                                                         <span className="text-xs bg-bg-tertiary px-1.5 rounded text-text-muted border border-white/5">
                                                             {item.checklistItems.length} items
@@ -264,7 +308,7 @@ export default function SchedulePage() {
                                             ) : (
                                                 <div className="flex items-center gap-2 text-text-muted">
                                                     <ClockIcon size={14} />
-                                                    <span className={status.days <= 0 ? "text-accent-red font-bold" : ""}>
+                                                    <span className={status.days === 0 ? "text-accent-red font-bold" : status.days < 0 ? "text-accent-yellow font-bold" : ""}>
                                                         {status.days < 0 ? `เกินมา ${Math.abs(status.days)} วัน` :
                                                             status.days === 0 ? "วันนี้" :
                                                                 `อีก ${status.days} วัน`}

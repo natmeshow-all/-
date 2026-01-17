@@ -3,6 +3,7 @@
 import React, { useState, useRef, useEffect } from "react";
 import Modal from "../ui/Modal";
 import { useLanguage } from "../../contexts/LanguageContext";
+import { useAuth } from "../../contexts/AuthContext";
 import { PMPlan } from "../../types";
 import { CameraIcon, CheckCircleIcon, XIcon, ActivityIcon, PlusIcon, UserIcon, FileTextIcon, ClockIcon } from "../ui/Icons";
 import { completePMTask } from "../../lib/firebaseService";
@@ -22,7 +23,11 @@ interface ChecklistItemResult {
 
 export default function PMExecutionModal({ isOpen, onClose, plan, onSuccess }: PMExecutionModalProps) {
     const { t } = useLanguage();
-    const [technician, setTechnician] = useState("");
+    const { userProfile } = useAuth();
+
+    // Auto-fill technician from userProfile
+    const defaultTechnician = userProfile?.nickname || userProfile?.displayName || "";
+    const [technician, setTechnician] = useState(defaultTechnician);
     const [additionalNotes, setAdditionalNotes] = useState("");
     const [imageFile, setImageFile] = useState<File | null>(null);
     const [imagePreview, setImagePreview] = useState<string | null>(null);
@@ -73,8 +78,10 @@ export default function PMExecutionModal({ isOpen, onClose, plan, onSuccess }: P
 
     // Build details string from checklist results
     const buildDetailsString = (): string => {
+        const cycleInfo = plan.scheduleType === 'weekly' ? '[รอบรายสัปดาห์]' : `[รอบราย ${plan.cycleMonths || 1} เดือน]`;
+
         if (!plan?.checklistItems || plan.checklistItems.length === 0) {
-            return additionalNotes;
+            return `${cycleInfo}\n${additionalNotes}`;
         }
 
         const itemDetails = plan.checklistItems.map((item, index) => {
@@ -85,8 +92,8 @@ export default function PMExecutionModal({ isOpen, onClose, plan, onSuccess }: P
         }).join("\n");
 
         return additionalNotes
-            ? `${itemDetails}\n\n[หมายเหตุเพิ่มเติม]\n${additionalNotes}`
-            : itemDetails;
+            ? `${cycleInfo}\n${itemDetails}\n\n[หมายเหตุเพิ่มเติม]\n${additionalNotes}`
+            : `${cycleInfo}\n${itemDetails}`;
     };
 
     const handleSubmit = async (e: React.FormEvent) => {
@@ -95,6 +102,19 @@ export default function PMExecutionModal({ isOpen, onClose, plan, onSuccess }: P
 
         try {
             const details = buildDetailsString();
+
+            // Convert local checklistResults to ChecklistItemResult[]
+            const structuredChecklist = plan.checklistItems?.map((item, index) => ({
+                item,
+                completed: checklistResults[index]?.completed || false,
+                value: checklistResults[index]?.value || ""
+            }));
+
+            // Fetch machine to get its current zone if not in record
+            // Since we already have machineName, let's assume we might needs zone too
+            // For now, if we don't have zone in PMPlan, we can lookup or just pass it if we have it.
+            // Let's check machines once in useEffect to get the zone.
+            const machineZone = plan.locationType === 'machine_zone' ? plan.customLocation : undefined;
 
             await completePMTask(
                 plan.id,
@@ -108,6 +128,8 @@ export default function PMExecutionModal({ isOpen, onClose, plan, onSuccess }: P
                     date: new Date(),
                     technician: technician || "Technician",
                     details: details,
+                    checklist: structuredChecklist,
+                    zone: machineZone || "", // Save zone for auditing
                 },
                 imageFile || undefined
             );
@@ -182,8 +204,8 @@ export default function PMExecutionModal({ isOpen, onClose, plan, onSuccess }: P
                                     <div
                                         key={index}
                                         className={`p-3 rounded-lg border transition-all ${checklistResults[index]?.completed
-                                                ? 'bg-accent-green/10 border-accent-green/30'
-                                                : 'bg-bg-tertiary border-white/5'
+                                            ? 'bg-accent-green/10 border-accent-green/30'
+                                            : 'bg-bg-tertiary border-white/5'
                                             }`}
                                     >
                                         <div className="flex items-start gap-3">
@@ -192,8 +214,8 @@ export default function PMExecutionModal({ isOpen, onClose, plan, onSuccess }: P
                                                 type="button"
                                                 onClick={() => handleChecklistChange(index, "completed", !checklistResults[index]?.completed)}
                                                 className={`w-6 h-6 rounded-md border-2 flex items-center justify-center shrink-0 transition-all mt-0.5 ${checklistResults[index]?.completed
-                                                        ? 'bg-accent-green border-accent-green text-white'
-                                                        : 'border-white/20 hover:border-accent-blue'
+                                                    ? 'bg-accent-green border-accent-green text-white'
+                                                    : 'border-white/20 hover:border-accent-blue'
                                                     }`}
                                             >
                                                 {checklistResults[index]?.completed && (
@@ -204,8 +226,8 @@ export default function PMExecutionModal({ isOpen, onClose, plan, onSuccess }: P
                                             {/* Item content */}
                                             <div className="flex-1 space-y-2">
                                                 <span className={`text-sm font-medium ${checklistResults[index]?.completed
-                                                        ? 'text-accent-green'
-                                                        : 'text-text-primary'
+                                                    ? 'text-accent-green'
+                                                    : 'text-text-primary'
                                                     }`}>
                                                     {item}
                                                 </span>

@@ -2,14 +2,13 @@
 
 import React from "react";
 import { useLanguage } from "../contexts/LanguageContext";
-import { FlaskIcon } from "./ui/Icons";
+import { FlaskIcon, ShieldCheckIcon, UserIcon } from "./ui/Icons";
 import FirebaseStatus from "./ui/FirebaseStatus";
+import Link from "next/link";
 
 import { useAuth } from "../contexts/AuthContext";
 import LoginButton from "./auth/LoginButton";
 import NotificationBell from "./ui/NotificationBell";
-import { CameraIcon } from "./ui/Icons";
-import ScannerModal from "./ui/ScannerModal";
 
 interface HeaderProps {
     className?: string;
@@ -17,9 +16,15 @@ interface HeaderProps {
 
 export default function Header({ className = "" }: HeaderProps) {
     const { language, setLanguage, t } = useLanguage();
-    const { user, signOut } = useAuth();
+    const { user, userProfile, signOut, isAdmin, isPending } = useAuth();
     const [showProfileMenu, setShowProfileMenu] = React.useState(false);
-    const [isScannerOpen, setIsScannerOpen] = React.useState(false);
+
+    // Get display name from userProfile first, fallback to user
+    const displayName = userProfile?.displayName || userProfile?.nickname || user?.displayName || "User";
+    const roleLabel = userProfile?.role === "admin" ? "Admin" :
+        userProfile?.role === "supervisor" ? "Supervisor" :
+            userProfile?.role === "technician" ? "Technician" :
+                userProfile?.role === "viewer" ? "Viewer" : "";
 
     return (
         <header className={`sticky top-0 z-30 bg-bg-secondary/80 backdrop-blur-xl border-b border-border-light ${className}`}>
@@ -50,18 +55,9 @@ export default function Header({ className = "" }: HeaderProps) {
                             <FirebaseStatus />
                         </div>
 
-                        {/* Notifications & Scanner */}
+                        {/* Notifications */}
                         <div className="flex items-center gap-1 sm:gap-2">
                             <NotificationBell />
-
-                            {/* Scanner Button (Phase 4) */}
-                            <button
-                                onClick={() => setIsScannerOpen(true)}
-                                className="p-1.5 sm:p-2 rounded-lg sm:rounded-xl text-text-muted hover:text-text-primary hover:bg-bg-tertiary transition-colors"
-                                title="Scan QR Code"
-                            >
-                                <CameraIcon size={16} className="sm:w-5 sm:h-5" />
-                            </button>
                         </div>
 
                         {/* Language Switcher */}
@@ -95,8 +91,8 @@ export default function Header({ className = "" }: HeaderProps) {
                                 >
                                     <div className="user-avatar-glow">
                                         <img
-                                            src={user.photoURL || "https://ui-avatars.com/api/?name=" + user.displayName}
-                                            alt={user.displayName || "User"}
+                                            src={user.photoURL || "https://ui-avatars.com/api/?name=" + displayName}
+                                            alt={displayName}
                                             className="w-9 h-9 sm:w-10 sm:h-10 rounded-full transition-transform group-hover:scale-95 cursor-pointer"
                                         />
                                     </div>
@@ -109,23 +105,48 @@ export default function Header({ className = "" }: HeaderProps) {
                                             className="fixed inset-0 z-40 bg-transparent"
                                             onClick={() => setShowProfileMenu(false)}
                                         />
-                                        <div className="absolute right-0 top-full mt-2 w-48 py-1 bg-bg-secondary rounded-xl border border-border-light shadow-xl z-50 animate-in fade-in slide-in-from-top-2">
-                                            <div className="px-4 py-2 border-b border-border-light/50">
+                                        <div className="absolute right-0 top-full mt-2 w-56 py-1 bg-bg-secondary rounded-xl border border-border-light shadow-xl z-50 animate-in fade-in slide-in-from-top-2">
+                                            <div className="px-4 py-3 border-b border-border-light/50">
                                                 <p className="text-sm font-semibold text-text-primary truncate">
-                                                    {user.displayName}
+                                                    {displayName}
                                                 </p>
-                                                <p className="text-xs text-text-muted truncate">
+                                                {userProfile?.nickname && userProfile.nickname !== displayName && (
+                                                    <p className="text-xs text-text-muted">({userProfile.nickname})</p>
+                                                )}
+                                                <p className="text-xs text-text-muted truncate mt-1">
                                                     {user.email}
                                                 </p>
+                                                {roleLabel && (
+                                                    <span className={`inline-block mt-2 px-2 py-0.5 rounded text-[10px] font-bold
+                                                        ${userProfile?.role === 'admin' ? 'bg-accent-red/20 text-accent-red' :
+                                                            userProfile?.role === 'supervisor' ? 'bg-accent-yellow/20 text-accent-yellow' :
+                                                                userProfile?.role === 'technician' ? 'bg-accent-blue/20 text-accent-blue' :
+                                                                    'bg-white/10 text-white/60'}`}>
+                                                        {roleLabel}
+                                                    </span>
+                                                )}
                                             </div>
+
+                                            {/* Admin Link */}
+                                            {isAdmin && (
+                                                <Link
+                                                    href="/users"
+                                                    onClick={() => setShowProfileMenu(false)}
+                                                    className="flex items-center gap-2 w-full text-left px-4 py-2.5 text-sm text-accent-purple hover:bg-bg-tertiary transition-colors"
+                                                >
+                                                    <ShieldCheckIcon size={16} />
+                                                    จัดการผู้ใช้งาน
+                                                </Link>
+                                            )}
+
                                             <button
                                                 onClick={() => {
                                                     signOut();
                                                     setShowProfileMenu(false);
                                                 }}
-                                                className="w-full text-left px-4 py-2 text-sm text-accent-red hover:bg-bg-tertiary transition-colors"
+                                                className="w-full text-left px-4 py-2.5 text-sm text-accent-red hover:bg-bg-tertiary transition-colors"
                                             >
-                                                Sign out
+                                                ออกจากระบบ
                                             </button>
                                         </div>
                                     </>
@@ -138,11 +159,8 @@ export default function Header({ className = "" }: HeaderProps) {
                 </div>
             </div>
 
-            {/* QR Scanner Modal */}
-            <ScannerModal
-                isOpen={isScannerOpen}
-                onClose={() => setIsScannerOpen(false)}
-            />
+
         </header>
     );
 }
+

@@ -1,138 +1,89 @@
 "use client";
 
-import React, { useState, useEffect } from "react";
+import React, { useEffect } from "react";
 import { useAuth } from "../contexts/AuthContext";
-import { useLanguage } from "../contexts/LanguageContext";
 import { useRouter } from "next/navigation";
-import { doc, setDoc, Timestamp } from "firebase/firestore";
-import { db } from "../lib/firebase";
-import { UserIcon, CheckIcon } from "../components/ui/Icons";
+import { UserIcon, ClockIcon } from "../components/ui/Icons";
 
 export default function RegisterPage() {
-    const { user, userData } = useAuth();
-    const { t } = useLanguage();
+    const { user, userProfile, isPending, loading } = useAuth();
     const router = useRouter();
-    const [isSubmitting, setIsSubmitting] = useState(false);
-    const [formData, setFormData] = useState({
-        name: "",
-        phoneNumber: "",
-        position: "",
-        role: "technician", // Default role
-    });
 
     useEffect(() => {
+        if (loading) return;
+
         if (!user) {
             router.push("/"); // Redirect if not logged in
-        } else if (userData) {
-            router.push("/"); // Redirect if already registered
-        } else if (user.displayName) {
-            setFormData(prev => ({ ...prev, name: user.displayName || "" }));
+        } else if (userProfile && userProfile.isApproved) {
+            router.push("/"); // Redirect if already approved
         }
-    }, [user, userData, router]);
+    }, [user, userProfile, loading, router]);
 
-    const handleSubmit = async (e: React.FormEvent) => {
-        e.preventDefault();
-        if (!user) return;
+    // Show pending approval page
+    if (isPending) {
+        return (
+            <div className="min-h-screen flex items-center justify-center p-4 bg-bg-primary">
+                <div className="w-full max-w-md bg-bg-secondary p-6 sm:p-8 rounded-2xl border border-border-light shadow-2xl relative overflow-hidden">
+                    {/* Background Glow */}
+                    <div className="absolute top-0 right-0 w-64 h-64 bg-accent-yellow/10 rounded-full blur-3xl -z-10 -mr-16 -mt-16" />
+                    <div className="absolute bottom-0 left-0 w-64 h-64 bg-primary/10 rounded-full blur-3xl -z-10 -ml-16 -mb-16" />
 
-        try {
-            setIsSubmitting(true);
-            await setDoc(doc(db, "users", user.uid), {
-                id: user.uid,
-                name: formData.name,
-                email: user.email,
-                role: formData.role,
-                phoneNumber: formData.phoneNumber,
-                position: formData.position,
-                photoURL: user.photoURL,
-                createdAt: Timestamp.now(),
-                updatedAt: Timestamp.now(),
-            });
-
-            // Force reload to update context or just redirect
-            window.location.href = "/";
-        } catch (error) {
-            console.error("Error registering:", error);
-            alert("Failed to register. Please try again.");
-        } finally {
-            setIsSubmitting(false);
-        }
-    };
-
-    if (!user || userData) return null; // Prevent flash
-
-    return (
-        <div className="min-h-screen flex items-center justify-center p-4 bg-bg-primary">
-            <div className="w-full max-w-md bg-bg-secondary p-6 sm:p-8 rounded-2xl border border-border-light shadow-2xl relative overflow-hidden">
-                {/* Background Glow */}
-                <div className="absolute top-0 right-0 w-64 h-64 bg-accent-purple/10 rounded-full blur-3xl -z-10 -mr-16 -mt-16" />
-                <div className="absolute bottom-0 left-0 w-64 h-64 bg-primary/10 rounded-full blur-3xl -z-10 -ml-16 -mb-16" />
-
-                <div className="text-center mb-8">
-                    <div className="w-20 h-20 bg-bg-tertiary rounded-full mx-auto flex items-center justify-center mb-4 relative">
-                        {user.photoURL ? (
-                            <img src={user.photoURL} alt="Profile" className="w-full h-full rounded-full object-cover" />
-                        ) : (
-                            <UserIcon size={40} className="text-primary" />
-                        )}
-                        <div className="absolute bottom-0 right-0 w-6 h-6 bg-accent-green rounded-full border-4 border-bg-secondary flex items-center justify-center">
-                            <CheckIcon size={12} className="text-bg-secondary" />
+                    <div className="text-center">
+                        <div className="w-20 h-20 bg-accent-yellow/20 rounded-full mx-auto flex items-center justify-center mb-6">
+                            <ClockIcon size={40} className="text-accent-yellow" />
                         </div>
-                    </div>
-                    <h1 className="text-2xl font-bold text-text-primary">Welcome, {user.displayName?.split(" ")[0]}!</h1>
-                    <p className="text-text-muted mt-2 text-sm">Please complete your registration to continue.</p>
-                </div>
+                        <h1 className="text-2xl font-bold text-text-primary mb-2">รอการอนุมัติ</h1>
+                        <p className="text-text-muted text-sm mb-6">
+                            บัญชีของคุณกำลังรอการอนุมัติจากผู้ดูแลระบบ
+                        </p>
 
-                <form onSubmit={handleSubmit} className="space-y-4">
-                    <div>
-                        <label className="label">Full Name</label>
-                        <input
-                            type="text"
-                            required
-                            value={formData.name}
-                            onChange={(e) => setFormData({ ...formData, name: e.target.value })}
-                            className="input"
-                            placeholder="John Doe"
-                        />
-                    </div>
+                        {user && (
+                            <div className="flex items-center gap-3 p-4 bg-bg-tertiary rounded-xl mb-6">
+                                {user.photoURL ? (
+                                    <img
+                                        src={user.photoURL}
+                                        alt={user.displayName || "User"}
+                                        className="w-12 h-12 rounded-full"
+                                    />
+                                ) : (
+                                    <div className="w-12 h-12 rounded-full bg-accent-purple/20 flex items-center justify-center">
+                                        <UserIcon size={24} className="text-accent-purple" />
+                                    </div>
+                                )}
+                                <div className="text-left">
+                                    <p className="font-bold text-text-primary">{user.displayName}</p>
+                                    <p className="text-xs text-text-muted">{user.email}</p>
+                                </div>
+                            </div>
+                        )}
 
-                    <div>
-                        <label className="label">Position / Job Title</label>
-                        <input
-                            type="text"
-                            required
-                            value={formData.position}
-                            onChange={(e) => setFormData({ ...formData, position: e.target.value })}
-                            className="input"
-                            placeholder="e.g. Senior Technician"
-                        />
-                    </div>
+                        <div className="p-4 bg-accent-blue/10 rounded-xl border border-accent-blue/20 mb-6">
+                            <p className="text-sm text-accent-blue">
+                                💡 กรุณารอสักครู่ ผู้ดูแลระบบจะตรวจสอบและอนุมัติบัญชีของคุณโดยเร็ว
+                            </p>
+                        </div>
 
-                    <div>
-                        <label className="label">Phone Number (Optional)</label>
-                        <input
-                            type="tel"
-                            value={formData.phoneNumber}
-                            onChange={(e) => setFormData({ ...formData, phoneNumber: e.target.value })}
-                            className="input"
-                            placeholder="08X-XXX-XXXX"
-                        />
-                    </div>
-
-                    <div className="pt-4">
                         <button
-                            type="submit"
-                            disabled={isSubmitting}
-                            className="w-full btn btn-primary py-3 text-base flex justify-center items-center gap-2"
+                            onClick={() => router.push("/")}
+                            className="w-full py-3 rounded-xl bg-white/5 text-text-primary font-bold hover:bg-white/10 transition-colors"
                         >
-                            {isSubmitting ? (
-                                <span className="animate-spin rounded-full h-5 w-5 border-b-2 border-white"></span>
-                            ) : (
-                                "Complete Registration"
-                            )}
+                            กลับหน้าหลัก
                         </button>
                     </div>
-                </form>
+                </div>
             </div>
-        </div>
-    );
+        );
+    }
+
+    // Loading state
+    if (loading) {
+        return (
+            <div className="min-h-screen flex items-center justify-center bg-bg-primary">
+                <div className="w-8 h-8 border-2 border-accent-blue border-t-transparent rounded-full animate-spin" />
+            </div>
+        );
+    }
+
+    return null; // Prevent flash while redirecting
 }
+
