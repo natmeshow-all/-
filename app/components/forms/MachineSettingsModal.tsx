@@ -27,6 +27,7 @@ export default function MachineSettingsModal({ isOpen, onClose, machine, onSucce
     const { success, error: toastError } = useToast();
     const [loading, setLoading] = useState(false);
     const [formData, setFormData] = useState<Partial<Machine>>({
+        name: "",
         code: "",
         brand: "",
         model: "",
@@ -44,6 +45,7 @@ export default function MachineSettingsModal({ isOpen, onClose, machine, onSucce
     useEffect(() => {
         if (machine) {
             setFormData({
+                name: machine.name || "",
                 code: machine.code || "",
                 brand: machine.brand || "",
                 model: machine.model || "",
@@ -113,6 +115,22 @@ export default function MachineSettingsModal({ isOpen, onClose, machine, onSucce
 
                 <form onSubmit={handleSubmit} className="p-6 max-h-[80vh] overflow-y-auto custom-scrollbar">
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-6">
+                        {/* Machine Name */}
+                        <div className="space-y-2">
+                            <label className="flex items-center gap-2 text-sm font-medium text-text-secondary">
+                                <CpuIcon size={14} className="text-primary" />
+                                {t("labelMachineName") || "Machine Name"}
+                            </label>
+                            <input
+                                type="text"
+                                name="name"
+                                value={formData.name}
+                                onChange={handleChange}
+                                placeholder="e.g. Deck Oven"
+                                className="input w-full bg-bg-tertiary"
+                            />
+                        </div>
+
                         {/* Machine Code */}
                         <div className="space-y-2">
                             <label className="flex items-center gap-2 text-sm font-medium text-text-secondary">
