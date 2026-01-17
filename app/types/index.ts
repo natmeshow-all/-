@@ -293,3 +293,35 @@ export interface PartFilters {
     partName: string;
     location: string;
 }
+
+// ===== Admin & Analytics Types =====
+export interface UsageLog {
+    date: string; // YYYY-MM-DD
+    count: number;
+}
+
+export interface PerformanceScore {
+    quality: number; // 1-5
+    speed: number;   // 1-5
+    reliability: number; // 1-5
+    knowledge: number; // 1-5
+}
+
+export interface PerformanceEvaluation {
+    id: string;
+    technicianId: string;
+    evaluatorId: string;
+    evaluatorName: string;
+    date: Date;
+    scores: PerformanceScore;
+    averageScore: number;
+    comments: string;
+}
+
+export interface AdminStats {
+    totalLogins: number;
+    avgLoginsPerDay: number;
+    usageHistory: { date: string; count: number }[];
+    technicianCount: number;
+    avgPerformance: number;
+}

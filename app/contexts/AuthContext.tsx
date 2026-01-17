@@ -13,7 +13,8 @@ import {
     getUserProfile,
     createPendingUser,
     isPendingUser,
-    createInitialAdmin
+    createInitialAdmin,
+    logAppAccess
 } from "../lib/firebaseService";
 
 interface AuthContextType {
@@ -105,6 +106,8 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
                     if (profile && profile.isApproved && profile.isActive) {
                         setUserProfile(profile);
                         setIsPending(false);
+                        // Log usage
+                        logAppAccess();
                     } else {
                         setUserProfile(null);
 

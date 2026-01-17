@@ -111,15 +111,15 @@ export default function Header({ className = "" }: HeaderProps) {
                                                 )}
                                             </div>
 
-                                            {/* Admin Link */}
+                                            {/* Admin Dashboard */}
                                             {isAdmin && (
                                                 <Link
-                                                    href="/users"
+                                                    href="/admin"
                                                     onClick={() => setShowProfileMenu(false)}
                                                     className="flex items-center gap-2 w-full text-left px-4 py-2.5 text-sm text-accent-purple hover:bg-bg-tertiary transition-colors"
                                                 >
                                                     <ShieldCheckIcon size={16} />
-                                                    {t("actionManageUsers")}
+                                                    {t("navAdminDashboard")}
                                                 </Link>
                                             )}
 

@@ -425,6 +425,14 @@ export interface TranslationKeys {
     userActionReject: string;
     userConfirmReject: string;
     userEditTitle: string;
+    msgSuccess: string;
+    navAdminDashboard: string;
+    aiAnalyze: string;
+    aiAnalyzing: string;
+    aiSuggestionTitle: string;
+    aiInsightTitle: string;
+    aiApplySuggestion: string;
+    aiReasoning: string;
     userApproveTitle: string;
     userLabelNickname: string;
     userLabelRole: string;
@@ -860,7 +868,16 @@ const th: TranslationKeys = {
     msgNoData: "ไม่พบข้อมูล",
     msgSaveSuccess: "บันทึกข้อมูลสำเร็จ",
     msgSaveError: "เกิดข้อผิดพลาดในการบันทึก",
-    msgConfirmDelete: "ยืนยันการลบข้อมูล?",
+    msgConfirmDelete: "คุณแน่ใจหรือไม่ว่าต้องการลบ?",
+    msgSuccess: "ดำเนินการสำเร็จ",
+    userEditTitle: "แก้ไขข้อมูลผู้ใช้งาน",
+    navAdminDashboard: "แดชบอร์ดผู้ดูแลระบบ",
+    aiAnalyze: "วิเคราะห์ด้วย AI",
+    aiAnalyzing: "AI กำลังวิเคราะห์...",
+    aiSuggestionTitle: "ข้อแนะนำจาก AI",
+    aiInsightTitle: "ข้อมูลเจาะลึกจาก AI",
+    aiApplySuggestion: "ใช้การตั้งค่านี้",
+    aiReasoning: "เหตุผลประกอบการประเมิน",
     msgSaving: "กำลังบันทึก...",
     msgDeleteSuccess: "ลบข้อมูลสำเร็จ",
     msgDeleteError: "เกิดข้อผิดพลาดในการลบ",
@@ -1001,7 +1018,6 @@ const th: TranslationKeys = {
     userActionApprove: "อนุมัติ",
     userActionReject: "ปฏิเสธ",
     userConfirmReject: "ต้องการปฏิเสธผู้ใช้นี้?",
-    userEditTitle: "แก้ไขข้อมูลผู้ใช้",
     userApproveTitle: "อนุมัติผู้ใช้",
     userLabelNickname: "ชื่อเล่น",
     userLabelRole: "บทบาท",
@@ -1437,7 +1453,16 @@ const en: TranslationKeys = {
     msgNoData: "No data found",
     msgSaveSuccess: "Data saved successfully",
     msgSaveError: "Error saving data",
-    msgConfirmDelete: "Confirm delete?",
+    msgConfirmDelete: "Are you sure you want to delete?",
+    msgSuccess: "Action successful",
+    userEditTitle: "Edit User",
+    navAdminDashboard: "Admin Dashboard",
+    aiAnalyze: "Analyze with AI",
+    aiAnalyzing: "AI Analyzing...",
+    aiSuggestionTitle: "AI Suggested Score",
+    aiInsightTitle: "AI Performance Insights",
+    aiApplySuggestion: "Apply AI Scores",
+    aiReasoning: "AI Reasoning",
     msgSaving: "Saving...",
     msgDeleteSuccess: "Deleted successfully",
     msgDeleteError: "Error deleting data",
@@ -1578,7 +1603,6 @@ const en: TranslationKeys = {
     userActionApprove: "Approve",
     userActionReject: "Reject",
     userConfirmReject: "Reject this user?",
-    userEditTitle: "Edit User Information",
     userApproveTitle: "Approve User",
     userLabelNickname: "Nickname",
     userLabelRole: "Role",
