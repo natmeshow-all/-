@@ -76,9 +76,9 @@ export default function AddMachineModal({ isOpen, onClose, onSuccess }: AddMachi
                 operatingHours: 0,
                 maintenanceCycle: 0,
             });
-        } catch (err) {
+        } catch (err: any) {
             console.error("Error adding machine:", err);
-            toastError(t("msgSaveError") || "Failed to add machine");
+            toastError(t("msgSaveError") || "Failed to add machine", err.message);
         } finally {
             setLoading(false);
         }

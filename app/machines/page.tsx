@@ -4,6 +4,8 @@ import React from "react";
 import Header from "../components/Header";
 import MobileNav from "../components/MobileNav";
 import { useLanguage } from "../contexts/LanguageContext";
+import { useAuth } from "../contexts/AuthContext";
+import { useToast } from "../contexts/ToastContext";
 import { PlusIcon, SettingsIcon, TrashIcon } from "../components/ui/Icons";
 import MachineSettingsModal from "../components/forms/MachineSettingsModal";
 import AddMachineModal from "../components/forms/AddMachineModal";
@@ -11,6 +13,8 @@ import ConfirmModal from "../components/ui/ConfirmModal";
 
 export default function MachinesPage() {
     const { t } = useLanguage();
+    const { checkAuth } = useAuth();
+    const { success, error: showError } = useToast();
     const [machines, setMachines] = React.useState<any[]>([]);
     const [loading, setLoading] = React.useState(true);
     const [settingsModalOpen, setSettingsModalOpen] = React.useState(false);
@@ -46,6 +50,7 @@ export default function MachinesPage() {
             setMachines(data);
         } catch (error) {
             console.error("Failed to fetch machines:", error);
+            showError(t("msgError") || "Error", "Failed to fetch machines");
         } finally {
             setLoading(false);
         }
@@ -56,11 +61,13 @@ export default function MachinesPage() {
     }, []);
 
     const handleOpenSettings = (machine: any) => {
+        if (!checkAuth()) return;
         setSelectedMachine(machine);
         setSettingsModalOpen(true);
     };
 
     const handleOpenDelete = (machine: any) => {
+        if (!checkAuth()) return;
         setMachineToDelete(machine);
         setDeleteConfirmOpen(true);
     };
@@ -70,10 +77,14 @@ export default function MachinesPage() {
         try {
             const { deleteMachine } = await import("../lib/firebaseService");
             await deleteMachine(machineToDelete.id);
+            success(t("msgDeleteSuccess") || "Deleted", t("msgDeleteSuccess") || "Machine deleted successfully");
             fetchMachines();
-        } catch (error) {
+        } catch (error: any) {
             console.error("Delete failed", error);
-            alert("Failed to delete machine");
+            showError(t("msgDeleteError") || "Delete Failed", error.message || "Failed to delete machine");
+        } finally {
+            setDeleteConfirmOpen(false); // Close modal
+            setMachineToDelete(null);
         }
     };
 
@@ -96,7 +107,7 @@ export default function MachinesPage() {
                         </div>
                     </div>
                     <button
-                        onClick={() => setAddModalOpen(true)}
+                        onClick={() => { if (checkAuth()) setAddModalOpen(true); }}
                         className="btn btn-primary h-8"
                     >
                         <PlusIcon size={16} />
@@ -203,9 +214,15 @@ export default function MachinesPage() {
 // Sub-component for Machine Card
 function MachineCard({ machine, index, onRefresh, onOpenSettings, onOpenDelete }: { machine: any, index: number, onRefresh: () => void, onOpenSettings: () => void, onOpenDelete: () => void }) {
     const { t } = useLanguage();
+    const { checkAuth } = useAuth();
+    const { success, error: showError } = useToast();
     const [uploading, setUploading] = React.useState(false);
 
     const handleFileChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
+        if (!checkAuth()) {
+            e.target.value = ""; // Reset input
+            return;
+        }
         if (!e.target.files || e.target.files.length === 0) return;
 
         const file = e.target.files[0];
@@ -213,10 +230,11 @@ function MachineCard({ machine, index, onRefresh, onOpenSettings, onOpenDelete }
         try {
             const { updateMachineImage } = await import("../lib/firebaseService");
             await updateMachineImage(machine.name, file, machine.id);
+            success(t("msgSaveSuccess") || "Saved", "Image updated successfully");
             onRefresh();
-        } catch (error) {
+        } catch (error: any) {
             console.error("Upload failed", error);
-            alert("Failed to upload image");
+            showError(t("msgError") || "Error", error.message || "Failed to upload image");
         } finally {
             setUploading(false);
         }

@@ -5,6 +5,7 @@ import Header from "../components/Header";
 import MobileNav from "../components/MobileNav";
 import { useAuth } from "../contexts/AuthContext";
 import { useLanguage } from "../contexts/LanguageContext";
+import { useToast } from "../contexts/ToastContext";
 import {
     UserIcon,
     CheckIcon,
@@ -29,6 +30,7 @@ import { useRouter } from "next/navigation";
 export default function UsersPage() {
     const { t } = useLanguage();
     const { userProfile, isAdmin, loading: authLoading } = useAuth();
+    const { success, error: showError } = useToast();
     const router = useRouter();
 
     const [users, setUsers] = useState<UserProfile[]>([]);
@@ -82,9 +84,9 @@ export default function UsersPage() {
             setApprovalNickname("");
             setApprovalRole("technician");
             fetchData();
-        } catch (error) {
+        } catch (error: any) {
             console.error("Error approving user:", error);
-            alert("เกิดข้อผิดพลาดในการอนุมัติ");
+            showError("เกิดข้อผิดพลาดในการอนุมัติ", error.message);
         }
     };
 
@@ -252,8 +254,8 @@ export default function UsersPage() {
                                             <button
                                                 onClick={() => handleToggleActive(user)}
                                                 className={`p-2 rounded-lg transition-colors ${user.isActive
-                                                        ? 'bg-accent-red/10 hover:bg-accent-red/20 text-accent-red'
-                                                        : 'bg-accent-green/10 hover:bg-accent-green/20 text-accent-green'
+                                                    ? 'bg-accent-red/10 hover:bg-accent-red/20 text-accent-red'
+                                                    : 'bg-accent-green/10 hover:bg-accent-green/20 text-accent-green'
                                                     }`}
                                                 title={user.isActive ? "ปิดใช้งาน" : "เปิดใช้งาน"}
                                             >

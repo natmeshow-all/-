@@ -1,6 +1,7 @@
 import React, { useState, useRef } from "react";
 import { BoxIcon, XIcon, UploadIcon, SaveIcon } from "../ui/Icons";
 import { useLanguage } from "../../contexts/LanguageContext";
+import { useToast } from "../../contexts/ToastContext";
 import { addSparePart } from "../../lib/firebaseService";
 import { SparePart } from "../../types";
 
@@ -12,6 +13,7 @@ interface AddSparePartModalProps {
 
 export default function AddSparePartModal({ isOpen, onClose, onSuccess }: AddSparePartModalProps) {
     const { t } = useLanguage();
+    const { success, error: showError } = useToast();
     const [loading, setLoading] = useState(false);
     const fileInputRef = useRef<HTMLInputElement>(null);
 
@@ -64,6 +66,7 @@ export default function AddSparePartModal({ isOpen, onClose, onSuccess }: AddSpa
             }, imageFile || undefined);
 
             onSuccess();
+            success(t("msgAddPartSuccess") || "เพิ่มอะไหล่สำเร็จ!", t("msgAddPartDetail", { name: formData.name }));
             onClose();
             // Reset form
             setFormData({
@@ -79,9 +82,9 @@ export default function AddSparePartModal({ isOpen, onClose, onSuccess }: AddSpa
             });
             setImageFile(null);
             setPreviewUrl(null);
-        } catch (error) {
+        } catch (error: any) {
             console.error("Error adding spare part:", error);
-            alert("Failed to add spare part");
+            showError(t("msgSaveError") || "ไม่สามารถบันทึกได้", error.message);
         } finally {
             setLoading(false);
         }

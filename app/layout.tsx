@@ -42,13 +42,13 @@ export default function RootLayout({
   return (
     <html lang="th" className="dark" suppressHydrationWarning>
       <body className={`${promptFont.className} bg-bg-primary text-text-primary min-h-screen antialiased`} suppressHydrationWarning>
-        <AuthProvider>
-          <LanguageProvider>
-            <ToastProvider>
+        <LanguageProvider>
+          <ToastProvider>
+            <AuthProvider>
               {children}
-            </ToastProvider>
-          </LanguageProvider>
-        </AuthProvider>
+            </AuthProvider>
+          </ToastProvider>
+        </LanguageProvider>
       </body>
     </html>
   );

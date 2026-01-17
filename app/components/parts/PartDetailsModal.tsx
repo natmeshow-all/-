@@ -4,6 +4,7 @@ import React, { useState } from "react";
 import Modal from "../ui/Modal";
 import { SparePart } from "../../types";
 import { useLanguage } from "../../contexts/LanguageContext";
+import { useAuth } from "../../contexts/AuthContext";
 import { EditIcon, TrashIcon, BoxIcon, WrenchIcon, XIcon } from "../ui/Icons";
 
 interface PartDetailsModalProps {
@@ -24,6 +25,7 @@ export default function PartDetailsModal({
     onRepair
 }: PartDetailsModalProps) {
     const { t } = useLanguage();
+    const { checkAuth } = useAuth();
     const [lightboxOpen, setLightboxOpen] = useState(false);
 
     if (!part) return null;
@@ -143,21 +145,21 @@ export default function PartDetailsModal({
                     {/* Action Buttons */}
                     <div className="grid grid-cols-3 gap-3 pt-2">
                         <button
-                            onClick={() => onEdit(part)}
+                            onClick={() => { if (checkAuth()) onEdit(part); }}
                             className="btn btn-secondary flex items-center justify-center gap-2 h-12 text-sm"
                         >
                             <EditIcon size={18} />
                             {t("actionEdit") || "Edit"}
                         </button>
                         <button
-                            onClick={() => onRepair(part)}
+                            onClick={() => { if (checkAuth()) onRepair(part); }}
                             className="btn bg-accent-orange/10 text-accent-orange hover:bg-accent-orange/20 border-accent-orange/20 flex items-center justify-center gap-2 h-12 text-sm rounded-xl font-medium transition-all"
                         >
                             <WrenchIcon size={18} />
                             {t("actionRepair") || "Repair"}
                         </button>
                         <button
-                            onClick={() => onDelete(part)}
+                            onClick={() => { if (checkAuth()) onDelete(part); }}
                             className="btn bg-error/10 text-error hover:bg-error/20 border-error/20 flex items-center justify-center gap-2 h-12 text-sm rounded-xl font-medium transition-all"
                         >
                             <TrashIcon size={18} />

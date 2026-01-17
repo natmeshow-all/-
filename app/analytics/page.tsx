@@ -4,6 +4,7 @@ import React from "react";
 import Header from "../components/Header";
 import MobileNav from "../components/MobileNav";
 import { useLanguage } from "../contexts/LanguageContext";
+import { useToast } from "../contexts/ToastContext";
 import {
     BarChartIcon,
     ActivityIcon,
@@ -96,13 +97,14 @@ const CustomTooltip = ({ active, payload, label }: { active?: boolean; payload?:
 
 export default function AnalyticsPage() {
     const { t } = useLanguage();
+    const { success } = useToast();
     const [isGenerating, setIsGenerating] = React.useState(false);
 
     const handleGenerateReport = () => {
         setIsGenerating(true);
         setTimeout(() => {
             setIsGenerating(false);
-            alert("Monthly Report for January 2026 has been generated and is ready for download.");
+            success("Report Generated", "Monthly Report for January 2026 has been generated and is ready for download.");
         }, 2000);
     };
 

@@ -2,6 +2,7 @@
 
 import React, { createContext, useContext, useState, useCallback, ReactNode } from "react";
 import { ToastContainer, ToastData, ToastType } from "../components/ui/Toast";
+import { useLanguage } from "./LanguageContext";
 
 interface ToastContextType {
     showToast: (type: ToastType, title: string, message?: string, duration?: number) => void;
@@ -9,11 +10,13 @@ interface ToastContextType {
     error: (title: string, message?: string) => void;
     warning: (title: string, message?: string) => void;
     info: (title: string, message?: string) => void;
+    loginRequired: () => void;
 }
 
 const ToastContext = createContext<ToastContextType | undefined>(undefined);
 
 export function ToastProvider({ children }: { children: ReactNode }) {
+    const { t } = useLanguage();
     const [toasts, setToasts] = useState<ToastData[]>([]);
 
     const removeToast = useCallback((id: string) => {
@@ -22,6 +25,13 @@ export function ToastProvider({ children }: { children: ReactNode }) {
 
     const showToast = useCallback(
         (type: ToastType, title: string, message?: string, duration?: number) => {
+            // Intercept Permission Denied errors to show user-friendly message
+            if (message && (message.includes("PERMISSION_DENIED") || message.includes("permission_denied"))) {
+                type = "error";
+                title = t("msgNoEditPermission") || "คุณไม่มีสิทธ์แก้ไข";
+                message = t("msgPleaseLogin") || "กรุณาล็อกอิน";
+            }
+
             const id = `toast-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`;
             const newToast: ToastData = {
                 id,
@@ -32,7 +42,7 @@ export function ToastProvider({ children }: { children: ReactNode }) {
             };
             setToasts((prev) => [...prev, newToast]);
         },
-        []
+        [t]
     );
 
     const success = useCallback(
@@ -55,8 +65,13 @@ export function ToastProvider({ children }: { children: ReactNode }) {
         [showToast]
     );
 
+    const loginRequired = useCallback(
+        () => showToast("error", t("msgNoEditPermission") || "คุณไม่มีสิทธ์แก้ไข", t("msgPleaseLogin") || "กรุณาล็อกอิน", 5000),
+        [showToast, t]
+    );
+
     return (
-        <ToastContext.Provider value={{ showToast, success, error, warning, info }}>
+        <ToastContext.Provider value={{ showToast, success, error, warning, info, loginRequired }}>
             {children}
             <ToastContainer toasts={toasts} onClose={removeToast} />
         </ToastContext.Provider>

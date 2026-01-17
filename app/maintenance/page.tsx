@@ -5,6 +5,7 @@ import Header from "../components/Header";
 import MobileNav from "../components/MobileNav";
 import MaintenanceRecordModal from "../components/forms/MaintenanceRecordModal";
 import { useLanguage } from "../contexts/LanguageContext";
+import { useAuth } from "../contexts/AuthContext";
 import { formatDateThai } from "../lib/dateUtils";
 import { getMaintenanceRecords } from "../lib/firebaseService";
 import { MaintenanceRecord } from "../types";
@@ -21,6 +22,7 @@ import { mockMaintenanceRecords } from "../data/mockData";
 
 export default function MaintenancePage() {
     const { t } = useLanguage();
+    const { checkAuth } = useAuth();
     const [maintenanceModalOpen, setMaintenanceModalOpen] = useState(false);
     const [mounted, setMounted] = useState(false);
     const [records, setRecords] = useState<MaintenanceRecord[]>([]);
@@ -99,7 +101,7 @@ export default function MaintenancePage() {
                         </div>
                     </div>
                     <button
-                        onClick={() => setMaintenanceModalOpen(true)}
+                        onClick={() => { if (checkAuth()) setMaintenanceModalOpen(true); }}
                         className="btn btn-primary"
                     >
                         <PlusIcon size={18} />

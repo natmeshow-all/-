@@ -70,9 +70,9 @@ export default function MachineSettingsModal({ isOpen, onClose, machine, onSucce
             success(t("msgSaveSuccess") || "Saved successfully");
             onSuccess();
             onClose();
-        } catch (err) {
+        } catch (err: any) {
             console.error("Error updating machine:", err);
-            toastError(t("msgSaveError") || "Failed to save changes");
+            toastError(t("msgSaveError") || "Failed to save changes", err.message);
         } finally {
             setLoading(false);
         }

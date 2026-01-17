@@ -16,7 +16,7 @@ import { BoxIcon, PlusIcon, SearchIcon, FilterIcon, ArrowUpIcon, ArrowDownIcon, 
 
 export default function PartsPage() {
     const { t } = useLanguage();
-    const { user } = useAuth();
+    const { user, checkAuth } = useAuth();
     const [addModalOpen, setAddModalOpen] = useState(false);
     const [stockActionModalOpen, setStockActionModalOpen] = useState(false);
     const [historyModalOpen, setHistoryModalOpen] = useState(false);
@@ -50,6 +50,7 @@ export default function PartsPage() {
     }, []);
 
     const openStockModal = (part: SparePart, type: "restock" | "withdraw") => {
+        if (!checkAuth()) return;
         setSelectedPart(part);
         setActionType(type);
         setStockActionModalOpen(true);
@@ -66,12 +67,14 @@ export default function PartsPage() {
     };
 
     const handleEditPart = (part: SparePart) => {
+        if (!checkAuth()) return;
         setDetailsModalOpen(false);
         // TODO: Implement Edit Modal or pre-fill Add Modal
         console.log("Edit part:", part);
     };
 
     const handleDeleteClick = (part: SparePart) => {
+        if (!checkAuth()) return;
         setPartToDelete(part);
         setConfirmDeleteOpen(true);
         setDetailsModalOpen(false);
@@ -149,15 +152,13 @@ export default function PartsPage() {
                         </div>
 
                         {/* Add Button - Only for Logged In Users */}
-                        {user && (
-                            <button
-                                onClick={() => setAddModalOpen(true)}
-                                className="btn btn-primary h-11 px-5 shadow-lg shadow-primary/20 hover:shadow-primary/30 hover:-translate-y-0.5 transition-all"
-                            >
-                                <PlusIcon size={20} />
-                                <span className="hidden sm:inline font-medium">{t("actionAddPart")}</span>
-                            </button>
-                        )}
+                        <button
+                            onClick={() => { if (checkAuth()) setAddModalOpen(true); }}
+                            className="btn btn-primary h-11 px-5 shadow-lg shadow-primary/20 hover:shadow-primary/30 hover:-translate-y-0.5 transition-all"
+                        >
+                            <PlusIcon size={20} />
+                            <span className="hidden sm:inline font-medium">{t("actionAddPart")}</span>
+                        </button>
                     </div>
                 </div>
 
@@ -285,30 +286,24 @@ export default function PartsPage() {
                                             </div>
 
                                             {/* Action Buttons (Require Login) */}
-                                            {user ? (
-                                                <div className="grid grid-cols-2 divide-x divide-white/5 border-t border-white/5">
-                                                    <button
-                                                        onClick={() => openStockModal(part, "withdraw")}
-                                                        className="py-3 flex items-center justify-center gap-2 hover:bg-error/10 text-text-secondary hover:text-error transition-colors text-sm font-medium"
-                                                        title={t("partsWithdraw")}
-                                                    >
-                                                        <ArrowDownIcon size={16} />
-                                                        {t("partsWithdraw")}
-                                                    </button>
-                                                    <button
-                                                        onClick={() => openStockModal(part, "restock")}
-                                                        className="py-3 flex items-center justify-center gap-2 hover:bg-success/10 text-text-secondary hover:text-success transition-colors text-sm font-medium"
-                                                        title={t("partsReceive")}
-                                                    >
-                                                        <ArrowUpIcon size={16} />
-                                                        {t("partsReceive")}
-                                                    </button>
-                                                </div>
-                                            ) : (
-                                                <div className="py-2.5 text-center text-xs text-text-muted bg-bg-tertiary/30 border-t border-white/5">
-                                                    {t("partsLoginToManage")}
-                                                </div>
-                                            )}
+                                            <div className="grid grid-cols-2 divide-x divide-white/5 border-t border-white/5">
+                                                <button
+                                                    onClick={() => openStockModal(part, "withdraw")}
+                                                    className="py-3 flex items-center justify-center gap-2 hover:bg-error/10 text-text-secondary hover:text-error transition-colors text-sm font-medium"
+                                                    title={t("partsWithdraw")}
+                                                >
+                                                    <ArrowDownIcon size={16} />
+                                                    {t("partsWithdraw")}
+                                                </button>
+                                                <button
+                                                    onClick={() => openStockModal(part, "restock")}
+                                                    className="py-3 flex items-center justify-center gap-2 hover:bg-success/10 text-text-secondary hover:text-success transition-colors text-sm font-medium"
+                                                    title={t("partsReceive")}
+                                                >
+                                                    <ArrowUpIcon size={16} />
+                                                    {t("partsReceive")}
+                                                </button>
+                                            </div>
                                         </div>
                                     ))}
                                 </div>
@@ -324,15 +319,13 @@ export default function PartsPage() {
                         <p className="text-text-muted text-sm max-w-md mx-auto mb-6">
                             {t("partsNoPartsDesc")}
                         </p>
-                        {user && (
-                            <button
-                                onClick={() => setAddModalOpen(true)}
-                                className="btn btn-primary shadow-lg shadow-primary/20"
-                            >
-                                <PlusIcon size={20} />
-                                {t("partsAddFirst")}
-                            </button>
-                        )}
+                        <button
+                            onClick={() => { if (checkAuth()) setAddModalOpen(true); }}
+                            className="btn btn-primary shadow-lg shadow-primary/20"
+                        >
+                            <PlusIcon size={20} />
+                            {t("partsAddFirst")}
+                        </button>
                     </div>
                 )}
             </main>

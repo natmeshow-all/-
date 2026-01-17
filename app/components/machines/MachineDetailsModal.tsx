@@ -4,6 +4,7 @@ import Modal from "../ui/Modal";
 import { Machine, Part, SparePart } from "../../types";
 import { getMachines, getPartsByMachine, getPartsByMachineName } from "../../lib/firebaseService";
 import { useLanguage } from "../../contexts/LanguageContext";
+import { useAuth } from "../../contexts/AuthContext";
 import { BoxIcon, MapPinIcon, SettingsIcon, WrenchIcon, AlertTriangleIcon, SearchIcon, FilterIcon, XIcon, MaximizeIcon, CheckCircleIcon, TrashIcon, EditIcon, CalendarIcon } from "../ui/Icons";
 import Lightbox from "@/app/components/ui/Lightbox";
 import Image from "next/image";
@@ -31,6 +32,7 @@ export default function MachineDetailsModal({
     onDeletePart
 }: MachineDetailsModalProps) {
     const { t, tData } = useLanguage();
+    const { checkAuth } = useAuth();
     const [machine, setMachine] = useState<Machine | null>(null);
     const [parts, setParts] = useState<Part[]>([]);
     const [loading, setLoading] = useState(false);
@@ -133,7 +135,7 @@ export default function MachineDetailsModal({
                                     </p>
                                     {(machine || machineName) && (
                                         <button
-                                            onClick={() => setPmConfigOpen(true)}
+                                            onClick={() => { if (checkAuth()) setPmConfigOpen(true); }}
                                             className="flex items-center gap-2 px-2 py-1 rounded bg-indigo-500/20 text-indigo-300 text-[10px] font-bold hover:bg-indigo-500/30 transition-all border border-indigo-500/30 shadow-lg active:scale-95"
                                         >
                                             <CalendarIcon size={12} />
@@ -330,14 +332,14 @@ export default function MachineDetailsModal({
                                                     <div className="flex items-center justify-between gap-3 pt-2">
                                                         <div className="flex items-center gap-2">
                                                             <button
-                                                                onClick={() => onEditPart?.(part)}
+                                                                onClick={() => { if (checkAuth()) onEditPart?.(part); }}
                                                                 className="w-10 h-10 md:w-11 md:h-11 rounded-xl bg-blue-500/10 text-blue-400 border border-blue-500/20 flex items-center justify-center hover:bg-blue-500 hover:text-white transition-all shadow-md active:scale-90"
                                                                 title={t("actionEdit")}
                                                             >
                                                                 <EditIcon size={18} />
                                                             </button>
                                                             <button
-                                                                onClick={() => onDeletePart?.(part)}
+                                                                onClick={() => { if (checkAuth()) onDeletePart?.(part); }}
                                                                 className="w-10 h-10 md:w-11 md:h-11 rounded-xl bg-red-500/10 text-red-400 border border-red-500/20 flex items-center justify-center hover:bg-red-500 hover:text-white transition-all shadow-md active:scale-90"
                                                                 title={t("actionDelete")}
                                                             >
@@ -345,7 +347,7 @@ export default function MachineDetailsModal({
                                                             </button>
                                                         </div>
                                                         <button
-                                                            onClick={() => onRepairPart?.(part)}
+                                                            onClick={() => { if (checkAuth()) onRepairPart?.(part); }}
                                                             className="flex-1 md:flex-none flex items-center justify-center gap-2 px-6 py-2.5 md:py-3 bg-indigo-600 hover:bg-indigo-500 text-white rounded-xl font-bold transition-all shadow-lg shadow-indigo-600/20 active:scale-95 text-sm"
                                                         >
                                                             <WrenchIcon size={18} />

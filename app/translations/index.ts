@@ -263,6 +263,12 @@ export interface TranslationKeys {
     validateSelectMachine: string;
     validateSelectPart: string;
     msgNoParts: string;
+    msgNoEditPermission: string;
+    msgPleaseLogin: string;
+    stockWithdrawSuccess: string;
+    stockReceiveSuccess: string;
+    stockWithdrawError: string;
+    stockReceiveError: string;
 
     // Additional Actions/Labels
     actionMaintenance: string;
@@ -626,6 +632,12 @@ const th: TranslationKeys = {
     validateSelectMachine: "กรุณาระบุชื่อเครื่องจักร",
     validateSelectPart: "กรุณาเลือกชื่ออะไหล่",
     msgNoParts: "ไม่พบรายการอะไหล่สำหรับเครื่องจักรนี้",
+    msgNoEditPermission: "คุณไม่มีสิทธ์แก้ไข",
+    msgPleaseLogin: "กรุณาล็อกอิน",
+    stockWithdrawSuccess: "เบิกของสำเร็จ",
+    stockReceiveSuccess: "รับของเข้าสำเร็จ",
+    stockWithdrawError: "ไม่สามารถเบิกของได้",
+    stockReceiveError: "ไม่สามารถรับของเข้าได้",
 
     // Additional Actions/Labels
     actionMaintenance: "ซ่อมบำรุง",
@@ -989,6 +1001,12 @@ const en: TranslationKeys = {
     validateSelectMachine: "Please specify machine name",
     validateSelectPart: "Please select part name",
     msgNoParts: "No parts found for this machine",
+    msgNoEditPermission: "You don't have permission to edit",
+    msgPleaseLogin: "Please log in",
+    stockWithdrawSuccess: "Withdrawal successful",
+    stockReceiveSuccess: "Stock reception successful",
+    stockWithdrawError: "Failed to withdraw stock",
+    stockReceiveError: "Failed to receive stock",
 
     // Additional Actions/Labels
     actionMaintenance: "Maintenance",

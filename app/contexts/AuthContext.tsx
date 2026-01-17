@@ -26,6 +26,7 @@ interface AuthContextType {
     refreshUserProfile: () => Promise<void>;
     hasRole: (roles: UserRole | UserRole[]) => boolean;
     isAdmin: boolean;
+    checkAuth: () => boolean;
 }
 
 const AuthContext = createContext<AuthContextType>({
@@ -38,11 +39,15 @@ const AuthContext = createContext<AuthContextType>({
     refreshUserProfile: async () => { },
     hasRole: () => false,
     isAdmin: false,
+    checkAuth: () => false,
 });
 
 export const useAuth = () => useContext(AuthContext);
 
+import { useToast } from "./ToastContext";
+
 export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
+    const { loginRequired } = useToast();
     const [user, setUser] = useState<User | null>(null);
     const [userProfile, setUserProfile] = useState<UserProfile | null>(null);
     const [loading, setLoading] = useState(true);
@@ -161,6 +166,14 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
 
     const isAdmin = userProfile?.role === "admin";
 
+    const checkAuth = (): boolean => {
+        if (!user) {
+            loginRequired();
+            return false;
+        }
+        return true;
+    };
+
     return (
         <AuthContext.Provider value={{
             user,
@@ -171,7 +184,8 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
             signOut,
             refreshUserProfile,
             hasRole,
-            isAdmin
+            isAdmin,
+            checkAuth
         }}>
             {children}
         </AuthContext.Provider>

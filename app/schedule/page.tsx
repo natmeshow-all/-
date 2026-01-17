@@ -4,18 +4,20 @@ import React, { useState, useEffect } from "react";
 import Header from "../components/Header";
 import MobileNav from "../components/MobileNav";
 import { useLanguage } from "../contexts/LanguageContext";
+import { useAuth } from "../contexts/AuthContext";
 import { CalendarIcon, ClockIcon, SettingsIcon, AlertTriangleIcon, BoxIcon, FolderIcon, CheckCircleIcon, PlusIcon, EditIcon, TrashIcon } from "../components/ui/Icons";
-import { getPMPlans, deletePMPlan } from "../lib/firebaseService";
-import { PMPlan } from "../types";
+import { getPMPlans, deletePMPlan, getMachines } from "../lib/firebaseService";
+import { PMPlan, Machine } from "../types";
 import PMExecutionModal from "../components/pm/PMExecutionModal";
 import PMConfigModal from "../components/pm/PMConfigModal";
 import PMHistoryModal from "../components/pm/PMHistoryModal";
-import { getMachines } from "../lib/firebaseService";
-import { Machine } from "../types";
 import Modal from "../components/ui/Modal";
+import { useToast } from "../contexts/ToastContext";
 
 export default function SchedulePage() {
     const { t } = useLanguage();
+    const { checkAuth } = useAuth();
+    const { success, error: showError } = useToast();
     const [mounted, setMounted] = useState(false);
     const [plans, setPlans] = useState<PMPlan[]>([]);
     const [loading, setLoading] = useState(true);
@@ -96,6 +98,7 @@ export default function SchedulePage() {
     };
 
     const handleExecuteClick = (plan: PMPlan) => {
+        if (!checkAuth()) return;
         setSelectedPlan(plan);
         setExecutionModalOpen(true);
     };
@@ -106,6 +109,7 @@ export default function SchedulePage() {
     };
 
     const handleEditClick = (plan: PMPlan) => {
+        if (!checkAuth()) return;
         const machine = allMachines.find(m => m.id === plan.machineId || m.name === plan.machineName);
         if (machine) {
             setSelectedMachine(machine);
@@ -115,6 +119,7 @@ export default function SchedulePage() {
     };
 
     const handleDeleteClick = (plan: PMPlan) => {
+        if (!checkAuth()) return;
         setPlanToDelete(plan);
         setDeleteModalOpen(true);
     };
@@ -124,12 +129,13 @@ export default function SchedulePage() {
 
         try {
             await deletePMPlan(planToDelete.id);
+            success(t("msgDeleteSuccess") || "ลบสำเร็จ", "ลบแผนงานเรียบร้อยแล้ว");
             setDeleteModalOpen(false);
             setPlanToDelete(null);
             fetchData();
-        } catch (error) {
+        } catch (error: any) {
             console.error("Error deleting PM plan:", error);
-            alert("ไม่สามารถลบแผนงานได้");
+            showError(t("msgDeleteError") || "ไม่สามารถลบแผนงานได้", error.message);
         }
     };
 
@@ -154,7 +160,7 @@ export default function SchedulePage() {
 
                     <div className="flex items-center gap-2">
                         <button
-                            onClick={() => setMachineSelectOpen(true)}
+                            onClick={() => { if (checkAuth()) setMachineSelectOpen(true); }}
                             className="flex items-center gap-2 px-3 py-1.5 rounded-lg bg-accent-blue/20 text-accent-blue hover:bg-accent-blue/30 transition-all shadow-md active:scale-95 border border-accent-blue/30"
                             title="จัดการแผน PM"
                         >

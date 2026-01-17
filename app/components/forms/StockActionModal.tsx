@@ -4,6 +4,7 @@ import { useLanguage } from "../../contexts/LanguageContext";
 import { adjustStock, getMachines } from "../../lib/firebaseService";
 import { Machine, SparePart, TransactionType } from "../../types";
 import { useAuth } from "../../contexts/AuthContext";
+import { useToast } from "../../contexts/ToastContext";
 
 interface StockActionModalProps {
     isOpen: boolean;
@@ -16,6 +17,7 @@ interface StockActionModalProps {
 export default function StockActionModal({ isOpen, onClose, onSuccess, actionType, part }: StockActionModalProps) {
     const { t } = useLanguage();
     const { user } = useAuth();
+    const { success, error: showError, loginRequired } = useToast();
     const [loading, setLoading] = useState(false);
     const fileInputRef = useRef<HTMLInputElement>(null);
     const [machines, setMachines] = useState<Machine[]>([]);
@@ -76,7 +78,7 @@ export default function StockActionModal({ isOpen, onClose, onSuccess, actionTyp
     const handleSubmit = async (e: React.FormEvent) => {
         e.preventDefault();
         if (!user) {
-            alert("Please login to perform this action");
+            loginRequired();
             return;
         }
 
@@ -102,6 +104,10 @@ export default function StockActionModal({ isOpen, onClose, onSuccess, actionTyp
             }, evidenceFile || undefined);
 
             onSuccess();
+            success(
+                isWithdraw ? t("stockWithdrawSuccess") || "เบิกของสำเร็จ" : t("stockReceiveSuccess") || "รับของเข้าสำเร็จ",
+                `${part.name}: ${formData.quantity} ${part.unit}`
+            );
             onClose();
             // Reset
             setFormData({
@@ -115,9 +121,12 @@ export default function StockActionModal({ isOpen, onClose, onSuccess, actionTyp
             });
             setEvidenceFile(null);
             setPreviewUrl(null);
-        } catch (error) {
+        } catch (error: any) {
             console.error("Error adjusting stock:", error);
-            alert("Failed to update stock");
+            showError(
+                isWithdraw ? t("stockWithdrawError") || "ไม่สามารถเบิกของได้" : t("stockReceiveError") || "ไม่สามารถรับของเข้าได้",
+                error.message
+            );
         } finally {
             setLoading(false);
         }

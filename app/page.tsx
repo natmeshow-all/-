@@ -34,8 +34,8 @@ import Image from "next/image";
 
 export default function Dashboard() {
   const { t, language, setLanguage, tData } = useLanguage();
-  const { user } = useAuth();
-  const { success } = useToast();
+  const { user, checkAuth } = useAuth();
+  const { success, error: showError } = useToast();
   const [addPartModalOpen, setAddPartModalOpen] = useState(false);
   const [maintenanceModalOpen, setMaintenanceModalOpen] = useState(false);
   const [historyModalOpen, setHistoryModalOpen] = useState(false);
@@ -59,16 +59,19 @@ export default function Dashboard() {
 
   // Handlers for action buttons
   const handleEditPart = (part: Part) => {
+    if (!checkAuth()) return;
     setSelectedPart(part);
     setAddPartModalOpen(true);
   };
 
   const handleMaintenancePart = (part: Part) => {
+    if (!checkAuth()) return;
     // Ideally pass part details to maintenance modal
     setMaintenanceModalOpen(true);
   };
 
   const handleDeleteClick = (part: Part) => {
+    if (!checkAuth()) return;
     setPartToDelete(part);
     setConfirmModalOpen(true);
   };
@@ -77,10 +80,14 @@ export default function Dashboard() {
     if (!partToDelete) return;
     try {
       await deletePart(partToDelete.id);
+      success(t("msgDeleteSuccess") || "Deleted", "Part deleted successfully");
       fetchData(); // Refresh list
-    } catch (error) {
+    } catch (error: any) {
       console.error("Failed to delete part", error);
-      alert("Failed to delete part");
+      showError(t("msgDeleteError") || "Delete Failed", error.message || "Failed to delete part");
+    } finally {
+      setConfirmModalOpen(false); // Close modal
+      setPartToDelete(null);
     }
   };
 
@@ -362,21 +369,21 @@ export default function Dashboard() {
         <section className="mb-6">
           <div className="flex flex-wrap gap-2 mt-4">
             <button
-              onClick={() => setAddPartModalOpen(true)}
+              onClick={() => { if (checkAuth()) setAddPartModalOpen(true); }}
               className="flex-1 min-w-[120px] btn btn-active bg-accent-green text-bg-primary hover:bg-accent-green/90 border-none h-8 text-[11px] font-bold"
             >
               <PlusIcon size={14} className="mr-1" />
               {t("actionAddPart")}
             </button>
             <button
-              onClick={() => setMaintenanceModalOpen(true)}
+              onClick={() => { if (checkAuth()) setMaintenanceModalOpen(true); }}
               className="flex-1 min-w-[120px] btn btn-active bg-accent-yellow text-bg-primary hover:bg-accent-yellow/90 border-none h-8 text-[11px] font-bold"
             >
               <HistoryIcon size={14} className="mr-1" />
               {t("actionRecordMaintenance")}
             </button>
             <button
-              onClick={() => setHistoryModalOpen(true)}
+              onClick={() => { if (checkAuth()) setHistoryModalOpen(true); }}
               className="flex-1 min-w-[120px] btn btn-active bg-accent-purple text-white hover:bg-accent-purple/90 border-none h-8 text-[11px] font-bold"
             >
               <RefreshIcon size={14} className="mr-1" />
@@ -616,33 +623,27 @@ export default function Dashboard() {
                         </td>
                         <td className="py-3 px-4 text-center">
                           <div className="flex items-center justify-center gap-2">
-                            {user ? (
-                              <>
-                                <button
-                                  onClick={() => handleEditPart(part)}
-                                  className="p-1.5 rounded-lg text-accent-cyan hover:bg-accent-cyan/10 transition-colors"
-                                  title={t("actionEdit")}
-                                >
-                                  <EditIcon size={16} />
-                                </button>
-                                <button
-                                  onClick={() => handleMaintenancePart(part)}
-                                  className="p-1.5 rounded-lg text-accent-yellow hover:bg-accent-yellow/10 transition-colors"
-                                  title={t("actionMaintenance")}
-                                >
-                                  <SettingsIcon size={16} />
-                                </button>
-                                <button
-                                  onClick={() => handleDeleteClick(part)}
-                                  className="p-1.5 rounded-lg text-accent-red hover:bg-accent-red/10 transition-colors"
-                                  title={t("actionDelete")}
-                                >
-                                  <BoxIcon size={16} className="rotate-45" />
-                                </button>
-                              </>
-                            ) : (
-                              <span className="text-xs text-text-muted italic opacity-50">{t("statusReadOnly")}</span>
-                            )}
+                            <button
+                              onClick={() => handleEditPart(part)}
+                              className="p-1.5 rounded-lg text-accent-cyan hover:bg-accent-cyan/10 transition-colors"
+                              title={t("actionEdit")}
+                            >
+                              <EditIcon size={16} />
+                            </button>
+                            <button
+                              onClick={() => handleMaintenancePart(part)}
+                              className="p-1.5 rounded-lg text-accent-yellow hover:bg-accent-yellow/10 transition-colors"
+                              title={t("actionMaintenance")}
+                            >
+                              <SettingsIcon size={16} />
+                            </button>
+                            <button
+                              onClick={() => handleDeleteClick(part)}
+                              className="p-1.5 rounded-lg text-accent-red hover:bg-accent-red/10 transition-colors"
+                              title={t("actionDelete")}
+                            >
+                              <BoxIcon size={16} className="rotate-45" />
+                            </button>
                           </div>
                         </td>
                       </tr>

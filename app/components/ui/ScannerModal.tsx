@@ -5,6 +5,7 @@ import { Html5Qrcode } from "html5-qrcode";
 import { XIcon, CameraIcon, RefreshCwIcon } from "./Icons";
 import { useRouter } from "next/navigation";
 import { useLanguage } from "../../contexts/LanguageContext";
+import { useToast } from "../../contexts/ToastContext";
 
 interface ScannerModalProps {
     isOpen: boolean;
@@ -14,6 +15,7 @@ interface ScannerModalProps {
 export default function ScannerModal({ isOpen, onClose }: ScannerModalProps) {
     const { t } = useLanguage();
     const router = useRouter();
+    const { success, error: showError } = useToast();
     const [scannerLoaded, setScannerLoaded] = useState(false);
     const [error, setError] = useState<string | null>(null);
     const scannerRef = useRef<Html5Qrcode | null>(null);
@@ -70,11 +72,11 @@ export default function ScannerModal({ isOpen, onClose }: ScannerModalProps) {
                 router.push(url.pathname + url.search);
                 onClose();
             } else {
-                alert(`Scanned content: ${text}`);
+                success("Scanned Content", text);
             }
         } catch (e) {
             // Not a URL, display or check ID patterns
-            alert(`Scanned: ${text}`);
+            success("Scanned Content", text);
         }
     };
 
