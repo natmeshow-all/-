@@ -20,6 +20,7 @@ import {
 import { database, storage } from "./firebase";
 import { Machine, Part, MaintenanceRecord, SparePart, StockTransaction, MaintenanceSchedule, PMPlan, UserProfile, PendingUser, UserRole } from "../types";
 import { translateToEnglish } from "./translationService";
+import { compressImage } from "./imageCompression";
 
 // Collection names
 const COLLECTIONS = {
@@ -165,10 +166,13 @@ export async function getMachines(): Promise<Machine[]> {
 
 export async function updateMachineImage(machineName: string, file: File, machineId?: string): Promise<string> {
     try {
-        // 1. Upload new image
-        const fileName = `machines/${Date.now()}_${file.name}`;
+        // 1. Compress Image
+        const compressedFile = await compressImage(file);
+
+        // 2. Upload new image
+        const fileName = `machines/${Date.now()}_${compressedFile.name}`;
         const sRef = storageRef(storage, fileName);
-        await uploadBytes(sRef, file);
+        await uploadBytes(sRef, compressedFile);
         const downloadUrl = await getDownloadURL(sRef);
 
         // 2. Save/Update machine record in Realtime Database
@@ -664,9 +668,10 @@ export async function deletePMPlan(id: string): Promise<void> {
 }
 
 export async function uploadEvidenceImage(file: File): Promise<string> {
-    const fileName = `evidence/pm_${Date.now()}_${file.name}`;
+    const compressedFile = await compressImage(file);
+    const fileName = `evidence/pm_${Date.now()}_${compressedFile.name}`;
     const sRef = storageRef(storage, fileName);
-    await uploadBytes(sRef, file);
+    await uploadBytes(sRef, compressedFile);
     return await getDownloadURL(sRef);
 }
 
@@ -817,8 +822,11 @@ async function incrementImageUsage(key: string, currentCount: number) {
 
 export async function uploadPartImage(file: File): Promise<string> {
     try {
-        // 1. Calculate Hash
-        const hash = await calculateFileHash(file);
+        // 0. Compress Image First
+        const compressedFile = await compressImage(file);
+
+        // 1. Calculate Hash (of compressed file)
+        const hash = await calculateFileHash(compressedFile);
 
         // 2. Check for Duplicate
         const existingRecord = await findImageByHash(hash);
@@ -831,14 +839,14 @@ export async function uploadPartImage(file: File): Promise<string> {
         }
 
         // 3. Upload New Image
-        const fileName = `parts/${Date.now()}_${file.name}`;
+        const fileName = `parts/${Date.now()}_${compressedFile.name}`;
         const sRef = storageRef(storage, fileName);
 
-        await uploadBytes(sRef, file);
+        await uploadBytes(sRef, compressedFile);
         const downloadUrl = await getDownloadURL(sRef);
 
         // 4. Save Hash Record
-        await saveImageHashRecord(file, hash, downloadUrl);
+        await saveImageHashRecord(compressedFile, hash, downloadUrl);
 
         return downloadUrl;
     } catch (error) {
@@ -988,9 +996,10 @@ export async function adjustStock(
     // 1. Upload Evidence Image if provided
     let evidenceImageUrl = "";
     if (evidenceImageFile) {
-        const fileName = `evidence/${Date.now()}_${evidenceImageFile.name}`;
+        const compressedFile = await compressImage(evidenceImageFile);
+        const fileName = `evidence/${Date.now()}_${compressedFile.name}`;
         const sRef = storageRef(storage, fileName);
-        await uploadBytes(sRef, evidenceImageFile);
+        await uploadBytes(sRef, compressedFile);
         evidenceImageUrl = await getDownloadURL(sRef);
     }
 

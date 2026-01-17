@@ -111,7 +111,7 @@ export default function MachineSettingsModal({ isOpen, onClose, machine, onSucce
                     </button>
                 </div>
 
-                <form onSubmit={handleSubmit} className="p-6">
+                <form onSubmit={handleSubmit} className="p-6 max-h-[80vh] overflow-y-auto custom-scrollbar">
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-6">
                         {/* Machine Code */}
                         <div className="space-y-2">

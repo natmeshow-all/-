@@ -587,7 +587,7 @@ const th: TranslationKeys = {
     navMaintenance: "ซ่อมบำรุง",
     navSchedule: "ตารางงาน",
     navAnalytics: "วิเคราะห์",
-    navPredictive: "ทำนายผล",
+    navPredictive: "การพยากรณ์",
     navAudit: "Audit",
 
     // Predictive Page
@@ -1161,7 +1161,7 @@ const en: TranslationKeys = {
     navMaintenance: "Maintenance",
     navSchedule: "Schedule",
     navAnalytics: "Analytics",
-    navPredictive: "Predictive",
+    navPredictive: "Forecasting",
     navAudit: "Audit",
 
     // Predictive Page
