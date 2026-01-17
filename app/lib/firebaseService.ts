@@ -58,8 +58,11 @@ export async function syncTranslation(text: string): Promise<void> {
                 [normalizedText]: englishText
             });
         }
-    } catch (error) {
-        console.error("Error syncing translation:", error);
+    } catch (error: any) {
+        // Suppress permission denied errors for viewers/technicians
+        if (error.code !== "PERMISSION_DENIED") {
+            console.error("Error syncing translation:", error);
+        }
     }
 }
 
@@ -257,10 +260,58 @@ export async function addMachine(machine: Omit<Machine, "id" | "createdAt" | "up
 export async function updateMachine(id: string, data: Partial<Machine>): Promise<void> {
     const machineRef = ref(database, `${COLLECTIONS.MACHINES}/${id}`);
 
+    // Fetch existing data to check if name changed
+    const snapshot = await get(machineRef);
+    const existingData = snapshot.exists() ? snapshot.val() : {};
+    const oldName = existingData.name;
+
     await update(machineRef, {
         ...data,
         updatedAt: new Date().toISOString(),
     });
+
+    // Fan-out update if name changed
+    if (data.name && oldName && data.name !== oldName) {
+        // 1. Update Parts
+        const partsRef = ref(database, COLLECTIONS.PARTS);
+        const partsSnapshot = await get(query(partsRef, orderByChild("machineId"), equalTo(id)));
+        /* 
+           Note: If parts don't have machineId (legacy), we might miss them. 
+           We could also search by machineName, but that's expensive.
+           For now, we rely on the fact that modern parts should have machineId.
+           If we really need to support legacy parts, we'd fetch ALL parts and filter in memory.
+        */
+        if (partsSnapshot.exists()) {
+            const updates: Record<string, any> = {};
+            partsSnapshot.forEach((child) => {
+                updates[`${child.key}/machineName`] = data.name;
+                updates[`${child.key}/machine`] = data.name; // Legacy support
+            });
+            await update(partsRef, updates);
+        }
+
+        // 2. Update Maintenance Records
+        const recordsRef = ref(database, COLLECTIONS.MAINTENANCE_RECORDS);
+        const recordsSnapshot = await get(query(recordsRef, orderByChild("machineId"), equalTo(id)));
+        if (recordsSnapshot.exists()) {
+            const updates: Record<string, any> = {};
+            recordsSnapshot.forEach((child) => {
+                updates[`${child.key}/machineName`] = data.name;
+            });
+            await update(recordsRef, updates);
+        }
+
+        // 3. Update Schedules
+        const schedulesRef = ref(database, COLLECTIONS.SCHEDULES);
+        const schedulesSnapshot = await get(query(schedulesRef, orderByChild("machineId"), equalTo(id)));
+        if (schedulesSnapshot.exists()) {
+            const updates: Record<string, any> = {};
+            schedulesSnapshot.forEach((child) => {
+                updates[`${child.key}/machineName`] = data.name;
+            });
+            await update(schedulesRef, updates);
+        }
+    }
 
     // Auto-translate updated fields
     if (data.name) syncTranslation(data.name);

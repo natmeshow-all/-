@@ -171,6 +171,7 @@ export interface TranslationKeys {
     addPartSelectCategory: string;
     addPartSelectMachine: string;
     addPartNotes: string;
+    optionOther: string;
 
     // Machine Settings Labels
     labelFileSize: string;
@@ -745,6 +746,7 @@ const th: TranslationKeys = {
     addPartSelectCategory: "เลือกหมวดหมู่",
     addPartSelectMachine: "เลือกเครื่องจักร",
     addPartNotes: "หมายเหตุ",
+    optionOther: "อื่นๆ (ระบุ)",
 
     // Machine Settings Labels
     labelFileSize: "ขนาดไฟล์",
@@ -1319,6 +1321,7 @@ const en: TranslationKeys = {
     addPartSelectCategory: "Select Category",
     addPartSelectMachine: "Select Machine",
     addPartNotes: "Notes",
+    optionOther: "Other (Specify)",
 
     // Machine Settings Labels
     labelFileSize: "File Size",

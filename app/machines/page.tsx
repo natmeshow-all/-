@@ -118,36 +118,50 @@ export default function MachinesPage() {
                 {/* Location Filters */}
                 <div className="flex flex-wrap items-center gap-2 mb-8">
                     {[
-                        { id: 'ALL', label: 'All', color: 'accent-purple' },
-                        { id: 'FZ', label: 'FZ', color: 'accent-cyan' },
-                        { id: 'RTE', label: 'RTE', color: 'green-500' },
-                        { id: 'UT', label: 'UT', color: 'accent-yellow' }
-                    ].map((loc) => (
-                        <button
-                            key={loc.id}
-                            onClick={() => setSelectedLocation(loc.id)}
-                            className={`
-                                relative px-4 py-2 rounded-xl transition-all duration-300
-                                border backdrop-blur-md flex items-center gap-2
-                                ${selectedLocation === loc.id
-                                    ? `bg-${loc.color}/20 border-${loc.color}/40 text-white shadow-lg scale-105`
-                                    : 'bg-white/5 border-white/10 text-text-muted hover:bg-white/10 hover:border-white/20'}
-                            `}
-                        >
-                            <span className={`text-sm font-bold tracking-wide`}>{loc.label}</span>
-                            <span className={`
-                                px-1.5 py-0.5 rounded-md text-[10px] font-black
-                                ${selectedLocation === loc.id
-                                    ? `bg-${loc.color} text-bg-primary`
-                                    : 'bg-white/10 text-text-muted'}
-                            `}>
-                                {(counts as any)[loc.id]}
-                            </span>
-                            {selectedLocation === loc.id && (
-                                <div className={`absolute -bottom-1 left-1/2 -translate-x-1/2 w-1 h-1 rounded-full bg-${loc.color}`}></div>
-                            )}
-                        </button>
-                    ))}
+                        { id: 'ALL', label: t("filterAllLocations") || 'All Locations', color: 'accent-purple' },
+                        ...Array.from(new Set(machines.map(m => m.location?.toUpperCase()).filter(l => l && l !== 'ALL' && l !== 'UT' && l !== 'UTILITY')))
+                            .sort()
+                            .map((loc, idx) => ({
+                                id: loc,
+                                label: loc,
+                                color: ['accent-cyan', 'green-500', 'accent-yellow', 'accent-red', 'blue-500'][idx % 5]
+                            })),
+                        // Add UT/UTILITY manually if they exist to group them
+                        ...(machines.some(m => m.location?.toUpperCase() === 'UT' || m.location?.toUpperCase() === 'UTILITY') ? [{ id: 'UT', label: 'UT', color: 'accent-yellow' }] : [])
+                    ].map((loc) => {
+                        const count = loc.id === 'ALL'
+                            ? machines.length
+                            : loc.id === 'UT'
+                                ? machines.filter(m => m.location?.toUpperCase() === 'UT' || m.location?.toUpperCase() === 'UTILITY').length
+                                : machines.filter(m => m.location?.toUpperCase() === loc.id).length;
+
+                        return (
+                            <button
+                                key={loc.id}
+                                onClick={() => setSelectedLocation(loc.id)}
+                                className={`
+                                    relative px-4 py-2 rounded-xl transition-all duration-300
+                                    border backdrop-blur-md flex items-center gap-2
+                                    ${selectedLocation === loc.id
+                                        ? `bg-${loc.color}/20 border-${loc.color}/40 text-white shadow-lg scale-105`
+                                        : 'bg-white/5 border-white/10 text-text-muted hover:bg-white/10 hover:border-white/20'}
+                                `}
+                            >
+                                <span className={`text-sm font-bold tracking-wide`}>{loc.label}</span>
+                                <span className={`
+                                    px-1.5 py-0.5 rounded-md text-[10px] font-black
+                                    ${selectedLocation === loc.id
+                                        ? `bg-${loc.color} text-bg-primary`
+                                        : 'bg-white/10 text-text-muted'}
+                                `}>
+                                    {count}
+                                </span>
+                                {selectedLocation === loc.id && (
+                                    <div className={`absolute -bottom-1 left-1/2 -translate-x-1/2 w-1 h-1 rounded-full bg-${loc.color}`}></div>
+                                )}
+                            </button>
+                        );
+                    })}
                 </div>
 
                 {/* Loading State */}

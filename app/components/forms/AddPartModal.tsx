@@ -16,6 +16,7 @@ import {
     CheckIcon,
     EditIcon,
     AlertTriangleIcon,
+    XIcon,
 } from "../ui/Icons";
 import { mockPartNames } from "../../data/mockData";
 import { AddPartFormData, PartCategory, Part, Machine } from "../../types";
@@ -60,6 +61,8 @@ export default function AddPartModal({ isOpen, onClose, onSuccess, partToEdit }:
     });
     const [selectedFile, setSelectedFile] = useState<File | null>(null);
     const [previewUrl, setPreviewUrl] = useState<string | null>(null);
+    const [isCustomPartName, setIsCustomPartName] = useState(false);
+    const [filterLocation, setFilterLocation] = useState("ALL");
 
     // Helper to format file size
     const formatFileSize = (bytes: number) => {
@@ -86,6 +89,12 @@ export default function AddPartModal({ isOpen, onClose, onSuccess, partToEdit }:
                 category: partToEdit.category || "other",
                 notes: partToEdit.notes || "",
             });
+            // Check if current part name is custom
+            if (partToEdit.partName && !mockPartNames.includes(partToEdit.partName)) {
+                setIsCustomPartName(true);
+            } else {
+                setIsCustomPartName(false);
+            }
         } else {
             // Reset if no partToEdit (Adding new mode)
             setFormData({
@@ -101,6 +110,7 @@ export default function AddPartModal({ isOpen, onClose, onSuccess, partToEdit }:
                 category: "other",
                 notes: "",
             });
+            setIsCustomPartName(false);
         }
         setSelectedFile(null);
         if (previewUrl) {
@@ -253,10 +263,30 @@ export default function AddPartModal({ isOpen, onClose, onSuccess, partToEdit }:
                 {/* Machine & Part Name */}
                 <div className="form-grid form-grid-2">
                     <div>
-                        <label className="label">
+                        <label className="label mb-1">
                             <SettingsIcon size={14} />
                             {t("addPartMachine")}
                         </label>
+
+                        {/* Location Filter Buttons */}
+                        <div className="flex flex-wrap gap-1 mb-2">
+                            {['ALL', 'FZ', 'RTE', 'UT'].map((loc) => (
+                                <button
+                                    key={loc}
+                                    type="button"
+                                    onClick={() => setFilterLocation(loc)}
+                                    className={`
+                                        px-2 py-1 text-[10px] font-bold rounded-md border transition-all
+                                        ${filterLocation === loc
+                                            ? 'bg-primary text-white border-primary shadow-md'
+                                            : 'bg-white/5 text-text-muted border-white/10 hover:bg-white/10'}
+                                    `}
+                                >
+                                    {loc}
+                                </button>
+                            ))}
+                        </div>
+
                         <select
                             name="machineId"
                             value={formData.machineId}
@@ -265,9 +295,17 @@ export default function AddPartModal({ isOpen, onClose, onSuccess, partToEdit }:
                             disabled={!!partToEdit || isLoadingMachines}
                         >
                             <option value="">{isLoadingMachines ? "Loading..." : t("addPartSelectMachine") || "Select Machine"}</option>
-                            {machines.map(m => (
-                                <option key={m.id} value={m.id}>{m.name}</option>
-                            ))}
+                            {machines
+                                .filter(m => filterLocation === 'ALL' ||
+                                    (filterLocation === 'UT'
+                                        ? (m.location?.toUpperCase() === 'UT' || m.location?.toUpperCase() === 'UTILITY')
+                                        : m.location?.toUpperCase() === filterLocation)
+                                )
+                                .sort((a, b) => a.name.localeCompare(b.name))
+                                .map(m => (
+                                    <option key={m.id} value={m.id}>{m.name}</option>
+                                ))
+                            }
                         </select>
                     </div>
                     <div>
@@ -275,20 +313,63 @@ export default function AddPartModal({ isOpen, onClose, onSuccess, partToEdit }:
                             <BoxIcon size={14} />
                             {t("addPartName")}
                         </label>
-                        <select
-                            name="partName"
-                            value={formData.partName}
-                            onChange={handleInputChange}
-                            className="input select"
-                        >
-                            <option value="">{t("addPartSelectPart")}</option>
-                            {mockPartNames.map(name => (
-                                <option key={name} value={name}>{name}</option>
-                            ))}
-                        </select>
-                        <button className="mt-1 text-xs text-accent-green hover:text-accent-green-light transition-colors">
-                            {t("addPartNewPart")}
-                        </button>
+                        {!isCustomPartName ? (
+                            <select
+                                name="selectPartName"
+                                value={mockPartNames.includes(formData.partName) ? formData.partName : (formData.partName ? "other" : "")}
+                                onChange={(e) => {
+                                    const value = e.target.value;
+                                    if (value === "other") {
+                                        setIsCustomPartName(true);
+                                        setFormData(prev => ({ ...prev, partName: "" }));
+                                    } else {
+                                        setFormData(prev => ({ ...prev, partName: value }));
+                                    }
+                                }}
+                                className="input select"
+                            >
+                                <option value="">{t("addPartSelectPart")}</option>
+                                {mockPartNames.map(name => (
+                                    <option key={name} value={name}>{name}</option>
+                                ))}
+                                <option value="other">{t("optionOther") || "Other (Specify)"}</option>
+                            </select>
+                        ) : (
+                            <div className="flex gap-2 animate-fade-in">
+                                <input
+                                    type="text"
+                                    name="partName"
+                                    value={formData.partName}
+                                    onChange={handleInputChange}
+                                    placeholder={t("placeholderPartName") || "Enter part name..."}
+                                    className="input flex-1"
+                                    autoFocus
+                                />
+                                <button
+                                    type="button"
+                                    onClick={() => {
+                                        setIsCustomPartName(false);
+                                        setFormData(prev => ({ ...prev, partName: "" }));
+                                    }}
+                                    className="btn btn-ghost px-2 text-xs"
+                                    title={t("actionCancel") || "Cancel"}
+                                >
+                                    <XIcon size={16} />
+                                </button>
+                            </div>
+                        )}
+                        {!isCustomPartName && (
+                            <button
+                                type="button"
+                                onClick={() => {
+                                    setIsCustomPartName(true);
+                                    setFormData(prev => ({ ...prev, partName: "" }));
+                                }}
+                                className="mt-1 text-xs text-accent-green hover:text-accent-green-light transition-colors"
+                            >
+                                {t("addPartNewPart")}
+                            </button>
+                        )}
                     </div>
                 </div>
 
