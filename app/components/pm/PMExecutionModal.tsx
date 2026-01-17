@@ -153,7 +153,7 @@ export default function PMExecutionModal({ isOpen, onClose, plan, onSuccess }: P
                             <ActivityIcon size={20} />
                         </div>
                         <div className="flex-1">
-                            <h3 className="font-bold text-text-primary">{plan.taskName}</h3>
+                            <h3 className="font-bold text-accent-orange">{plan.taskName}</h3>
                             <p className="text-xs text-text-muted">{plan.machineName}</p>
                         </div>
                         {hasChecklistItems && (
@@ -174,7 +174,7 @@ export default function PMExecutionModal({ isOpen, onClose, plan, onSuccess }: P
                 <form onSubmit={handleSubmit} className="space-y-5">
                     {/* Technician Name */}
                     <div className="space-y-2">
-                        <label className="text-xs font-semibold text-text-muted uppercase tracking-wider flex items-center gap-2">
+                        <label className="text-xs font-semibold text-accent-orange uppercase tracking-wider flex items-center gap-2">
                             {t("labelTechnician")}
                         </label>
                         <input
@@ -190,61 +190,238 @@ export default function PMExecutionModal({ isOpen, onClose, plan, onSuccess }: P
                     {/* Checklist Items - Dynamic based on PM plan */}
                     {hasChecklistItems && (
                         <div className="space-y-3">
-                            <label className="text-xs font-semibold text-text-muted uppercase tracking-wider flex items-center gap-2">
+                            <label className="text-xs font-semibold text-accent-orange uppercase tracking-wider flex items-center gap-2">
                                 <CheckCircleIcon size={14} />
                                 {t("labelChecklist")} ({completedCount}/{totalItems})
                             </label>
                             <div className="space-y-2">
-                                {plan.checklistItems!.map((item, index) => (
-                                    <div
-                                        key={index}
-                                        className={`p-3 rounded-lg border transition-all ${checklistResults[index]?.completed
-                                            ? 'bg-accent-green/10 border-accent-green/30'
-                                            : 'bg-bg-tertiary border-white/5'
-                                            }`}
-                                    >
-                                        <div className="flex items-start gap-3">
-                                            {/* Checkbox */}
-                                            <button
-                                                type="button"
-                                                onClick={() => handleChecklistChange(index, "completed", !checklistResults[index]?.completed)}
-                                                className={`w-6 h-6 rounded-md border-2 flex items-center justify-center shrink-0 transition-all mt-0.5 ${checklistResults[index]?.completed
-                                                    ? 'bg-accent-green border-accent-green text-white'
-                                                    : 'border-white/20 hover:border-accent-blue'
-                                                    }`}
-                                            >
-                                                {checklistResults[index]?.completed && (
-                                                    <CheckCircleIcon size={14} />
-                                                )}
-                                            </button>
+                                {plan.checklistItems!.map((item, index) => {
+                                    // Check if item is related to vibration
+                                    const isVibrationItem = item.toLowerCase().includes("vibration") || item.includes("สั่นสะเทือน");
 
-                                            {/* Item content */}
-                                            <div className="flex-1 space-y-2">
-                                                <span className={`text-sm font-medium ${checklistResults[index]?.completed
-                                                    ? 'text-accent-green'
-                                                    : 'text-text-primary'
-                                                    }`}>
-                                                    {item}
-                                                </span>
-                                                {/* Value input field */}
-                                                <input
-                                                    type="text"
-                                                    placeholder={t("placeholderChecklistValue")}
-                                                    className="input-field w-full text-sm py-2"
-                                                    value={checklistResults[index]?.value || ""}
-                                                    onChange={(e) => handleChecklistChange(index, "value", e.target.value)}
-                                                />
+                                    if (isVibrationItem) {
+                                        // Parse existing value if available (expected format: JSON string or pipe-separated)
+                                        // But for new implementation we manage state in a specialized way
+                                        // We'll utilize the existing 'value' field to store the JSON string of the vibration data
+
+                                        // Helper to get vibration data from the stored string
+                                        let vibrationData = {
+                                            x: { value: "", status: "normal" },
+                                            y: { value: "", status: "normal" },
+                                            z: { value: "", status: "normal" }
+                                        };
+                                        try {
+                                            if (checklistResults[index]?.value?.startsWith("{")) {
+                                                vibrationData = JSON.parse(checklistResults[index].value);
+                                            }
+                                        } catch (e) {
+                                            // ignore parse error, use default
+                                        }
+
+                                        const updateVibration = (axis: 'x' | 'y' | 'z', field: 'value' | 'status', val: string) => {
+                                            const newData = {
+                                                ...vibrationData,
+                                                [axis]: {
+                                                    ...vibrationData[axis],
+                                                    [field]: val
+                                                }
+                                            };
+                                            // Save complete object as JSON string to the main value field
+                                            handleChecklistChange(index, "value", JSON.stringify(newData));
+
+                                            // Mark as completed if all values are filled (optional logic, but good for UX)
+                                            if (newData.x.value && newData.y.value && newData.z.value) {
+                                                handleChecklistChange(index, "completed", true);
+                                            }
+                                        };
+
+                                        return (
+                                            <div key={index} className="p-4 rounded-lg border border-white/10 bg-bg-tertiary space-y-4">
+                                                <div className="flex items-center gap-2 mb-2">
+                                                    <ActivityIcon size={16} className="text-accent-orange" />
+                                                    <span className="font-bold text-accent-orange">{item}</span>
+                                                </div>
+
+                                                {/* X Axis */}
+                                                <div className="space-y-2">
+                                                    <label className="text-sm font-bold text-accent-orange flex items-center gap-2">
+                                                        <span className="w-1 h-3 bg-accent-blue rounded-full"></span>
+                                                        {t("maintenanceAxisX") || "X Axis"}
+                                                    </label>
+                                                    <input
+                                                        type="text"
+                                                        placeholder={t("placeholderVibration") || "Value (mm/s)"}
+                                                        className="input-field w-full text-sm py-1.5 mb-2"
+                                                        value={vibrationData.x.value}
+                                                        onChange={(e) => updateVibration('x', 'value', e.target.value)}
+                                                    />
+                                                    <div className="flex gap-2">
+                                                        {[
+                                                            { value: 'normal', label: t("maintenanceVibrationNormal") || "Normal", color: 'bg-accent-green', text: 'text-accent-green' },
+                                                            { value: 'warning', label: t("maintenanceVibrationMedium") || "Warning", color: 'bg-accent-yellow', text: 'text-accent-yellow' },
+                                                            { value: 'critical', label: t("maintenanceVibrationAbnormal") || "Critical", color: 'bg-accent-red', text: 'text-accent-red' }
+                                                        ].map((statusOption) => (
+                                                            <button
+                                                                key={statusOption.value}
+                                                                type="button"
+                                                                onClick={() => updateVibration('x', 'status', statusOption.value)}
+                                                                className={`
+                                                                    flex-1 py-1.5 rounded-md text-[10px] font-bold border transition-all flex items-center justify-center gap-1
+                                                                    ${vibrationData.x.status === statusOption.value
+                                                                        ? `${statusOption.color} text-white border-transparent`
+                                                                        : `bg-transparent border-white/10 text-text-muted hover:border-white/30`
+                                                                    }
+                                                                `}
+                                                            >
+                                                                <div className={`w-2 h-2 rounded-full ${vibrationData.x.status === statusOption.value ? 'bg-white' : statusOption.color}`} />
+                                                                {statusOption.label}
+                                                            </button>
+                                                        ))}
+                                                    </div>
+                                                </div>
+
+                                                {/* Y Axis */}
+                                                <div className="space-y-2">
+                                                    <label className="text-sm font-bold text-accent-orange flex items-center gap-2">
+                                                        <span className="w-1 h-3 bg-accent-purple rounded-full"></span>
+                                                        {t("maintenanceAxisY") || "Y Axis"}
+                                                    </label>
+                                                    <input
+                                                        type="text"
+                                                        placeholder={t("placeholderVibration") || "Value (mm/s)"}
+                                                        className="input-field w-full text-sm py-1.5 mb-2"
+                                                        value={vibrationData.y.value}
+                                                        onChange={(e) => updateVibration('y', 'value', e.target.value)}
+                                                    />
+                                                    <div className="flex gap-2">
+                                                        {[
+                                                            { value: 'normal', label: t("maintenanceVibrationNormal") || "Normal", color: 'bg-accent-green', text: 'text-accent-green' },
+                                                            { value: 'warning', label: t("maintenanceVibrationMedium") || "Warning", color: 'bg-accent-yellow', text: 'text-accent-yellow' },
+                                                            { value: 'critical', label: t("maintenanceVibrationAbnormal") || "Critical", color: 'bg-accent-red', text: 'text-accent-red' }
+                                                        ].map((statusOption) => (
+                                                            <button
+                                                                key={statusOption.value}
+                                                                type="button"
+                                                                onClick={() => updateVibration('y', 'status', statusOption.value)}
+                                                                className={`
+                                                                    flex-1 py-1.5 rounded-md text-[10px] font-bold border transition-all flex items-center justify-center gap-1
+                                                                    ${vibrationData.y.status === statusOption.value
+                                                                        ? `${statusOption.color} text-white border-transparent`
+                                                                        : `bg-transparent border-white/10 text-text-muted hover:border-white/30`
+                                                                    }
+                                                                `}
+                                                            >
+                                                                <div className={`w-2 h-2 rounded-full ${vibrationData.y.status === statusOption.value ? 'bg-white' : statusOption.color}`} />
+                                                                {statusOption.label}
+                                                            </button>
+                                                        ))}
+                                                    </div>
+                                                </div>
+
+                                                {/* Z Axis */}
+                                                <div className="space-y-2">
+                                                    <label className="text-sm font-bold text-accent-orange flex items-center gap-2">
+                                                        <span className="w-1 h-3 bg-accent-orange rounded-full"></span>
+                                                        {t("maintenanceAxisZ") || "Z Axis"}
+                                                    </label>
+                                                    <input
+                                                        type="text"
+                                                        placeholder={t("placeholderVibration") || "Value (mm/s)"}
+                                                        className="input-field w-full text-sm py-1.5 mb-2"
+                                                        value={vibrationData.z.value}
+                                                        onChange={(e) => updateVibration('z', 'value', e.target.value)}
+                                                    />
+                                                    <div className="flex gap-2">
+                                                        {[
+                                                            { value: 'normal', label: t("maintenanceVibrationNormal") || "Normal", color: 'bg-accent-green', text: 'text-accent-green' },
+                                                            { value: 'warning', label: t("maintenanceVibrationMedium") || "Warning", color: 'bg-accent-yellow', text: 'text-accent-yellow' },
+                                                            { value: 'critical', label: t("maintenanceVibrationAbnormal") || "Critical", color: 'bg-accent-red', text: 'text-accent-red' }
+                                                        ].map((statusOption) => (
+                                                            <button
+                                                                key={statusOption.value}
+                                                                type="button"
+                                                                onClick={() => updateVibration('z', 'status', statusOption.value)}
+                                                                className={`
+                                                                    flex-1 py-1.5 rounded-md text-[10px] font-bold border transition-all flex items-center justify-center gap-1
+                                                                    ${vibrationData.z.status === statusOption.value
+                                                                        ? `${statusOption.color} text-white border-transparent`
+                                                                        : `bg-transparent border-white/10 text-text-muted hover:border-white/30`
+                                                                    }
+                                                                `}
+                                                            >
+                                                                <div className={`w-2 h-2 rounded-full ${vibrationData.z.status === statusOption.value ? 'bg-white' : statusOption.color}`} />
+                                                                {statusOption.label}
+                                                            </button>
+                                                        ))}
+                                                    </div>
+                                                </div>
+
+                                                {/* Manual Completed Check (to match standard items behavior) */}
+                                                <label className="flex items-center gap-2 cursor-pointer mt-2 pt-2 border-t border-white/5">
+                                                    <input
+                                                        type="checkbox"
+                                                        className="checkbox checkbox-primary w-5 h-5"
+                                                        checked={checklistResults[index]?.completed || false}
+                                                        onChange={(e) => handleChecklistChange(index, "completed", e.target.checked)}
+                                                    />
+                                                    <span className="text-sm">{t("statusCompleted") || "Mark as Completed"}</span>
+                                                </label>
+                                            </div>
+                                        );
+                                    }
+
+                                    // Standard Checklist Item
+                                    return (
+                                        <div
+                                            key={index}
+                                            className={`p-3 rounded-lg border transition-all ${checklistResults[index]?.completed
+                                                ? 'bg-accent-green/10 border-accent-green/30'
+                                                : 'bg-bg-tertiary border-white/5'
+                                                }`}
+                                        >
+                                            <div className="flex items-start gap-3">
+                                                {/* Checkbox */}
+                                                <button
+                                                    type="button"
+                                                    onClick={() => handleChecklistChange(index, "completed", !checklistResults[index]?.completed)}
+                                                    className={`w-6 h-6 rounded-md border-2 flex items-center justify-center shrink-0 transition-all mt-0.5 ${checklistResults[index]?.completed
+                                                        ? 'bg-accent-green border-accent-green text-white'
+                                                        : 'border-white/20 hover:border-accent-blue'
+                                                        }`}
+                                                >
+                                                    {checklistResults[index]?.completed && (
+                                                        <CheckCircleIcon size={14} />
+                                                    )}
+                                                </button>
+
+                                                {/* Item content */}
+                                                <div className="flex-1 space-y-2">
+                                                    <span className={`text-sm font-medium ${checklistResults[index]?.completed
+                                                        ? 'text-accent-green'
+                                                        : 'text-text-primary'
+                                                        }`}>
+                                                        {item}
+                                                    </span>
+                                                    {/* Value input field */}
+                                                    <input
+                                                        type="text"
+                                                        placeholder={t("placeholderChecklistValue")}
+                                                        className="input-field w-full text-sm py-2"
+                                                        value={checklistResults[index]?.value || ""}
+                                                        onChange={(e) => handleChecklistChange(index, "value", e.target.value)}
+                                                    />
+                                                </div>
                                             </div>
                                         </div>
-                                    </div>
-                                ))}
+                                    );
+                                })}
                             </div>
                         </div>
                     )}
 
                     {/* Additional Notes (if no checklist or for extra notes) */}
                     <div className="space-y-2">
-                        <label className="text-xs font-semibold text-text-muted uppercase tracking-wider flex items-center gap-2">
+                        <label className="text-xs font-semibold text-accent-orange uppercase tracking-wider flex items-center gap-2">
                             {hasChecklistItems ? t("labelAdditionalNotes") : t("labelMaintenanceDetails")}
                         </label>
                         <textarea
@@ -261,7 +438,7 @@ export default function PMExecutionModal({ isOpen, onClose, plan, onSuccess }: P
 
                     {/* Photo Evidence */}
                     <div className="space-y-2">
-                        <label className="text-xs font-semibold text-text-muted uppercase tracking-wider flex items-center gap-2">
+                        <label className="text-xs font-semibold text-accent-orange uppercase tracking-wider flex items-center gap-2">
                             {t("labelEvidencePhoto")}
                         </label>
 

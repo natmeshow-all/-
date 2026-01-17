@@ -573,6 +573,7 @@ export interface TranslationKeys {
     scannerScannedContent: string;
     labelViewFullscreen: string;
     altImage: string;
+    statusCompleted: string;
 }
 
 const th: TranslationKeys = {
@@ -1148,6 +1149,7 @@ const th: TranslationKeys = {
     scannerScannedContent: "เนื้อหาที่สแกน",
     labelViewFullscreen: "ดูภาพเต็มจอ",
     altImage: "รูปภาพ",
+    statusCompleted: "ทำเครื่องหมายว่าเสร็จสิ้น",
 };
 
 const en: TranslationKeys = {
@@ -1723,6 +1725,7 @@ const en: TranslationKeys = {
     scannerScannedContent: "Scanned Content",
     labelViewFullscreen: "View Fullscreen",
     altImage: "Image",
+    statusCompleted: "Mark as Completed",
 };
 
 export const translations: Record<Language, TranslationKeys> = {
