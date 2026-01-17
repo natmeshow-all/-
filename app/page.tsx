@@ -534,7 +534,7 @@ export default function Dashboard() {
           style={{ animationDelay: "300ms" }}
         >
           {/* Header Card - Separate on mobile if not fullscreen */}
-          <div className={`${isTableFullscreen ? "rounded-none border-0 flex-1 flex flex-col mb-0" : "mb-2"}`}>
+          <div className={`${isTableFullscreen ? "rounded-none border-0 flex-1 flex flex-col mb-0 overflow-hidden" : "mb-2"}`}>
             <div className={`flex items-center justify-between flex-none ${isTableFullscreen ? "px-4 py-3 border-b border-border-light bg-bg-secondary" : "px-2 py-1"}`}>
               <div className="flex items-center gap-2">
                 <SettingsIcon size={isTableFullscreen ? 18 : 14} className="text-text-muted" />
@@ -655,7 +655,7 @@ export default function Dashboard() {
 
             {/* Fullscreen Mobile View Content - Inside specialized container when fullscreen */}
             {isTableFullscreen && (
-              <div className="md:hidden flex-1 overflow-auto bg-bg-primary p-4 space-y-4" style={{ WebkitOverflowScrolling: 'touch' }}>
+              <div className="md:hidden flex-1 overflow-auto bg-bg-primary p-4 space-y-4 min-h-0" style={{ WebkitOverflowScrolling: 'touch' }}>
                 {loading ? (
                   <div className="flex justify-center py-12">
                     <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary"></div>
