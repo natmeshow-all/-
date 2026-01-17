@@ -19,6 +19,7 @@ import {
 } from "firebase/storage";
 import { database, storage } from "./firebase";
 import { Machine, Part, MaintenanceRecord, SparePart, StockTransaction, MaintenanceSchedule, PMPlan, UserProfile, PendingUser, UserRole } from "../types";
+import { translateToEnglish } from "./translationService";
 
 // Collection names
 const COLLECTIONS = {
@@ -27,7 +28,48 @@ const COLLECTIONS = {
     MAINTENANCE_RECORDS: "maintenance_records",
     SCHEDULES: "schedules",
     PM_PLANS: "pm_plans",
+    DATA_TRANSLATIONS: "data_translations",
 };
+
+// ==================== TRANSLATIONS ====================
+
+/**
+ * Synchronizes a translation for a piece of text.
+ */
+export async function syncTranslation(text: string): Promise<void> {
+    if (!text || !/[ก-ฮ]/.test(text)) return;
+
+    const normalizedText = text.trim();
+    const translationsRef = ref(database, COLLECTIONS.DATA_TRANSLATIONS);
+
+    try {
+        const snapshot = await get(translationsRef);
+        if (snapshot.exists()) {
+            const data = snapshot.val();
+            // Case-insensitive check
+            const alreadyExists = Object.keys(data).some(k => k.toLowerCase() === normalizedText.toLowerCase());
+            if (alreadyExists) return;
+        }
+
+        const englishText = await translateToEnglish(normalizedText);
+        if (englishText && englishText !== normalizedText) {
+            await update(translationsRef, {
+                [normalizedText]: englishText
+            });
+        }
+    } catch (error) {
+        console.error("Error syncing translation:", error);
+    }
+}
+
+/**
+ * Fetches all dynamic translations.
+ */
+export async function getDynamicTranslations(): Promise<Record<string, string>> {
+    const translationsRef = ref(database, COLLECTIONS.DATA_TRANSLATIONS);
+    const snapshot = await get(translationsRef);
+    return snapshot.exists() ? snapshot.val() : {};
+}
 
 // ==================== MACHINES ====================
 
@@ -199,6 +241,12 @@ export async function addMachine(machine: Omit<Machine, "id" | "createdAt" | "up
         updatedAt: new Date().toISOString(),
     });
 
+    // Auto-translate relevant fields
+    syncTranslation(machine.name);
+    if (machine.brand) syncTranslation(machine.brand);
+    if (machine.model) syncTranslation(machine.model);
+    if (machine.description) syncTranslation(machine.description);
+
     return newMachineRef.key!;
 }
 
@@ -209,6 +257,12 @@ export async function updateMachine(id: string, data: Partial<Machine>): Promise
         ...data,
         updatedAt: new Date().toISOString(),
     });
+
+    // Auto-translate updated fields
+    if (data.name) syncTranslation(data.name);
+    if (data.brand) syncTranslation(data.brand);
+    if (data.model) syncTranslation(data.model);
+    if (data.description) syncTranslation(data.description);
 }
 
 export async function deleteMachine(id: string): Promise<void> {
@@ -322,6 +376,12 @@ export async function addPart(
         updatedAt: new Date().toISOString(),
     });
 
+    // Auto-translate relevant fields
+    syncTranslation(safePartData.partName);
+    if (safePartData.modelSpec) syncTranslation(safePartData.modelSpec);
+    if (safePartData.brand) syncTranslation(safePartData.brand);
+    if (safePartData.location) syncTranslation(safePartData.location);
+
     return newPartRef.key!;
 }
 
@@ -349,6 +409,13 @@ export async function updatePart(
     }
 
     await update(partRef, updateData);
+
+    // Auto-translate updated fields
+    if (data.partName) syncTranslation(data.partName);
+    if (data.modelSpec) syncTranslation(data.modelSpec);
+    if (data.brand) syncTranslation(data.brand);
+    if (data.location) syncTranslation(data.location);
+    if (data.notes) syncTranslation(data.notes);
 }
 
 export async function deletePart(id: string): Promise<void> {
@@ -405,6 +472,11 @@ export async function addMaintenanceRecord(
         updatedAt: now.toISOString(),
     });
 
+    // Auto-translate relevant fields
+    if (record.description) syncTranslation(record.description);
+    if (record.technician) syncTranslation(record.technician);
+    if (record.machineName) syncTranslation(record.machineName);
+
     // Phase 4: Auto-update/Create Schedule if it's a preventive task
     if (record.type === "preventive" || record.type === "oilChange" || record.type === "inspection") {
         try {
@@ -449,6 +521,11 @@ export async function updateMaintenanceRecord(
     }
 
     await update(recordRef, updateData);
+
+    // Auto-translate updated fields
+    if (data.description) syncTranslation(data.description);
+    if (data.technician) syncTranslation(data.technician);
+    if (data.machineName) syncTranslation(data.machineName);
 }
 
 export async function deleteMaintenanceRecord(id: string): Promise<void> {
@@ -557,6 +634,11 @@ export async function addPMPlan(plan: Omit<PMPlan, "id" | "createdAt" | "updated
         updatedAt: new Date().toISOString(),
     }));
 
+    // Auto-translate relevant fields
+    if (plan.machineName) syncTranslation(plan.machineName);
+    if (plan.taskName) syncTranslation(plan.taskName);
+    if (plan.notes) syncTranslation(plan.notes);
+
     return newPlanRef.key!;
 }
 
@@ -569,6 +651,11 @@ export async function updatePMPlan(id: string, data: Partial<PMPlan>): Promise<v
     if (data.lastCompletedDate) updateData.lastCompletedDate = data.lastCompletedDate.toISOString();
 
     await update(planRef, cleanObject(updateData));
+
+    // Auto-translate updated fields
+    if (data.machineName) syncTranslation(data.machineName);
+    if (data.taskName) syncTranslation(data.taskName);
+    if (data.notes) syncTranslation(data.notes);
 }
 
 export async function deletePMPlan(id: string): Promise<void> {
@@ -614,6 +701,11 @@ export const completePMTask = async (
             updatedAt: now.toISOString(),
         };
         await set(recordRef, recordData);
+
+        // Auto-translate relevant fields
+        if (record.description) syncTranslation(record.description);
+        if (record.technician) syncTranslation(record.technician);
+        if (record.machineName) syncTranslation(record.machineName);
 
         // Update PM Plan (Status, Last Completed, Next Due)
         const planRef = ref(database, `${COLLECTIONS.PM_PLANS}/${planId}`);
@@ -842,6 +934,12 @@ export async function addSparePart(
         updatedAt: new Date().toISOString(),
     }));
 
+    // Auto-translate relevant fields
+    syncTranslation(part.name);
+    if (part.description) syncTranslation(part.description);
+    if (part.brand) syncTranslation(part.brand);
+    if (part.location) syncTranslation(part.location);
+
     return newPartRef.key!;
 }
 
@@ -867,6 +965,13 @@ export async function updateSparePart(
     }
 
     await update(partRef, cleanObject(updateData));
+
+    // Auto-translate updated fields
+    if (data.name) syncTranslation(data.name);
+    if (data.description) syncTranslation(data.description);
+    if (data.brand) syncTranslation(data.brand);
+    if (data.location) syncTranslation(data.location);
+    if (data.notes) syncTranslation(data.notes);
 }
 
 export async function deleteSparePart(id: string): Promise<void> {
@@ -898,6 +1003,12 @@ export async function adjustStock(
         evidenceImageUrl: evidenceImageUrl || transaction.evidenceImageUrl || "",
         performedAt: transaction.performedAt.toISOString(),
     }));
+
+    // Auto-translate relevant fields
+    if (transaction.notes) syncTranslation(transaction.notes);
+    if (transaction.machineName) syncTranslation(transaction.machineName);
+    if (transaction.partName) syncTranslation(transaction.partName);
+    if (transaction.performedBy) syncTranslation(transaction.performedBy);
 
     // 3. Update Stock Level
     const partRef = ref(database, `spare_parts/${transaction.partId}`);

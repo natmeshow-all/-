@@ -132,9 +132,9 @@ export default function PartsPage() {
                         <div>
                             <h1 className="text-2xl font-bold text-text-primary tracking-tight">{t("partsInventoryTitle")}</h1>
                             <div className="flex items-center gap-2 text-sm text-text-muted">
-                                <span>{loading ? "..." : t("partsItemsCount").replace("{count}", parts.length.toString())}</span>
+                                <span>{loading ? "..." : t("partsItemsCount", { count: parts.length })}</span>
                                 <span className="w-1 h-1 rounded-full bg-text-muted/30"></span>
-                                <span>{t("partsCategoriesCount").replace("{count}", Object.keys(groupedParts).length.toString())}</span>
+                                <span>{t("partsCategoriesCount", { count: Object.keys(groupedParts).length })}</span>
                             </div>
                         </div>
                     </div>
@@ -169,7 +169,7 @@ export default function PartsPage() {
                             <AlertIcon size={20} />
                         </div>
                         <div>
-                            <h3 className="font-bold text-error mb-1">{t("partsLowStockAlert").replace("{count}", lowStockItems.length.toString())}</h3>
+                            <h3 className="font-bold text-error mb-1">{t("partsLowStockAlert", { count: lowStockItems.length })}</h3>
                             <p className="text-sm text-text-secondary mb-3">
                                 {t("partsLowStockDesc")}
                             </p>
@@ -228,7 +228,7 @@ export default function PartsPage() {
                                                     )}
                                                     {part.quantity <= part.minStockThreshold && (
                                                         <div className="absolute inset-0 bg-error/20 flex items-center justify-center backdrop-blur-[1px]">
-                                                            <span className="text-xs font-bold text-white bg-error px-2 py-0.5 rounded shadow-sm">Low Stock</span>
+                                                            <span className="text-xs font-bold text-white bg-error px-2 py-0.5 rounded shadow-sm">{t("statusLowStock")}</span>
                                                         </div>
                                                     )}
                                                 </div>
@@ -248,7 +248,7 @@ export default function PartsPage() {
                                                         <button
                                                             onClick={() => openHistoryModal(part)}
                                                             className="p-1.5 rounded-lg bg-bg-tertiary text-text-muted hover:text-primary transition-colors hover:bg-primary/10"
-                                                            title="ประวัติรายการ"
+                                                            title={t("historyItem")}
                                                         >
                                                             <HistoryIcon size={14} />
                                                         </button>
@@ -365,11 +365,11 @@ export default function PartsPage() {
                 isOpen={confirmDeleteOpen}
                 onClose={() => setConfirmDeleteOpen(false)}
                 onConfirm={confirmDelete}
-                title={t("actionDelete") || "Delete Part"}
-                message={t("msgConfirmDelete") || "Are you sure you want to delete this part? This action cannot be undone."}
+                title={t("actionDelete")}
+                message={t("msgConfirmDelete")}
                 isDestructive={true}
-                confirmText={t("actionDelete") || "Delete"}
-                cancelText={t("actionCancel") || "Cancel"}
+                confirmText={t("actionDelete")}
+                cancelText={t("actionCancel")}
             />
         </div>
     );

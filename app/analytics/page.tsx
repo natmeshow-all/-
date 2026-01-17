@@ -36,12 +36,12 @@ import {
 
 // Sample analytics data
 const maintenanceByMonth = [
-    { month: "ก.ค.", preventive: 12, corrective: 3, oilChange: 5 },
-    { month: "ส.ค.", preventive: 15, corrective: 4, oilChange: 6 },
-    { month: "ก.ย.", preventive: 10, corrective: 5, oilChange: 4 },
-    { month: "ต.ค.", preventive: 18, corrective: 2, oilChange: 7 },
-    { month: "พ.ย.", preventive: 14, corrective: 6, oilChange: 5 },
-    { month: "ธ.ค.", preventive: 16, corrective: 3, oilChange: 8 },
+    { month: "Jul", preventive: 12, corrective: 3, oilChange: 5 },
+    { month: "Aug", preventive: 15, corrective: 4, oilChange: 6 },
+    { month: "Sep", preventive: 10, corrective: 5, oilChange: 4 },
+    { month: "Oct", preventive: 18, corrective: 2, oilChange: 7 },
+    { month: "Nov", preventive: 14, corrective: 6, oilChange: 5 },
+    { month: "Dec", preventive: 16, corrective: 3, oilChange: 8 },
 ];
 
 const machineDowntime = [
@@ -52,7 +52,7 @@ const machineDowntime = [
     { machine: "Packaging", hours: 6.8 },
 ];
 
-const partsByCategory = [
+const partsByCategoryRaw = [
     { name: "มอเตอร์", value: 35, color: "#3B82F6" },
     { name: "เกียร์", value: 25, color: "#8B5CF6" },
     { name: "สายพาน", value: 20, color: "#10B981" },
@@ -61,21 +61,21 @@ const partsByCategory = [
 ];
 
 const vibrationTrend = [
-    { date: "1 ธ.ค.", axisX: 2.1, axisY: 2.3, axisZ: 2.8 },
-    { date: "8 ธ.ค.", axisX: 2.3, axisY: 2.5, axisZ: 3.0 },
-    { date: "15 ธ.ค.", axisX: 2.2, axisY: 2.4, axisZ: 2.9 },
-    { date: "22 ธ.ค.", axisX: 2.5, axisY: 2.7, axisZ: 3.2 },
-    { date: "29 ธ.ค.", axisX: 2.4, axisY: 2.6, axisZ: 3.1 },
-    { date: "5 ม.ค.", axisX: 2.6, axisY: 2.8, axisZ: 3.4 },
+    { date: "1 Dec", axisX: 2.1, axisY: 2.3, axisZ: 2.8 },
+    { date: "8 Dec", axisX: 2.3, axisY: 2.5, axisZ: 3.0 },
+    { date: "15 Dec", axisX: 2.2, axisY: 2.4, axisZ: 2.9 },
+    { date: "22 Dec", axisX: 2.5, axisY: 2.7, axisZ: 3.2 },
+    { date: "29 Dec", axisX: 2.4, axisY: 2.6, axisZ: 3.1 },
+    { date: "5 Jan", axisX: 2.6, axisY: 2.8, axisZ: 3.4 },
 ];
 
 const temperatureTrend = [
-    { date: "1 ธ.ค.", temp: 58.5 },
-    { date: "8 ธ.ค.", temp: 60.2 },
-    { date: "15 ธ.ค.", temp: 59.8 },
-    { date: "22 ธ.ค.", temp: 62.3 },
-    { date: "29 ธ.ค.", temp: 64.1 },
-    { date: "5 ม.ค.", temp: 65.5 },
+    { date: "1 Dec", temp: 58.5 },
+    { date: "8 Dec", temp: 60.2 },
+    { date: "15 Dec", temp: 59.8 },
+    { date: "22 Dec", temp: 62.3 },
+    { date: "29 Dec", temp: 64.1 },
+    { date: "5 Jan", temp: 65.5 },
 ];
 
 // Custom Tooltip for charts
@@ -96,7 +96,7 @@ const CustomTooltip = ({ active, payload, label }: { active?: boolean; payload?:
 };
 
 export default function AnalyticsPage() {
-    const { t } = useLanguage();
+    const { t, tData } = useLanguage();
     const { success } = useToast();
     const [isGenerating, setIsGenerating] = React.useState(false);
 
@@ -104,9 +104,14 @@ export default function AnalyticsPage() {
         setIsGenerating(true);
         setTimeout(() => {
             setIsGenerating(false);
-            success("Report Generated", "Monthly Report for January 2026 has been generated and is ready for download.");
+            success(t("analyticsReportReady"), t("analyticsReportDesc"));
         }, 2000);
     };
+
+    const partsByCategory = partsByCategoryRaw.map(p => ({
+        ...p,
+        name: tData(p.name)
+    }));
 
     return (
         <div className="min-h-screen bg-bg-primary">
@@ -121,13 +126,13 @@ export default function AnalyticsPage() {
                         </div>
                         <div>
                             <h1 className="text-xl font-bold text-text-primary">{t("navAnalytics")}</h1>
-                            <p className="text-sm text-text-muted">วิเคราะห์ข้อมูลการซ่อมบำรุง</p>
+                            <p className="text-sm text-text-muted">{t("analyticsSubtitle")}</p>
                         </div>
                     </div>
                     <div className="flex gap-2">
                         <button className="btn btn-outline border-white/10 hover:bg-white/5 text-sm">
                             <DownloadIcon size={16} className="mr-2" />
-                            ตารางงาน (PDF)
+                            {t("analyticsDownloadSchedule")}
                         </button>
                         <button
                             className="btn btn-primary bg-primary text-white text-sm disabled:opacity-50"
@@ -137,12 +142,12 @@ export default function AnalyticsPage() {
                             {isGenerating ? (
                                 <span className="flex items-center">
                                     <div className="w-3 h-3 border-2 border-white/30 border-t-white rounded-full animate-spin mr-2" />
-                                    Generating...
+                                    {t("analyticsGenerating")}
                                 </span>
                             ) : (
                                 <>
                                     <FileTextIcon size={16} className="mr-2" />
-                                    Monthly Report
+                                    {t("analyticsMonthlyReport")}
                                 </>
                             )}
                         </button>
@@ -156,7 +161,7 @@ export default function AnalyticsPage() {
                     <div className="card animate-fade-in-up">
                         <div className="flex items-center gap-2 mb-4">
                             <CalendarIcon size={18} className="text-accent-yellow" />
-                            <h3 className="font-semibold text-text-primary">การซ่อมบำรุงรายเดือน</h3>
+                            <h3 className="font-semibold text-text-primary">{t("analyticsMonthlyMaintenance")}</h3>
                         </div>
                         <div className="h-64">
                             <ResponsiveContainer width="100%" height="100%">
@@ -167,11 +172,11 @@ export default function AnalyticsPage() {
                                     <Tooltip content={<CustomTooltip />} />
                                     <Legend
                                         wrapperStyle={{ fontSize: "12px" }}
-                                        formatter={(value) => <span className="text-text-secondary">{value}</span>}
+                                        formatter={(value) => <span className="text-text-secondary">{tData(value)}</span>}
                                     />
-                                    <Bar dataKey="preventive" name="เชิงป้องกัน" fill="#10B981" radius={[4, 4, 0, 0]} />
-                                    <Bar dataKey="corrective" name="แก้ไข" fill="#EF4444" radius={[4, 4, 0, 0]} />
-                                    <Bar dataKey="oilChange" name="ถ่ายน้ำมัน" fill="#F59E0B" radius={[4, 4, 0, 0]} />
+                                    <Bar dataKey="preventive" name={t("analyticsPreventive")} fill="#10B981" radius={[4, 4, 0, 0]} />
+                                    <Bar dataKey="corrective" name={t("analyticsCorrective")} fill="#EF4444" radius={[4, 4, 0, 0]} />
+                                    <Bar dataKey="oilChange" name={t("analyticsOilChange")} fill="#F59E0B" radius={[4, 4, 0, 0]} />
                                 </BarChart>
                             </ResponsiveContainer>
                         </div>
@@ -181,7 +186,7 @@ export default function AnalyticsPage() {
                     <div className="card animate-fade-in-up" style={{ animationDelay: "100ms" }}>
                         <div className="flex items-center gap-2 mb-4">
                             <SettingsIcon size={18} className="text-primary-light" />
-                            <h3 className="font-semibold text-text-primary">อะไหล่ตามหมวดหมู่</h3>
+                            <h3 className="font-semibold text-text-primary">{t("analyticsPartsByCategory")}</h3>
                         </div>
                         <div className="h-64">
                             <ResponsiveContainer width="100%" height="100%">
@@ -215,7 +220,7 @@ export default function AnalyticsPage() {
                     <div className="card animate-fade-in-up" style={{ animationDelay: "200ms" }}>
                         <div className="flex items-center gap-2 mb-4">
                             <WrenchIcon size={18} className="text-accent-red" />
-                            <h3 className="font-semibold text-text-primary">เวลาหยุดเครื่อง (ชม.)</h3>
+                            <h3 className="font-semibold text-text-primary">{t("analyticsDowntimeHours")}</h3>
                         </div>
                         <div className="h-64">
                             <ResponsiveContainer width="100%" height="100%">
@@ -224,7 +229,7 @@ export default function AnalyticsPage() {
                                     <XAxis type="number" stroke="#94A3B8" fontSize={12} />
                                     <YAxis dataKey="machine" type="category" stroke="#94A3B8" fontSize={12} width={80} />
                                     <Tooltip content={<CustomTooltip />} />
-                                    <Bar dataKey="hours" name="ชั่วโมง" fill="#EF4444" radius={[0, 4, 4, 0]} />
+                                    <Bar dataKey="hours" name={t("labelHours")} fill="#EF4444" radius={[0, 4, 4, 0]} />
                                 </BarChart>
                             </ResponsiveContainer>
                         </div>
@@ -234,7 +239,7 @@ export default function AnalyticsPage() {
                     <div className="card animate-fade-in-up" style={{ animationDelay: "300ms" }}>
                         <div className="flex items-center gap-2 mb-4">
                             <ActivityIcon size={18} className="text-accent-purple" />
-                            <h3 className="font-semibold text-text-primary">แนวโน้มค่าแรงสั่นสะเทือน (mm/s)</h3>
+                            <h3 className="font-semibold text-text-primary">{t("analyticsVibrationTrend")}</h3>
                         </div>
                         <div className="h-64">
                             <ResponsiveContainer width="100%" height="100%">
@@ -245,11 +250,11 @@ export default function AnalyticsPage() {
                                     <Tooltip content={<CustomTooltip />} />
                                     <Legend
                                         wrapperStyle={{ fontSize: "12px" }}
-                                        formatter={(value) => <span className="text-text-secondary">{value}</span>}
+                                        formatter={(value) => <span className="text-text-secondary">{tData(value)}</span>}
                                     />
-                                    <Line type="monotone" dataKey="axisX" name="แกน X" stroke="#3B82F6" strokeWidth={2} dot={{ fill: "#3B82F6" }} />
-                                    <Line type="monotone" dataKey="axisY" name="แกน Y" stroke="#10B981" strokeWidth={2} dot={{ fill: "#10B981" }} />
-                                    <Line type="monotone" dataKey="axisZ" name="แกน Z" stroke="#F59E0B" strokeWidth={2} dot={{ fill: "#F59E0B" }} />
+                                    <Line type="monotone" dataKey="axisX" name={t("analyticsAxisX")} stroke="#3B82F6" strokeWidth={2} dot={{ fill: "#3B82F6" }} />
+                                    <Line type="monotone" dataKey="axisY" name={t("analyticsAxisY")} stroke="#10B981" strokeWidth={2} dot={{ fill: "#10B981" }} />
+                                    <Line type="monotone" dataKey="axisZ" name={t("analyticsAxisZ")} stroke="#F59E0B" strokeWidth={2} dot={{ fill: "#F59E0B" }} />
                                 </LineChart>
                             </ResponsiveContainer>
                         </div>
@@ -259,8 +264,8 @@ export default function AnalyticsPage() {
                     <div className="card lg:col-span-2 animate-fade-in-up" style={{ animationDelay: "400ms" }}>
                         <div className="flex items-center gap-2 mb-4">
                             <ThermometerIcon size={18} className="text-accent-red" />
-                            <h3 className="font-semibold text-text-primary">แนวโน้มอุณหภูมิมอเตอร์ (°C) - Mix 2</h3>
-                            <span className="ml-auto badge badge-warning">ควรตรวจสอบ</span>
+                            <h3 className="font-semibold text-text-primary">{t("analyticsTemperatureTrend")} - Mix 2</h3>
+                            <span className="ml-auto badge badge-warning">{t("analyticsShouldCheck")}</span>
                         </div>
                         <div className="h-48">
                             <ResponsiveContainer width="100%" height="100%">
@@ -278,7 +283,7 @@ export default function AnalyticsPage() {
                                     <Area
                                         type="monotone"
                                         dataKey="temp"
-                                        name="อุณหภูมิ"
+                                        name={t("temperature")}
                                         stroke="#EF4444"
                                         fill="url(#tempGradient)"
                                         strokeWidth={2}
@@ -291,14 +296,14 @@ export default function AnalyticsPage() {
                                         strokeDasharray="5 5"
                                         strokeWidth={1}
                                         dot={false}
-                                        name="เกณฑ์เตือน"
+                                        name={t("statusMonitoring")}
                                     />
                                 </AreaChart>
                             </ResponsiveContainer>
                         </div>
                         <p className="mt-3 text-sm text-text-muted flex items-center gap-2">
                             <span className="w-2 h-2 bg-accent-red rounded-full"></span>
-                            อุณหภูมิมีแนวโน้มสูงขึ้น - แนะนำให้ตรวจสอบระบบระบายความร้อน
+                            {t("analyticsTempRising")}
                         </p>
                     </div>
                 </div>
@@ -331,8 +336,8 @@ export default function AnalyticsPage() {
                                 <TrendingUpIcon size={20} className="text-accent-green" />
                             </div>
                             <div>
-                                <h3 className="font-bold text-text-primary">Advanced Cost Analysis (Phase 4)</h3>
-                                <p className="text-xs text-text-muted">การวิเคราะห์ต้นทุนอะไหล่เทียบกับเวลาหยุดเครื่อง</p>
+                                <h3 className="font-bold text-text-primary">{t("analyticsAdvancedCost")}</h3>
+                                <p className="text-xs text-text-muted">{t("analyticsCostAnalysisDesc")}</p>
                             </div>
                         </div>
                     </div>
@@ -340,25 +345,25 @@ export default function AnalyticsPage() {
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
                         <div className="space-y-4">
                             <div className="flex justify-between items-center p-3 rounded-xl bg-bg-tertiary/50">
-                                <span className="text-sm text-text-secondary">ค่าอะไหล่สะสม (เดือนนี้)</span>
+                                <span className="text-sm text-text-secondary">{t("analyticsAccumulatedCost")}</span>
                                 <span className="font-bold text-text-primary">฿45,200</span>
                             </div>
                             <div className="flex justify-between items-center p-3 rounded-xl bg-bg-tertiary/50">
-                                <span className="text-sm text-text-secondary">ความสูญเสียจาก Downtime</span>
+                                <span className="text-sm text-text-secondary">{t("analyticsDowntimeLoss")}</span>
                                 <span className="font-bold text-accent-red">฿120,500</span>
                             </div>
                             <div className="flex justify-between items-center p-3 rounded-xl bg-primary/10 border border-primary/20">
-                                <span className="text-sm font-semibold text-primary-light">ROI จากการทำ PM</span>
+                                <span className="text-sm font-semibold text-primary-light">{t("analyticsEfficiencyROI")}</span>
                                 <span className="font-bold text-primary-light">+24%</span>
                             </div>
                         </div>
                         <div className="p-4 bg-bg-tertiary rounded-xl flex flex-col justify-center">
-                            <p className="text-xs text-text-muted italic mb-3">AI Insight: "เครื่อง Mixer 2 มีค่าใช้จ่ายอะไหล่สูงสุด แต่ช่วยลด Downtime ได้ 15% เมื่อเทียบกับเดือนที่แล้ว แนะนำให้รักษามาตรฐานการทำ PM ต่อไป"</p>
+                            <p className="text-xs text-text-muted italic mb-3">{t("analyticsAiInsight")}: {tData("เครื่อง Mixer 2 มีค่าใช้จ่ายอะไหล่สูงสุด แต่ช่วยลด Downtime ได้ 15% เมื่อเทียบกับเดือนที่แล้ว แนะนำให้รักษามาตรฐานการทำ PM ต่อไป")}</p>
                             <div className="h-2 w-full bg-bg-primary rounded-full overflow-hidden">
                                 <div className="h-full bg-accent-green w-[85%]" />
                             </div>
                             <div className="flex justify-between mt-1 text-[10px] text-text-muted">
-                                <span>Efficiency Optimization</span>
+                                <span>{t("analyticsEfficiencyOpt")}</span>
                                 <span>85%</span>
                             </div>
                         </div>

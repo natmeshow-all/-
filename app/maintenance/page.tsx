@@ -96,7 +96,7 @@ export default function MaintenancePage() {
                         <div>
                             <h1 className="text-xl font-bold text-text-primary">{t("navMaintenance")}</h1>
                             <p className="text-sm text-text-muted">
-                                {loading ? "Loading..." : `${records.length} รายการ`}
+                                {loading ? t("msgLoading") : t("filterRecords") + ": " + records.length}
                             </p>
                         </div>
                     </div>
@@ -208,7 +208,7 @@ export default function MaintenancePage() {
                     <div className="empty-state py-12">
                         <WrenchIcon size={48} className="text-text-muted mb-3" />
                         <p className="text-text-primary font-medium mb-1">{t("msgNoData")}</p>
-                        <p className="text-text-muted text-sm">ยังไม่มีประวัติการซ่อมบำรุง</p>
+                        <p className="text-text-muted text-sm">{t("msgNoHistory")}</p>
                     </div>
                 )}
             </main>

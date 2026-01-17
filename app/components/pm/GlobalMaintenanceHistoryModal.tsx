@@ -97,7 +97,7 @@ export default function GlobalMaintenanceHistoryModal({ isOpen, onClose }: Globa
     };
 
     return (
-        <Modal isOpen={isOpen} onClose={onClose} title="ประวัติการซ่อมบำรุงและผลการตรวจเช็ค" size="lg">
+        <Modal isOpen={isOpen} onClose={onClose} title={t("pmHistoryTitle")} size="lg">
             <div className="space-y-6">
                 {/* Search and Filters */}
                 <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3 bg-bg-tertiary/30 p-4 rounded-2xl border border-white/5">
@@ -105,7 +105,7 @@ export default function GlobalMaintenanceHistoryModal({ isOpen, onClose }: Globa
                         <SearchIcon size={14} className="absolute left-3 top-1/2 -translate-y-1/2 text-text-muted" />
                         <input
                             type="text"
-                            placeholder="ค้นหาช่าง, รายละเอียด..."
+                            placeholder={t("placeholderSearchHistory")}
                             className="input-field w-full pl-9 h-10 text-xs"
                             value={searchTerm}
                             onChange={(e) => setSearchTerm(e.target.value)}
@@ -118,7 +118,7 @@ export default function GlobalMaintenanceHistoryModal({ isOpen, onClose }: Globa
                             value={selectedZone}
                             onChange={(e) => setSelectedZone(e.target.value)}
                         >
-                            <option value="all">ทุกสถานที่</option>
+                            <option value="all">{t("filterAllLocations")}</option>
                             {getZoneOptions().map(z => (
                                 <option key={z} value={z}>{z}</option>
                             ))}
@@ -131,7 +131,7 @@ export default function GlobalMaintenanceHistoryModal({ isOpen, onClose }: Globa
                             value={selectedMachine}
                             onChange={(e) => setSelectedMachine(e.target.value)}
                         >
-                            <option value="all">ทุกเครื่องจักร</option>
+                            <option value="all">{t("filterAllMachines")}</option>
                             {machines.filter(m => {
                                 if (selectedZone === 'all') return true;
                                 const loc = m.location?.toUpperCase() || "";
@@ -149,9 +149,9 @@ export default function GlobalMaintenanceHistoryModal({ isOpen, onClose }: Globa
                             value={selectedMonth}
                             onChange={(e) => setSelectedMonth(e.target.value)}
                         >
-                            <option value="all">ทุกช่วงเวลา</option>
+                            <option value="all">{t("filterAllTime")}</option>
                             {getMonthOptions().map(m => (
-                                <option key={m} value={m}>{new Date(m).toLocaleDateString('th-TH', { month: 'long', year: 'numeric' })}</option>
+                                <option key={m} value={m}>{new Date(m).toLocaleDateString(t("language") === 'th' ? 'th-TH' : 'en-US', { month: 'long', year: 'numeric' })}</option>
                             ))}
                         </select>
                     </div>
@@ -174,7 +174,7 @@ export default function GlobalMaintenanceHistoryModal({ isOpen, onClose }: Globa
                                         ? `bg-${loc.color}/20 border-${loc.color}/40 text-white shadow-lg`
                                         : 'bg-white/5 border-white/10 text-text-muted hover:bg-white/10'}`}
                             >
-                                {loc.label === 'All' ? 'ทั้งหมด' : loc.label}
+                                {loc.label === 'All' ? t("filterAll") : loc.label}
                                 <span className={`px-1.5 py-0.5 rounded text-[10px] ${selectedZone === loc.id ? `bg-${loc.color} text-bg-primary` : 'bg-white/10 text-white/40'}`}>
                                     {loc.id === 'all' ? records.length : records.filter(r => {
                                         const m = machines.find(mach => mach.id === r.machineId || mach.name === r.machineName);
@@ -188,7 +188,7 @@ export default function GlobalMaintenanceHistoryModal({ isOpen, onClose }: Globa
                     </div>
 
                     <div className="flex items-center justify-between text-[11px] text-text-muted px-2">
-                        <p>พบประวัติทั้งหมด <span className="text-text-primary font-bold">{filteredRecords.length}</span> รายการ</p>
+                        <p>{t("statFoundHistoryPrefix")} <span className="text-text-primary font-bold">{filteredRecords.length}</span> {t("statFoundHistorySuffix")}</p>
                         <div className="flex items-center gap-3">
                             <div className="flex items-center gap-1">
                                 <div className="w-2 h-2 rounded-full bg-accent-blue" />
@@ -196,7 +196,7 @@ export default function GlobalMaintenanceHistoryModal({ isOpen, onClose }: Globa
                             </div>
                             <div className="flex items-center gap-1">
                                 <div className="w-2 h-2 rounded-full bg-accent-red" />
-                                <span>ซ่อมเร่งด่วน</span>
+                                <span>{t("labelUrgentRepair")}</span>
                             </div>
                         </div>
                     </div>
@@ -206,7 +206,7 @@ export default function GlobalMaintenanceHistoryModal({ isOpen, onClose }: Globa
                     {loading ? (
                         <div className="flex flex-col items-center justify-center py-20 opacity-50">
                             <div className="w-8 h-8 border-2 border-accent-blue border-t-transparent rounded-full animate-spin mb-4" />
-                            <p>กำลังโหลดประวัติ...</p>
+                            <p>{t("msgLoadingHistory")}</p>
                         </div>
                     ) : filteredRecords.length > 0 ? (
                         filteredRecords.map((record) => (
@@ -238,7 +238,7 @@ export default function GlobalMaintenanceHistoryModal({ isOpen, onClose }: Globa
                                                 </span>
                                                 <span className="text-xs text-text-muted flex items-center gap-1">
                                                     <CalendarIcon size={12} />
-                                                    {new Date(record.date).toLocaleDateString('th-TH', { day: 'numeric', month: 'short', year: '2-digit' })}
+                                                    {new Date(record.date).toLocaleDateString(t("language") === 'th' ? 'th-TH' : 'en-US', { day: 'numeric', month: 'short', year: '2-digit' })}
                                                 </span>
                                             </div>
                                         </div>
@@ -262,7 +262,7 @@ export default function GlobalMaintenanceHistoryModal({ isOpen, onClose }: Globa
                                             {/* Details Text Section */}
                                             <div className="bg-black/20 p-3 rounded-xl border border-white/5">
                                                 <p className="text-xs font-bold text-text-muted uppercase mb-2 flex items-center gap-2">
-                                                    <FileTextIcon size={12} /> รายละเอียดการทำงาน
+                                                    <FileTextIcon size={12} /> {t("labelWorkDetails")}
                                                 </p>
                                                 <div className="text-sm text-text-primary whitespace-pre-wrap leading-relaxed">
                                                     {record.details}
@@ -273,7 +273,7 @@ export default function GlobalMaintenanceHistoryModal({ isOpen, onClose }: Globa
                                             {record.checklist && record.checklist.length > 0 && (
                                                 <div className="space-y-2">
                                                     <p className="text-xs font-bold text-text-muted uppercase flex items-center gap-2">
-                                                        <CheckCircleIcon size={12} className="text-accent-green" /> รายการตรวจเช็ค (Audit Checklist)
+                                                        <CheckCircleIcon size={12} className="text-accent-green" /> {t("labelAuditChecklist")}
                                                     </p>
                                                     <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
                                                         {record.checklist.map((item, idx) => (
@@ -297,7 +297,7 @@ export default function GlobalMaintenanceHistoryModal({ isOpen, onClose }: Globa
                                             {record.evidenceImageUrl && (
                                                 <div className="space-y-2">
                                                     <p className="text-xs font-bold text-text-muted uppercase flex items-center gap-2">
-                                                        <CameraIcon size={12} /> รูปถ่ายหลักฐาน
+                                                        <CameraIcon size={12} /> {t("labelEvidencePhotoShort")}
                                                     </p>
                                                     <div className="relative w-full h-48 rounded-xl overflow-hidden border border-white/10 group">
                                                         <Image
@@ -317,7 +317,7 @@ export default function GlobalMaintenanceHistoryModal({ isOpen, onClose }: Globa
                     ) : (
                         <div className="flex flex-col items-center justify-center py-20 text-text-muted opacity-40">
                             <ClockIcon size={48} className="mb-4" />
-                            <p>ไม่พบประวัติการซ่อมบำรุงที่ตรงกับเงื่อนไข</p>
+                            <p>{t("msgNoMatchingHistory")}</p>
                         </div>
                     )}
                 </div>
@@ -327,7 +327,7 @@ export default function GlobalMaintenanceHistoryModal({ isOpen, onClose }: Globa
                         onClick={onClose}
                         className="w-full py-3 rounded-xl bg-bg-tertiary text-text-primary font-bold hover:bg-white/10 transition-colors"
                     >
-                        ปิดหน้าต่าง
+                        {t("actionCloseWindow")}
                     </button>
                 </div>
             </div>

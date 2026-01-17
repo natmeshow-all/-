@@ -2,6 +2,8 @@
 
 import React, { createContext, useContext, useState, useEffect, ReactNode } from "react";
 import { translations, Language, TranslationKeys, dataTranslations } from "../translations";
+import { database } from "../lib/firebase";
+import { ref, onValue } from "firebase/database";
 
 interface LanguageContextType {
     language: Language;
@@ -15,6 +17,7 @@ const LanguageContext = createContext<LanguageContextType | undefined>(undefined
 export function LanguageProvider({ children }: { children: ReactNode }) {
     const [language, setLanguageState] = useState<Language>("th");
     const [mounted, setMounted] = useState(false);
+    const [dynamicTranslations, setDynamicTranslations] = useState<Record<string, string>>({});
 
     useEffect(() => {
         setMounted(true);
@@ -22,6 +25,16 @@ export function LanguageProvider({ children }: { children: ReactNode }) {
         if (savedLang && (savedLang === "th" || savedLang === "en")) {
             setLanguageState(savedLang);
         }
+
+        // Listen for dynamic translations from Firebase
+        const translationsRef = ref(database, "data_translations");
+        const unsubscribe = onValue(translationsRef, (snapshot) => {
+            if (snapshot.exists()) {
+                setDynamicTranslations(snapshot.val());
+            }
+        });
+
+        return () => unsubscribe();
     }, []);
 
     const setLanguage = (lang: Language) => {
@@ -44,7 +57,16 @@ export function LanguageProvider({ children }: { children: ReactNode }) {
         if (!text || language === "th") return text;
 
         let translatedText = text;
-        // Attempt to replace known terms from the map
+
+        // 1. Check static dataTranslations map
+        const staticMatch = Object.entries(dataTranslations).find(([th]) => th === text);
+        if (staticMatch) return staticMatch[1];
+
+        // 2. Check dynamic translations from Firebase
+        const dynamicMatch = dynamicTranslations[text];
+        if (dynamicMatch) return dynamicMatch;
+
+        // 3. Partial replacement for terms (legacy behavior)
         Object.entries(dataTranslations).forEach(([thTerm, enTerm]) => {
             const regex = new RegExp(thTerm, 'g');
             translatedText = translatedText.replace(regex, enTerm);

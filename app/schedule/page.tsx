@@ -15,7 +15,7 @@ import Modal from "../components/ui/Modal";
 import { useToast } from "../contexts/ToastContext";
 
 export default function SchedulePage() {
-    const { t } = useLanguage();
+    const { t, language } = useLanguage();
     const { checkAuth } = useAuth();
     const { success, error: showError } = useToast();
     const [mounted, setMounted] = useState(false);
@@ -77,7 +77,7 @@ export default function SchedulePage() {
 
         // Overdue -> Yellow/Orange (Warning)
         if (diffDays < 0) return {
-            label: "เกินกำหนด",
+            label: t("statusOverdueLabel"),
             color: "text-accent-yellow",
             bg: "bg-accent-yellow/20",
             border: "border-accent-yellow/30",
@@ -86,15 +86,15 @@ export default function SchedulePage() {
 
         // Today -> Red + Blink (Urgent)
         if (diffDays === 0) return {
-            label: "วันนี้!",
+            label: t("statusTodayLabel"),
             color: "text-accent-red",
             bg: "bg-accent-red/20",
             border: "border-accent-red/30",
             days: diffDays
         };
 
-        if (diffDays <= 7) return { label: "เร็วๆ นี้", color: "text-accent-blue", bg: "bg-accent-blue/20", border: "border-accent-blue/30", days: diffDays };
-        return { label: "ตามกำหนด", color: "text-accent-green", bg: "bg-accent-green/20", border: "border-accent-green/30", days: diffDays };
+        if (diffDays <= 7) return { label: t("statusUpcomingLabel"), color: "text-accent-blue", bg: "bg-accent-blue/20", border: "border-accent-blue/30", days: diffDays };
+        return { label: t("statusOnTrackLabel"), color: "text-accent-green", bg: "bg-accent-green/20", border: "border-accent-green/30", days: diffDays };
     };
 
     const handleExecuteClick = (plan: PMPlan) => {
@@ -129,13 +129,13 @@ export default function SchedulePage() {
 
         try {
             await deletePMPlan(planToDelete.id);
-            success(t("msgDeleteSuccess") || "ลบสำเร็จ", "ลบแผนงานเรียบร้อยแล้ว");
+            success(t("msgDeleteSuccess"), t("msgDeleteSuccess"));
             setDeleteModalOpen(false);
             setPlanToDelete(null);
             fetchData();
         } catch (error: any) {
             console.error("Error deleting PM plan:", error);
-            showError(t("msgDeleteError") || "ไม่สามารถลบแผนงานได้", error.message);
+            showError(t("msgDeleteError"), error.message || t("msgError"));
         }
     };
 
@@ -154,7 +154,7 @@ export default function SchedulePage() {
                         </div>
                         <div>
                             <h1 className="text-xl font-bold text-text-primary">{t("navSchedule")}</h1>
-                            <p className="text-sm text-text-muted">รายการแผนงานซ่อมบำรุงเชิงป้องกัน (PM)</p>
+                            <p className="text-sm text-text-muted">{t("scheduleDescription")}</p>
                         </div>
                     </div>
 
@@ -165,7 +165,7 @@ export default function SchedulePage() {
                             title="จัดการแผน PM"
                         >
                             <SettingsIcon size={16} />
-                            <span className="text-xs font-bold whitespace-nowrap">จัดการแผน PM</span>
+                            <span className="text-xs font-bold whitespace-nowrap">{t("actionManagePM")}</span>
                         </button>
                     </div>
                 </div>
@@ -178,8 +178,8 @@ export default function SchedulePage() {
                         <div className="mb-6 p-4 bg-accent-red/10 border border-accent-red/30 rounded-xl flex items-center gap-3 animate-pulse-glow">
                             <AlertTriangleIcon size={24} className="text-accent-red shrink-0" />
                             <div>
-                                <p className="font-semibold text-accent-red">มีรายการที่ถึงกำหนดหรือเกินกำหนดซ่อมบำรุง!</p>
-                                <p className="text-sm text-text-muted">กรุณาดำเนินการและบันทึกผลการทำงาน</p>
+                                <p className="font-semibold text-accent-red">{t("msgOverdueAlert")}</p>
+                                <p className="text-sm text-text-muted">{t("msgActionRequired")}</p>
                             </div>
                         </div>
                     )}
@@ -189,7 +189,7 @@ export default function SchedulePage() {
                     {loading ? (
                         <div className="flex flex-col items-center justify-center py-20 opacity-50">
                             <div className="w-8 h-8 border-2 border-accent-blue border-t-transparent rounded-full animate-spin mb-4" />
-                            <p>กำลังโหลดแผนงาน...</p>
+                            <p>{t("msgLoadingPlans")}</p>
                         </div>
                     ) : plans.length > 0 ? (
                         [...plans].sort((a, b) => {
@@ -304,20 +304,19 @@ export default function SchedulePage() {
                                         <div className="flex flex-wrap gap-4 text-xs">
                                             <div className="flex items-center gap-2 text-text-muted">
                                                 <CalendarIcon size={14} />
-                                                <span>กำหนด: {item.nextDueDate.toLocaleDateString('th-TH', { day: 'numeric', month: 'short', year: 'numeric' })}</span>
+                                                <span>{t("labelDue", { date: item.nextDueDate.toLocaleDateString(language === 'th' ? 'th-TH' : 'en-US', { day: 'numeric', month: 'short', year: 'numeric' }) })}</span>
                                             </div>
                                             {item.scheduleType === 'weekly' ? (
                                                 <div className="flex items-center gap-2 text-text-muted">
-                                                    <ClockIcon size={14} />
-                                                    <span>ทุกวัน{['อา', 'จ', 'อ', 'พ', 'พฤ', 'ศ', 'ส'][item.weeklyDay || 0]}</span>
+                                                    <span>{t("labelEveryDay", { day: [t("calendarSun"), t("calendarMon"), t("calendarTue"), t("calendarWed"), t("calendarThu"), t("calendarFri"), t("calendarSat")][item.weeklyDay || 0] })}</span>
                                                 </div>
                                             ) : (
                                                 <div className="flex items-center gap-2 text-text-muted">
                                                     <ClockIcon size={14} />
                                                     <span className={status.days === 0 ? "text-accent-red font-bold" : status.days < 0 ? "text-accent-yellow font-bold" : ""}>
-                                                        {status.days < 0 ? `เกินมา ${Math.abs(status.days)} วัน` :
-                                                            status.days === 0 ? "วันนี้" :
-                                                                `อีก ${status.days} วัน`}
+                                                        {status.days < 0 ? t("labelOverdueBy", { days: Math.abs(status.days) }) :
+                                                            status.days === 0 ? t("labelToday") :
+                                                                t("labelInDays", { days: status.days })}
                                                     </span>
                                                 </div>
                                             )}
@@ -339,7 +338,7 @@ export default function SchedulePage() {
                                                     }`}
                                             >
                                                 <CheckCircleIcon size={16} />
-                                                <span>ปิดงาน</span>
+                                                <span>{t("actionCloseWork")}</span>
                                             </button>
                                         </div>
                                     </div>
@@ -349,7 +348,7 @@ export default function SchedulePage() {
                     ) : (
                         <div className="flex flex-col items-center justify-center py-20 text-text-muted opacity-50 bg-bg-secondary/30 rounded-3xl border border-dashed border-white/10">
                             <BoxIcon size={48} className="mb-4" />
-                            <p>ไม่มีแผนงานซ่อมบำรุงในขณะนี้</p>
+                            <p>{t("msgNoPlans")}</p>
                         </div>
                     )}
                 </div>
@@ -379,7 +378,7 @@ export default function SchedulePage() {
             <Modal
                 isOpen={machineSelectOpen}
                 onClose={() => setMachineSelectOpen(false)}
-                title="เลือกเครื่องจักรสำหรับแผน PM"
+                title={t("modalSelectMachinePM")}
             >
                 {/* Location Filter */}
                 <div className="flex gap-2 mb-4 overflow-x-auto pb-2 custom-scrollbar">
@@ -392,7 +391,7 @@ export default function SchedulePage() {
                                 : "bg-bg-tertiary text-text-muted hover:bg-white/5 hover:text-text-primary border border-white/5"
                                 }`}
                         >
-                            {loc === "All" ? "ทั้งหมด" : loc}
+                            {loc === "All" ? t("labelAll") : loc}
                         </button>
                     ))}
                 </div>
@@ -421,7 +420,7 @@ export default function SchedulePage() {
                         ))
                     ) : (
                         <div className="text-center py-8 text-text-muted opacity-60">
-                            <p>ไม่พบเครื่องจักรในสถานที่นี้</p>
+                            <p>{t("msgNoMachineLocation")}</p>
                         </div>
                     )}
                 </div>
@@ -445,17 +444,16 @@ export default function SchedulePage() {
             <Modal
                 isOpen={deleteModalOpen}
                 onClose={() => setDeleteModalOpen(false)}
-                title="ยืนยันการลบแผนงาน"
+                title={t("modalConfirmDeletePM")}
             >
                 <div className="space-y-4">
                     <div className="flex flex-col items-center justify-center p-6 text-center">
                         <div className="w-16 h-16 rounded-full bg-accent-red/10 flex items-center justify-center mb-4">
                             <TrashIcon size={32} className="text-accent-red" />
                         </div>
-                        <h3 className="text-lg font-bold text-text-primary mb-2">คุณแน่ใจหรือไม่?</h3>
+                        <h3 className="text-lg font-bold text-text-primary mb-2">{t("modalAreYouSure")}</h3>
                         <p className="text-text-muted">
-                            คุณต้องการลบแผนงาน <span className="text-accent-red font-semibold">"{planToDelete?.taskName}"</span> ใช่หรือไม่?
-                            การกระทำนี้ไม่สามารถเรียกคืนได้
+                            {t("modalDeletePMConfirm", { name: planToDelete?.taskName || "" })}
                         </p>
                     </div>
                     <div className="flex gap-3">
@@ -463,13 +461,13 @@ export default function SchedulePage() {
                             onClick={() => setDeleteModalOpen(false)}
                             className="flex-1 py-3 rounded-xl bg-bg-tertiary text-text-primary font-bold hover:bg-white/10"
                         >
-                            ยกเลิก
+                            {t("actionCancel")}
                         </button>
                         <button
                             onClick={confirmDelete}
                             className="flex-1 py-3 rounded-xl bg-accent-red text-white font-bold hover:bg-accent-red/90"
                         >
-                            ยืนยันลบ
+                            {t("actionDelete")}
                         </button>
                     </div>
                 </div>

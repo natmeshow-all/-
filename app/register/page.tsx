@@ -4,9 +4,11 @@ import React, { useEffect } from "react";
 import { useAuth } from "../contexts/AuthContext";
 import { useRouter } from "next/navigation";
 import { UserIcon, ClockIcon } from "../components/ui/Icons";
+import { useLanguage } from "../contexts/LanguageContext";
 
 export default function RegisterPage() {
     const { user, userProfile, isPending, loading } = useAuth();
+    const { t } = useLanguage();
     const router = useRouter();
 
     useEffect(() => {
@@ -32,9 +34,9 @@ export default function RegisterPage() {
                         <div className="w-20 h-20 bg-accent-yellow/20 rounded-full mx-auto flex items-center justify-center mb-6">
                             <ClockIcon size={40} className="text-accent-yellow" />
                         </div>
-                        <h1 className="text-2xl font-bold text-text-primary mb-2">รอการอนุมัติ</h1>
+                        <h1 className="text-2xl font-bold text-text-primary mb-2">{t("userRegisterTitle")}</h1>
                         <p className="text-text-muted text-sm mb-6">
-                            บัญชีของคุณกำลังรอการอนุมัติจากผู้ดูแลระบบ
+                            {t("userRegisterSubtitle")}
                         </p>
 
                         {user && (
@@ -42,7 +44,7 @@ export default function RegisterPage() {
                                 {user.photoURL ? (
                                     <img
                                         src={user.photoURL}
-                                        alt={user.displayName || "User"}
+                                        alt={user.displayName || t("altUser")}
                                         className="w-12 h-12 rounded-full"
                                     />
                                 ) : (
@@ -59,7 +61,7 @@ export default function RegisterPage() {
 
                         <div className="p-4 bg-accent-blue/10 rounded-xl border border-accent-blue/20 mb-6">
                             <p className="text-sm text-accent-blue">
-                                💡 กรุณารอสักครู่ ผู้ดูแลระบบจะตรวจสอบและอนุมัติบัญชีของคุณโดยเร็ว
+                                💡 {t("msgWaitApproval")}
                             </p>
                         </div>
 
@@ -67,7 +69,7 @@ export default function RegisterPage() {
                             onClick={() => router.push("/")}
                             className="w-full py-3 rounded-xl bg-white/5 text-text-primary font-bold hover:bg-white/10 transition-colors"
                         >
-                            กลับหน้าหลัก
+                            {t("actionGoToDashboard")}
                         </button>
                     </div>
                 </div>

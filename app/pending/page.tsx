@@ -5,9 +5,11 @@ import Header from "../components/Header";
 import MobileNav from "../components/MobileNav";
 import { useAuth } from "../contexts/AuthContext";
 import { ClockIcon, UserIcon } from "../components/ui/Icons";
+import { useLanguage } from "../contexts/LanguageContext";
 
 export default function PendingApprovalPage() {
     const { user, isPending, signOut } = useAuth();
+    const { t } = useLanguage();
 
     return (
         <div className="min-h-screen bg-bg-primary">
@@ -20,12 +22,8 @@ export default function PendingApprovalPage() {
                     </div>
 
                     <div>
-                        <h1 className="text-2xl font-bold text-text-primary mb-2">
-                            รอการอนุมัติ
-                        </h1>
-                        <p className="text-text-muted">
-                            บัญชีของคุณกำลังรอการอนุมัติจากผู้ดูแลระบบ
-                        </p>
+                        <h1 className="text-2xl font-bold text-text-primary mb-2">{t("userPendingApprovalTitle")}</h1>
+                        <p className="text-text-muted mb-8">{t("userPendingApprovalDesc")}</p>
                     </div>
 
                     {user && (
@@ -50,7 +48,7 @@ export default function PendingApprovalPage() {
 
                     <div className="p-4 bg-accent-blue/10 rounded-xl border border-accent-blue/20">
                         <p className="text-sm text-accent-blue">
-                            💡 กรุณารอสักครู่ ผู้ดูแลระบบจะตรวจสอบและอนุมัติบัญชีของคุณโดยเร็ว
+                            💡 {t("msgWaitApproval")}
                         </p>
                     </div>
 
@@ -58,7 +56,7 @@ export default function PendingApprovalPage() {
                         onClick={signOut}
                         className="w-full py-3 rounded-xl bg-white/5 text-text-primary font-bold hover:bg-white/10 transition-colors"
                     >
-                        ออกจากระบบ
+                        {t("actionSignOut")}
                     </button>
                 </div>
             </main>

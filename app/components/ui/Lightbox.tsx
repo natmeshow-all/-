@@ -2,6 +2,8 @@
 import React from 'react';
 import { XIcon } from './Icons';
 
+import { useLanguage } from "../../contexts/LanguageContext";
+
 interface LightboxProps {
     isOpen: boolean;
     onClose: () => void;
@@ -9,7 +11,8 @@ interface LightboxProps {
     altText?: string;
 }
 
-export default function Lightbox({ isOpen, onClose, imageSrc, altText = "Image" }: LightboxProps) {
+export default function Lightbox({ isOpen, onClose, imageSrc, altText }: LightboxProps) {
+    const { t } = useLanguage();
     if (!isOpen) return null;
 
     return (
@@ -23,7 +26,7 @@ export default function Lightbox({ isOpen, onClose, imageSrc, altText = "Image" 
             <div className="relative w-full h-full max-w-7xl max-h-screen p-4 flex items-center justify-center pointer-events-none">
                 <img
                     src={imageSrc}
-                    alt={altText}
+                    alt={altText || t("altImage")}
                     className="max-w-full max-h-full object-contain pointer-events-auto transform transition-transform duration-300"
                     onClick={(e) => e.stopPropagation()} // Prevent closing when clicking image
                 />

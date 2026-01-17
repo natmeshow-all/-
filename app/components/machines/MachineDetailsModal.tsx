@@ -139,7 +139,7 @@ export default function MachineDetailsModal({
                                             className="flex items-center gap-2 px-2 py-1 rounded bg-indigo-500/20 text-indigo-300 text-[10px] font-bold hover:bg-indigo-500/30 transition-all border border-indigo-500/30 shadow-lg active:scale-95"
                                         >
                                             <CalendarIcon size={12} />
-                                            ตั้งค่า PM อัตโนมัติ
+                                            {t("actionPMSettings")}
                                         </button>
                                     )}
                                 </div>

@@ -5,7 +5,7 @@ import Modal from "../ui/Modal";
 import { useLanguage } from "../../contexts/LanguageContext";
 import { PMPlan, MaintenanceRecord } from "../../types";
 import { getMaintenanceRecordsByPMPlan } from "../../lib/firebaseService";
-import { ClockIcon, UserIcon, FileTextIcon, CameraIcon, CalendarIcon, BoxIcon } from "../ui/Icons";
+import { ClockIcon, UserIcon, FileTextIcon, CalendarIcon, BoxIcon } from "../ui/Icons";
 import Image from "next/image";
 
 interface PMHistoryModalProps {
@@ -37,7 +37,7 @@ export default function PMHistoryModal({ isOpen, onClose, plan }: PMHistoryModal
     }, [isOpen, plan.id]);
 
     return (
-        <Modal isOpen={isOpen} onClose={onClose} title="ประวัติการซ่อมบำรุงเชิงป้องกัน (PM)" size="lg">
+        <Modal isOpen={isOpen} onClose={onClose} title={t("pmHistoryModalTitle")} size="lg">
             <div className="space-y-6">
                 {/* Header Information */}
                 <div className="p-4 bg-bg-tertiary rounded-xl border border-white/5 space-y-2">
@@ -52,7 +52,7 @@ export default function PMHistoryModal({ isOpen, onClose, plan }: PMHistoryModal
                     {loading ? (
                         <div className="flex flex-col items-center justify-center py-20 opacity-50">
                             <div className="w-8 h-8 border-2 border-accent-blue border-t-transparent rounded-full animate-spin mb-4" />
-                            <p>กำลังโหลดประวัติ...</p>
+                            <p>{t("msgLoadingHistory")}</p>
                         </div>
                     ) : records.length > 0 ? (
                         records.map((record, index) => (
@@ -64,7 +64,7 @@ export default function PMHistoryModal({ isOpen, onClose, plan }: PMHistoryModal
                                     <div className="flex items-start justify-between">
                                         <div className="flex items-center gap-2 text-accent-blue font-bold">
                                             <CalendarIcon size={16} />
-                                            <span>{record.date.toLocaleDateString('th-TH', { day: 'numeric', month: 'long', year: 'numeric' })}</span>
+                                            <span>{record.date.toLocaleDateString(t("language") === 'th' ? 'th-TH' : 'en-US', { day: 'numeric', month: 'long', year: 'numeric' })}</span>
                                         </div>
                                         <div className="flex items-center gap-1.5 text-xs text-text-muted bg-white/5 px-2 py-1 rounded-md">
                                             <UserIcon size={12} />
@@ -95,7 +95,7 @@ export default function PMHistoryModal({ isOpen, onClose, plan }: PMHistoryModal
                     ) : (
                         <div className="flex flex-col items-center justify-center py-20 text-text-muted opacity-40">
                             <ClockIcon size={48} className="mb-4" />
-                            <p>ยังไม่มีประวัติการซ่อมบำรุงสำหรับรายการนี้</p>
+                            <p>{t("msgNoHistoryForItem")}</p>
                         </div>
                     )}
                 </div>
@@ -105,7 +105,7 @@ export default function PMHistoryModal({ isOpen, onClose, plan }: PMHistoryModal
                         onClick={onClose}
                         className="w-full py-3 rounded-xl bg-bg-tertiary text-text-primary font-bold hover:bg-white/10 transition-colors"
                     >
-                        ปิดหน้าต่าง
+                        {t("actionCloseWindow")}
                     </button>
                 </div>
             </div>

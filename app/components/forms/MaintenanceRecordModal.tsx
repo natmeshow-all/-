@@ -138,11 +138,11 @@ export default function MaintenanceRecordModal({
     const handleSubmit = async () => {
         // Validation with toast
         if (!formData.machineId) {
-            toast.warning("กรุณากรอกข้อมูล", "กรุณาเลือกเครื่องจักร");
+            toast.warning(t("msgRequiredInfo"), t("msgSelectMachine"));
             return;
         }
         if (!formData.description) {
-            toast.warning("กรุณากรอกข้อมูล", "กรุณาระบุรายละเอียดงานซ่อมบำรุง");
+            toast.warning(t("msgRequiredInfo"), t("msgSpecifyDetails"));
             return;
         }
 
@@ -185,7 +185,7 @@ export default function MaintenanceRecordModal({
             await addMaintenanceRecord(dataToSubmit);
 
             // Show success toast
-            toast.success("บันทึกสำเร็จ!", `บันทึกงานซ่อมบำรุง "${machine?.name}" เรียบร้อยแล้ว`);
+            toast.success(t("msgSaveSuccess"), t("msgSaveSuccess"));
 
             if (onSuccess) {
                 onSuccess();
@@ -197,9 +197,9 @@ export default function MaintenanceRecordModal({
             console.error("Error adding maintenance record:", error);
             const errorMessage = error?.message || "Unknown error occurred";
             if (errorMessage.includes("insufficient permissions")) {
-                toast.error("ไม่มีสิทธิ์เข้าถึง", "กรุณาตรวจสอบ Firestore security rules");
+                toast.error(t("msgNoAccess"), t("msgCheckRules"));
             } else {
-                toast.error("เกิดข้อผิดพลาด", "ไม่สามารถบันทึกข้อมูลได้ กรุณาลองใหม่อีกครั้ง");
+                toast.error(t("msgError"), t("msgSaveError"));
             }
         } finally {
             setIsSubmitting(false);
@@ -224,7 +224,7 @@ export default function MaintenanceRecordModal({
                         {isSubmitting ? (
                             <span className="flex items-center gap-2">
                                 <span className="animate-spin rounded-full h-4 w-4 border-b-2 border-white"></span>
-                                Saving...
+                                {t("msgSavingData")}
                             </span>
                         ) : (
                             <span className="flex items-center gap-2">
@@ -528,7 +528,7 @@ export default function MaintenanceRecordModal({
                         />
                         <p className="mt-1 text-xs text-text-muted flex items-center gap-1">
                             <InfoIcon size={12} />
-                            ข้อมูลจะถูกบันทึกเพื่อเปรียบเทียบและวิเคราะห์แนวโน้มในอนาคต
+                            {t("msgMaintenanceDocHint")}
                         </p>
                     </div>
                 </div>
@@ -587,7 +587,7 @@ export default function MaintenanceRecordModal({
                                 name="details"
                                 value={formData.details}
                                 onChange={handleInputChange}
-                                placeholder="อธิบายรายละเอียดการซ่อมบำรุง ปัญหาที่พบ และวิธีการแก้ไข"
+                                placeholder={t("placeholderMaintenanceDetails")}
                                 rows={3}
                                 className="input resize-none"
                             />

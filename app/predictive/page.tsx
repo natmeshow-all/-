@@ -92,7 +92,7 @@ export default function PredictivePage() {
             prediction: t("predBeltTension"),
             timeframe: t("predictiveWithinDays", { days: 7 }),
             status: "warning",
-            metrics: { temp: "42°C (Normal)", vib: "1.2 mm/s (+10%)" }
+            metrics: { temp: `42°C (${t("predictiveMetricsNormal")})`, vib: "1.2 mm/s (+10%)" }
         }
     ];
 
@@ -243,7 +243,7 @@ export default function PredictivePage() {
                                             fill="url(#colorVib)"
                                             animationDuration={2500}
                                         />
-                                        <ReferenceLine y={70} label={{ position: 'right', value: 'Threshold', fill: '#EF4444', fontSize: 10 }} stroke="#EF4444" strokeDasharray="3 3" />
+                                        <ReferenceLine y={70} label={{ position: 'right', value: t("labelThreshold"), fill: '#EF4444', fontSize: 10 }} stroke="#EF4444" strokeDasharray="3 3" />
                                     </AreaChart>
                                 </ResponsiveContainer>
                             </div>

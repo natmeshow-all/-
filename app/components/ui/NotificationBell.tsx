@@ -124,7 +124,7 @@ export default function NotificationBell() {
                     <div className="p-3 border-b border-white/5 flex items-center justify-between bg-white/5">
                         <h3 className="font-semibold text-sm text-text-primary px-1 flex items-center gap-2">
                             {t("notificationTitle")}
-                            {overdueCount > 0 && <span className="text-xs text-accent-yellow font-normal">({overdueCount} Alerts)</span>}
+                            {overdueCount > 0 && <span className="text-xs text-accent-yellow font-normal">({overdueCount} {t("notificationAlerts")})</span>}
                         </h3>
                         {!permissionGranted && (
                             <button
@@ -168,7 +168,7 @@ export default function NotificationBell() {
                                             </p>
                                             <p className="text-[10px] text-text-muted mt-1.5 flex items-center gap-1">
                                                 <span>{new Date(notification.timestamp).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}</span>
-                                                {notification.type === 'due_today' && <span className="px-1.5 py-0.5 rounded-full bg-accent-yellow/10 text-accent-yellow text-[9px] font-medium">Action Required</span>}
+                                                {notification.type === 'due_today' && <span className="px-1.5 py-0.5 rounded-full bg-accent-yellow/10 text-accent-yellow text-[9px] font-medium">{t("labelActionRequired")}</span>}
                                             </p>
                                         </div>
                                     </div>

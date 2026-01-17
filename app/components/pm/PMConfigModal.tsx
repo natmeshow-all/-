@@ -3,9 +3,8 @@
 import React, { useState, useEffect } from "react";
 import Modal from "../ui/Modal";
 import { useLanguage } from "../../contexts/LanguageContext";
-import { Machine, Part } from "../../types";
+import { Machine, PMPlan } from "../../types";
 import { CalendarIcon, ClockIcon, CheckCircleIcon, SettingsIcon, ActivityIcon, MapPinIcon, ChevronDownIcon } from "../ui/Icons";
-import { PMPlan } from "../../types";
 import { addPMPlan, updatePMPlan, getParts } from "../../lib/firebaseService";
 
 interface PMConfigModalProps {
@@ -16,16 +15,9 @@ interface PMConfigModalProps {
     onSuccess?: () => void;
 }
 
-const CYCLE_OPTIONS = [
-    { label: "1 เดือน", value: 1 },
-    { label: "2 เดือน", value: 2 },
-    { label: "3 เดือน", value: 3 },
-    { label: "6 เดือน", value: 6 },
-    { label: "9 เดือน", value: 9 },
-    { label: "12 เดือน", value: 12 },
-];
-
 // Part-Checklist Mapping (รายการซ่อมบำรุงตามประเภทอะไหล่)
+// NOTE: Specifically keeping these technical checklist items in Thai as per business requirements, 
+// but UI controls around them are localized.
 const PART_CHECKLIST_MAP: Record<string, string[]> = {
     // ระบบขับเคลื่อน
     "Motor": ["ตรวจเช็คกระแสไฟฟ้า (Amp)", "ตรวจแรงดันไฟฟ้า (Volt)", "วัดอุณหภูมิ", "วัดค่าสั่นสะเทือน (X/Y/Z)", "ตรวจสภาพมอเตอร์"],
@@ -78,13 +70,10 @@ export default function PMConfigModal({ isOpen, onClose, machine, plan, onSucces
     const { t } = useLanguage();
     const [loading, setLoading] = useState(false);
 
-    // Form State - Changed taskName to dropdown-based
     const [selectedMaintenanceType, setSelectedMaintenanceType] = useState(plan?.taskName || "");
     const [customMaintenanceName, setCustomMaintenanceName] = useState("");
     const [checklistItems, setChecklistItems] = useState<string[]>(plan?.checklistItems || []);
     const [newItem, setNewItem] = useState("");
-
-    // Selected part type for checklist suggestions
     const [selectedPartType, setSelectedPartType] = useState("");
 
     const [scheduleType, setScheduleType] = useState<"monthly" | "weekly">(plan?.scheduleType || "monthly");
@@ -97,15 +86,22 @@ export default function PMConfigModal({ isOpen, onClose, machine, plan, onSucces
             : new Date().toISOString().split('T')[0]
     );
 
-    // Location State - Now using zones from database
     const [selectedZone, setSelectedZone] = useState(plan?.customLocation || machine.zone || "");
     const [customLocation, setCustomLocation] = useState("");
     const [useCustomLocation, setUseCustomLocation] = useState(plan?.locationType === "custom");
 
-    // Data from database
     const [allPartNames, setAllPartNames] = useState<string[]>([]);
     const [allZones, setAllZones] = useState<string[]>([]);
     const [loadingData, setLoadingData] = useState(false);
+
+    const CYCLE_OPTIONS = [
+        { label: `1 ${t("labelMonths")}`, value: 1 },
+        { label: `2 ${t("labelMonths")}`, value: 2 },
+        { label: `3 ${t("labelMonths")}`, value: 3 },
+        { label: `6 ${t("labelMonths")}`, value: 6 },
+        { label: `9 ${t("labelMonths")}`, value: 9 },
+        { label: `12 ${t("labelMonths")}`, value: 12 },
+    ];
 
     useEffect(() => {
         if (isOpen) {
@@ -113,7 +109,6 @@ export default function PMConfigModal({ isOpen, onClose, machine, plan, onSucces
         }
     }, [isOpen]);
 
-    // Initialize form when editing existing plan
     useEffect(() => {
         if (plan) {
             setSelectedMaintenanceType(plan.taskName || "");
@@ -127,12 +122,8 @@ export default function PMConfigModal({ isOpen, onClose, machine, plan, onSucces
         setLoadingData(true);
         try {
             const parts = await getParts();
-
-            // Extract unique part names
             const uniquePartNames = Array.from(new Set(parts.map(p => p.partName).filter(Boolean))).sort();
             setAllPartNames(uniquePartNames);
-
-            // Extract unique zones
             const uniqueZones = Array.from(new Set(parts.map(p => p.zone).filter(Boolean))).sort();
             setAllZones(uniqueZones);
         } catch (error) {
@@ -153,44 +144,31 @@ export default function PMConfigModal({ isOpen, onClose, machine, plan, onSucces
         setChecklistItems(checklistItems.filter((_, i) => i !== index));
     };
 
-    // Add suggested checklist item
     const handleAddSuggestedItem = (item: string) => {
         if (!checklistItems.includes(item)) {
             setChecklistItems([...checklistItems, item]);
         }
     };
 
-    // Get suggested checklist items based on selected part type
     const getSuggestedItems = (): string[] => {
         if (!selectedPartType) return [];
-
-        // Try exact match first
-        if (PART_CHECKLIST_MAP[selectedPartType]) {
-            return PART_CHECKLIST_MAP[selectedPartType];
-        }
-
-        // Try partial match
+        if (PART_CHECKLIST_MAP[selectedPartType]) return PART_CHECKLIST_MAP[selectedPartType];
         for (const [key, items] of Object.entries(PART_CHECKLIST_MAP)) {
             if (selectedPartType.toLowerCase().includes(key.toLowerCase()) ||
                 key.toLowerCase().includes(selectedPartType.toLowerCase())) {
                 return items;
             }
         }
-
         return [];
     };
 
     const getTaskName = () => {
-        if (selectedMaintenanceType === "อื่นๆ") {
-            return customMaintenanceName;
-        }
+        if (selectedMaintenanceType === t("labelOtherCustom") || selectedMaintenanceType === "อื่นๆ") return customMaintenanceName;
         return selectedMaintenanceType;
     };
 
     const getLocation = () => {
-        if (useCustomLocation) {
-            return customLocation;
-        }
+        if (useCustomLocation) return customLocation;
         return selectedZone;
     };
 
@@ -240,9 +218,8 @@ export default function PMConfigModal({ isOpen, onClose, machine, plan, onSucces
     const suggestedItems = getSuggestedItems();
 
     return (
-        <Modal isOpen={isOpen} onClose={onClose} title="ตั้งค่าแผนซ่อมบำรุงเชิงป้องกัน (PM)">
+        <Modal isOpen={isOpen} onClose={onClose} title={t("pmConfigTitle")}>
             <div className="space-y-6 max-h-[75vh] overflow-y-auto custom-scrollbar pr-2">
-                {/* Header Card */}
                 <div className="flex items-center gap-4 p-4 rounded-xl border bg-bg-tertiary border-white/5">
                     <div className="w-14 h-14 rounded-xl flex items-center justify-center shadow-inner bg-bg-secondary text-accent-blue">
                         <SettingsIcon size={28} />
@@ -260,11 +237,10 @@ export default function PMConfigModal({ isOpen, onClose, machine, plan, onSucces
                 </div>
 
                 <form onSubmit={handleSubmit} className="space-y-6">
-                    {/* 1. Maintenance Type (การซ่อมบำรุง) - Full Width */}
                     <div className="space-y-2">
                         <label className="text-xs font-bold text-text-muted uppercase tracking-wider flex items-center gap-2">
                             <ActivityIcon size={14} className="text-accent-blue" />
-                            การซ่อมบำรุง
+                            {t("labelMaintenanceType")}
                         </label>
                         <div className="relative">
                             <select
@@ -273,29 +249,27 @@ export default function PMConfigModal({ isOpen, onClose, machine, plan, onSucces
                                 value={selectedMaintenanceType}
                                 onChange={(e) => {
                                     setSelectedMaintenanceType(e.target.value);
-                                    // Auto-set part type for checklist suggestions
-                                    if (e.target.value !== "อื่นๆ") {
+                                    if (e.target.value !== t("labelOtherCustom") && e.target.value !== "อื่นๆ") {
                                         setSelectedPartType(e.target.value);
                                     }
                                 }}
                             >
-                                <option value="">-- เลือกประเภทการซ่อมบำรุง --</option>
+                                <option value="">{t("placeholderSelectMaintenanceType")}</option>
                                 {allPartNames.map(name => (
                                     <option key={name} value={name}>{name}</option>
                                 ))}
-                                <option value="อื่นๆ">อื่นๆ (ระบุเอง)</option>
+                                <option value="อื่นๆ">{t("labelOtherCustom")}</option>
                             </select>
                             <div className="absolute right-3 top-1/2 -translate-y-1/2 pointer-events-none text-text-muted">
                                 <ChevronDownIcon size={16} />
                             </div>
                         </div>
 
-                        {/* Custom input when "อื่นๆ" is selected */}
-                        {selectedMaintenanceType === "อื่นๆ" && (
+                        {(selectedMaintenanceType === "อื่นๆ" || selectedMaintenanceType === t("labelOtherCustom")) && (
                             <input
                                 type="text"
                                 required
-                                placeholder="ระบุชื่อการซ่อมบำรุง..."
+                                placeholder={t("placeholderSpecifyMaintenanceName")}
                                 className="input-field w-full mt-2 bg-accent-blue/5 border-accent-blue/30 focus:border-accent-blue"
                                 value={customMaintenanceName}
                                 onChange={(e) => setCustomMaintenanceName(e.target.value)}
@@ -304,28 +278,26 @@ export default function PMConfigModal({ isOpen, onClose, machine, plan, onSucces
                         )}
                     </div>
 
-                    {/* 2. Checklist with Dependent Dropdown */}
                     <div className="space-y-3 bg-bg-secondary/30 p-4 rounded-xl border border-white/5">
                         <label className="text-xs font-bold text-text-muted uppercase tracking-wider flex items-center justify-between">
                             <div className="flex items-center gap-2">
                                 <CheckCircleIcon size={14} className="text-accent-blue" />
-                                รายการที่ต้องทำ (Checklist)
+                                {t("labelChecklist")}
                             </div>
                             <span className="text-[10px] bg-accent-blue/20 text-accent-blue px-2 py-0.5 rounded-full">
-                                {checklistItems.length} รายการ
+                                {checklistItems.length} {t("statFoundHistorySuffix")}
                             </span>
                         </label>
 
-                        {/* Part Type Selection for Checklist */}
                         <div className="space-y-2">
-                            <label className="text-[10px] text-text-muted">เลือกประเภทอะไหล่เพื่อดูรายการแนะนำ:</label>
+                            <label className="text-[10px] text-text-muted">{t("labelSelectPartTypeSuggestion")}</label>
                             <div className="relative">
                                 <select
                                     className="input-field w-full text-sm appearance-none cursor-pointer"
                                     value={selectedPartType}
                                     onChange={(e) => setSelectedPartType(e.target.value)}
                                 >
-                                    <option value="">-- เลือกประเภทอะไหล่ --</option>
+                                    <option value="">{t("placeholderSelectPartType")}</option>
                                     {Object.keys(PART_CHECKLIST_MAP).map(partType => (
                                         <option key={partType} value={partType}>{partType}</option>
                                     ))}
@@ -336,10 +308,9 @@ export default function PMConfigModal({ isOpen, onClose, machine, plan, onSucces
                             </div>
                         </div>
 
-                        {/* Suggested Items */}
                         {suggestedItems.length > 0 && (
                             <div className="bg-accent-blue/5 border border-accent-blue/20 rounded-lg p-3">
-                                <p className="text-[10px] text-accent-blue font-bold mb-2">รายการแนะนำ (คลิกเพื่อเพิ่ม):</p>
+                                <p className="text-[10px] text-accent-blue font-bold mb-2">{t("labelSuggestedItems")}</p>
                                 <div className="flex flex-wrap gap-2">
                                     {suggestedItems.map((item, idx) => {
                                         const isAdded = checklistItems.includes(item);
@@ -350,8 +321,8 @@ export default function PMConfigModal({ isOpen, onClose, machine, plan, onSucces
                                                 onClick={() => handleAddSuggestedItem(item)}
                                                 disabled={isAdded}
                                                 className={`text-[11px] px-2 py-1 rounded-lg border transition-all ${isAdded
-                                                        ? 'bg-accent-green/20 border-accent-green/30 text-accent-green cursor-default'
-                                                        : 'bg-bg-tertiary border-white/10 hover:border-accent-blue hover:text-accent-blue cursor-pointer'
+                                                    ? 'bg-accent-green/20 border-accent-green/30 text-accent-green cursor-default'
+                                                    : 'bg-bg-tertiary border-white/10 hover:border-accent-blue hover:text-accent-blue cursor-pointer'
                                                     }`}
                                             >
                                                 {isAdded ? '✓' : '+'} {item}
@@ -362,11 +333,10 @@ export default function PMConfigModal({ isOpen, onClose, machine, plan, onSucces
                             </div>
                         )}
 
-                        {/* Manual Add Item Input */}
                         <div className="flex gap-2">
                             <input
                                 type="text"
-                                placeholder="เพิ่มรายการย่อย..."
+                                placeholder={t("placeholderAddSubItem")}
                                 className="input-field flex-1 text-sm"
                                 value={newItem}
                                 onChange={(e) => setNewItem(e.target.value)}
@@ -381,10 +351,9 @@ export default function PMConfigModal({ isOpen, onClose, machine, plan, onSucces
                             </button>
                         </div>
 
-                        {/* Checklist Display */}
                         <div className="space-y-2 max-h-40 overflow-y-auto custom-scrollbar">
                             {checklistItems.length === 0 && (
-                                <p className="text-center text-sm text-text-muted/50 py-2 italic">- ยังไม่มีรายการ -</p>
+                                <p className="text-center text-sm text-text-muted/50 py-2 italic">{t("msgNoItems")}</p>
                             )}
                             {checklistItems.map((item, idx) => (
                                 <div key={idx} className="flex items-center justify-between bg-bg-tertiary px-3 py-2 rounded-lg border border-white/5 group">
@@ -401,14 +370,12 @@ export default function PMConfigModal({ isOpen, onClose, machine, plan, onSucces
                         </div>
                     </div>
 
-                    {/* 3. Schedule & Time (Unchanged) */}
                     <div className="grid grid-cols-1 sm:grid-cols-2 gap-6">
-                        {/* Schedule Type */}
                         <div className="space-y-4">
                             <div className="space-y-2">
                                 <label className="text-xs font-bold text-text-muted uppercase tracking-wider flex items-center gap-2">
                                     <ClockIcon size={14} className="text-accent-blue" />
-                                    รูปแบบเวลา
+                                    {t("labelTimeFormat")}
                                 </label>
                                 <div className="flex bg-bg-tertiary p-1 rounded-lg border border-white/5">
                                     <button
@@ -416,22 +383,21 @@ export default function PMConfigModal({ isOpen, onClose, machine, plan, onSucces
                                         onClick={() => setScheduleType('monthly')}
                                         className={`flex-1 py-1.5 text-sm font-bold rounded-md transition-all ${scheduleType === 'monthly' ? 'bg-accent-blue text-white shadow-md' : 'text-text-muted hover:text-white'}`}
                                     >
-                                        รายเดือน
+                                        {t("labelMonthly")}
                                     </button>
                                     <button
                                         type="button"
                                         onClick={() => setScheduleType('weekly')}
                                         className={`flex-1 py-1.5 text-sm font-bold rounded-md transition-all ${scheduleType === 'weekly' ? 'bg-accent-blue text-white shadow-md' : 'text-text-muted hover:text-white'}`}
                                     >
-                                        รายสัปดาห์
+                                        {t("labelWeekly")}
                                     </button>
                                 </div>
                             </div>
 
-                            {/* Dynamic Interval Input */}
                             <div className="space-y-2">
                                 <label className="text-xs font-bold text-text-muted uppercase tracking-wider">
-                                    {scheduleType === 'monthly' ? 'รอบทุกๆ (เดือน)' : 'ทำทุกวัน'}
+                                    {scheduleType === 'monthly' ? t("labelEveryMonthly") : t("labelEveryWeekly")}
                                 </label>
                                 {scheduleType === 'monthly' ? (
                                     <div className="relative">
@@ -460,7 +426,7 @@ export default function PMConfigModal({ isOpen, onClose, machine, plan, onSucces
                                                     : 'bg-bg-tertiary border-white/5 text-text-muted hover:border-white/20'
                                                     }`}
                                             >
-                                                {['อา', 'จ', 'อ', 'พ', 'พฤ', 'ศ', 'ส'][d]}
+                                                {[t("daySun"), t("dayMon"), t("dayTue"), t("dayWed"), t("dayThu"), t("dayFri"), t("daySat")][d]}
                                             </button>
                                         ))}
                                     </div>
@@ -468,12 +434,11 @@ export default function PMConfigModal({ isOpen, onClose, machine, plan, onSucces
                             </div>
                         </div>
 
-                        {/* Start Date & Location */}
                         <div className="space-y-4">
                             <div className="space-y-2">
                                 <label className="text-xs font-bold text-text-muted uppercase tracking-wider flex items-center gap-2">
                                     <CalendarIcon size={14} className="text-accent-blue" />
-                                    วันที่เริ่มรอบแรก
+                                    {t("labelFirstStartDate")}
                                 </label>
                                 <input
                                     type="date"
@@ -484,11 +449,10 @@ export default function PMConfigModal({ isOpen, onClose, machine, plan, onSucces
                                 />
                             </div>
 
-                            {/* Location - Using zones from database */}
                             <div className="space-y-2">
                                 <label className="text-xs font-bold text-text-muted uppercase tracking-wider flex items-center gap-2">
                                     <MapPinIcon size={14} className="text-accent-blue" />
-                                    สถานที่ปฏิบัติงาน
+                                    {t("labelWorkLocation")}
                                 </label>
                                 <div className="relative">
                                     <select
@@ -503,11 +467,11 @@ export default function PMConfigModal({ isOpen, onClose, machine, plan, onSucces
                                             }
                                         }}
                                     >
-                                        <option value="">-- เลือกโซน --</option>
+                                        <option value="">{t("placeholderSelectZone")}</option>
                                         {allZones.map(zone => (
                                             <option key={zone} value={zone}>{zone}</option>
                                         ))}
-                                        <option value="custom">อื่นๆ (ระบุเอง)</option>
+                                        <option value="custom">{t("labelOtherCustom")}</option>
                                     </select>
                                     <div className="absolute right-3 top-1/2 -translate-y-1/2 pointer-events-none text-text-muted">
                                         <ChevronDownIcon size={14} />
@@ -516,7 +480,7 @@ export default function PMConfigModal({ isOpen, onClose, machine, plan, onSucces
                                 {useCustomLocation && (
                                     <input
                                         type="text"
-                                        placeholder="ระบุสถานที่..."
+                                        placeholder={t("placeholderSpecifyLocation")}
                                         className="input-field w-full bg-accent-blue/5 border-accent-blue/30 focus:border-accent-blue"
                                         value={customLocation}
                                         onChange={(e) => setCustomLocation(e.target.value)}
@@ -533,7 +497,7 @@ export default function PMConfigModal({ isOpen, onClose, machine, plan, onSucces
                             onClick={onClose}
                             className="flex-1 px-4 py-3 rounded-xl bg-bg-tertiary text-text-primary font-bold hover:bg-white/10 transition-colors"
                         >
-                            ยกเลิก
+                            {t("actionCancel")}
                         </button>
                         <button
                             type="submit"
@@ -545,7 +509,7 @@ export default function PMConfigModal({ isOpen, onClose, machine, plan, onSucces
                             ) : (
                                 <>
                                     <CheckCircleIcon size={18} />
-                                    บันทึกแผนงาน
+                                    {t("actionSavePlan")}
                                 </>
                             )}
                         </button>

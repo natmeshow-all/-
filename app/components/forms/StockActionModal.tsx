@@ -200,7 +200,7 @@ export default function StockActionModal({ isOpen, onClose, onSuccess, actionTyp
                                     {machines.map(m => (
                                         <option key={m.id} value={m.id}>{m.name}</option>
                                     ))}
-                                    <option value="other">Other / General Use</option>
+                                    <option value="other">{t("stockOtherGeneral")}</option>
                                 </select>
                             </div>
 
@@ -242,7 +242,7 @@ export default function StockActionModal({ isOpen, onClose, onSuccess, actionTyp
                                     </div>
                                     <div className="text-xs text-text-muted">
                                         {t("stockEvidenceHint")}
-                                        <br />(Optional but recommended)
+                                        {t("stockOptionalRecommended")}
                                     </div>
                                 </div>
                             </div>

@@ -415,7 +415,7 @@ export default function Dashboard() {
                 {/* Location Buttons */}
                 <div className="flex flex-wrap items-center gap-1.5 mb-4">
                   {[
-                    { id: '', label: 'All', color: 'accent-purple' },
+                    { id: '', label: t("labelAll"), color: 'accent-purple' },
                     { id: 'FZ', label: 'FZ', color: 'accent-cyan' },
                     { id: 'RTE', label: 'RTE', color: 'green-500' },
                     { id: 'UT', label: 'UT', color: 'accent-yellow' }
@@ -687,7 +687,7 @@ export default function Dashboard() {
                         ) : (
                           <div className="w-full h-full flex flex-col items-center justify-center text-text-muted bg-bg-secondary">
                             <BoxIcon size={48} className="opacity-20 mb-2" />
-                            <span className="text-xs opacity-50">No Image</span>
+                            <span className="text-xs opacity-50">{t("labelNoImage")}</span>
                           </div>
                         )}
 
@@ -834,7 +834,7 @@ export default function Dashboard() {
                       ) : (
                         <div className="w-full h-full flex flex-col items-center justify-center text-text-muted bg-bg-secondary">
                           <BoxIcon size={48} className="opacity-20 mb-2" />
-                          <span className="text-xs opacity-50">No Image</span>
+                          <span className="text-xs opacity-50">{t("labelNoImage")}</span>
                         </div>
                       )}
 

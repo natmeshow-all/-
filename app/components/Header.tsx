@@ -21,10 +21,10 @@ export default function Header({ className = "" }: HeaderProps) {
 
     // Get display name from userProfile first, fallback to user
     const displayName = userProfile?.displayName || userProfile?.nickname || user?.displayName || "User";
-    const roleLabel = userProfile?.role === "admin" ? "Admin" :
-        userProfile?.role === "supervisor" ? "Supervisor" :
-            userProfile?.role === "technician" ? "Technician" :
-                userProfile?.role === "viewer" ? "Viewer" : "";
+    const roleLabel = userProfile?.role === "admin" ? t("userRoleAdmin") :
+        userProfile?.role === "supervisor" ? t("userRoleSupervisor") :
+            userProfile?.role === "technician" ? t("userRoleTechnician") :
+                userProfile?.role === "viewer" ? t("userRoleViewer") : "";
 
     return (
         <header className={`sticky top-0 z-30 bg-bg-secondary/80 backdrop-blur-xl border-b border-border-light ${className}`}>
@@ -60,27 +60,16 @@ export default function Header({ className = "" }: HeaderProps) {
                             <NotificationBell />
                         </div>
 
-                        {/* Language Switcher */}
-                        <div className="lang-switcher scale-75 sm:scale-100 origin-right ml-[-4px] sm:ml-0">
-                            <button
-                                onClick={() => setLanguage("th")}
-                                className={`lang-btn ${language === "th" ? "active" : ""}`}
-                            >
-                                <span className="flex items-center gap-0.5 sm:gap-1">
-                                    <span className="text-xs">🇹🇭</span>
-                                    <span className="text-xs sm:text-sm">TH</span>
-                                </span>
-                            </button>
-                            <button
-                                onClick={() => setLanguage("en")}
-                                className={`lang-btn ${language === "en" ? "active" : ""}`}
-                            >
-                                <span className="flex items-center gap-0.5 sm:gap-1">
-                                    <span className="text-xs">🇬🇧</span>
-                                    <span className="text-xs sm:text-sm">EN</span>
-                                </span>
-                            </button>
-                        </div>
+                        {/* Language Switcher - Single Toggle Button */}
+                        <button
+                            onClick={() => setLanguage(language === "th" ? "en" : "th")}
+                            className="px-2 py-0.5 sm:px-2.5 sm:py-1 bg-bg-tertiary/40 hover:bg-bg-tertiary border border-border-light rounded-md transition-all active:scale-95 ml-1 sm:ml-0 min-w-[32px] flex items-center justify-center group"
+                            title={language === "th" ? "Switch to English" : "เปลี่ยนเป็นภาษาไทย"}
+                        >
+                            <span className="text-[10px] sm:text-xs font-bold text-text-primary uppercase transition-colors group-hover:text-primary">
+                                {language}
+                            </span>
+                        </button>
 
                         {/* Authentication */}
                         {user ? (
@@ -135,7 +124,7 @@ export default function Header({ className = "" }: HeaderProps) {
                                                     className="flex items-center gap-2 w-full text-left px-4 py-2.5 text-sm text-accent-purple hover:bg-bg-tertiary transition-colors"
                                                 >
                                                     <ShieldCheckIcon size={16} />
-                                                    จัดการผู้ใช้งาน
+                                                    {t("actionManageUsers")}
                                                 </Link>
                                             )}
 
@@ -146,7 +135,7 @@ export default function Header({ className = "" }: HeaderProps) {
                                                 }}
                                                 className="w-full text-left px-4 py-2.5 text-sm text-accent-red hover:bg-bg-tertiary transition-colors"
                                             >
-                                                ออกจากระบบ
+                                                {t("actionSignOut")}
                                             </button>
                                         </div>
                                     </>

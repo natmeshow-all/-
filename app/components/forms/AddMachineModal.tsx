@@ -49,14 +49,14 @@ export default function AddMachineModal({ isOpen, onClose, onSuccess }: AddMachi
     const handleSubmit = async (e: React.FormEvent) => {
         e.preventDefault();
         if (!formData.name) {
-            toastError("Please provide a machine name");
+            toastError(t("msgEnterMachineName"));
             return;
         }
 
         setLoading(true);
         try {
             await addMachine(formData as any);
-            success(t("msgSaveSuccess") || "Machine added successfully");
+            success(t("msgSaveSuccess"));
             onSuccess();
             onClose();
             // Reset form
@@ -78,7 +78,7 @@ export default function AddMachineModal({ isOpen, onClose, onSuccess }: AddMachi
             });
         } catch (err: any) {
             console.error("Error adding machine:", err);
-            toastError(t("msgSaveError") || "Failed to add machine", err.message);
+            toastError(t("msgSaveError"), err.message);
         } finally {
             setLoading(false);
         }
@@ -108,8 +108,8 @@ export default function AddMachineModal({ isOpen, onClose, onSuccess }: AddMachi
                             <PlusIcon size={20} />
                         </div>
                         <div>
-                            <h2 className="text-xl font-bold text-text-primary">{t("actionAddMachine") || "เพิ่มเครื่องจักร"}</h2>
-                            <p className="text-sm text-text-muted">กรอกข้อมูลเครื่องจักรใหม่</p>
+                            <h2 className="text-xl font-bold text-text-primary">{t("actionAddMachine")}</h2>
+                            <p className="text-sm text-text-muted">{t("msgAddMachineSubtitle")}</p>
                         </div>
                     </div>
                     <button onClick={onClose} className="p-2 hover:bg-white/5 rounded-full text-text-muted transition-colors">
@@ -123,14 +123,14 @@ export default function AddMachineModal({ isOpen, onClose, onSuccess }: AddMachi
                         <div className="space-y-2">
                             <label className="flex items-center gap-2 text-sm font-medium text-text-secondary">
                                 <HashIcon size={14} className="text-primary" />
-                                {t("labelMachineCode") || "Machine Code"}
+                                {t("labelMachineCode")}
                             </label>
                             <input
                                 type="text"
                                 name="code"
                                 value={formData.code}
                                 onChange={handleChange}
-                                placeholder="e.g. HT05"
+                                placeholder="HT05"
                                 className="input w-full bg-bg-tertiary"
                             />
                         </div>
@@ -139,7 +139,7 @@ export default function AddMachineModal({ isOpen, onClose, onSuccess }: AddMachi
                         <div className="space-y-2">
                             <label className="flex items-center gap-2 text-sm font-medium text-text-secondary">
                                 <CpuIcon size={14} className="text-primary" />
-                                {t("labelMachineName") || "ชื่อเครื่องจักร"} *
+                                {t("labelMachineName")} *
                             </label>
                             <input
                                 type="text"
@@ -147,7 +147,7 @@ export default function AddMachineModal({ isOpen, onClose, onSuccess }: AddMachi
                                 value={formData.name}
                                 onChange={handleChange}
                                 required
-                                placeholder="e.g. Deck oven No.1"
+                                placeholder="Deck oven No.1"
                                 className="input w-full bg-bg-tertiary"
                             />
                         </div>
@@ -156,14 +156,14 @@ export default function AddMachineModal({ isOpen, onClose, onSuccess }: AddMachi
                         <div className="space-y-2">
                             <label className="flex items-center gap-2 text-sm font-medium text-text-secondary">
                                 <CpuIcon size={14} className="text-primary" />
-                                {t("labelBrand") || "Brand"}
+                                {t("labelBrand")}
                             </label>
                             <input
                                 type="text"
                                 name="brand"
                                 value={formData.brand}
                                 onChange={handleChange}
-                                placeholder="e.g. WachTel"
+                                placeholder="WachTel"
                                 className="input w-full bg-bg-tertiary"
                             />
                         </div>
@@ -172,14 +172,14 @@ export default function AddMachineModal({ isOpen, onClose, onSuccess }: AddMachi
                         <div className="space-y-2">
                             <label className="flex items-center gap-2 text-sm font-medium text-text-secondary">
                                 <CpuIcon size={14} className="text-primary" />
-                                {t("labelModel") || "Model"}
+                                {t("labelModel")}
                             </label>
                             <input
                                 type="text"
                                 name="model"
                                 value={formData.model}
                                 onChange={handleChange}
-                                placeholder="e.g. Infra ce 416/77 A1"
+                                placeholder="Infra ce 416/77 A1"
                                 className="input w-full bg-bg-tertiary"
                             />
                         </div>
@@ -188,7 +188,7 @@ export default function AddMachineModal({ isOpen, onClose, onSuccess }: AddMachi
                         <div className="space-y-2">
                             <label className="flex items-center gap-2 text-sm font-medium text-text-secondary">
                                 <HashIcon size={14} className="text-primary" />
-                                {t("labelSerialNumber") || "Serial Number"}
+                                {t("labelSerialNumber")}
                             </label>
                             <input
                                 type="text"
@@ -204,14 +204,14 @@ export default function AddMachineModal({ isOpen, onClose, onSuccess }: AddMachi
                         <div className="space-y-2">
                             <label className="flex items-center gap-2 text-sm font-medium text-text-secondary">
                                 <ZapIcon size={14} className="text-primary" />
-                                {t("labelPerformance") || "Performance (Capacity/kW)"}
+                                {t("labelPerformance")}
                             </label>
                             <input
                                 type="text"
                                 name="performance"
                                 value={formData.performance}
                                 onChange={handleChange}
-                                placeholder="e.g. 46"
+                                placeholder="46 kW"
                                 className="input w-full bg-bg-tertiary"
                             />
                         </div>
@@ -220,14 +220,14 @@ export default function AddMachineModal({ isOpen, onClose, onSuccess }: AddMachi
                         <div className="space-y-2">
                             <label className="flex items-center gap-2 text-sm font-medium text-text-secondary">
                                 <div className="text-primary text-xs font-bold w-3.5 h-3.5 flex items-center justify-center border border-primary rounded-sm">L</div>
-                                {t("tableLocation") || "Location"}
+                                {t("tableLocation")}
                             </label>
                             <input
                                 type="text"
                                 name="location"
                                 value={formData.location}
                                 onChange={handleChange}
-                                placeholder="e.g. RTE"
+                                placeholder="RTE"
                                 className="input w-full bg-bg-tertiary"
                             />
                         </div>
@@ -236,14 +236,14 @@ export default function AddMachineModal({ isOpen, onClose, onSuccess }: AddMachi
                         <div className="space-y-2">
                             <label className="flex items-center gap-2 text-sm font-medium text-text-secondary">
                                 <div className="text-primary text-xs font-bold w-3.5 h-3.5 flex items-center justify-center border border-primary rounded-sm">Z</div>
-                                {t("filterZone") || "Zone"}
+                                {t("filterZone")}
                             </label>
                             <input
                                 type="text"
                                 name="zone"
                                 value={formData.zone}
                                 onChange={handleChange}
-                                placeholder="e.g. Baking Room"
+                                placeholder="Baking Room"
                                 className="input w-full bg-bg-tertiary"
                             />
                         </div>
@@ -252,14 +252,14 @@ export default function AddMachineModal({ isOpen, onClose, onSuccess }: AddMachi
                         <div className="space-y-2">
                             <label className="flex items-center gap-2 text-sm font-medium text-text-secondary">
                                 <SettingsIcon size={14} className="text-primary" />
-                                {t("labelRemark") || "Remark (Class)"}
+                                {t("labelRemark")}
                             </label>
                             <input
                                 type="text"
                                 name="remark"
                                 value={formData.remark}
                                 onChange={handleChange}
-                                placeholder="e.g. A or B"
+                                placeholder="A"
                                 className="input w-full bg-bg-tertiary"
                             />
                         </div>
@@ -268,7 +268,7 @@ export default function AddMachineModal({ isOpen, onClose, onSuccess }: AddMachi
                         <div className="space-y-2">
                             <label className="flex items-center gap-2 text-sm font-medium text-text-secondary">
                                 <RefreshCwIcon size={14} className="text-primary" />
-                                {t("labelMaintenanceCycle") || "Maintenance Cycle (Months)"}
+                                {t("labelMaintenanceCycle")}
                             </label>
                             <select
                                 name="maintenanceCycle"
@@ -276,19 +276,19 @@ export default function AddMachineModal({ isOpen, onClose, onSuccess }: AddMachi
                                 onChange={handleChange}
                                 className="input select w-full bg-bg-tertiary"
                             >
-                                <option value={0}>No automatic cycle</option>
-                                <option value={1}>1 Month</option>
-                                <option value={3}>3 Months</option>
-                                <option value={6}>6 Months</option>
-                                <option value={9}>9 Months</option>
-                                <option value={12}>12 Months</option>
+                                <option value={0}>{t("labelNoAutoCycle")}</option>
+                                <option value={1}>1 {t("labelMonths")}</option>
+                                <option value={3}>3 {t("labelMonths")}</option>
+                                <option value={6}>6 {t("labelMonths")}</option>
+                                <option value={9}>9 {t("labelMonths")}</option>
+                                <option value={12}>12 {t("labelMonths")}</option>
                             </select>
                         </div>
 
                         {/* Description */}
                         <div className="md:col-span-2 space-y-2">
                             <label className="text-sm font-medium text-text-secondary">
-                                {t("labelDescription") || "Additional Description"}
+                                {t("labelDescription")}
                             </label>
                             <textarea
                                 name="description"
@@ -306,7 +306,7 @@ export default function AddMachineModal({ isOpen, onClose, onSuccess }: AddMachi
                             onClick={onClose}
                             className="btn btn-outline"
                         >
-                            {t("actionCancel") || "Cancel"}
+                            {t("actionCancel")}
                         </button>
                         <button
                             type="submit"
@@ -318,7 +318,7 @@ export default function AddMachineModal({ isOpen, onClose, onSuccess }: AddMachi
                             ) : (
                                 <>
                                     <SaveIcon size={18} />
-                                    {t("actionSave") || "เพิ่มข้อมูล"}
+                                    {t("actionSave")}
                                 </>
                             )}
                         </button>

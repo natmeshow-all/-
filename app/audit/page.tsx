@@ -98,8 +98,8 @@ export default function AuditPage() {
                     </div>
                     <div className="flex items-center gap-3 bg-bg-secondary p-3 rounded-xl border border-white/5">
                         <div className="text-right">
-                            <p className="text-[10px] text-text-muted uppercase tracking-wider">Audit Status</p>
-                            <p className="text-green-400 font-bold">READY / COMPLIANT</p>
+                            <p className="text-[10px] text-text-muted uppercase tracking-wider">{t("auditStatus")}</p>
+                            <p className="text-green-400 font-bold">{t("auditReady")}</p>
                         </div>
                         <div className="w-10 h-10 rounded-full bg-green-500/20 flex items-center justify-center">
                             <CheckCircleIcon className="text-green-400" size={24} />
@@ -128,7 +128,7 @@ export default function AuditPage() {
                         </div>
                         <p className="text-[10px] text-text-muted mt-2 flex items-center gap-1">
                             <CheckCircleIcon size={12} className="text-green-400" />
-                            Monthly PM Target: 100%
+                            {t("auditTarget", { target: 100 })}
                         </p>
                     </div>
 
@@ -149,7 +149,7 @@ export default function AuditPage() {
                                 style={{ width: `${stats.onTimeRate}%` }}
                             />
                         </div>
-                        <p className="text-[10px] text-text-muted mt-2">Measured against PM scheduled dates</p>
+                        <p className="text-[10px] text-text-muted mt-2">{t("auditMeasured")}</p>
                     </div>
 
                     {/* Machine Availability */}
@@ -169,7 +169,7 @@ export default function AuditPage() {
                                 style={{ width: `${stats.availability}%` }}
                             />
                         </div>
-                        <p className="text-[10px] text-text-muted mt-2">{machines.length} Machines Monitorized</p>
+                        <p className="text-[10px] text-text-muted mt-2">{t("auditMachinesMonitorized", { count: machines.length })}</p>
                     </div>
 
                     {/* Active Issues */}
@@ -185,10 +185,10 @@ export default function AuditPage() {
                         </div>
                         <div className="flex gap-2">
                             <div className="px-2 py-0.5 rounded bg-white/5 border border-white/5 text-[10px]">
-                                {stats.lowStockCount} Low Stock
+                                {t("auditLowStock", { count: stats.lowStockCount })}
                             </div>
                             <div className="px-2 py-0.5 rounded bg-white/5 border border-white/5 text-[10px]">
-                                {machines.filter(m => m.status === 'maintenance').length} In-Repair
+                                {t("auditInRepair", { count: machines.filter(m => m.status === 'maintenance').length })}
                             </div>
                         </div>
                     </div>
@@ -272,8 +272,8 @@ export default function AuditPage() {
                         </h2>
                         <div className="card-glass overflow-hidden">
                             <div className="p-3 bg-white/5 border-b border-white/5 flex items-center justify-between">
-                                <span className="text-[10px] font-bold text-text-muted uppercase">PART NAME & LOCATION</span>
-                                <span className="text-[10px] font-bold text-text-muted uppercase">QTY / MIN</span>
+                                <span className="text-[10px] font-bold text-text-muted uppercase">{t("auditPartLocation")}</span>
+                                <span className="text-[10px] font-bold text-text-muted uppercase">{t("auditQtyMin")}</span>
                             </div>
                             <div className="max-h-[500px] overflow-y-auto">
                                 {parts.filter(p => p.quantity <= (p.minStockThreshold || 0)).map((part) => (
@@ -290,7 +290,7 @@ export default function AuditPage() {
                                 ))}
                                 {parts.filter(p => p.quantity <= (p.minStockThreshold || 0)).length === 0 && (
                                     <div className="p-12 text-center">
-                                        <p className="text-text-muted italic">Stock Levels Normal</p>
+                                        <p className="text-text-muted italic">{t("auditStockNormal")}</p>
                                     </div>
                                 )}
                             </div>
@@ -300,8 +300,8 @@ export default function AuditPage() {
                         <div className="p-4 rounded-2xl bg-gradient-to-br from-bg-secondary to-bg-tertiary border border-white/5 text-center">
                             <ShieldCheckIcon className="mx-auto text-accent-cyan/40 mb-2" size={32} />
                             <p className="text-[10px] text-text-muted leading-relaxed">
-                                Automated audit validation active.<br />
-                                All maintenance records are timestamped and signed by the assigned technician.
+                                {t("auditValidationActive")}<br />
+                                {t("auditValidationDesc")}
                             </p>
                         </div>
                     </div>

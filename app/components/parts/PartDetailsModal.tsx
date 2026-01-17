@@ -13,7 +13,7 @@ interface PartDetailsModalProps {
     part: SparePart | null;
     onEdit: (part: SparePart) => void;
     onDelete: (part: SparePart) => void;
-    onRepair: (part: SparePart) => void; // Added Repair handler
+    onRepair: (part: SparePart) => void;
 }
 
 export default function PartDetailsModal({
@@ -31,7 +31,7 @@ export default function PartDetailsModal({
     if (!part) return null;
 
     // Lightbox Component
-    const Lightbox = () => {
+    const LocalLightbox = () => {
         if (!lightboxOpen || !part.imageUrl) return null;
 
         return (
@@ -47,9 +47,9 @@ export default function PartDetailsModal({
                 </button>
                 <img
                     src={part.imageUrl}
-                    alt={part.name}
+                    alt={part.name || t("altImage")}
                     className="max-w-full max-h-screen object-contain rounded-lg shadow-2xl animate-scale-in"
-                    onClick={(e) => e.stopPropagation()} // Prevent close on image click
+                    onClick={(e) => e.stopPropagation()}
                 />
             </div>
         );
@@ -77,7 +77,7 @@ export default function PartDetailsModal({
                                 />
                                 <div className="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center pointer-events-none">
                                     <span className="px-4 py-2 rounded-full bg-black/60 text-white text-sm font-medium backdrop-blur-sm">
-                                        View Fullscreen
+                                        {t("labelViewFullscreen")}
                                     </span>
                                 </div>
                             </>
@@ -91,11 +91,11 @@ export default function PartDetailsModal({
                         <div className="absolute top-4 right-4">
                             {part.quantity <= part.minStockThreshold ? (
                                 <span className="px-3 py-1 rounded-full bg-error text-white text-xs font-bold shadow-lg">
-                                    Low Stock
+                                    {t("statusLowStock")}
                                 </span>
                             ) : (
                                 <span className="px-3 py-1 rounded-full bg-success text-white text-xs font-bold shadow-lg">
-                                    In Stock
+                                    {t("statusInStock")}
                                 </span>
                             )}
                         </div>
@@ -105,15 +105,15 @@ export default function PartDetailsModal({
                     <div className="grid grid-cols-1 sm:grid-cols-2 gap-6 p-4 rounded-xl bg-bg-secondary/50 border border-white/5">
                         <div className="space-y-4">
                             <div>
-                                <h3 className="text-sm font-medium text-text-muted mb-1">{t("tableModelSpec") || "Specification"}</h3>
+                                <h3 className="text-sm font-medium text-text-muted mb-1">{t("tableModelSpec")}</h3>
                                 <p className="text-base text-text-primary">{part.description || "-"}</p>
                             </div>
                             <div>
-                                <h3 className="text-sm font-medium text-text-muted mb-1">{t("tableBrand") || "Brand"}</h3>
+                                <h3 className="text-sm font-medium text-text-muted mb-1">{t("tableBrand")}</h3>
                                 <p className="text-base text-text-primary">{part.brand || "-"}</p>
                             </div>
                             <div>
-                                <h3 className="text-sm font-medium text-text-muted mb-1">{t("tableLocation") || "Location"}</h3>
+                                <h3 className="text-sm font-medium text-text-muted mb-1">{t("tableLocation")}</h3>
                                 <div className="flex items-center gap-2">
                                     <span className="w-2 h-2 rounded-full bg-accent-cyan"></span>
                                     <p className="text-base text-text-primary">{part.location || "-"}</p>
@@ -123,11 +123,11 @@ export default function PartDetailsModal({
 
                         <div className="space-y-4">
                             <div>
-                                <h3 className="text-sm font-medium text-text-muted mb-1">{t("addPartCategory") || "Category"}</h3>
+                                <h3 className="text-sm font-medium text-text-muted mb-1">{t("addPartCategory")}</h3>
                                 <p className="text-base text-text-primary capitalize">{part.category || "-"}</p>
                             </div>
                             <div>
-                                <h3 className="text-sm font-medium text-text-muted mb-1">{t("tableQuantity") || "Quantity"}</h3>
+                                <h3 className="text-sm font-medium text-text-muted mb-1">{t("tableQuantity")}</h3>
                                 <div className="flex items-end gap-2">
                                     <span className={`text-2xl font-bold ${part.quantity <= part.minStockThreshold ? 'text-error' : 'text-primary'}`}>
                                         {part.quantity}
@@ -136,7 +136,7 @@ export default function PartDetailsModal({
                                 </div>
                             </div>
                             <div>
-                                <h3 className="text-sm font-medium text-text-muted mb-1">{t("tableNotes") || "Notes"}</h3>
+                                <h3 className="text-sm font-medium text-text-muted mb-1">{t("tableNotes")}</h3>
                                 <p className="text-sm text-text-secondary italic">{part.notes || "-"}</p>
                             </div>
                         </div>
@@ -149,28 +149,28 @@ export default function PartDetailsModal({
                             className="btn btn-secondary flex items-center justify-center gap-2 h-12 text-sm"
                         >
                             <EditIcon size={18} />
-                            {t("actionEdit") || "Edit"}
+                            {t("actionEdit")}
                         </button>
                         <button
                             onClick={() => { if (checkAuth()) onRepair(part); }}
                             className="btn bg-accent-orange/10 text-accent-orange hover:bg-accent-orange/20 border-accent-orange/20 flex items-center justify-center gap-2 h-12 text-sm rounded-xl font-medium transition-all"
                         >
                             <WrenchIcon size={18} />
-                            {t("actionRepair") || "Repair"}
+                            {t("actionRepair")}
                         </button>
                         <button
                             onClick={() => { if (checkAuth()) onDelete(part); }}
                             className="btn bg-error/10 text-error hover:bg-error/20 border-error/20 flex items-center justify-center gap-2 h-12 text-sm rounded-xl font-medium transition-all"
                         >
                             <TrashIcon size={18} />
-                            {t("actionDelete") || "Delete"}
+                            {t("actionDelete")}
                         </button>
                     </div>
                 </div>
             </Modal>
 
             {/* Render Lightbox outside Modal to ensure it's on top */}
-            <Lightbox />
+            <LocalLightbox />
         </>
     );
 }

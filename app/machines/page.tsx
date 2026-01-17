@@ -102,7 +102,7 @@ export default function MachinesPage() {
                         <div>
                             <h1 className="text-xl font-bold text-text-primary">{t("navMachines")}</h1>
                             <p className="text-sm text-text-muted">
-                                {loading ? "Loading..." : `${machines.length} เครื่อง`}
+                                {loading ? t("msgLoading") : t("machineCount", { count: machines.length })}
                             </p>
                         </div>
                     </div>
@@ -111,7 +111,7 @@ export default function MachinesPage() {
                         className="btn btn-primary h-8"
                     >
                         <PlusIcon size={16} />
-                        {t("actionAddMachine") || "เพิ่มเครื่องจักร"}
+                        {t("actionAddMachine")}
                     </button>
                 </div>
 
@@ -175,7 +175,7 @@ export default function MachinesPage() {
 
                 {!loading && machines.length === 0 && (
                     <div className="text-center py-12 text-text-muted">
-                        No machines found. Add parts to see machines here.
+                        {t("msgNoMachines")}
                     </div>
                 )}
             </main>
@@ -201,10 +201,10 @@ export default function MachinesPage() {
                 isOpen={deleteConfirmOpen}
                 onClose={() => setDeleteConfirmOpen(false)}
                 onConfirm={handleDeleteMachine}
-                title={t("confirmDeleteTitle") || "Confirm Delete"}
-                message={(t("confirmDeleteMessageDetail") || "Are you sure you want to delete {name}?").replace("{name}", machineToDelete?.name || "")}
-                confirmText={t("actionDelete") || "Delete"}
-                cancelText={t("actionCancel") || "Cancel"}
+                title={t("confirmDeleteTitle")}
+                message={t("confirmDeleteMessageDetail", { name: machineToDelete?.name || "" })}
+                confirmText={t("actionDelete")}
+                cancelText={t("actionCancel")}
                 isDestructive={true}
             />
         </div>
@@ -230,11 +230,11 @@ function MachineCard({ machine, index, onRefresh, onOpenSettings, onOpenDelete }
         try {
             const { updateMachineImage } = await import("../lib/firebaseService");
             await updateMachineImage(machine.name, file, machine.id);
-            success(t("msgSaveSuccess") || "Saved", "Image updated successfully");
+            success(t("msgSaveSuccess"), t("msgSaveSuccess"));
             onRefresh();
         } catch (error: any) {
             console.error("Upload failed", error);
-            showError(t("msgError") || "Error", error.message || "Failed to upload image");
+            showError(t("msgError"), error.message || t("msgError"));
         } finally {
             setUploading(false);
         }
@@ -294,7 +294,7 @@ function MachineCard({ machine, index, onRefresh, onOpenSettings, onOpenDelete }
                         <h3 className="text-xl font-bold text-white tracking-tight drop-shadow-md">{machine.name}</h3>
                     </div>
                     <span className="badge badge-success shadow-lg backdrop-blur-md bg-green-500/20 border-green-500/30 text-green-400">
-                        {machine.status === 'active' ? 'Active' : machine.status}
+                        {machine.status === 'active' ? t("statusActive") : machine.status}
                     </span>
                 </div>
 
@@ -322,7 +322,7 @@ function MachineCard({ machine, index, onRefresh, onOpenSettings, onOpenDelete }
                     )}
                     {machine.remark && (
                         <span className="px-2.5 py-1 rounded-lg bg-accent-yellow/20 backdrop-blur-md border border-accent-yellow/30 text-[10px] font-bold text-accent-yellow">
-                            Class {machine.remark}
+                            {t("labelClass")} {machine.remark}
                         </span>
                     )}
                     {machine.performance && (

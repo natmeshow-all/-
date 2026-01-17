@@ -58,6 +58,18 @@ export interface TranslationKeys {
     auditOnTimeRate: string;
     auditActiveIssues: string;
     auditAvailability: string;
+    auditStatus: string;
+    auditReady: string;
+    auditTarget: string;
+    auditMeasured: string;
+    auditMachinesMonitorized: string;
+    auditLowStock: string;
+    auditInRepair: string;
+    auditPartLocation: string;
+    auditQtyMin: string;
+    auditStockNormal: string;
+    auditValidationActive: string;
+    auditValidationDesc: string;
 
     // Stats
     statTotalParts: string;
@@ -93,6 +105,35 @@ export interface TranslationKeys {
     filterShowResults: string;
     filterOf: string;
     filterRecords: string;
+    machineCount: string;
+    msgNoMachines: string;
+    statusActive: string;
+    statusInStock: string;
+    statusLowStock: string;
+    labelClass: string;
+    historyItem: string;
+    msgNoHistory: string;
+    scheduleDescription: string;
+    actionManagePM: string;
+    msgOverdueAlert: string;
+    msgActionRequired: string;
+    msgLoadingPlans: string;
+    labelDue: string;
+    labelEveryDay: string;
+    labelOverdueBy: string;
+    labelToday: string;
+    labelInDays: string;
+    actionCloseWork: string;
+    msgNoPlans: string;
+    modalSelectMachinePM: string;
+    msgNoMachineLocation: string;
+    modalConfirmDeletePM: string;
+    modalAreYouSure: string;
+    modalDeletePMConfirm: string;
+    statusOverdueLabel: string;
+    statusTodayLabel: string;
+    statusUpcomingLabel: string;
+    statusOnTrackLabel: string;
 
     // Table Headers
     tableImage: string;
@@ -278,7 +319,6 @@ export interface TranslationKeys {
     confirmDeleteTitle: string;
     confirmDeleteMessage: string;
     confirmDeleteMessageDetail: string;
-    statusLowStock: string;
 
     // Placeholders
     placeholderMachine: string;
@@ -367,6 +407,171 @@ export interface TranslationKeys {
     notificationRequestTitle: string;
     notificationRequestDesc: string;
     notificationEnable: string;
+
+    // User Management
+    userManageTitle: string;
+    userTotalCount: string;
+    userPendingCount: string;
+    userTabAll: string;
+    userTabPending: string;
+    userRoleAdmin: string;
+    userRoleSupervisor: string;
+    userRoleTechnician: string;
+    userRoleViewer: string;
+    userStatusDeactivated: string;
+    userActionApprove: string;
+    userActionReject: string;
+    userConfirmReject: string;
+    userEditTitle: string;
+    userApproveTitle: string;
+    userLabelNickname: string;
+    userLabelRole: string;
+    userLabelDisplayName: string;
+    userLabelDepartment: string;
+    userRequestedAt: string;
+    userNoPending: string;
+    labelLocation: string;
+    labelNormal: string;
+    labelThreshold: string;
+
+    // Analytics Page
+    analyticsSubtitle: string;
+    analyticsMonthlyMaintenance: string;
+    analyticsPartsByCategory: string;
+    analyticsDowntimeHours: string;
+    analyticsVibrationTrend: string;
+    analyticsTemperatureTrend: string;
+    analyticsMotorTemp: string;
+    analyticsShouldCheck: string;
+    analyticsTempRising: string;
+    analyticsDowntimeTitle: string;
+    analyticsEfficiencyTitle: string;
+    analyticsEfficiencyROI: string;
+    analyticsAdvancedCost: string;
+    analyticsCostAnalysisDesc: string;
+    analyticsAccumulatedCost: string;
+    analyticsDowntimeLoss: string;
+    analyticsAiInsight: string;
+    analyticsEfficiencyOpt: string;
+    analyticsDownloadSchedule: string;
+    analyticsMonthlyReport: string;
+    analyticsGenerateReport: string;
+    analyticsGenerating: string;
+    analyticsReportReady: string;
+    analyticsReportDesc: string;
+    analyticsPreventive: string;
+    analyticsCorrective: string;
+    analyticsOilChange: string;
+    analyticsAxisX: string;
+    analyticsAxisY: string;
+    analyticsAxisZ: string;
+
+    // Generic Actions/Labels
+    language: string;
+    actionSignOut: string;
+    actionManageUsers: string;
+    actionGoToDashboard: string;
+    actionRegister: string;
+    labelNoImage: string;
+    labelAll: string;
+    predictiveMetricsNormal: string;
+    userRegisterTitle: string;
+    userRegisterSubtitle: string;
+    userPendingApprovalTitle: string;
+    userPendingApprovalDesc: string;
+    msgWaitApproval: string;
+    altUser: string;
+    msgRequiredInfo: string;
+    msgSelectMachine: string;
+    msgSpecifyDetails: string;
+    msgNoAccess: string;
+    msgCheckRules: string;
+    msgSavingData: string;
+    msgMaintenanceDocHint: string;
+    placeholderMaintenanceDetails: string;
+    actionUploadPhoto: string;
+    stockOtherGeneral: string;
+    stockOptionalRecommended: string;
+    actionPMSettings: string;
+    pmConfigTitle: string;
+    labelMaintenanceType: string;
+    placeholderSelectMaintenanceType: string;
+    labelOtherCustom: string;
+    placeholderSpecifyMaintenanceName: string;
+    labelChecklist: string;
+    labelSelectPartTypeSuggestion: string;
+    placeholderSelectPartType: string;
+    labelSuggestedItems: string;
+    placeholderAddSubItem: string;
+    msgNoItems: string;
+    labelTimeFormat: string;
+    labelMonthly: string;
+    labelWeekly: string;
+    labelEveryMonthly: string;
+    labelEveryWeekly: string;
+    labelFirstStartDate: string;
+    labelWorkLocation: string;
+    placeholderSelectZone: string;
+    placeholderSpecifyLocation: string;
+    actionSavePlan: string;
+    pmExecutionTitle: string;
+    labelItemsCompleted: string;
+    labelTechnician: string;
+    placeholderSpecifyTechnician: string;
+    placeholderChecklistValue: string;
+    labelAdditionalNotes: string;
+    labelMaintenanceDetails: string;
+    placeholderAdditionalNotesHint: string;
+    placeholderMaintenanceDetailsHint: string;
+    labelEvidencePhoto: string;
+    actionTakePhoto: string;
+    actionConfirmNextCycle: string;
+    pmHistoryTitle: string;
+    placeholderSearchHistory: string;
+    filterAllLocations: string;
+    filterAllMachines: string;
+    filterAllTime: string;
+    labelUrgentRepair: string;
+    msgLoadingHistory: string;
+    msgNoMatchingHistory: string;
+    pmHistoryModalTitle: string;
+    msgNoHistoryForItem: string;
+    labelWorkDetails: string;
+    labelAuditChecklist: string;
+    labelEvidencePhotoShort: string;
+    actionCloseWindow: string;
+    msgAddMachineSubtitle: string;
+    labelNoAutoCycle: string;
+    labelFirebaseStatus: string;
+    statusConnected: string;
+    statusOffline: string;
+    labelProjectID: string;
+    labelAuthDomain: string;
+    labelAPIKey: string;
+    labelModularSDK: string;
+    statFoundHistoryPrefix: string;
+    statFoundHistorySuffix: string;
+    daySun: string;
+    dayMon: string;
+    dayTue: string;
+    dayWed: string;
+    dayThu: string;
+    dayFri: string;
+    daySat: string;
+    textEveryMonths: string;
+    msgAutoScheduleHint: string;
+    msgEnterMachineName: string;
+    actionConfirm: string;
+    notificationAlerts: string;
+    labelActionRequired: string;
+    scannerTitle: string;
+    scannerInitializing: string;
+    scannerAccessDenied: string;
+    scannerTryAgain: string;
+    scannerInstructions: string;
+    scannerScannedContent: string;
+    labelViewFullscreen: string;
+    altImage: string;
 }
 
 const th: TranslationKeys = {
@@ -427,6 +632,18 @@ const th: TranslationKeys = {
     auditOnTimeRate: "อัตราการทำตรงเวลา",
     auditActiveIssues: "ปัญหาที่ยังไม่แก้ไข",
     auditAvailability: "ความพร้อมใช้งาน",
+    auditStatus: "สถานะการตรวจประเมิน",
+    auditReady: "พร้อม / สอดคล้องตามเกณฑ์",
+    auditTarget: "เป้าหมาย PM ประจำเดือน: {target}%",
+    auditMeasured: "วัดผลเทียบกับวันที่ในแผนซ่อมบำรุง",
+    auditMachinesMonitorized: "ติดตามเครื่องจักรแล้ว {count} เครื่อง",
+    auditLowStock: "สต็อกต่ำ {count} รายการ",
+    auditInRepair: "กำลังซ่อมแซม {count} เครื่อง",
+    auditPartLocation: "ชื่ออะไหล่และสถานที่",
+    auditQtyMin: "จำนวน / ขั้นต่ำ",
+    auditStockNormal: "ระดับสต็อกปกติ",
+    auditValidationActive: "ระบบตรวจสอบการตรวจประเมินอัตโนมัติทำงานอยู่",
+    auditValidationDesc: "บันทึกการซ่อมบำรุงทั้งหมดจะถูกประทับเวลาและลงนามโดยช่างที่ได้รับมอบหมาย",
 
     // Stats
     statTotalParts: "จำนวนอะไหล่ทั้งหมด",
@@ -462,6 +679,35 @@ const th: TranslationKeys = {
     filterShowResults: "แสดงผล:",
     filterOf: "จาก",
     filterRecords: "รายการ",
+    machineCount: "{count} เครื่อง",
+    msgNoMachines: "ไม่พบเครื่องจักร กรุณาเพิ่มข้อมูลอะไหล่เพื่อเริ่มใช้งาน",
+    statusActive: "เปิดใช้งาน",
+    statusInStock: "ปกติ",
+    statusLowStock: "อะไหล่เหลือน้อย",
+    labelClass: "คลาส",
+    historyItem: "ประวัติรายการ",
+    msgNoHistory: "ยังไม่มีประวัติการซ่อมบำรุง",
+    scheduleDescription: "รายการแผนงานซ่อมบำรุงเชิงป้องกัน (PM)",
+    actionManagePM: "จัดการแผน PM",
+    msgOverdueAlert: "มีรายการที่ถึงกำหนดหรือเกินกำหนดซ่อมบำรุง!",
+    msgActionRequired: "กรุณาดำเนินการและบันทึกผลการทำงาน",
+    msgLoadingPlans: "กำลังโหลดแผนงาน...",
+    labelDue: "กำหนด: {date}",
+    labelEveryDay: "ทุกวัน{day}",
+    labelOverdueBy: "เกินมา {days} วัน",
+    labelToday: "วันนี้",
+    labelInDays: "อีก {days} วัน",
+    actionCloseWork: "ปิดงาน",
+    msgNoPlans: "ไม่มีแผนงานซ่อมบำรุงในขณะนี้",
+    modalSelectMachinePM: "เลือกเครื่องจักรสำหรับแผน PM",
+    msgNoMachineLocation: "ไม่พบเครื่องจักรในสถานที่นี้",
+    modalConfirmDeletePM: "ยืนยันการลบแผนงาน",
+    modalAreYouSure: "คุณแน่ใจหรือไม่?",
+    modalDeletePMConfirm: "คุณต้องการลบแผนงาน \"{name}\" ใช่หรือไม่? การกระทำนี้ไม่สามารถเรียกคืนได้",
+    statusOverdueLabel: "เกินกำหนด",
+    statusTodayLabel: "วันนี้!",
+    statusUpcomingLabel: "เร็วๆ นี้",
+    statusOnTrackLabel: "ตามกำหนด",
 
     // Table Headers
     tableImage: "รูปภาพ",
@@ -647,7 +893,6 @@ const th: TranslationKeys = {
     confirmDeleteTitle: "ยืนยันการลบ",
     confirmDeleteMessage: "คุณแน่ใจหรือไม่ว่าต้องการลบรายการนี้?",
     confirmDeleteMessageDetail: "การลบรายการ: {name} จะไม่สามารถย้อนกลับได้",
-    statusLowStock: "อะไหล่เหลือน้อย",
 
     // Placeholders
     placeholderMachine: "เช่น Pie Line",
@@ -736,6 +981,171 @@ const th: TranslationKeys = {
     notificationRequestTitle: "เปิดการแจ้งเตือน",
     notificationRequestDesc: "รับการแจ้งเตือนทันเมื่อมีอะไหล่ใกล้หมดหรือถึงกำหนดซ่อมบำรุง",
     notificationEnable: "เปิดใช้งาน",
+
+    // User Management
+    userManageTitle: "จัดการผู้ใช้งาน",
+    userTotalCount: "{count} ผู้ใช้",
+    userPendingCount: "{count} รออนุมัติ",
+    userTabAll: "ผู้ใช้ทั้งหมด",
+    userTabPending: "รออนุมัติ",
+    userRoleAdmin: "ผู้ดูแลระบบ",
+    userRoleSupervisor: "หัวหน้าช่าง",
+    userRoleTechnician: "ช่างซ่อมบำรุง",
+    userRoleViewer: "ผู้ดูอย่างเดียว",
+    userStatusDeactivated: "ปิดใช้งาน",
+    userActionApprove: "อนุมัติ",
+    userActionReject: "ปฏิเสธ",
+    userConfirmReject: "ต้องการปฏิเสธผู้ใช้นี้?",
+    userEditTitle: "แก้ไขข้อมูลผู้ใช้",
+    userApproveTitle: "อนุมัติผู้ใช้",
+    userLabelNickname: "ชื่อเล่น",
+    userLabelRole: "บทบาท",
+    userLabelDisplayName: "ชื่อที่แสดง",
+    userLabelDepartment: "แผนก",
+    userRequestedAt: "ลงทะเบียนเมื่อ",
+    userNoPending: "ไม่มีผู้ใช้รออนุมัติ",
+    labelLocation: "สถานที่",
+    labelNormal: "ปกติ",
+    labelThreshold: "ค่าเกณฑ์",
+
+    // Analytics Page
+    analyticsSubtitle: "วิเคราะห์ข้อมูลการซ่อมบำรุง",
+    analyticsMonthlyMaintenance: "การซ่อมบำรุงรายเดือน",
+    analyticsPartsByCategory: "อะไหล่ตามหมวดหมู่",
+    analyticsDowntimeHours: "เวลาหยุดเครื่อง (ชม.)",
+    analyticsVibrationTrend: "แนวโน้มค่าแรงสั่นสะเทือน (mm/s)",
+    analyticsTemperatureTrend: "แนวโน้มอุณหภูมิมอเตอร์ (°C)",
+    analyticsMotorTemp: "อุณหภูมิมอเตอร์",
+    analyticsShouldCheck: "ควรตรวจสอบ",
+    analyticsTempRising: "อุณหภูมิมีแนวโน้มสูงขึ้น - แนะนำให้ตรวจสอบระบบระบายความร้อน",
+    analyticsDowntimeTitle: "ความสูญเสียจาก Downtime",
+    analyticsEfficiencyTitle: "ประสิทธิภาพการทำงาน",
+    analyticsEfficiencyROI: "ROI จากการทำ PM",
+    analyticsAdvancedCost: "Advanced Cost Analysis (Phase 4)",
+    analyticsCostAnalysisDesc: "การวิเคราะห์ต้นทุนอะไหล่เทียบกับเวลาหยุดเครื่อง",
+    analyticsAccumulatedCost: "ค่าอะไหล่สะสม (เดือนนี้)",
+    analyticsDowntimeLoss: "ความสูญเสียจาก Downtime",
+    analyticsAiInsight: "AI Insight",
+    analyticsEfficiencyOpt: "Efficiency Optimization",
+    analyticsDownloadSchedule: "ตารางงาน (PDF)",
+    analyticsMonthlyReport: "Monthly Report",
+    analyticsGenerateReport: "สร้างรายงาน",
+    analyticsGenerating: "กำลังสร้าง...",
+    analyticsReportReady: "สร้างรายงานสำเร็จ",
+    analyticsReportDesc: "รายงานประจำเดือนมกราคม 2026 พร้อมให้ดาวน์โหลดแล้ว",
+    analyticsPreventive: "เชิงป้องกัน",
+    analyticsCorrective: "แก้ไข",
+    analyticsOilChange: "ถ่ายน้ำมัน",
+    analyticsAxisX: "แกน X",
+    analyticsAxisY: "แกน Y",
+    analyticsAxisZ: "แกน Z",
+
+    // Generic Actions/Labels
+    language: "th",
+    actionSignOut: "ออกจากระบบ",
+    actionManageUsers: "จัดการผู้ใช้งาน",
+    actionGoToDashboard: "กลับหน้าหลัก",
+    actionRegister: "ส่งข้อมูลสมัครสมาชิก",
+    labelNoImage: "ไม่มีรูปภาพ",
+    labelAll: "ทั้งหมด",
+    predictiveMetricsNormal: "ปกติ",
+    userRegisterTitle: "สมัครสมาชิก",
+    userRegisterSubtitle: "ขอสิทธิ์เข้าใช้งานระบบจัดการอะไหล่",
+    userPendingApprovalTitle: "บัญชีของคุณรอการอนุมัติ",
+    userPendingApprovalDesc: "กรุณารอผู้ดูแลระบบตรวจสอบและอนุมัติการเข้าใช้งานของคุณ",
+    msgWaitApproval: "รอการตรวจสอบสิทธิ์การใช้งาน",
+    altUser: "ผู้ใช้งาน",
+    msgRequiredInfo: "กรุณากรอกข้อมูล",
+    msgSelectMachine: "กรุณาเลือกเครื่องจักร",
+    msgSpecifyDetails: "กรุณาระบุรายละเอียดงานซ่อมบำรุง",
+    msgNoAccess: "ไม่มีสิทธิ์เข้าถึง",
+    msgCheckRules: "กรุณาตรวจสอบ Firestore security rules",
+    msgSavingData: "กำลังบันทึกข้อมูล...",
+    msgMaintenanceDocHint: "ข้อมูลจะถูกบันทึกเพื่อเปรียบเทียบและวิเคราะห์แนวโน้มในอนาคต",
+    placeholderMaintenanceDetails: "อธิบายรายละเอียดการซ่อมบำรุง ปัญหาที่พบ และวิธีการแก้ไข",
+    actionUploadPhoto: "อัปโหลดรูปภาพ",
+    stockOtherGeneral: "อื่นๆ / ทั่วไป",
+    stockOptionalRecommended: "(ไม่บังคับแต่แนะนำ)",
+    actionPMSettings: "ตั้งค่า PM อัตโนมัติ",
+    pmConfigTitle: "ตั้งค่าแผนซ่อมบำรุงเชิงป้องกัน (PM)",
+    labelMaintenanceType: "การซ่อมบำรุง",
+    placeholderSelectMaintenanceType: "-- เลือกประเภทการซ่อมบำรุง --",
+    labelOtherCustom: "อื่นๆ (ระบุเอง)",
+    placeholderSpecifyMaintenanceName: "ระบุชื่อการซ่อมบำรุง...",
+    labelChecklist: "รายการที่ต้องทำ (Checklist)",
+    labelSelectPartTypeSuggestion: "เลือกประเภทอะไหล่เพื่อดูรายการแนะนำ:",
+    placeholderSelectPartType: "-- เลือกประเภทอะไหล่ --",
+    labelSuggestedItems: "รายการแนะนำ (คลิกเพื่อเพิ่ม):",
+    placeholderAddSubItem: "เพิ่มรายการย่อย...",
+    msgNoItems: "- ยังไม่มีรายการ -",
+    labelTimeFormat: "รูปแบบเวลา",
+    labelMonthly: "รายเดือน",
+    labelWeekly: "รายสัปดาห์",
+    labelEveryMonthly: "รอบทุกๆ (เดือน)",
+    labelEveryWeekly: "ทำทุกวัน",
+    labelFirstStartDate: "วันที่เริ่มรอบแรก",
+    labelWorkLocation: "สถานที่ปฏิบัติงาน",
+    placeholderSelectZone: "-- เลือกโซน --",
+    placeholderSpecifyLocation: "ระบุสถานที่...",
+    actionSavePlan: "บันทึกแผนงาน",
+    pmExecutionTitle: "บันทึกผลการซ่อมบำรุง (PM)",
+    labelItemsCompleted: "รายการเสร็จ",
+    labelTechnician: "ผู้ปฏิบัติงาน",
+    placeholderSpecifyTechnician: "ระบุชื่อผู้ทำ",
+    placeholderChecklistValue: "ใส่ค่า/รายละเอียด (เช่น 2.5A, ปกติ, เปลี่ยนแล้ว)",
+    labelAdditionalNotes: "หมายเหตุเพิ่มเติม",
+    labelMaintenanceDetails: "รายละเอียดการซ่อมบำรุง",
+    placeholderAdditionalNotesHint: "หมายเหตุเพิ่มเติม (ถ้ามี)...",
+    placeholderMaintenanceDetailsHint: "ระบุสิ่งที่ทำ เช่น ทำความสะอาด, เปลี่ยนอะไหล่ชิ้นไหน...",
+    labelEvidencePhoto: "รูปถ่ายหลังการทำงาน (หลักฐาน)",
+    actionTakePhoto: "กดเพื่อถ่ายรูปหรืออัปโหลดรูป",
+    actionConfirmNextCycle: "ยืนยันและรันรอบถัดไป",
+    pmHistoryTitle: "ประวัติการซ่อมบำรุงและผลการตรวจเช็ค",
+    placeholderSearchHistory: "ค้นหาช่าง, รายละเอียด...",
+    filterAllLocations: "ทุกสถานที่",
+    filterAllMachines: "ทุกเครื่องจักร",
+    filterAllTime: "ทุกช่วงเวลา",
+    labelUrgentRepair: "ซ่อมเร่งด่วน",
+    msgLoadingHistory: "กำลังโหลดประวัติ...",
+    msgNoMatchingHistory: "ไม่พบข้อมูลประวัติที่ตรงกับเงื่อนไข",
+    pmHistoryModalTitle: "ประวัติการซ่อมบำรุงเชิงป้องกัน (PM)",
+    msgNoHistoryForItem: "ยังไม่มีประวัติการซ่อมบำรุงสำหรับรายการนี้",
+    labelWorkDetails: "รายละเอียดการทำงาน",
+    labelAuditChecklist: "รายการตรวจเช็ค (Audit Checklist)",
+    labelEvidencePhotoShort: "รูปถ่ายหลักฐาน",
+    actionCloseWindow: "ปิดหน้าต่าง",
+    msgAddMachineSubtitle: "กรอกข้อมูลเครื่องจักรใหม่",
+    labelNoAutoCycle: "ไม่ใช้การตั้งรอบอัตโนมัติ",
+    labelFirebaseStatus: "สถานะ Firebase",
+    statusConnected: "เชื่อมต่อแล้ว",
+    statusOffline: "ออฟไลน์",
+    labelProjectID: "รหัสโปรเจกต์ (Project ID)",
+    labelAuthDomain: "โดเมนรับรองสิทธิ์ (Auth Domain)",
+    labelAPIKey: "รหัส API (API Key)",
+    labelModularSDK: "v9.0.0 (Modular SDK)",
+    statFoundHistoryPrefix: "พบประวัติทั้งหมด",
+    statFoundHistorySuffix: "รายการ",
+    daySun: "อา",
+    dayMon: "จ",
+    dayTue: "อ",
+    dayWed: "พ",
+    dayThu: "พฤ",
+    dayFri: "ศ",
+    daySat: "ส",
+    textEveryMonths: "รอบทุก {count} เดือน",
+    msgAutoScheduleHint: "ตารางเวลาจะถูกสร้างขึ้นอัตโนมัติเมื่อกดบันทึก",
+    msgEnterMachineName: "กรุณาระบุชื่อเครื่องจักร",
+    actionConfirm: "ยืนยัน",
+    notificationAlerts: "การแจ้งเตือน",
+    labelActionRequired: "ต้องดำเนินการ",
+    scannerTitle: "เครื่องสแกน QR",
+    scannerInitializing: "กำลังเริ่มต้นกล้อง...",
+    scannerAccessDenied: "การเข้าถึงกล้องถูกปฏิเสธ",
+    scannerTryAgain: "ลองอีกครั้งในภายหลัง",
+    scannerInstructions: "หันกล้องไปที่รหัส QR ของเครื่องจักรหรืออะไหล่เพื่อดูรายละเอียดโดยอัตโนมัติ",
+    scannerScannedContent: "เนื้อหาที่สแกน",
+    labelViewFullscreen: "ดูภาพเต็มจอ",
+    altImage: "รูปภาพ",
 };
 
 const en: TranslationKeys = {
@@ -796,6 +1206,18 @@ const en: TranslationKeys = {
     auditOnTimeRate: "On-time Completion Rate",
     auditActiveIssues: "Active Issues",
     auditAvailability: "Availability",
+    auditStatus: "Audit Status",
+    auditReady: "READY / COMPLIANT",
+    auditTarget: "Monthly PM Target: {target}%",
+    auditMeasured: "Measured against PM scheduled dates",
+    auditMachinesMonitorized: "{count} Machines Monitorized",
+    auditLowStock: "{count} Low Stock",
+    auditInRepair: "{count} In-Repair",
+    auditPartLocation: "PART NAME & LOCATION",
+    auditQtyMin: "QTY / MIN",
+    auditStockNormal: "Stock Levels Normal",
+    auditValidationActive: "Automated audit validation active.",
+    auditValidationDesc: "All maintenance records are timestamped and signed by the assigned technician.",
 
     // Stats
     statTotalParts: "Part Names",
@@ -831,6 +1253,35 @@ const en: TranslationKeys = {
     filterShowResults: "Showing:",
     filterOf: "of",
     filterRecords: "records",
+    machineCount: "{count} Machines",
+    msgNoMachines: "No machines found. Add parts to see machines here.",
+    statusActive: "Active",
+    statusInStock: "In Stock",
+    statusLowStock: "Low Stock",
+    labelClass: "Class",
+    historyItem: "Item History",
+    msgNoHistory: "No maintenance history yet",
+    scheduleDescription: "Preventive Maintenance (PM) Schedule",
+    actionManagePM: "Manage PM Plans",
+    msgOverdueAlert: "Items are due or overdue for maintenance!",
+    msgActionRequired: "Please perform the tasks and record results.",
+    msgLoadingPlans: "Loading plans...",
+    labelDue: "Due: {date}",
+    labelEveryDay: "Every {day}",
+    labelOverdueBy: "Overdue by {days} days",
+    labelToday: "Today",
+    labelInDays: "In {days} days",
+    actionCloseWork: "Close Work",
+    msgNoPlans: "No maintenance plans at this time",
+    modalSelectMachinePM: "Select Machine for PM Plan",
+    msgNoMachineLocation: "No machines found in this location",
+    modalConfirmDeletePM: "Confirm PM Plan Deletion",
+    modalAreYouSure: "Are you sure?",
+    modalDeletePMConfirm: "Are you sure you want to delete the plan \"{name}\"? This action cannot be undone.",
+    statusOverdueLabel: "Overdue",
+    statusTodayLabel: "Today!",
+    statusUpcomingLabel: "Upcoming",
+    statusOnTrackLabel: "On Track",
 
     // Table Headers
     tableImage: "IMAGE",
@@ -1016,7 +1467,6 @@ const en: TranslationKeys = {
     confirmDeleteTitle: "Confirm Deletion",
     confirmDeleteMessage: "Are you sure you want to delete this item?",
     confirmDeleteMessageDetail: "Deleting: {name} cannot be undone.",
-    statusLowStock: "Low Stock",
 
     // Placeholders
     placeholderMachine: "e.g. Pie Line",
@@ -1042,37 +1492,6 @@ const en: TranslationKeys = {
     partsInventoryTitle: "Spare Parts Inventory",
     partsItemsCount: "{count} Items",
     partsCategoriesCount: "{count} Categories",
-
-    // Schedule & Calendar
-    scheduleCalendarView: "Calendar View",
-    scheduleListView: "List View",
-    calendarToday: "Today",
-    calendarMon: "Mon",
-    calendarTue: "Tue",
-    calendarWed: "Wed",
-    calendarThu: "Thu",
-    calendarFri: "Fri",
-    calendarSat: "Sat",
-    calendarSun: "Sun",
-    calendarNoTasks: "No maintenance tasks",
-
-    // Notifications
-    notificationTitle: "Notifications",
-    notificationEmpty: "No new notifications",
-    notificationLowStockMessage: "{part} only {qty} {unit} remaining",
-    notificationPmUpcomingTitle: "Upcoming Maintenance",
-    notificationPmUpcomingMessage: "{machine} is due in {days} days",
-    notificationPmTodayTitle: "Maintenance Due Today",
-    notificationPmTodayMessage: "{machine} is due today",
-    notificationPmOverdueTitle: "Overdue Maintenance",
-    notificationPmOverdueMessage: "{machine} is overdue since {date}",
-    notificationLowStock: "Low Stock: {name}",
-
-    notificationUpcomingPM: "Maintenance in {days} days: {name}",
-    notificationDueToday: "Due Today: {name}",
-    notificationRequestTitle: "Enable Notifications",
-    notificationRequestDesc: "Get notified immediately when parts are low or maintenance is due.",
-    notificationEnable: "Enable",
     partsLowStockAlert: "Low Stock Alert ({count})",
     partsLowStockDesc: "The following items are below threshold. Restock needed.",
     partsNoSpec: "No spec details",
@@ -1106,6 +1525,201 @@ const en: TranslationKeys = {
     historyPerformedBy: "Performed By",
     historyPerformedAt: "Performed At",
     historyClose: "Close History",
+
+    // Schedule & Calendar
+    scheduleCalendarView: "Calendar View",
+    scheduleListView: "List View",
+    calendarToday: "Today",
+    calendarMon: "Mon",
+    calendarTue: "Tue",
+    calendarWed: "Wed",
+    calendarThu: "Thu",
+    calendarFri: "Fri",
+    calendarSat: "Sat",
+    calendarSun: "Sun",
+    calendarNoTasks: "No maintenance tasks",
+
+    // Notifications
+    notificationTitle: "Notifications",
+    notificationEmpty: "No new notifications",
+    notificationLowStockMessage: "{part} only {qty} {unit} remaining",
+    notificationPmUpcomingTitle: "Upcoming Maintenance",
+    notificationPmUpcomingMessage: "{machine} is due in {days} days",
+    notificationPmTodayTitle: "Maintenance Due Today",
+    notificationPmTodayMessage: "{machine} is due today",
+    notificationPmOverdueTitle: "Overdue Maintenance",
+    notificationPmOverdueMessage: "{machine} is overdue since {date}",
+    notificationLowStock: "Low Stock: {name}",
+    notificationUpcomingPM: "Maintenance in {days} days: {name}",
+    notificationDueToday: "Due Today: {name}",
+    notificationRequestTitle: "Enable Notifications",
+    notificationRequestDesc: "Get notified immediately when parts are low or maintenance is due.",
+    notificationEnable: "Enable",
+
+    // User Management
+    userManageTitle: "User Management",
+    userTotalCount: "{count} Users",
+    userPendingCount: "{count} Pending",
+    userTabAll: "All Users",
+    userTabPending: "Pending Approval",
+    userRoleAdmin: "Admin",
+    userRoleSupervisor: "Supervisor",
+    userRoleTechnician: "Technician",
+    userRoleViewer: "Viewer",
+    userStatusDeactivated: "Deactivated",
+    userActionApprove: "Approve",
+    userActionReject: "Reject",
+    userConfirmReject: "Reject this user?",
+    userEditTitle: "Edit User Information",
+    userApproveTitle: "Approve User",
+    userLabelNickname: "Nickname",
+    userLabelRole: "Role",
+    userLabelDisplayName: "Display Name",
+    userLabelDepartment: "Department",
+    userRequestedAt: "Requested At",
+    userNoPending: "No users pending approval",
+    labelLocation: "Location",
+    labelNormal: "Normal",
+    labelThreshold: "Threshold",
+
+    // Analytics Page
+    analyticsSubtitle: "Maintenance Data Analysis",
+    analyticsMonthlyMaintenance: "Monthly Maintenance",
+    analyticsPartsByCategory: "Parts by Category",
+    analyticsDowntimeHours: "Downtime Hours",
+    analyticsVibrationTrend: "Vibration Trend (mm/s)",
+    analyticsTemperatureTrend: "Motor Temperature Trend (°C)",
+    analyticsMotorTemp: "Motor Temperature",
+    analyticsShouldCheck: "Should Check",
+    analyticsTempRising: "Temperature is rising - Recommended to check cooling system",
+    analyticsDowntimeTitle: "Downtime Loss",
+    analyticsEfficiencyTitle: "Work Efficiency",
+    analyticsEfficiencyROI: "ROI from PM",
+    analyticsAdvancedCost: "Advanced Cost Analysis (Phase 4)",
+    analyticsCostAnalysisDesc: "Analysis of spare parts cost vs. downtime",
+    analyticsAccumulatedCost: "Accumulated Parts Cost (This Month)",
+    analyticsDowntimeLoss: "Downtime Loss",
+    analyticsAiInsight: "AI Insight",
+    analyticsEfficiencyOpt: "Efficiency Optimization",
+    analyticsDownloadSchedule: "Schedule (PDF)",
+    analyticsMonthlyReport: "Monthly Report",
+    analyticsGenerateReport: "Generate Report",
+    analyticsGenerating: "Generating...",
+    analyticsReportReady: "Report Generated",
+    analyticsReportDesc: "Monthly Report for January 2026 has been generated and is ready for download.",
+    analyticsPreventive: "Preventive",
+    analyticsCorrective: "Corrective",
+    analyticsOilChange: "Oil Change",
+    analyticsAxisX: "Axis X",
+    analyticsAxisY: "Axis Y",
+    analyticsAxisZ: "Axis Z",
+
+    // Generic Actions/Labels
+    language: "en",
+    actionSignOut: "Sign Out",
+    actionManageUsers: "Manage Users",
+    actionGoToDashboard: "Return to Dashboard",
+    actionRegister: "Submit Registration",
+    labelNoImage: "No Image",
+    labelAll: "All",
+    predictiveMetricsNormal: "Normal",
+    userRegisterTitle: "Registration",
+    userRegisterSubtitle: "Request access to the Parts Management system",
+    userPendingApprovalTitle: "Account Pending Approval",
+    userPendingApprovalDesc: "Please wait for an administrator to review and approve your access.",
+    msgWaitApproval: "Waiting for authorization review",
+    altUser: "User",
+    msgRequiredInfo: "Required Information",
+    msgSelectMachine: "Please select a machine",
+    msgSpecifyDetails: "Please specify maintenance details",
+    msgNoAccess: "Access Denied",
+    msgCheckRules: "Please check Firestore security rules",
+    msgSavingData: "Saving data...",
+    msgMaintenanceDocHint: "Data will be recorded for future comparison and trend analysis.",
+    placeholderMaintenanceDetails: "Describe maintenance details, problems found, and solutions.",
+    actionUploadPhoto: "Upload Photo",
+    stockOtherGeneral: "Other / General Use",
+    stockOptionalRecommended: "(Optional but recommended)",
+    actionPMSettings: "Auto PM Settings",
+    pmConfigTitle: "PM Plan Configuration",
+    labelMaintenanceType: "Maintenance Type",
+    placeholderSelectMaintenanceType: "-- Select Maintenance Type --",
+    labelOtherCustom: "Other (Custom)",
+    placeholderSpecifyMaintenanceName: "Specify maintenance name...",
+    labelChecklist: "Checklist Items",
+    labelSelectPartTypeSuggestion: "Select part type for suggestions:",
+    placeholderSelectPartType: "-- Select Part Type --",
+    labelSuggestedItems: "Suggested Items (Click to add):",
+    placeholderAddSubItem: "Add sub-item...",
+    msgNoItems: "- No items -",
+    labelTimeFormat: "Time Format",
+    labelMonthly: "Monthly",
+    labelWeekly: "Weekly",
+    labelEveryMonthly: "Every (Months)",
+    labelEveryWeekly: "Every Day",
+    labelFirstStartDate: "First Cycle Start Date",
+    labelWorkLocation: "Work Location",
+    placeholderSelectZone: "-- Select Zone --",
+    placeholderSpecifyLocation: "Specify location...",
+    actionSavePlan: "Save Plan",
+    pmExecutionTitle: "Record PM Result",
+    labelItemsCompleted: "Items Completed",
+    labelTechnician: "Technician",
+    placeholderSpecifyTechnician: "Specify technician name...",
+    placeholderChecklistValue: "Enter value/details (e.g. 2.5A, Normal, Replaced)",
+    labelAdditionalNotes: "Additional Notes",
+    labelMaintenanceDetails: "Maintenance Details",
+    placeholderAdditionalNotesHint: "Additional notes (if any)...",
+    placeholderMaintenanceDetailsHint: "Specify actions (e.g., cleaned, replaced parts)...",
+    labelEvidencePhoto: "Post-Work Photo (Evidence)",
+    actionTakePhoto: "Take a photo or upload",
+    actionConfirmNextCycle: "Confirm and Start Next Cycle",
+    pmHistoryTitle: "Maintenance History & Audit Results",
+    placeholderSearchHistory: "Search technician, details...",
+    filterAllLocations: "All Locations",
+    filterAllMachines: "All Machines",
+    filterAllTime: "All Time periods",
+    labelUrgentRepair: "Urgent Repair",
+    msgLoadingHistory: "Loading history...",
+    msgNoMatchingHistory: "No history found matching the criteria.",
+    pmHistoryModalTitle: "Preventive Maintenance (PM) History",
+    msgNoHistoryForItem: "No maintenance history found for this item",
+    labelWorkDetails: "Work Details",
+    labelAuditChecklist: "Audit Checklist",
+    labelEvidencePhotoShort: "Evidence Photo",
+    actionCloseWindow: "Close Window",
+    msgAddMachineSubtitle: "Enter new machine details",
+    labelNoAutoCycle: "No automatic cycle",
+    labelFirebaseStatus: "Firebase Status",
+    statusConnected: "Connected",
+    statusOffline: "Offline",
+    labelProjectID: "Project ID",
+    labelAuthDomain: "Auth Domain",
+    labelAPIKey: "API Key",
+    labelModularSDK: "v9.0.0 (Modular SDK)",
+    statFoundHistoryPrefix: "Found total",
+    statFoundHistorySuffix: "records",
+    daySun: "Sun",
+    dayMon: "Mon",
+    dayTue: "Tue",
+    dayWed: "Wed",
+    dayThu: "Thu",
+    dayFri: "Fri",
+    daySat: "Sat",
+    textEveryMonths: "Every {count} months",
+    msgAutoScheduleHint: "Schedule will be generated automatically upon saving",
+    msgEnterMachineName: "Please enter machine name",
+    actionConfirm: "Confirm",
+    notificationAlerts: "Alerts",
+    labelActionRequired: "Action Required",
+    scannerTitle: "QR Scanner",
+    scannerInitializing: "Initializing Camera...",
+    scannerAccessDenied: "Camera Access Denied",
+    scannerTryAgain: "Try Again Later",
+    scannerInstructions: "Point your camera at a Machine or Part QR code to view details automatically.",
+    scannerScannedContent: "Scanned Content",
+    labelViewFullscreen: "View Fullscreen",
+    altImage: "Image",
 };
 
 export const translations: Record<Language, TranslationKeys> = {

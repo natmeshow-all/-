@@ -46,7 +46,7 @@ export default function ScannerModal({ isOpen, onClose }: ScannerModalProps) {
                     );
                 } catch (err: any) {
                     console.error("Camera error:", err);
-                    setError(err?.message || "Could not access camera");
+                    setError(err?.message || t("scannerAccessDenied"));
                 }
             };
 
@@ -72,11 +72,11 @@ export default function ScannerModal({ isOpen, onClose }: ScannerModalProps) {
                 router.push(url.pathname + url.search);
                 onClose();
             } else {
-                success("Scanned Content", text);
+                success(t("scannerScannedContent"), text);
             }
         } catch (e) {
             // Not a URL, display or check ID patterns
-            success("Scanned Content", text);
+            success(t("scannerScannedContent"), text);
         }
     };
 
@@ -89,7 +89,7 @@ export default function ScannerModal({ isOpen, onClose }: ScannerModalProps) {
                 <div className="p-4 border-b border-border-light flex items-center justify-between bg-bg-tertiary/50">
                     <div className="flex items-center gap-2">
                         <CameraIcon className="text-primary" size={20} />
-                        <h3 className="font-bold text-text-primary">QR Scanner</h3>
+                        <h3 className="font-bold text-text-primary">{t("scannerTitle")}</h3>
                     </div>
                     <button
                         onClick={onClose}
@@ -106,7 +106,7 @@ export default function ScannerModal({ isOpen, onClose }: ScannerModalProps) {
                     {!scannerLoaded && !error && (
                         <div className="absolute inset-0 flex flex-col items-center justify-center gap-3">
                             <RefreshCwIcon className="text-primary animate-spin" size={32} />
-                            <p className="text-sm text-text-muted">Initializing Camera...</p>
+                            <p className="text-sm text-text-muted">{t("scannerInitializing")}</p>
                         </div>
                     )}
 
@@ -116,14 +116,14 @@ export default function ScannerModal({ isOpen, onClose }: ScannerModalProps) {
                                 <XIcon className="text-accent-red" size={32} />
                             </div>
                             <div>
-                                <h4 className="font-bold text-text-primary mb-1">Camera Access Denied</h4>
+                                <h4 className="font-bold text-text-primary mb-1">{t("scannerAccessDenied")}</h4>
                                 <p className="text-xs text-text-muted">{error}</p>
                             </div>
                             <button
                                 onClick={onClose}
                                 className="btn btn-outline text-xs"
                             >
-                                Try Again Later
+                                {t("scannerTryAgain")}
                             </button>
                         </div>
                     )}
@@ -148,14 +148,10 @@ export default function ScannerModal({ isOpen, onClose }: ScannerModalProps) {
                 {/* Footer Instructions */}
                 <div className="p-4 text-center">
                     <p className="text-xs text-text-muted">
-                        Point your camera at a Machine or Part QR code to view details automatically.
+                        {t("scannerInstructions")}
                     </p>
                 </div>
             </div>
         </div>
     );
 }
-
-// Add these to local CSS or globals if scanner styling is needed
-// .animate-scan-line { animation: scan 3s infinite ease-in-out; }
-// @keyframes scan { 0%, 100% { top: 0%; } 50% { top: 100%; } }

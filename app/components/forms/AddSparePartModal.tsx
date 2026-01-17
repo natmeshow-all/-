@@ -122,7 +122,7 @@ export default function AddSparePartModal({ isOpen, onClose, onSuccess }: AddSpa
                             ) : (
                                 <>
                                     <UploadIcon size={24} className="text-text-muted group-hover:text-primary mb-2 transition-colors" />
-                                    <span className="text-xs text-text-muted">Upload Photo</span>
+                                    <span className="text-xs text-text-muted">{t("actionUploadPhoto")}</span>
                                 </>
                             )}
                             <input

@@ -78,7 +78,7 @@ export default function PMExecutionModal({ isOpen, onClose, plan, onSuccess }: P
 
     // Build details string from checklist results
     const buildDetailsString = (): string => {
-        const cycleInfo = plan.scheduleType === 'weekly' ? '[รอบรายสัปดาห์]' : `[รอบราย ${plan.cycleMonths || 1} เดือน]`;
+        const cycleInfo = plan.scheduleType === 'weekly' ? `[${t("labelWeekly")}]` : `[${t("labelEveryMonthly")} ${plan.cycleMonths || 1} ${t("labelMonths")}]`;
 
         if (!plan?.checklistItems || plan.checklistItems.length === 0) {
             return `${cycleInfo}\n${additionalNotes}`;
@@ -92,7 +92,7 @@ export default function PMExecutionModal({ isOpen, onClose, plan, onSuccess }: P
         }).join("\n");
 
         return additionalNotes
-            ? `${cycleInfo}\n${itemDetails}\n\n[หมายเหตุเพิ่มเติม]\n${additionalNotes}`
+            ? `${cycleInfo}\n${itemDetails}\n\n[${t("labelAdditionalNotes")}]\n${additionalNotes}`
             : `${cycleInfo}\n${itemDetails}`;
     };
 
@@ -110,10 +110,6 @@ export default function PMExecutionModal({ isOpen, onClose, plan, onSuccess }: P
                 value: checklistResults[index]?.value || ""
             }));
 
-            // Fetch machine to get its current zone if not in record
-            // Since we already have machineName, let's assume we might needs zone too
-            // For now, if we don't have zone in PMPlan, we can lookup or just pass it if we have it.
-            // Let's check machines once in useEffect to get the zone.
             const machineZone = plan.locationType === 'machine_zone' ? plan.customLocation : undefined;
 
             await completePMTask(
@@ -148,7 +144,7 @@ export default function PMExecutionModal({ isOpen, onClose, plan, onSuccess }: P
     const totalItems = plan?.checklistItems?.length || 0;
 
     return (
-        <Modal isOpen={isOpen} onClose={onClose} title="บันทึกผลการซ่อมบำรุง (PM)">
+        <Modal isOpen={isOpen} onClose={onClose} title={t("pmExecutionTitle")}>
             <div className="space-y-5 max-h-[75vh] overflow-y-auto custom-scrollbar pr-1">
                 {/* Header Information */}
                 <div className="p-4 bg-bg-tertiary rounded-xl border border-white/5 space-y-3">
@@ -163,14 +159,14 @@ export default function PMExecutionModal({ isOpen, onClose, plan, onSuccess }: P
                         {hasChecklistItems && (
                             <div className="text-right">
                                 <span className="text-lg font-bold text-accent-blue">{completedCount}/{totalItems}</span>
-                                <p className="text-[10px] text-text-muted">รายการเสร็จ</p>
+                                <p className="text-[10px] text-text-muted">{t("labelItemsCompleted")}</p>
                             </div>
                         )}
                     </div>
                     <div className="flex items-center gap-4 text-xs pt-2 border-t border-white/5">
                         <div className="flex items-center gap-1.5 text-text-muted">
                             <ClockIcon size={12} />
-                            <span>รอบทุก {plan.cycleMonths || 1} เดือน</span>
+                            <span>{t("textEveryMonths", { count: plan.cycleMonths || 1 })}</span>
                         </div>
                     </div>
                 </div>
@@ -179,13 +175,12 @@ export default function PMExecutionModal({ isOpen, onClose, plan, onSuccess }: P
                     {/* Technician Name */}
                     <div className="space-y-2">
                         <label className="text-xs font-semibold text-text-muted uppercase tracking-wider flex items-center gap-2">
-                            <UserIcon size={14} />
-                            ผู้ปฏิบัติงาน
+                            {t("labelTechnician")}
                         </label>
                         <input
                             type="text"
                             required
-                            placeholder="ระบุชื่อผู้ทำ"
+                            placeholder={t("placeholderSpecifyTechnician")}
                             className="input-field w-full"
                             value={technician}
                             onChange={(e) => setTechnician(e.target.value)}
@@ -197,7 +192,7 @@ export default function PMExecutionModal({ isOpen, onClose, plan, onSuccess }: P
                         <div className="space-y-3">
                             <label className="text-xs font-semibold text-text-muted uppercase tracking-wider flex items-center gap-2">
                                 <CheckCircleIcon size={14} />
-                                รายการที่ต้องทำ ({completedCount}/{totalItems})
+                                {t("labelChecklist")} ({completedCount}/{totalItems})
                             </label>
                             <div className="space-y-2">
                                 {plan.checklistItems!.map((item, index) => (
@@ -234,7 +229,7 @@ export default function PMExecutionModal({ isOpen, onClose, plan, onSuccess }: P
                                                 {/* Value input field */}
                                                 <input
                                                     type="text"
-                                                    placeholder="ใส่ค่า/รายละเอียด (เช่น 2.5A, ปกติ, เปลี่ยนแล้ว)"
+                                                    placeholder={t("placeholderChecklistValue")}
                                                     className="input-field w-full text-sm py-2"
                                                     value={checklistResults[index]?.value || ""}
                                                     onChange={(e) => handleChecklistChange(index, "value", e.target.value)}
@@ -250,14 +245,13 @@ export default function PMExecutionModal({ isOpen, onClose, plan, onSuccess }: P
                     {/* Additional Notes (if no checklist or for extra notes) */}
                     <div className="space-y-2">
                         <label className="text-xs font-semibold text-text-muted uppercase tracking-wider flex items-center gap-2">
-                            <FileTextIcon size={14} />
-                            {hasChecklistItems ? 'หมายเหตุเพิ่มเติม' : 'รายละเอียดการซ่อมบำรุง'}
+                            {hasChecklistItems ? t("labelAdditionalNotes") : t("labelMaintenanceDetails")}
                         </label>
                         <textarea
                             required={!hasChecklistItems}
                             placeholder={hasChecklistItems
-                                ? "หมายเหตุเพิ่มเติม (ถ้ามี)..."
-                                : "ระบุสิ่งที่ทำ เช่น ทำความสะอาด, เปลี่ยนอะไหล่ชิ้นไหน..."
+                                ? t("placeholderAdditionalNotesHint")
+                                : t("placeholderMaintenanceDetailsHint")
                             }
                             className="input-field w-full min-h-[80px] py-3 resize-none"
                             value={additionalNotes}
@@ -268,8 +262,7 @@ export default function PMExecutionModal({ isOpen, onClose, plan, onSuccess }: P
                     {/* Photo Evidence */}
                     <div className="space-y-2">
                         <label className="text-xs font-semibold text-text-muted uppercase tracking-wider flex items-center gap-2">
-                            <CameraIcon size={14} />
-                            รูปถ่ายหลังการทำงาน (หลักฐาน)
+                            {t("labelEvidencePhoto")}
                         </label>
 
                         {!imagePreview ? (
@@ -279,7 +272,7 @@ export default function PMExecutionModal({ isOpen, onClose, plan, onSuccess }: P
                                 className="w-full h-28 border-2 border-dashed border-white/10 rounded-xl flex flex-col items-center justify-center gap-2 text-text-muted hover:border-accent-blue/50 hover:text-accent-blue transition-all bg-white/5"
                             >
                                 <PlusIcon size={20} />
-                                <span className="text-xs">กดเพื่อถ่ายรูปหรืออัปโหลดรูป</span>
+                                <span className="text-xs">{t("actionTakePhoto")}</span>
                             </button>
                         ) : (
                             <div className="relative w-full h-40 rounded-xl overflow-hidden border border-white/10 shadow-lg group">
@@ -313,7 +306,7 @@ export default function PMExecutionModal({ isOpen, onClose, plan, onSuccess }: P
                         <p className="text-[11px] text-accent-green/80 flex items-start gap-2 leading-relaxed">
                             <CheckCircleIcon size={14} className="mt-0.5 shrink-0" />
                             <span>
-                                เมื่อกดยืนยัน ระบบจะบันทึกประวัติ และคำนวณวันซ่อมบำรุงรอบถัดไป (ในอีก {plan.cycleMonths || 1} เดือน) ให้โดยอัตโนมัติ
+                                {t("msgAutoScheduleHint", { count: plan.cycleMonths || 1 })}
                             </span>
                         </p>
                     </div>
@@ -323,9 +316,9 @@ export default function PMExecutionModal({ isOpen, onClose, plan, onSuccess }: P
                         <button
                             type="button"
                             onClick={onClose}
-                            className="flex-1 px-4 py-3 rounded-xl bg-bg-tertiary text-text-primary font-bold hover:bg-white/10 transition-colors"
+                            className="flex-1 py-3 rounded-xl bg-bg-tertiary text-text-primary font-bold hover:bg-white/10 transition-colors"
                         >
-                            ยกเลิก
+                            {t("actionCancel")}
                         </button>
                         <button
                             type="submit"
@@ -336,8 +329,7 @@ export default function PMExecutionModal({ isOpen, onClose, plan, onSuccess }: P
                                 <div className="w-5 h-5 border-2 border-white/30 border-t-white rounded-full animate-spin" />
                             ) : (
                                 <>
-                                    <CheckCircleIcon size={18} />
-                                    ยืนยันและรันรอบถัดไป
+                                    {t("actionConfirmNextCycle")}
                                 </>
                             )}
                         </button>

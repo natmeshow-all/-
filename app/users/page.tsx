@@ -86,12 +86,12 @@ export default function UsersPage() {
             fetchData();
         } catch (error: any) {
             console.error("Error approving user:", error);
-            showError("เกิดข้อผิดพลาดในการอนุมัติ", error.message);
+            showError(t("msgError"), error.message);
         }
     };
 
     const handleReject = async (uid: string) => {
-        if (!confirm("ต้องการปฏิเสธผู้ใช้นี้?")) return;
+        if (!confirm(t("userConfirmReject"))) return;
 
         try {
             await rejectPendingUser(uid);
@@ -135,10 +135,10 @@ export default function UsersPage() {
 
     const getRoleLabel = (role: UserRole) => {
         switch (role) {
-            case "admin": return "ผู้ดูแลระบบ";
-            case "supervisor": return "หัวหน้าช่าง";
-            case "technician": return "ช่างซ่อมบำรุง";
-            case "viewer": return "ผู้ดูอย่างเดียว";
+            case "admin": return t("userRoleAdmin");
+            case "supervisor": return t("userRoleSupervisor");
+            case "technician": return t("userRoleTechnician");
+            case "viewer": return t("userRoleViewer");
         }
     };
 
@@ -162,9 +162,9 @@ export default function UsersPage() {
                             <ShieldCheckIcon size={20} className="text-accent-purple" />
                         </div>
                         <div>
-                            <h1 className="text-xl font-bold text-text-primary">จัดการผู้ใช้งาน</h1>
+                            <h1 className="text-xl font-bold text-text-primary">{t("userManageTitle")}</h1>
                             <p className="text-sm text-text-muted">
-                                {users.length} ผู้ใช้ | {pendingUsers.length} รออนุมัติ
+                                {t("userTotalCount", { count: users.length })} | {t("userPendingCount", { count: pendingUsers.length })}
                             </p>
                         </div>
                     </div>
@@ -179,7 +179,7 @@ export default function UsersPage() {
                                 ? "bg-accent-blue/20 border-accent-blue/40 text-white"
                                 : "bg-white/5 border-white/10 text-text-muted hover:bg-white/10"}`}
                     >
-                        ผู้ใช้ทั้งหมด ({users.length})
+                        {t("userTabAll")} ({users.length})
                     </button>
                     <button
                         onClick={() => setActiveTab("pending")}
@@ -188,7 +188,7 @@ export default function UsersPage() {
                                 ? "bg-accent-yellow/20 border-accent-yellow/40 text-white"
                                 : "bg-white/5 border-white/10 text-text-muted hover:bg-white/10"}`}
                     >
-                        รออนุมัติ ({pendingUsers.length})
+                        {t("userTabPending")} ({pendingUsers.length})
                         {pendingUsers.length > 0 && (
                             <span className="absolute -top-1 -right-1 w-3 h-3 bg-accent-yellow rounded-full animate-pulse" />
                         )}
@@ -236,7 +236,7 @@ export default function UsersPage() {
                                             </span>
                                             {!user.isActive && (
                                                 <span className="px-2 py-0.5 rounded text-[10px] font-bold bg-accent-red/20 text-accent-red border border-accent-red/30">
-                                                    ปิดใช้งาน
+                                                    {t("userStatusDeactivated")}
                                                 </span>
                                             )}
                                         </div>
@@ -257,7 +257,7 @@ export default function UsersPage() {
                                                     ? 'bg-accent-red/10 hover:bg-accent-red/20 text-accent-red'
                                                     : 'bg-accent-green/10 hover:bg-accent-green/20 text-accent-green'
                                                     }`}
-                                                title={user.isActive ? "ปิดใช้งาน" : "เปิดใช้งาน"}
+                                                title={user.isActive ? t("statusReadOnly") : t("actionMaintenance")}
                                             >
                                                 {user.isActive ? <XIcon size={16} /> : <CheckIcon size={16} />}
                                             </button>
@@ -273,7 +273,7 @@ export default function UsersPage() {
                         {pendingUsers.length === 0 ? (
                             <div className="text-center py-12 text-text-muted">
                                 <UserIcon size={48} className="mx-auto mb-4 opacity-30" />
-                                <p>ไม่มีผู้ใช้รออนุมัติ</p>
+                                <p>{t("userNoPending")}</p>
                             </div>
                         ) : (
                             pendingUsers.map((user) => (
@@ -311,14 +311,14 @@ export default function UsersPage() {
                                                 className="px-3 py-2 rounded-lg bg-accent-green/20 hover:bg-accent-green/30 text-accent-green text-sm font-bold transition-colors"
                                             >
                                                 <CheckIcon size={16} className="inline mr-1" />
-                                                อนุมัติ
+                                                {t("userActionApprove")}
                                             </button>
                                             <button
                                                 onClick={() => handleReject(user.uid)}
                                                 className="px-3 py-2 rounded-lg bg-accent-red/20 hover:bg-accent-red/30 text-accent-red text-sm font-bold transition-colors"
                                             >
                                                 <XIcon size={16} className="inline mr-1" />
-                                                ปฏิเสธ
+                                                {t("userActionReject")}
                                             </button>
                                         </div>
                                     </div>
@@ -335,7 +335,7 @@ export default function UsersPage() {
             <Modal
                 isOpen={!!approvalModal}
                 onClose={() => setApprovalModal(null)}
-                title="อนุมัติผู้ใช้"
+                title={t("userApproveTitle")}
             >
                 {approvalModal && (
                     <div className="space-y-4">
@@ -354,27 +354,27 @@ export default function UsersPage() {
                         </div>
 
                         <div>
-                            <label className="block text-sm font-medium text-text-muted mb-2">ชื่อเล่น</label>
+                            <label className="block text-sm font-medium text-text-muted mb-2">{t("userLabelNickname")}</label>
                             <input
                                 type="text"
                                 className="input-field w-full"
-                                placeholder="เช่น ช่างชาย"
+                                placeholder={t("placeholderTechnician")}
                                 value={approvalNickname}
                                 onChange={(e) => setApprovalNickname(e.target.value)}
                             />
                         </div>
 
                         <div>
-                            <label className="block text-sm font-medium text-text-muted mb-2">บทบาท</label>
+                            <label className="block text-sm font-medium text-text-muted mb-2">{t("userLabelRole")}</label>
                             <select
                                 className="input-field w-full"
                                 value={approvalRole}
                                 onChange={(e) => setApprovalRole(e.target.value as UserRole)}
                             >
-                                <option value="technician">ช่างซ่อมบำรุง (Technician)</option>
-                                <option value="supervisor">หัวหน้าช่าง (Supervisor)</option>
-                                <option value="viewer">ผู้ดูอย่างเดียว (Viewer)</option>
-                                <option value="admin">ผู้ดูแลระบบ (Admin)</option>
+                                <option value="technician">{t("userRoleTechnician")}</option>
+                                <option value="supervisor">{t("userRoleSupervisor")}</option>
+                                <option value="viewer">{t("userRoleViewer")}</option>
+                                <option value="admin">{t("userRoleAdmin")}</option>
                             </select>
                         </div>
 
@@ -383,13 +383,13 @@ export default function UsersPage() {
                                 onClick={() => setApprovalModal(null)}
                                 className="flex-1 py-3 rounded-xl bg-white/5 text-text-primary font-bold hover:bg-white/10 transition-colors"
                             >
-                                ยกเลิก
+                                {t("actionCancel")}
                             </button>
                             <button
                                 onClick={handleApprove}
                                 className="flex-1 py-3 rounded-xl bg-accent-green text-bg-primary font-bold hover:bg-accent-green/80 transition-colors"
                             >
-                                อนุมัติ
+                                {t("userActionApprove")}
                             </button>
                         </div>
                     </div>
@@ -400,7 +400,7 @@ export default function UsersPage() {
             <Modal
                 isOpen={!!editingUser}
                 onClose={() => setEditingUser(null)}
-                title="แก้ไขข้อมูลผู้ใช้"
+                title={t("userEditTitle")}
             >
                 {editingUser && (
                     <EditUserForm
@@ -427,6 +427,7 @@ function EditUserForm({
     onCancel: () => void;
     getRoleLabel: (role: UserRole) => string;
 }) {
+    const { t } = useLanguage();
     const [displayName, setDisplayName] = useState(user.displayName);
     const [nickname, setNickname] = useState(user.nickname || "");
     const [role, setRole] = useState<UserRole>(user.role);
@@ -448,7 +449,7 @@ function EditUserForm({
             </div>
 
             <div>
-                <label className="block text-sm font-medium text-text-muted mb-2">ชื่อที่แสดง</label>
+                <label className="block text-sm font-medium text-text-muted mb-2">{t("userLabelDisplayName")}</label>
                 <input
                     type="text"
                     className="input-field w-full"
@@ -458,18 +459,18 @@ function EditUserForm({
             </div>
 
             <div>
-                <label className="block text-sm font-medium text-text-muted mb-2">ชื่อเล่น</label>
+                <label className="block text-sm font-medium text-text-muted mb-2">{t("userLabelNickname")}</label>
                 <input
                     type="text"
                     className="input-field w-full"
-                    placeholder="เช่น ช่างชาย"
+                    placeholder={t("placeholderTechnician")}
                     value={nickname}
                     onChange={(e) => setNickname(e.target.value)}
                 />
             </div>
 
             <div>
-                <label className="block text-sm font-medium text-text-muted mb-2">แผนก</label>
+                <label className="block text-sm font-medium text-text-muted mb-2">{t("userLabelDepartment")}</label>
                 <input
                     type="text"
                     className="input-field w-full"
@@ -480,7 +481,7 @@ function EditUserForm({
             </div>
 
             <div>
-                <label className="block text-sm font-medium text-text-muted mb-2">บทบาท</label>
+                <label className="block text-sm font-medium text-text-muted mb-2">{t("userLabelRole")}</label>
                 <select
                     className="input-field w-full"
                     value={role}
@@ -498,13 +499,13 @@ function EditUserForm({
                     onClick={onCancel}
                     className="flex-1 py-3 rounded-xl bg-white/5 text-text-primary font-bold hover:bg-white/10 transition-colors"
                 >
-                    ยกเลิก
+                    {t("actionCancel")}
                 </button>
                 <button
                     onClick={() => onSave({ displayName, nickname, role, department })}
                     className="flex-1 py-3 rounded-xl bg-primary text-white font-bold hover:bg-primary-dark transition-colors"
                 >
-                    บันทึก
+                    {t("actionSave")}
                 </button>
             </div>
         </div>

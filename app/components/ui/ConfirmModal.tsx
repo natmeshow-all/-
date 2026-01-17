@@ -1,5 +1,6 @@
 import React from "react";
 import Modal from "./Modal";
+import { useLanguage } from "../../contexts/LanguageContext";
 import { AlertTriangleIcon } from "./Icons";
 
 interface ConfirmModalProps {
@@ -19,10 +20,14 @@ export default function ConfirmModal({
     onConfirm,
     title,
     message,
-    confirmText = "Confirm",
-    cancelText = "Cancel",
+    confirmText,
+    cancelText,
     isDestructive = false,
 }: ConfirmModalProps) {
+    const { t } = useLanguage();
+    const displayConfirmText = confirmText || t("actionConfirm");
+    const displayCancelText = cancelText || t("actionCancel");
+
     return (
         <Modal
             isOpen={isOpen}
@@ -33,7 +38,7 @@ export default function ConfirmModal({
             footer={
                 <>
                     <button onClick={onClose} className="btn btn-outline">
-                        {cancelText}
+                        {displayCancelText}
                     </button>
                     <button
                         onClick={() => {
@@ -42,7 +47,7 @@ export default function ConfirmModal({
                         }}
                         className={`btn ${isDestructive ? "btn-danger" : "btn-primary"}`}
                     >
-                        {confirmText}
+                        {displayConfirmText}
                     </button>
                 </>
             }
