@@ -79,6 +79,22 @@
                 "machineId",
                 "timestamp"
             ]
+        },
+        // ===== System Stats (For Usage History) =====
+        "system_stats": {
+            ".read": "auth != null && (root.child('users').child(auth.uid).child('role').val() == 'admin' || root.child('users').child(auth.uid).child('role').val() == 'supervisor')",
+            "usage_history": {
+                ".read": "auth != null",
+                ".write": "auth != null"
+            }
+        },
+        // ===== Performance Evaluations =====
+        "performance_evaluations": {
+            ".read": "auth != null && (root.child('users').child(auth.uid).child('role').val() == 'admin' || root.child('users').child(auth.uid).child('role').val() == 'supervisor')",
+            ".write": "auth != null && (root.child('users').child(auth.uid).child('role').val() == 'admin' || root.child('users').child(auth.uid).child('role').val() == 'supervisor')",
+            "$technicianId": {
+                ".read": "auth != null && (auth.uid == $technicianId || root.child('users').child(auth.uid).child('role').val() == 'admin' || root.child('users').child(auth.uid).child('role').val() == 'supervisor')"
+            }
         }
     }
 }

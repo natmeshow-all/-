@@ -29,7 +29,7 @@ import { useRouter } from "next/navigation";
 import FirebaseStatus from "../components/ui/FirebaseStatus";
 
 export default function UsersPage() {
-    const { t } = useLanguage();
+    const { t, language } = useLanguage();
     const { userProfile, isAdmin, loading: authLoading } = useAuth();
     const { success, error: showError } = useToast();
     const router = useRouter();
@@ -214,7 +214,7 @@ export default function UsersPage() {
                             {users.map((user) => (
                                 <div
                                     key={user.uid}
-                                    className={`card p-4 transition-all ${!user.isActive ? 'opacity-50' : ''}`}
+                                    className={`card p-4 transition-all duration-300 hover:scale-[1.01] hover:shadow-lg hover:border-primary/20 cursor-default ${!user.isActive ? 'opacity-50' : ''}`}
                                 >
                                     <div className="flex items-center gap-4">
                                         {user.photoURL ? (
@@ -286,7 +286,7 @@ export default function UsersPage() {
                                 </div>
                             ) : (
                                 pendingUsers.map((user) => (
-                                    <div key={user.uid} className="card p-4 border-l-4 border-l-accent-yellow">
+                                    <div key={user.uid} className="card p-4 border-l-4 border-l-accent-yellow hover:scale-[1.01] hover:shadow-lg transition-all duration-300">
                                         <div className="flex items-center gap-4">
                                             {user.photoURL ? (
                                                 <img
@@ -306,7 +306,7 @@ export default function UsersPage() {
                                                 </h3>
                                                 <p className="text-xs text-text-muted truncate">{user.email}</p>
                                                 <p className="text-[10px] text-text-muted mt-1">
-                                                    ขอเข้าใช้งาน: {new Date(user.requestedAt).toLocaleDateString('th-TH')}
+                                                    {t("userRequestedAt")}: {new Date(user.requestedAt).toLocaleDateString(language === 'th' ? 'th-TH' : 'en-US')}
                                                 </p>
                                             </div>
 
@@ -484,7 +484,7 @@ function EditUserForm({
                 <input
                     type="text"
                     className="input-field w-full"
-                    placeholder="เช่น Maintenance"
+                    placeholder={t("placeholderDepartment")}
                     value={department}
                     onChange={(e) => setDepartment(e.target.value)}
                 />

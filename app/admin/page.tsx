@@ -77,12 +77,12 @@ export default function AdminPage() {
                 {/* Dashboard Header */}
                 <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between mb-8 gap-4">
                     <div className="flex items-center gap-3">
-                        <div className="w-12 h-12 rounded-2xl bg-gradient-to-br from-accent-purple to-primary flex items-center justify-center shadow-lg shadow-primary/20">
+                        <div className="w-12 h-12 rounded-2xl bg-gradient-to-br from-accent-purple to-primary flex items-center justify-center shadow-lg shadow-primary/20 animate-pulse">
                             <ShieldCheckIcon size={24} className="text-white" />
                         </div>
                         <div>
-                            <h1 className="text-2xl font-bold text-text-primary tracking-tight">Admin Dashboard</h1>
-                            <p className="text-sm text-text-muted">Advanced System Management & Analytics</p>
+                            <h1 className="text-2xl font-bold text-text-primary tracking-tight">{t("adminDashboardTitle")}</h1>
+                            <p className="text-sm text-text-muted">{t("adminDashboardSubtitle")}</p>
                         </div>
                     </div>
                 </div>
@@ -91,33 +91,33 @@ export default function AdminPage() {
                 <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 mb-8">
                     <StatCard
                         icon={<ActivityIcon size={20} />}
-                        label="Total Access"
+                        label={t("adminStatTotalAccess")}
                         value={stats?.totalLogins.toLocaleString() || "0"}
-                        subValue="All time logins"
+                        subValue={t("adminStatTotalAccessSub")}
                         color="text-primary"
                         bgColor="bg-primary/10"
                     />
                     <StatCard
                         icon={<ChartBarIcon size={20} />}
-                        label="Daily Average"
+                        label={t("adminStatDailyAvg")}
                         value={stats?.avgLoginsPerDay.toFixed(1) || "0"}
-                        subValue="Logins per day"
+                        subValue={t("adminStatDailyAvgSub")}
                         color="text-accent-cyan"
                         bgColor="bg-accent-cyan/10"
                     />
                     <StatCard
                         icon={<UsersIcon size={20} />}
-                        label="Technicians"
+                        label={t("adminStatTechnicians")}
                         value={stats?.technicianCount.toString() || "0"}
-                        subValue="Active team members"
+                        subValue={t("adminStatTechniciansSub")}
                         color="text-accent-blue"
                         bgColor="bg-accent-blue/10"
                     />
                     <StatCard
                         icon={<StarIcon size={20} />}
-                        label="Avg Performance"
+                        label={t("adminStatAvgPerformance")}
                         value={stats?.avgPerformance ? stats.avgPerformance.toFixed(1) : "0.0"}
-                        subValue="Team quality score"
+                        subValue={t("adminStatAvgPerformanceSub")}
                         color="text-accent-yellow"
                         bgColor="bg-accent-yellow/10"
                     />
@@ -129,19 +129,19 @@ export default function AdminPage() {
                         active={activeTab === "analytics"}
                         onClick={() => setActiveTab("analytics")}
                         icon={<ChartBarIcon size={18} />}
-                        label="Analytics"
+                        label={t("adminTabAnalytics")}
                     />
                     <TabButton
                         active={activeTab === "technicians"}
                         onClick={() => setActiveTab("technicians")}
                         icon={<UserCircleIcon size={18} />}
-                        label="Technicians"
+                        label={t("adminTabTechnicians")}
                     />
                     <TabButton
                         active={activeTab === "approvals"}
                         onClick={() => setActiveTab("approvals")}
                         icon={<CheckIcon size={18} />}
-                        label="User Approvals"
+                        label={t("adminTabApprovals")}
                     />
                 </div>
 
@@ -160,14 +160,14 @@ export default function AdminPage() {
 
 function StatCard({ icon, label, value, subValue, color, bgColor }: any) {
     return (
-        <div className="card p-5 bg-bg-secondary/30 border border-white/5 hover:border-white/10 transition-all flex items-start gap-4">
-            <div className={`p-3 rounded-xl ${bgColor} ${color}`}>
+        <div className="card p-5 bg-bg-secondary/30 border border-white/5 hover:border-primary/20 hover:bg-bg-secondary/50 hover:scale-[1.02] hover:shadow-xl hover:shadow-primary/5 transition-all duration-300 flex items-start gap-4 group cursor-default">
+            <div className={`p-3 rounded-xl ${bgColor} ${color} group-hover:scale-110 group-hover:rotate-3 transition-transform duration-300`}>
                 {icon}
             </div>
             <div className="min-w-0">
                 <p className="text-xs font-medium text-text-muted mb-1">{label}</p>
                 <div className="flex items-baseline gap-2">
-                    <span className="text-2xl font-bold text-text-primary">{value}</span>
+                    <span className="text-2xl font-bold text-text-primary group-hover:text-primary transition-colors">{value}</span>
                 </div>
                 <p className="text-[10px] text-text-muted mt-1">{subValue}</p>
             </div>
@@ -179,10 +179,10 @@ function TabButton({ active, onClick, icon, label }: any) {
     return (
         <button
             onClick={onClick}
-            className={`flex items-center gap-2 px-6 py-2.5 rounded-xl text-sm font-bold transition-all whitespace-nowrap
+            className={`flex items-center gap-2 px-6 py-2.5 rounded-xl text-sm font-bold transition-all whitespace-nowrap active:scale-95
                 ${active
-                    ? "bg-primary text-white shadow-lg shadow-primary/20"
-                    : "text-text-muted hover:bg-white/5 hover:text-text-primary"}`}
+                    ? "bg-primary text-white shadow-lg shadow-primary/20 scale-105"
+                    : "text-text-muted hover:bg-white/5 hover:text-text-primary hover:scale-105"}`}
         >
             {icon}
             {label}

@@ -2,6 +2,8 @@ import React, { useState, useEffect } from "react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { useLanguage } from "../contexts/LanguageContext";
+import { useAuth } from "../contexts/AuthContext";
+import { UserRole } from "../types";
 import {
     HomeIcon,
     SettingsIcon,
@@ -14,8 +16,9 @@ import {
 
 interface NavItem {
     href: string;
-    labelKey: "navDashboard" | "navMachines" | "navParts" | "navMaintenance" | "navSchedule" | "navPredictive" | "navAudit";
+    labelKey: string;
     icon: React.FC<{ className?: string; size?: number }>;
+    roles?: UserRole[];
 }
 
 const navItems: NavItem[] = [
@@ -24,13 +27,14 @@ const navItems: NavItem[] = [
     { href: "/parts", labelKey: "navParts", icon: BoxIcon },
     { href: "/maintenance", labelKey: "navMaintenance", icon: WrenchIcon },
     { href: "/schedule", labelKey: "navSchedule", icon: CalendarIcon },
-    { href: "/predictive", labelKey: "navPredictive", icon: ActivityIcon },
-    { href: "/audit", labelKey: "navAudit", icon: CheckCircleIcon },
+    { href: "/predictive", labelKey: "navPredictive", icon: ActivityIcon, roles: ["supervisor", "admin"] },
+    { href: "/audit", labelKey: "navAudit", icon: CheckCircleIcon, roles: ["supervisor", "admin"] },
 ];
 
 export default function MobileNav() {
     const pathname = usePathname();
     const { t } = useLanguage();
+    const { hasRole } = useAuth();
     const [isVisible, setIsVisible] = useState(true);
     const [lastScrollY, setLastScrollY] = useState(0);
 
@@ -73,26 +77,33 @@ export default function MobileNav() {
             </svg>
 
             <nav
-                className={`mobile-nav lg:hidden transition-all duration-500 ease-out ${isVisible
+                className={`mobile-nav lg:hidden transition-all duration-500 ease-out shadow-2xl shadow-black/50 ${isVisible
                     ? "translate-y-0 opacity-100"
                     : "translate-y-[calc(100%+2rem)] opacity-0"
                     }`}
             >
-                {navItems.map((item) => {
-                    const isActive = pathname === item.href;
-                    const Icon = item.icon;
+                {navItems
+                    .filter(item => !item.roles || hasRole(item.roles))
+                    .map((item) => {
+                        const isActive = pathname === item.href;
+                        const Icon = item.icon;
 
-                    return (
-                        <Link
-                            key={item.href}
-                            href={item.href}
-                            className={`mobile-nav-item ${isActive ? "active" : ""}`}
-                        >
-                            <Icon className="mobile-nav-icon" size={20} />
-                            <span>{t(item.labelKey)}</span>
-                        </Link>
-                    );
-                })}
+                        return (
+                            <Link
+                                key={item.href}
+                                href={item.href}
+                                className={`mobile-nav-item transition-all duration-300 active:scale-90 ${isActive ? "active scale-110" : "opacity-70 hover:opacity-100 hover:scale-105"}`}
+                            >
+                                <div className={`relative ${isActive ? "animate-bounce-subtle" : ""}`}>
+                                    <Icon className={`mobile-nav-icon transition-colors duration-300 ${isActive ? "text-primary" : "text-text-muted"}`} size={20} />
+                                    {isActive && <div className="absolute inset-0 bg-primary/20 blur-md rounded-full -z-10" />}
+                                </div>
+                                <span className={`text-[10px] mt-1 font-bold transition-colors duration-300 ${isActive ? "text-white" : "text-text-muted"}`}>
+                                    {t(item.labelKey as any)}
+                                </span>
+                            </Link>
+                        );
+                    })}
             </nav>
         </>
     );

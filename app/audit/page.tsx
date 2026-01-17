@@ -110,7 +110,7 @@ export default function AuditPage() {
                 {/* Audit Grid */}
                 <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 mb-8">
                     {/* PM Compliance CRITICAL */}
-                    <div className="card-glass p-5 border-l-4 border-l-accent-cyan">
+                    <div className="card-glass p-5 border-l-4 border-l-accent-cyan hover:scale-[1.02] hover:shadow-xl hover:shadow-accent-cyan/10 transition-all duration-300 group cursor-default">
                         <div className="flex justify-between items-start mb-4">
                             <div>
                                 <p className="text-xs text-text-muted mb-1">{t("auditPmCompletion")}</p>
@@ -133,7 +133,7 @@ export default function AuditPage() {
                     </div>
 
                     {/* On-time Rate */}
-                    <div className="card-glass p-5 border-l-4 border-l-green-500">
+                    <div className="card-glass p-5 border-l-4 border-l-green-500 hover:scale-[1.02] hover:shadow-xl hover:shadow-green-500/10 transition-all duration-300 group cursor-default">
                         <div className="flex justify-between items-start mb-4">
                             <div>
                                 <p className="text-xs text-text-muted mb-1">{t("auditOnTimeRate")}</p>
@@ -153,7 +153,7 @@ export default function AuditPage() {
                     </div>
 
                     {/* Machine Availability */}
-                    <div className="card-glass p-5 border-l-4 border-l-accent-purple">
+                    <div className="card-glass p-5 border-l-4 border-l-accent-purple hover:scale-[1.02] hover:shadow-xl hover:shadow-accent-purple/10 transition-all duration-300 group cursor-default">
                         <div className="flex justify-between items-start mb-4">
                             <div>
                                 <p className="text-xs text-text-muted mb-1">{t("auditAvailability")}</p>
@@ -173,7 +173,7 @@ export default function AuditPage() {
                     </div>
 
                     {/* Active Issues */}
-                    <div className={`card-glass p-5 border-l-4 ${stats.activeIssues > 0 ? 'border-l-accent-yellow' : 'border-l-green-500'}`}>
+                    <div className={`card-glass p-5 border-l-4 ${stats.activeIssues > 0 ? 'border-l-accent-yellow' : 'border-l-green-500'} hover:scale-[1.02] hover:shadow-xl transition-all duration-300 group cursor-default`}>
                         <div className="flex justify-between items-start mb-4">
                             <div>
                                 <p className="text-xs text-text-muted mb-1">{t("auditActiveIssues")}</p>
@@ -226,7 +226,7 @@ export default function AuditPage() {
                                 </div>
                             ) : (
                                 filteredRecords.slice(0, 10).map((record) => (
-                                    <div key={record.id} className="card-glass p-4 hover:border-white/20 transition-all group">
+                                    <div key={record.id} className="card-glass p-4 hover:border-white/20 hover:translate-x-1 hover:shadow-lg transition-all duration-300 group cursor-pointer">
                                         <div className="flex gap-4">
                                             {record.evidenceImageUrl ? (
                                                 <div className="w-16 h-16 rounded-lg overflow-hidden flex-none border border-white/10">
@@ -284,7 +284,7 @@ export default function AuditPage() {
                                         </div>
                                         <div className="flex flex-col items-end flex-none">
                                             <span className="text-xs font-black text-accent-yellow">{part.quantity}</span>
-                                            <span className="text-[8px] text-text-muted italic">Min: {part.minStockThreshold}</span>
+                                            <span className="text-[8px] text-text-muted italic">{t("labelMin")}: {part.minStockThreshold}</span>
                                         </div>
                                     </div>
                                 ))}

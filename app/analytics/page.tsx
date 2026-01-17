@@ -5,6 +5,9 @@ import Header from "../components/Header";
 import MobileNav from "../components/MobileNav";
 import { useLanguage } from "../contexts/LanguageContext";
 import { useToast } from "../contexts/ToastContext";
+import { useAuth } from "../contexts/AuthContext";
+import { useRouter } from "next/navigation";
+import { useEffect, useState } from "react";
 import {
     BarChartIcon,
     ActivityIcon,
@@ -98,7 +101,23 @@ const CustomTooltip = ({ active, payload, label }: { active?: boolean; payload?:
 export default function AnalyticsPage() {
     const { t, tData } = useLanguage();
     const { success } = useToast();
-    const [isGenerating, setIsGenerating] = React.useState(false);
+    const { hasRole, loading: authLoading } = useAuth();
+    const router = useRouter();
+    const [isGenerating, setIsGenerating] = useState(false);
+
+    useEffect(() => {
+        if (!authLoading && !hasRole(["supervisor", "admin"])) {
+            router.push("/");
+        }
+    }, [authLoading, hasRole, router]);
+
+    if (authLoading || !hasRole(["supervisor", "admin"])) {
+        return (
+            <div className="min-h-screen bg-bg-primary flex items-center justify-center">
+                <div className="w-8 h-8 border-2 border-primary border-t-transparent rounded-full animate-spin" />
+            </div>
+        );
+    }
 
     const handleGenerateReport = () => {
         setIsGenerating(true);
@@ -174,9 +193,9 @@ export default function AnalyticsPage() {
                                         wrapperStyle={{ fontSize: "12px" }}
                                         formatter={(value) => <span className="text-text-secondary">{tData(value)}</span>}
                                     />
-                                    <Bar dataKey="preventive" name={t("analyticsPreventive")} fill="#10B981" radius={[4, 4, 0, 0]} />
-                                    <Bar dataKey="corrective" name={t("analyticsCorrective")} fill="#EF4444" radius={[4, 4, 0, 0]} />
-                                    <Bar dataKey="oilChange" name={t("analyticsOilChange")} fill="#F59E0B" radius={[4, 4, 0, 0]} />
+                                    <Bar dataKey="preventive" name={t("analyticsPreventive")} fill="var(--color-accent-green)" radius={[4, 4, 0, 0]} />
+                                    <Bar dataKey="corrective" name={t("analyticsCorrective")} fill="var(--color-accent-red)" radius={[4, 4, 0, 0]} />
+                                    <Bar dataKey="oilChange" name={t("analyticsOilChange")} fill="var(--color-accent-yellow)" radius={[4, 4, 0, 0]} />
                                 </BarChart>
                             </ResponsiveContainer>
                         </div>
@@ -310,21 +329,21 @@ export default function AnalyticsPage() {
 
                 {/* Summary Cards */}
                 <div className="grid grid-cols-2 lg:grid-cols-4 gap-4 mt-6">
-                    <div className="card text-center animate-fade-in stagger-1">
+                    <div className="card text-center animate-fade-in stagger-1 hover:scale-105 hover:shadow-xl hover:shadow-accent-green/5 transition-all duration-300 cursor-default">
                         <p className="text-3xl font-bold text-accent-green">85%</p>
-                        <p className="text-sm text-text-muted">Preventive Rate</p>
+                        <p className="text-sm text-text-muted">{t("analyticsPreventiveRate")}</p>
                     </div>
-                    <div className="card text-center animate-fade-in stagger-2">
-                        <p className="text-3xl font-bold text-accent-yellow">56.3 ชม.</p>
-                        <p className="text-sm text-text-muted">Total Downtime</p>
+                    <div className="card text-center animate-fade-in stagger-2 hover:scale-105 hover:shadow-xl hover:shadow-accent-yellow/5 transition-all duration-300 cursor-default">
+                        <p className="text-3xl font-bold text-accent-yellow">56.3 {t("labelHoursShort")}</p>
+                        <p className="text-sm text-text-muted">{t("analyticsTotalDowntime")}</p>
                     </div>
-                    <div className="card text-center animate-fade-in stagger-3">
+                    <div className="card text-center animate-fade-in stagger-3 hover:scale-105 hover:shadow-xl hover:shadow-primary/5 transition-all duration-300 cursor-default">
                         <p className="text-3xl font-bold text-primary-light">98%</p>
-                        <p className="text-sm text-text-muted">Completion Rate</p>
+                        <p className="text-sm text-text-muted">{t("analyticsCompletionRate")}</p>
                     </div>
-                    <div className="card text-center animate-fade-in stagger-4">
+                    <div className="card text-center animate-fade-in stagger-4 hover:scale-105 hover:shadow-xl hover:shadow-accent-purple/5 transition-all duration-300 cursor-default">
                         <p className="text-3xl font-bold text-accent-purple">130</p>
-                        <p className="text-sm text-text-muted">Parts Tracked</p>
+                        <p className="text-sm text-text-muted">{t("analyticsPartsTracked")}</p>
                     </div>
                 </div>
 

@@ -370,21 +370,21 @@ export default function Dashboard() {
           <div className="flex flex-wrap gap-2 mt-4">
             <button
               onClick={() => { if (checkAuth()) setAddPartModalOpen(true); }}
-              className="flex-1 min-w-[120px] btn btn-active bg-accent-green text-bg-primary hover:bg-accent-green/90 border-none h-8 text-[11px] font-bold"
+              className="flex-1 min-w-[120px] btn btn-active bg-accent-green text-bg-primary hover:bg-accent-green/90 hover:scale-105 active:scale-95 border-none h-8 text-[11px] font-bold transition-all shadow-sm hover:shadow-accent-green/20"
             >
               <PlusIcon size={14} className="mr-1" />
               {t("actionAddPart")}
             </button>
             <button
               onClick={() => { if (checkAuth()) setMaintenanceModalOpen(true); }}
-              className="flex-1 min-w-[120px] btn btn-active bg-accent-yellow text-bg-primary hover:bg-accent-yellow/90 border-none h-8 text-[11px] font-bold"
+              className="flex-1 min-w-[120px] btn btn-active bg-accent-yellow text-bg-primary hover:bg-accent-yellow/90 hover:scale-105 active:scale-95 border-none h-8 text-[11px] font-bold transition-all shadow-sm hover:shadow-accent-yellow/20"
             >
               <HistoryIcon size={14} className="mr-1" />
               {t("actionRecordMaintenance")}
             </button>
             <button
               onClick={() => { if (checkAuth()) setHistoryModalOpen(true); }}
-              className="flex-1 min-w-[120px] btn btn-active bg-accent-purple text-white hover:bg-accent-purple/90 border-none h-8 text-[11px] font-bold"
+              className="flex-1 min-w-[120px] btn btn-active bg-accent-purple text-white hover:bg-accent-purple/90 hover:scale-105 active:scale-95 border-none h-8 text-[11px] font-bold transition-all shadow-sm hover:shadow-accent-purple/20"
             >
               <RefreshIcon size={14} className="mr-1" />
               {t("actionMaintenanceHistory")}

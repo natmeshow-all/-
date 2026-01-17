@@ -77,45 +77,53 @@ export default function UserApprovalTab() {
 
     return (
         <div className="space-y-6">
-            <div className="flex items-center justify-between">
-                <h2 className="text-lg font-bold text-text-primary">Pending Approvals</h2>
-                <span className="text-xs text-text-muted">{pendingUsers.length} waiting</span>
+            <div className="flex items-center justify-between px-1">
+                <h2 className="text-lg font-bold text-text-primary">{t("userTabPending")}</h2>
+                <span className="text-xs text-text-muted">{pendingUsers.length} {t("userTabPending")}</span>
             </div>
 
             {pendingUsers.length === 0 ? (
-                <div className="card p-12 bg-bg-secondary/20 border-white/5 flex flex-col items-center justify-center text-center">
-                    <UserIcon size={48} className="text-text-muted opacity-20 mb-4" />
-                    <p className="text-text-muted italic">All clear! No pending requests.</p>
+                <div className="card p-12 bg-bg-secondary/20 border-white/5 flex flex-col items-center justify-center text-center animate-fade-in">
+                    <div className="w-16 h-16 rounded-full bg-bg-tertiary flex items-center justify-center mb-4">
+                        <CheckIcon size={32} className="text-accent-green opacity-40" />
+                    </div>
+                    <p className="text-text-muted italic">{t("userNoPending")}</p>
                 </div>
             ) : (
                 <div className="grid gap-4">
-                    {pendingUsers.map(user => (
-                        <div key={user.uid} className="card p-4 border-l-4 border-accent-yellow bg-bg-secondary/30 hover:bg-bg-secondary/50 transition-colors">
+                    {pendingUsers.map((user, idx) => (
+                        <div key={user.uid}
+                            className="card p-4 border-l-4 border-accent-yellow bg-bg-secondary/30 hover:bg-bg-secondary/50 hover:scale-[1.01] hover:shadow-lg hover:shadow-accent-yellow/5 transition-all duration-300 group"
+                            style={{ animationDelay: `${idx * 100}ms` }}>
                             <div className="flex items-center gap-4">
-                                {user.photoURL ? (
-                                    <img src={user.photoURL} alt="" className="w-12 h-12 rounded-full object-cover" />
-                                ) : (
-                                    <div className="w-12 h-12 rounded-full bg-accent-yellow/10 flex items-center justify-center text-accent-yellow">
-                                        <UserIcon size={24} />
-                                    </div>
-                                )}
+                                <div className="relative">
+                                    {user.photoURL ? (
+                                        <img src={user.photoURL} alt="" className="w-12 h-12 rounded-full object-cover border-2 border-transparent group-hover:border-accent-yellow transition-all duration-300" />
+                                    ) : (
+                                        <div className="w-12 h-12 rounded-full bg-accent-yellow/10 flex items-center justify-center text-accent-yellow transition-transform group-hover:scale-110">
+                                            <UserIcon size={24} />
+                                        </div>
+                                    )}
+                                    <div className="absolute -bottom-1 -right-1 w-4 h-4 rounded-full bg-accent-yellow border-2 border-bg-secondary animate-pulse" />
+                                </div>
                                 <div className="flex-1 min-w-0">
-                                    <h3 className="font-bold text-text-primary truncate">{user.displayName}</h3>
+                                    <h3 className="font-bold text-text-primary truncate group-hover:text-accent-yellow transition-colors">{user.displayName}</h3>
                                     <p className="text-xs text-text-muted truncate">{user.email}</p>
-                                    <p className="text-[10px] text-text-muted mt-1">
-                                        Requested: {new Date(user.requestedAt).toLocaleDateString()}
+                                    <p className="text-[10px] text-text-muted mt-1 flex items-center gap-1">
+                                        <span className="opacity-60">{t("userRequestedAt")}:</span>
+                                        <span className="font-medium text-text-secondary">{new Date(user.requestedAt).toLocaleDateString()}</span>
                                     </p>
                                 </div>
                                 <div className="flex items-center gap-2">
                                     <button
                                         onClick={() => setApprovalModal(user)}
-                                        className="px-4 py-2 rounded-xl bg-accent-green/20 hover:bg-accent-green/30 text-accent-green text-xs font-bold transition-all"
+                                        className="px-4 py-2 rounded-xl bg-accent-green/20 hover:bg-accent-green text-accent-green hover:text-white text-xs font-bold transition-all shadow-sm hover:shadow-accent-green/20 active:scale-90"
                                     >
                                         {t("userActionApprove")}
                                     </button>
                                     <button
                                         onClick={() => handleReject(user.uid)}
-                                        className="p-2 rounded-xl bg-accent-red/10 hover:bg-accent-red/20 text-accent-red transition-all"
+                                        className="p-2.5 rounded-xl bg-accent-red/10 hover:bg-accent-red text-accent-red hover:text-white transition-all shadow-sm hover:shadow-accent-red/20 active:scale-90"
                                     >
                                         <XIcon size={16} />
                                     </button>

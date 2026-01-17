@@ -443,7 +443,39 @@ export interface TranslationKeys {
     labelLocation: string;
     labelNormal: string;
     labelThreshold: string;
-
+    adminDashboardTitle: string;
+    adminDashboardSubtitle: string;
+    adminStatTotalAccess: string;
+    adminStatTotalAccessSub: string;
+    adminStatDailyAvg: string;
+    adminStatDailyAvgSub: string;
+    adminStatTechnicians: string;
+    adminStatTechniciansSub: string;
+    adminStatAvgPerformance: string;
+    adminStatAvgPerformanceSub: string;
+    adminTabAnalytics: string;
+    adminTabTechnicians: string;
+    adminTabApprovals: string;
+    adminTechniciansTitle: string;
+    adminTechniciansLoading: string;
+    adminTechnicalQuality: string;
+    adminTechnicalRecords: string;
+    adminActionEvaluate: string;
+    adminUsageHistory: string;
+    adminUsageSubtitle: string;
+    adminUsageHits: string;
+    adminUsageDailyActivity: string;
+    adminUsageRecent: string;
+    adminSystemHealth: string;
+    adminDbResponse: string;
+    adminStorageUsage: string;
+    adminAuthSystem: string;
+    adminStatusOnline: string;
+    adminStatusNormal: string;
+    adminQuickInsights: string;
+    adminInsightPeak: string;
+    adminInsightMobile: string;
+    adminInsightStable: string;
     // Analytics Page
     analyticsSubtitle: string;
     analyticsMonthlyMaintenance: string;
@@ -583,6 +615,13 @@ export interface TranslationKeys {
     labelViewFullscreen: string;
     altImage: string;
     statusCompleted: string;
+    labelMin: string;
+    analyticsPreventiveRate: string;
+    analyticsTotalDowntime: string;
+    analyticsCompletionRate: string;
+    analyticsPartsTracked: string;
+    labelHoursShort: string;
+    placeholderDepartment: string;
 }
 
 const th: TranslationKeys = {
@@ -1028,7 +1067,39 @@ const th: TranslationKeys = {
     labelLocation: "สถานที่",
     labelNormal: "ปกติ",
     labelThreshold: "ค่าเกณฑ์",
-
+    adminDashboardTitle: "แผงควบคุมผู้ดูแลระบบ",
+    adminDashboardSubtitle: "การจัดการระบบขั้นสูงและการวิเคราะห์",
+    adminStatTotalAccess: "การเข้าใช้งานทั้งหมด",
+    adminStatTotalAccessSub: "จำนวนการเข้าสู่ระบบทั้งหมด",
+    adminStatDailyAvg: "ค่าเฉลี่ยรายวัน",
+    adminStatDailyAvgSub: "การเข้าสู่ระบบต่อวัน",
+    adminStatTechnicians: "ช่างเทคนิค",
+    adminStatTechniciansSub: "สมาชิกในทีมที่ใช้งานอยู่",
+    adminStatAvgPerformance: "ประสิทธิภาพเฉลี่ย",
+    adminStatAvgPerformanceSub: "คะแนนคุณภาพของทีม",
+    adminTabAnalytics: "การวิเคราะห์",
+    adminTabTechnicians: "ช่างเทคนิค",
+    adminTabApprovals: "การอนุมัติผู้ใช้",
+    adminTechniciansTitle: "ช่างเทคนิคของเรา",
+    adminTechniciansLoading: "กำลังโหลดข้อมูลช่างเทคนิค...",
+    adminTechnicalQuality: "คะแนนประสิทธิภาพ",
+    adminTechnicalRecords: "รายการ",
+    adminActionEvaluate: "ประเมินผล",
+    adminUsageHistory: "ประวัติการใช้งาน",
+    adminUsageSubtitle: "การเข้าถึงแอปพลิเคชันในช่วง 30 วันที่ผ่านมา",
+    adminUsageHits: "การเข้าชม",
+    adminUsageDailyActivity: "กิจกรรมรายวัน (ครั้ง/วัน)",
+    adminUsageRecent: "ล่าสุด",
+    adminSystemHealth: "สถานะของระบบ",
+    adminDbResponse: "การตอบสนองของฐานข้อมูล",
+    adminStorageUsage: "การใช้งานหน่วยความจำ",
+    adminAuthSystem: "ระบบการยืนยันตัวตน",
+    adminStatusOnline: "ออนไลน์",
+    adminStatusNormal: "ปกติ",
+    adminQuickInsights: "ข้อมูลสรุปอย่างรวดเร็ว",
+    adminInsightPeak: "การใช้งานสูงสุดมักเกิดขึ้นในเช้าวันจันทร์",
+    adminInsightMobile: "มีการเข้าใช้งานผ่านมือถือเพิ่มขึ้น 15% ในสัปดาห์ที่ผ่านมา",
+    adminInsightStable: "ความเสถียรของระบบอยู่ที่ 100% ตั้งแต่การอัปเดตครั้งล่าสุด",
     // Analytics Page
     analyticsSubtitle: "วิเคราะห์ข้อมูลการซ่อมบำรุง",
     analyticsMonthlyMaintenance: "การซ่อมบำรุงรายเดือน",
@@ -1167,7 +1238,14 @@ const th: TranslationKeys = {
     scannerScannedContent: "เนื้อหาที่สแกน",
     labelViewFullscreen: "ดูภาพเต็มจอ",
     altImage: "รูปภาพ",
-    statusCompleted: "ทำเครื่องหมายว่าเสร็จสิ้น",
+    statusCompleted: "เสร็จสิ้น",
+    labelMin: "ขั้นต่ำ",
+    analyticsPreventiveRate: "อัตราการซ่อมเชิงป้องกัน",
+    analyticsTotalDowntime: "เวลารวมที่หยุดเครื่อง",
+    analyticsCompletionRate: "อัตราการทำสำเร็จ",
+    analyticsPartsTracked: "จำนวนอะไหล่ที่ติดตาม",
+    labelHoursShort: "ชม.",
+    placeholderDepartment: "เช่น Maintenance",
 };
 
 const en: TranslationKeys = {
@@ -1613,7 +1691,39 @@ const en: TranslationKeys = {
     labelLocation: "Location",
     labelNormal: "Normal",
     labelThreshold: "Threshold",
-
+    adminDashboardTitle: "Admin Dashboard",
+    adminDashboardSubtitle: "Advanced System Management & Analytics",
+    adminStatTotalAccess: "Total Access",
+    adminStatTotalAccessSub: "All time logins",
+    adminStatDailyAvg: "Daily Average",
+    adminStatDailyAvgSub: "Logins per day",
+    adminStatTechnicians: "Technicians",
+    adminStatTechniciansSub: "Active team members",
+    adminStatAvgPerformance: "Avg Performance",
+    adminStatAvgPerformanceSub: "Team quality score",
+    adminTabAnalytics: "Analytics",
+    adminTabTechnicians: "Technicians",
+    adminTabApprovals: "User Approvals",
+    adminTechniciansTitle: "Our Technicians",
+    adminTechniciansLoading: "Loading technician data...",
+    adminTechnicalQuality: "Performance Score",
+    adminTechnicalRecords: "members",
+    adminActionEvaluate: "Evaluate",
+    adminUsageHistory: "Usage History",
+    adminUsageSubtitle: "Last 30 days of application access",
+    adminUsageHits: "hits",
+    adminUsageDailyActivity: "Daily Activity (Hits/Day)",
+    adminUsageRecent: "Recent",
+    adminSystemHealth: "System Health",
+    adminDbResponse: "Database Response",
+    adminStorageUsage: "Storage Usage",
+    adminAuthSystem: "Auth System",
+    adminStatusOnline: "Online",
+    adminStatusNormal: "Normal",
+    adminQuickInsights: "Quick Insights",
+    adminInsightPeak: "Peak usage usually occurs on Monday mornings.",
+    adminInsightMobile: "A 15% increase in mobile access over the last week.",
+    adminInsightStable: "System stability has been 100% since last update.",
     // Analytics Page
     analyticsSubtitle: "Maintenance Data Analysis",
     analyticsMonthlyMaintenance: "Monthly Maintenance",
@@ -1752,7 +1862,14 @@ const en: TranslationKeys = {
     scannerScannedContent: "Scanned Content",
     labelViewFullscreen: "View Fullscreen",
     altImage: "Image",
-    statusCompleted: "Mark as Completed",
+    statusCompleted: "Completed",
+    labelMin: "Min",
+    analyticsPreventiveRate: "Preventive Rate",
+    analyticsTotalDowntime: "Total Downtime",
+    analyticsCompletionRate: "Completion Rate",
+    analyticsPartsTracked: "Parts Tracked",
+    labelHoursShort: "hrs",
+    placeholderDepartment: "e.g. Maintenance",
 };
 
 export const translations: Record<Language, TranslationKeys> = {
