@@ -4,10 +4,12 @@ import React, { useState, useEffect } from "react";
 import Header from "../components/Header";
 import MobileNav from "../components/MobileNav";
 import MaintenanceRecordModal from "../components/forms/MaintenanceRecordModal";
+import ConfirmModal from "../components/ui/ConfirmModal";
 import { useLanguage } from "../contexts/LanguageContext";
 import { useAuth } from "../contexts/AuthContext";
+import { useToast } from "../contexts/ToastContext";
 import { formatDateThai } from "../lib/dateUtils";
-import { getMaintenanceRecords } from "../lib/firebaseService";
+import { getMaintenanceRecords, deleteMaintenanceRecord } from "../lib/firebaseService";
 import { MaintenanceRecord } from "../types";
 import {
     WrenchIcon,
@@ -17,13 +19,19 @@ import {
     ClockIcon,
     CheckIcon,
     AlertTriangleIcon,
+    TrashIcon,
 } from "../components/ui/Icons";
 import { mockMaintenanceRecords } from "../data/mockData";
 
 export default function MaintenancePage() {
     const { t } = useLanguage();
-    const { checkAuth } = useAuth();
+    const { checkAuth, isAdmin } = useAuth();
+    const { success, error } = useToast();
     const [maintenanceModalOpen, setMaintenanceModalOpen] = useState(false);
+
+    // Delete Confirmation State
+    const [deleteConfirmOpen, setDeleteConfirmOpen] = useState(false);
+    const [recordToDelete, setRecordToDelete] = useState<string | null>(null);
     const [mounted, setMounted] = useState(false);
     const [records, setRecords] = useState<MaintenanceRecord[]>([]);
     const [loading, setLoading] = useState(true);
@@ -37,6 +45,25 @@ export default function MaintenancePage() {
             console.error("Error fetching records:", error);
         } finally {
             setLoading(false);
+        }
+    };
+
+    const handleDeleteClick = (id: string) => {
+        setRecordToDelete(id);
+        setDeleteConfirmOpen(true);
+    };
+
+    const handleConfirmDelete = async () => {
+        if (!recordToDelete) return;
+
+        try {
+            await deleteMaintenanceRecord(recordToDelete);
+            // Optimistic update
+            setRecords(prev => prev.filter(r => r.id !== recordToDelete));
+            success(t("msgDeleteSuccess") || "ลบข้อมูลเรียบร้อยแล้ว");
+        } catch (err) {
+            console.error("Error deleting record:", err);
+            error(t("msgDeleteError") || "เกิดข้อผิดพลาดในการลบข้อมูล");
         }
     };
 
@@ -140,6 +167,18 @@ export default function MaintenancePage() {
                                         <span className={`badge ${getStatusColor(record.status)}`}>
                                             {getStatusText(record.status)}
                                         </span>
+                                        {isAdmin && (
+                                            <button
+                                                onClick={(e) => {
+                                                    e.stopPropagation();
+                                                    handleDeleteClick(record.id);
+                                                }}
+                                                className="p-1.5 rounded-full hover:bg-accent-red/20 text-text-muted hover:text-accent-red transition-colors"
+                                                title={t("actionDelete")}
+                                            >
+                                                <TrashIcon size={16} />
+                                            </button>
+                                        )}
                                     </div>
                                 </div>
 
@@ -219,6 +258,16 @@ export default function MaintenancePage() {
                 isOpen={maintenanceModalOpen}
                 onClose={() => setMaintenanceModalOpen(false)}
                 onSuccess={fetchRecords}
+            />
+
+            <ConfirmModal
+                isOpen={deleteConfirmOpen}
+                onClose={() => setDeleteConfirmOpen(false)}
+                onConfirm={handleConfirmDelete}
+                title={t("titleConfirmDelete") || "ยืนยันการลบ"}
+                message={t("confirmDeleteMessage") || "คุณแน่ใจหรือไม่ว่าต้องการลบรายการนี้? การกระทำนี้ไม่สามารถยกเลิกได้"}
+                isDestructive={true}
+                confirmText={t("actionDelete") || "ลบ"}
             />
         </div>
     );

@@ -287,6 +287,7 @@ export interface TranslationKeys {
     msgSaving: string;
     msgDeleteSuccess: string;
     msgDeleteError: string;
+    titleConfirmDelete: string;
     msgCurrentImagePreserved: string;
     msgDbConnected: string;
     msgDbReady: string;
@@ -863,6 +864,7 @@ const th: TranslationKeys = {
     msgSaving: "กำลังบันทึก...",
     msgDeleteSuccess: "ลบข้อมูลสำเร็จ",
     msgDeleteError: "เกิดข้อผิดพลาดในการลบ",
+    titleConfirmDelete: "ยืนยันการลบ",
     msgCurrentImagePreserved: "ใช้รูปภาพเดิมที่มีอยู่",
     msgDbConnected: "เชื่อมต่อสำเร็จ!",
     msgDbReady: "ระบบฐานข้อมูลพร้อมใช้งานแล้ว",
@@ -1439,6 +1441,7 @@ const en: TranslationKeys = {
     msgSaving: "Saving...",
     msgDeleteSuccess: "Deleted successfully",
     msgDeleteError: "Error deleting data",
+    titleConfirmDelete: "Confirm Delete",
     msgCurrentImagePreserved: "Current Image Preserved",
     msgDbConnected: "Successfully Connected!",
     msgDbReady: "Database system is ready for use",
