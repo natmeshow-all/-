@@ -679,7 +679,7 @@ export interface TranslationKeys {
 const th: TranslationKeys = {
     // App
     appTitle: "ระบบจัดการเครื่องจักร Art of Baking",
-    appSubtitle: "ซ่อมบำรุงขั้นสูง PM TEAM REALTIME DATABASE",
+    appSubtitle: "PM TEAM REALTIME DATABASE",
     machineDetailsSubtitle: "รายละเอียดและอะไหล่ทั้งหมด",
 
     // Navigation
@@ -1354,7 +1354,7 @@ const th: TranslationKeys = {
 const en: TranslationKeys = {
     // App
     appTitle: "Machine Management - Art of Baking",
-    appSubtitle: "Maintenance Management - PM TEAM REALTIME DATABASE",
+    appSubtitle: "PM TEAM REALTIME DATABASE",
     machineDetailsSubtitle: "Details and All Parts",
 
     // Navigation
