@@ -107,7 +107,7 @@ export async function getMachines(): Promise<Machine[]> {
                 performance: data.performance || "",
                 remark: data.remark || "",
                 description: data.description || "",
-                zone: data.zone || "No Zone",
+                Location: data.Location || data.zone || "No Zone",
                 location: data.location || "",
                 status: data.status || "active",
                 imageUrl: data.imageUrl || "",
@@ -132,7 +132,7 @@ export async function getMachines(): Promise<Machine[]> {
         partsSnapshot.forEach((childSnapshot) => {
             const part = childSnapshot.val();
             const machineName = part.machineName || part.machine || "Unknown Machine";
-            const zone = part.zone || "No Zone";
+            const zone = part.Location || part.zone || "No Zone";
             const location = part.location || "";
 
             if (machineName) {
@@ -142,7 +142,7 @@ export async function getMachines(): Promise<Machine[]> {
                         id: machineName,
                         name: machineName,
                         description: "",
-                        zone: zone,
+                        Location: zone,
                         location: location,
                         status: "active",
                         imageUrl: part.imageUrl || "",
@@ -157,10 +157,10 @@ export async function getMachines(): Promise<Machine[]> {
                         updatedAt: new Date(),
                     });
                 } else {
-                    // Enrich existing machine if it lacks image/zone/location
+                    // Enrich existing machine if it lacks image/Location/location
                     const existing = machinesMap.get(machineName)!;
                     if (!existing.imageUrl && part.imageUrl) existing.imageUrl = part.imageUrl;
-                    if (existing.zone === "No Zone" && zone && zone !== "No Zone") existing.zone = zone;
+                    if (existing.Location === "No Zone" && zone && zone !== "No Zone") existing.Location = zone;
                     if (!existing.location && location) existing.location = location;
                 }
             }
@@ -216,7 +216,7 @@ export async function updateMachineImage(machineName: string, file: File, machin
                 updatedAt: new Date().toISOString(),
                 description: "Machine record",
                 status: "active",
-                zone: "Unknown"
+                Location: "Unknown"
             });
         }
 
@@ -1152,7 +1152,7 @@ export async function getDashboardStats() {
         getSpareParts(),
     ]);
 
-    const uniqueZones = new Set(parts.map((p) => p.zone)).size;
+    const uniqueLocations = new Set(parts.map((p) => p.Location)).size;
     const pendingRecords = records.filter((r) => r.status !== "completed").length;
 
     // Separate PM and Overhaul counts
@@ -1170,7 +1170,7 @@ export async function getDashboardStats() {
     return {
         totalParts: parts.length,
         totalMachines: machines.length,
-        totalZones: uniqueZones,
+        totalLocations: uniqueLocations,
         maintenanceRecords: records.length,
         totalPM,
         totalOverhaul,

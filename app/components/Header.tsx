@@ -40,10 +40,10 @@ export default function Header({ className = "" }: HeaderProps) {
                             <div className="absolute inset-0 rounded-lg sm:rounded-xl bg-primary/30 blur-lg -z-10" />
                         </div>
                         <div className="flex flex-col min-w-0">
-                            <h1 className="text-[11px] sm:text-lg font-extrabold gradient-text leading-tight tracking-tight whitespace-nowrap sm:whitespace-normal">
+                            <h1 className="text-sm sm:text-lg font-extrabold gradient-text leading-tight tracking-tight whitespace-nowrap sm:whitespace-normal">
                                 {t("appTitle")}
                             </h1>
-                            <p className="text-[8px] sm:text-xs text-text-muted mt-0.5 sm:mt-0 font-medium line-clamp-1 sm:line-clamp-none">
+                            <p className="text-[10px] sm:text-xs text-text-muted mt-0.5 sm:mt-0 font-medium line-clamp-1 sm:line-clamp-none">
                                 {t("appSubtitle")}
                             </p>
                         </div>

@@ -10,20 +10,18 @@ import { getPMPlans, deletePMPlan, getMachines } from "../lib/firebaseService";
 import { PMPlan, Machine } from "../types";
 import PMExecutionModal from "../components/pm/PMExecutionModal";
 import PMConfigModal from "../components/pm/PMConfigModal";
-import PMHistoryModal from "../components/pm/PMHistoryModal";
 import Modal from "../components/ui/Modal";
 import { useToast } from "../contexts/ToastContext";
 
 export default function SchedulePage() {
     const { t, language } = useLanguage();
-    const { checkAuth } = useAuth();
+    const { checkAuth, isAdmin } = useAuth();
     const { success, error: showError } = useToast();
     const [mounted, setMounted] = useState(false);
     const [plans, setPlans] = useState<PMPlan[]>([]);
     const [loading, setLoading] = useState(true);
     const [selectedPlan, setSelectedPlan] = useState<PMPlan | null>(null);
     const [executionModalOpen, setExecutionModalOpen] = useState(false);
-    const [historyModalOpen, setHistoryModalOpen] = useState(false);
     const [configModalOpen, setConfigModalOpen] = useState(false);
     const [machineSelectOpen, setMachineSelectOpen] = useState(false);
     const [selectedMachine, setSelectedMachine] = useState<Machine | null>(null);
@@ -34,11 +32,12 @@ export default function SchedulePage() {
 
     const filteredMachines = allMachines.filter(machine => {
         if (selectedLocation === "All") return true;
-        // User requested FZ, RTE, UT.
-        // We filter by strict location match first, but if data isn't exact,
-        // we might consider relaxing it later. 
-        // For now, simple exact match on location field.
-        return machine.location === selectedLocation;
+
+        const loc = machine.Location?.toUpperCase() || machine.location?.toUpperCase() || "";
+        if (selectedLocation === "Utility") {
+            return loc === "UT" || loc === "UTILITY";
+        }
+        return loc === selectedLocation.toUpperCase();
     });
 
     // Delete Confirmation State
@@ -99,13 +98,23 @@ export default function SchedulePage() {
 
     const handleExecuteClick = (plan: PMPlan) => {
         if (!checkAuth()) return;
+
+        // Restriction: Only allow closing work on the due date
+        const now = new Date();
+        now.setHours(0, 0, 0, 0);
+        const due = new Date(plan.nextDueDate);
+        due.setHours(0, 0, 0, 0);
+
+        const diffTime = due.getTime() - now.getTime();
+        const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
+
+        if (diffDays !== 0) {
+            showError(t("msgNotYetDue"), t("msgNotYetDue"));
+            return;
+        }
+
         setSelectedPlan(plan);
         setExecutionModalOpen(true);
-    };
-
-    const handleHistoryClick = (plan: PMPlan) => {
-        setSelectedPlan(plan);
-        setHistoryModalOpen(true);
     };
 
     const handleEditClick = (plan: PMPlan) => {
@@ -120,6 +129,10 @@ export default function SchedulePage() {
 
     const handleDeleteClick = (plan: PMPlan) => {
         if (!checkAuth()) return;
+        if (!isAdmin) {
+            showError(t("msgNoPermission"), t("msgNoEditPermission"));
+            return;
+        }
         setPlanToDelete(plan);
         setDeleteModalOpen(true);
     };
@@ -283,16 +296,18 @@ export default function SchedulePage() {
                                                 >
                                                     <EditIcon size={14} />
                                                 </button>
-                                                <button
-                                                    onClick={(e) => {
-                                                        e.stopPropagation();
-                                                        handleDeleteClick(item);
-                                                    }}
-                                                    className="p-1.5 rounded-lg text-text-muted hover:text-accent-red hover:bg-accent-red/10 transition-all"
-                                                    title="ลบแผนงาน"
-                                                >
-                                                    <TrashIcon size={14} />
-                                                </button>
+                                                {isAdmin && (
+                                                    <button
+                                                        onClick={(e) => {
+                                                            e.stopPropagation();
+                                                            handleDeleteClick(item);
+                                                        }}
+                                                        className="p-1.5 rounded-lg text-text-muted hover:text-accent-red hover:bg-accent-red/10 transition-all"
+                                                        title="ลบแผนงาน"
+                                                    >
+                                                        <TrashIcon size={14} />
+                                                    </button>
+                                                )}
                                             </div>
                                             <span className={`badge ${status.bg} ${status.color} border ${status.border} shadow-sm px-2.5 py-1 text-[10px] font-bold uppercase`}>
                                                 {status.label}
@@ -324,13 +339,6 @@ export default function SchedulePage() {
 
                                         <div className="flex items-center gap-2">
                                             <button
-                                                onClick={() => handleHistoryClick(item)}
-                                                className="w-10 h-10 rounded-lg bg-bg-tertiary text-text-muted hover:text-accent-blue border border-white/5 flex items-center justify-center transition-all active:scale-90"
-                                                title="ดูประวัติ"
-                                            >
-                                                <ClockIcon size={18} />
-                                            </button>
-                                            <button
                                                 onClick={() => handleExecuteClick(item)}
                                                 className={`flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-bold transition-all shadow-md active:scale-95 ${status.days <= 0
                                                     ? "bg-accent-blue text-white hover:bg-accent-blue/90"
@@ -361,18 +369,7 @@ export default function SchedulePage() {
                     plan={selectedPlan}
                     onSuccess={fetchData}
                 />
-            )
-            }
-
-            {
-                selectedPlan && (
-                    <PMHistoryModal
-                        isOpen={historyModalOpen}
-                        onClose={() => setHistoryModalOpen(false)}
-                        plan={selectedPlan}
-                    />
-                )
-            }
+            )}
 
             {/* Machine Selection Modal */}
             <Modal
@@ -413,7 +410,7 @@ export default function SchedulePage() {
                                 </div>
                                 <div className="flex-1">
                                     <h3 className="font-bold text-text-primary group-hover:text-accent-blue transition-colors">{machine.name}</h3>
-                                    <p className="text-xs text-text-muted">{machine.zone} • {machine.location || '-'}</p>
+                                    <p className="text-xs text-text-muted">{machine.Location} • {machine.location || '-'}</p>
                                 </div>
                                 <PlusIcon size={18} className="text-text-muted group-hover:text-accent-blue" />
                             </button>

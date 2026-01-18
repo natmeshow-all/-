@@ -74,11 +74,11 @@ export interface TranslationKeys {
     // Stats
     statTotalParts: string;
     statMachines: string;
-    statZones: string;
+    statLocations: string;
     statMaintenanceRecords: string;
     statStockNormal: string;
     statStockLow: string;
-    statTotalZones: string;
+    statTotalLocations: string;
 
     // Actions
     actionAddPart: string;
@@ -96,11 +96,12 @@ export interface TranslationKeys {
     actionRepair: string;
     actionSearch: string;
     actionSaveChanges: string;
+    placeholderMachineName: string;
 
     // Filters
     filterTitle: string;
     filterMachine: string;
-    filterZone: string;
+    filterLocation: string;
     filterPartName: string;
     filterAll: string;
     filterShowResults: string;
@@ -142,7 +143,7 @@ export interface TranslationKeys {
     tablePartName: string;
     tableModelSpec: string;
     tableBrand: string;
-    tableZone: string;
+    tableLocationArea: string;
     tableStatus: string;
     tableDate: string;
     tableActions: string;
@@ -159,7 +160,7 @@ export interface TranslationKeys {
     addPartSelectPart: string;
     addPartNewPart: string;
     addPartModelSpec: string;
-    addPartZone: string;
+    addPartLocationArea: string;
     addPartBrand: string;
     addPartQuantity: string;
     addPartUnit: string;
@@ -287,14 +288,14 @@ export interface TranslationKeys {
     categoryTool: string;
     categoryOther: string;
 
-    // Zones
-    zoneTop: string;
-    zoneBottom: string;
-    zoneLeft: string;
-    zoneRight: string;
-    zoneFront: string;
-    zoneBack: string;
-    zoneInside: string;
+    // Locations (previously Zones)
+    locationTop: string;
+    locationBottom: string;
+    locationLeft: string;
+    locationRight: string;
+    locationFront: string;
+    locationBack: string;
+    locationInside: string;
 
     // Status Messages
     msgLoading: string;
@@ -342,7 +343,7 @@ export interface TranslationKeys {
 
     // Placeholders
     placeholderMachine: string;
-    placeholderZone: string;
+    placeholderLocationLong: string;
     placeholderBrand: string;
     placeholderLocation: string;
     placeholderNotes: string;
@@ -381,7 +382,7 @@ export interface TranslationKeys {
     stockReceiveTitle: string;
     stockQuantity: string;
     stockMachine: string;
-    stockZone: string;
+    stockLocation: string;
     stockNotes: string;
     stockEvidence: string;
     stockEvidenceHint: string;
@@ -573,7 +574,7 @@ export interface TranslationKeys {
     labelEveryWeekly: string;
     labelFirstStartDate: string;
     labelWorkLocation: string;
-    placeholderSelectZone: string;
+    placeholderSelectLocation: string;
     placeholderSpecifyLocation: string;
     actionSavePlan: string;
     pmExecutionTitle: string;
@@ -601,6 +602,14 @@ export interface TranslationKeys {
     pmHistoryModalTitle: string;
     statPMCount: string;
     statOverhaulCount: string;
+
+    // Period / Cycle
+    labelPeriod: string;
+    periodRoutine: string;
+    period1Month: string;
+    period3Months: string;
+    period6Months: string;
+    period1Year: string;
     msgNoHistoryForItem: string;
     labelWorkDetails: string;
     labelAuditChecklist: string;
@@ -664,6 +673,7 @@ export interface TranslationKeys {
     labelVibrationXYZ: string;
     labelAnalysisMode: string;
     placeholderAutoCalc: string;
+    msgNotYetDue: string;
 }
 
 const th: TranslationKeys = {
@@ -740,11 +750,11 @@ const th: TranslationKeys = {
     // Stats
     statTotalParts: "จำนวนอะไหล่ทั้งหมด",
     statMachines: "จำนวนเครื่องจักร",
-    statZones: "จำนวนโซน",
+    statLocations: "จำนวนสถานที่",
     statMaintenanceRecords: "จำนวนซ่อมบำรุง/Overhaul",
     statStockNormal: "สต็อกปกติ",
     statStockLow: "สต็อกต่ำ (Low)",
-    statTotalZones: "โซนทั้งหมด",
+    statTotalLocations: "สถานที่ทั้งหมด",
 
     // Actions
     actionAddPart: "เพิ่มอะไหล่",
@@ -762,11 +772,12 @@ const th: TranslationKeys = {
     actionRepair: "ซ่อมบำรุง/Overhaul",
     actionSearch: "ค้นหา",
     actionSaveChanges: "บันทึกการเปลี่ยนแปลง",
+    placeholderMachineName: "-- เลือกเครื่องจักร --",
 
     // Filters
     filterTitle: "ค้นหาและกรองข้อมูล",
     filterMachine: "ชื่อเครื่องจักร",
-    filterZone: "โซน",
+    filterLocation: "สถานที่ (Location)",
     filterPartName: "ชื่ออะไหล่",
     filterAll: "ทั้งหมด",
     filterShowResults: "แสดงผล:",
@@ -808,7 +819,7 @@ const th: TranslationKeys = {
     tablePartName: "ชื่ออะไหล่",
     tableModelSpec: "รุ่น/สเปค",
     tableBrand: "ยี่ห้อ",
-    tableZone: "โซน",
+    tableLocationArea: "สถานที่",
     tableStatus: "สถานะ",
     tableDate: "วันที่",
     tableActions: "จัดการ",
@@ -825,7 +836,7 @@ const th: TranslationKeys = {
     addPartSelectPart: "เลือกชื่ออะไหล่",
     addPartNewPart: "+ เพิ่มชื่ออะไหล่ใหม่",
     addPartModelSpec: "รุ่น/สเปค",
-    addPartZone: "โซน",
+    addPartLocationArea: "สถานที่",
     addPartBrand: "ยี่ห้อ",
     addPartQuantity: "จำนวน",
     addPartUnit: "หน่วยนับ",
@@ -952,14 +963,14 @@ const th: TranslationKeys = {
     categoryTool: "เครื่องมือ",
     categoryOther: "อื่นๆ",
 
-    // Zones
-    zoneTop: "Top",
-    zoneBottom: "Bottom",
-    zoneLeft: "Left",
-    zoneRight: "Right",
-    zoneFront: "Front",
-    zoneBack: "Back",
-    zoneInside: "Inside",
+    // Locations
+    locationTop: "Top",
+    locationBottom: "Bottom",
+    locationLeft: "Left",
+    locationRight: "Right",
+    locationFront: "Front",
+    locationBack: "Back",
+    locationInside: "Inside",
 
     // Status Messages
     msgLoading: "กำลังโหลด...",
@@ -1016,7 +1027,7 @@ const th: TranslationKeys = {
 
     // Placeholders
     placeholderMachine: "เช่น Pie Line",
-    placeholderZone: "เช่น Cross Roller",
+    placeholderLocationLong: "เช่น Cross Roller",
     placeholderBrand: "เช่น SEW / NORD",
     placeholderLocation: "เช่น FZ",
     placeholderNotes: "เช่น มอเตอร์กับ CrossRoller สายพาน Timing [2] เปลี่ยนมีตที่รันชาร์ 220 0.29I",
@@ -1055,7 +1066,7 @@ const th: TranslationKeys = {
     stockReceiveTitle: "รับของเข้า (Receive Stock)",
     stockQuantity: "จำนวน",
     stockMachine: "ใช้กับเครื่องจักร",
-    stockZone: "ระบุโซน (Zone)",
+    stockLocation: "ระบุตำแหน่ง (Location)",
     stockNotes: "หมายเหตุ (Notes)",
     stockEvidence: "รูปหลังเปลี่ยน (Proof of Change)",
     stockEvidenceHint: "ถ่ายรูปงานที่เปลี่ยนเสร็จแล้วเพื่อเป็นหลักฐาน",
@@ -1236,7 +1247,7 @@ const th: TranslationKeys = {
     labelEveryWeekly: "ทำทุกวัน",
     labelFirstStartDate: "วันที่เริ่มรอบแรก",
     labelWorkLocation: "สถานที่ปฏิบัติงาน",
-    placeholderSelectZone: "-- เลือกโซน --",
+    placeholderSelectLocation: "-- เลือกตำแหน่ง/สถานที่ --",
     placeholderSpecifyLocation: "ระบุสถานที่...",
     actionSavePlan: "บันทึกแผนงาน",
     pmExecutionTitle: "บันทึกผลการซ่อมบำรุง (PM)",
@@ -1329,6 +1340,15 @@ const th: TranslationKeys = {
     labelVibrationXYZ: "ความสั่นสะเทือน (X/Y/Z)",
     labelAnalysisMode: "โหมดวิเคราะห์รายละเอียด",
     placeholderAutoCalc: "คำนวณอัตโนมัติ",
+
+    // Period / Cycle
+    labelPeriod: "รอบการบำรุงรักษา",
+    periodRoutine: "ประจำวัน/สัปดาห์ (Routine)",
+    period1Month: "1 เดือน",
+    period3Months: "3 เดือน",
+    period6Months: "6 เดือน",
+    period1Year: "1 ปี",
+    msgNotYetDue: "ยังไม่ถึงกำหนดเวลา",
 };
 
 const en: TranslationKeys = {
@@ -1405,11 +1425,11 @@ const en: TranslationKeys = {
     // Stats
     statTotalParts: "Part Names",
     statMachines: "Machines",
-    statZones: "Zones",
+    statLocations: "Locations",
     statMaintenanceRecords: "Maintenance Records/Overhaul",
     statStockNormal: "In Stock",
     statStockLow: "Low Stock",
-    statTotalZones: "Total Zones",
+    statTotalLocations: "Total Locations",
 
     // Actions
     actionAddPart: "Add Part",
@@ -1427,11 +1447,12 @@ const en: TranslationKeys = {
     actionRepair: "Maintenance/Overhaul",
     actionSearch: "Search",
     actionSaveChanges: "Save Changes",
+    placeholderMachineName: "-- Select Machine --",
 
     // Filters
     filterTitle: "Search and Filter",
     filterMachine: "Machine Name",
-    filterZone: "Zone",
+    filterLocation: "Location",
     filterPartName: "Part Name",
     filterAll: "All",
     filterShowResults: "Showing:",
@@ -1473,7 +1494,7 @@ const en: TranslationKeys = {
     tablePartName: "PART NAME",
     tableModelSpec: "MODEL/SPEC",
     tableBrand: "BRAND",
-    tableZone: "ZONE",
+    tableLocationArea: "LOCATION",
     tableStatus: "STATUS",
     tableDate: "DATE",
     tableActions: "ACTIONS",
@@ -1490,7 +1511,7 @@ const en: TranslationKeys = {
     addPartSelectPart: "Select Part Name",
     addPartNewPart: "+ Add New Part Name",
     addPartModelSpec: "Model/Spec",
-    addPartZone: "Zone",
+    addPartLocationArea: "Location",
     addPartBrand: "Brand",
     addPartQuantity: "Quantity",
     addPartUnit: "Unit",
@@ -1617,14 +1638,14 @@ const en: TranslationKeys = {
     categoryTool: "Tool",
     categoryOther: "Other",
 
-    // Zones
-    zoneTop: "Top",
-    zoneBottom: "Bottom",
-    zoneLeft: "Left",
-    zoneRight: "Right",
-    zoneFront: "Front",
-    zoneBack: "Back",
-    zoneInside: "Inside",
+    // Locations
+    locationTop: "Top",
+    locationBottom: "Bottom",
+    locationLeft: "Left",
+    locationRight: "Right",
+    locationFront: "Front",
+    locationBack: "Back",
+    locationInside: "Inside",
 
     // Status Messages
     msgLoading: "Loading...",
@@ -1681,7 +1702,7 @@ const en: TranslationKeys = {
 
     // Placeholders
     placeholderMachine: "e.g. Pie Line",
-    placeholderZone: "e.g. Cross Roller",
+    placeholderLocationLong: "e.g. Cross Roller",
     placeholderBrand: "e.g. SEW / NORD",
     placeholderLocation: "e.g. FZ",
     placeholderNotes: "e.g. Motor with CrossRoller timing belt [2] changed meter run char 220 0.29I",
@@ -1720,7 +1741,7 @@ const en: TranslationKeys = {
     stockReceiveTitle: "Receive Stock",
     stockQuantity: "Quantity",
     stockMachine: "Select Machine",
-    stockZone: "Specify Zone",
+    stockLocation: "Specify Location",
     stockNotes: "Notes",
     stockEvidence: "Proof of Change Image",
     stockEvidenceHint: "Upload a photo of the completed change for evidence",
@@ -1901,7 +1922,7 @@ const en: TranslationKeys = {
     labelEveryWeekly: "Every Day",
     labelFirstStartDate: "First Cycle Start Date",
     labelWorkLocation: "Work Location",
-    placeholderSelectZone: "-- Select Zone --",
+    placeholderSelectLocation: "-- Select Location --",
     placeholderSpecifyLocation: "Specify location...",
     actionSavePlan: "Save Plan",
     pmExecutionTitle: "Record PM Result",
@@ -1994,6 +2015,15 @@ const en: TranslationKeys = {
     labelVibrationXYZ: "Vibration (X/Y/Z)",
     labelAnalysisMode: "Analysis Mode",
     placeholderAutoCalc: "Auto-calc",
+
+    // Period / Cycle
+    labelPeriod: "Maintenance Period",
+    periodRoutine: "Daily/Weekly (Routine)",
+    period1Month: "1 Month",
+    period3Months: "3 Months",
+    period6Months: "6 Months",
+    period1Year: "1 Year",
+    msgNotYetDue: "Not yet due",
 };
 
 export const translations: Record<Language, TranslationKeys> = {

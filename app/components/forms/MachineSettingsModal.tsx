@@ -34,7 +34,7 @@ export default function MachineSettingsModal({ isOpen, onClose, machine, onSucce
         serialNumber: "",
         performance: "",
         location: "",
-        zone: "",
+        Location: "",
         remark: "",
         installationDate: "",
         operatingHours: 0,
@@ -52,7 +52,7 @@ export default function MachineSettingsModal({ isOpen, onClose, machine, onSucce
                 serialNumber: machine.serialNumber || "",
                 performance: machine.performance || "",
                 location: machine.location || "",
-                zone: machine.zone || "",
+                Location: machine.Location || "",
                 remark: machine.remark || "",
                 installationDate: machine.installationDate || "",
                 operatingHours: machine.operatingHours || 0,
@@ -227,16 +227,16 @@ export default function MachineSettingsModal({ isOpen, onClose, machine, onSucce
                             />
                         </div>
 
-                        {/* Zone */}
+                        {/* Location (Area) */}
                         <div className="space-y-2">
                             <label className="flex items-center gap-2 text-sm font-medium text-text-secondary">
-                                <div className="text-primary text-xs font-bold w-3.5 h-3.5 flex items-center justify-center border border-primary rounded-sm">Z</div>
-                                {t("filterZone") || "Zone"}
+                                <div className="text-primary text-xs font-bold w-3.5 h-3.5 flex items-center justify-center border border-primary rounded-sm">L</div>
+                                {t("filterLocation") || "Location"}
                             </label>
                             <input
                                 type="text"
-                                name="zone"
-                                value={formData.zone}
+                                name="Location"
+                                value={formData.Location}
                                 onChange={handleChange}
                                 placeholder="e.g. Baking Room"
                                 className="input w-full bg-bg-tertiary"

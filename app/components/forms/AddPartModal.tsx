@@ -51,7 +51,7 @@ export default function AddPartModal({ isOpen, onClose, onSuccess, partToEdit }:
         machineName: "",
         partName: "",
         modelSpec: "",
-        zone: "",
+        Location: "",
         brand: "",
         quantity: 1,
         minStockThreshold: 1, // Default to 1
@@ -81,7 +81,7 @@ export default function AddPartModal({ isOpen, onClose, onSuccess, partToEdit }:
                 machineName: partToEdit.machineName || "",
                 partName: partToEdit.partName || "",
                 modelSpec: partToEdit.modelSpec || "",
-                zone: partToEdit.zone || "",
+                Location: partToEdit.Location || "",
                 brand: partToEdit.brand || "",
                 quantity: partToEdit.quantity || 1,
                 minStockThreshold: partToEdit.minStockThreshold || 1,
@@ -102,7 +102,7 @@ export default function AddPartModal({ isOpen, onClose, onSuccess, partToEdit }:
                 machineName: "",
                 partName: "",
                 modelSpec: "",
-                zone: "",
+                Location: "",
                 brand: "",
                 quantity: 1,
                 minStockThreshold: 1,
@@ -148,7 +148,7 @@ export default function AddPartModal({ isOpen, onClose, onSuccess, partToEdit }:
                 ...prev,
                 machineId: value,
                 machineName: machine?.name || "",
-                zone: machine?.zone || prev.zone,
+                Location: machine?.Location || prev.Location,
                 location: machine?.location || prev.location,
             }));
         } else {
@@ -394,14 +394,14 @@ export default function AddPartModal({ isOpen, onClose, onSuccess, partToEdit }:
                     <div>
                         <label className="label">
                             <MapPinIcon size={14} />
-                            {t("addPartZone")}
+                            {t("addPartLocationArea")}
                         </label>
                         <input
                             type="text"
-                            name="zone"
-                            value={formData.zone}
+                            name="Location"
+                            value={formData.Location}
                             onChange={handleInputChange}
-                            placeholder={t("placeholderZone")}
+                            placeholder={t("placeholderLocationLong")}
                             className="input"
                         />
                     </div>

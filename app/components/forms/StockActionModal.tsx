@@ -25,7 +25,7 @@ export default function StockActionModal({ isOpen, onClose, onSuccess, actionTyp
     const [formData, setFormData] = useState({
         quantity: 1,
         machineId: "",
-        zone: "",
+        Location: "",
         notes: "",
         supplier: "", // For restock
         pricePerUnit: "", // For restock
@@ -59,7 +59,7 @@ export default function StockActionModal({ isOpen, onClose, onSuccess, actionTyp
             setFormData(prev => ({
                 ...prev,
                 machineId: value,
-                zone: machine?.zone || prev.zone // Auto-populate zone if found
+                Location: machine?.Location || prev.Location // Auto-populate Location if found
             }));
         } else {
             setFormData(prev => ({ ...prev, [name]: value }));
@@ -92,7 +92,7 @@ export default function StockActionModal({ isOpen, onClose, onSuccess, actionTyp
                 quantity: Number(formData.quantity),
                 machineId: actionType === "withdraw" ? formData.machineId : undefined,
                 machineName: actionType === "withdraw" ? machines.find(m => m.id === formData.machineId)?.name : undefined,
-                zone: actionType === "withdraw" ? formData.zone : undefined,
+                Location: actionType === "withdraw" ? formData.Location : undefined,
                 performedBy: user.displayName || user.email || "Unknown User",
                 performedByEmail: user.email || undefined,
                 userId: user.uid,
@@ -113,7 +113,7 @@ export default function StockActionModal({ isOpen, onClose, onSuccess, actionTyp
             setFormData({
                 quantity: 1,
                 machineId: "",
-                zone: "",
+                Location: "",
                 notes: "",
                 supplier: "",
                 pricePerUnit: "",
@@ -206,13 +206,13 @@ export default function StockActionModal({ isOpen, onClose, onSuccess, actionTyp
 
                             <div>
                                 <label className="block text-sm font-medium text-text-secondary mb-1.5">
-                                    {t("stockZone")}
+                                    {t("stockLocation")}
                                 </label>
                                 <input
-                                    name="zone"
-                                    value={formData.zone}
+                                    name="Location"
+                                    value={formData.Location}
                                     onChange={handleChange}
-                                    placeholder={t("placeholderZone")}
+                                    placeholder={t("placeholderLocationLong")}
                                     className="input w-full bg-bg-tertiary border-white/10 focus:border-primary/50"
                                 />
                             </div>

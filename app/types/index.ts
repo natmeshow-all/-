@@ -34,7 +34,7 @@ export interface Machine {
     serialNumber?: string;
     performance?: string;
     location?: string;
-    zone: string;
+    Location: string;
     remark?: string;
     description?: string;
     status: "active" | "maintenance" | "inactive";
@@ -56,7 +56,7 @@ export interface Part {
     partName: string;
     modelSpec: string;
     brand: string;
-    zone: string;
+    Location: string;
     quantity: number;
     minStockThreshold: number; // Low stock alert level
     location?: string;
@@ -134,12 +134,13 @@ export interface MaintenanceRecord {
     motorGearData?: MotorGearData;
     details?: string;
     checklist?: ChecklistItemResult[];
-    zone?: string; // Location of the machine 
+    Location?: string; // Location of the machine 
     notes?: string;
     evidenceImageUrl?: string; // Photo after work completion
     pmPlanId?: string; // Reference to the PMPlan if this was a PM task
     startTime?: Date;
     endTime?: Date;
+    period?: string;
 
     // Part specific fields
     partId?: string;
@@ -180,7 +181,7 @@ export interface PMPlan {
     priority?: "normal" | "high" | "urgent";
 
     // Location/Context
-    locationType?: "machine_zone" | "custom";
+    locationType?: "machine_Location" | "custom";
     customLocation?: string;
 
     completedCount?: number;
@@ -212,7 +213,7 @@ export interface User {
 export interface DashboardStats {
     totalParts: number;
     totalMachines: number;
-    totalZones: number;
+    totalLocations: number;
     maintenanceRecords: number;
     totalPM: number;
     totalOverhaul: number;
@@ -226,7 +227,7 @@ export interface AddPartFormData {
     machineName: string;
     partName: string;
     modelSpec: string;
-    zone: string;
+    Location: string;
     brand: string;
     quantity: number;
     minStockThreshold: number;
@@ -247,6 +248,7 @@ export interface MaintenanceRecordFormData {
     status: MaintenanceStatus;
     startTime: string;
     endTime: string;
+    period?: string; // e.g. routine, 1month, 3months, etc.
 
     // Part specific
     partId?: string;
@@ -320,13 +322,13 @@ export interface StockTransaction {
     totalValue?: number;
     supplier?: string; // For restock
     refDocument?: string; // PO/Invoice number
-    zone?: string; // Where it's being used
+    Location?: string; // Where it's being used
     evidenceImageUrl?: string; // Proof of change (Withdrawal)
 }
 
 export interface PartFilters {
     machineId: string;
-    zone: string;
+    Location: string;
     partName: string;
     location: string;
 }

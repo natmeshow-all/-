@@ -329,9 +329,9 @@ function MachineCard({ machine, index, onRefresh, onOpenSettings, onOpenDelete }
                             {machine.location}
                         </span>
                     )}
-                    {machine.zone && machine.zone !== "No Zone" && (
+                    {machine.Location && machine.Location !== "No Zone" && (
                         <span className="px-2.5 py-1 rounded-lg bg-accent-cyan/20 backdrop-blur-md border border-accent-cyan/30 text-[10px] font-medium text-accent-cyan">
-                            {machine.zone}
+                            {machine.Location}
                         </span>
                     )}
                     {machine.remark && (

@@ -101,7 +101,7 @@ export default function Dashboard() {
   const [stats, setStats] = useState<DashboardStats>({
     totalParts: 0,
     totalMachines: 0,
-    totalZones: 0,
+    totalLocations: 0,
     maintenanceRecords: 0,
     totalPM: 0,
     totalOverhaul: 0,
@@ -111,7 +111,7 @@ export default function Dashboard() {
   const [parts, setParts] = useState<Part[]>([]);
   const [filters, setFilters] = useState<PartFilters>({
     machineId: "",
-    zone: "",
+    Location: "",
     partName: "",
     location: "",
   });
@@ -243,8 +243,8 @@ export default function Dashboard() {
     return filteredMachines.map(m => m.name || m.id).sort();
   }, [allMachines, filters.location]);
 
-  // 2. Available Zones: Filtered by location AND selected machine
-  const availableZones = React.useMemo(() => {
+  // 2. Available Locations: Filtered by area AND selected machine
+  const availableLocations = React.useMemo(() => {
     return Array.from(new Set(
       parts
         .filter(p => {
@@ -255,11 +255,11 @@ export default function Dashboard() {
           return mLoc === filters.location;
         })
         .filter(p => !filters.machineId || p.machineName === filters.machineId || p.machineId === filters.machineId)
-        .map(p => p.zone)
+        .map(p => p.Location)
     )).filter(Boolean).sort();
   }, [parts, allMachines, filters.location, filters.machineId]);
 
-  // 3. Available Part Names: Filtered by location, machine AND zone
+  // 3. Available Part Names: Filtered by area, machine AND location
   const availablePartNames = React.useMemo(() => {
     return Array.from(new Set(
       parts
@@ -271,16 +271,16 @@ export default function Dashboard() {
           return mLoc === filters.location;
         })
         .filter(p => !filters.machineId || p.machineName === filters.machineId || p.machineId === filters.machineId)
-        .filter(p => !filters.zone || p.zone === filters.zone)
+        .filter(p => !filters.Location || p.Location === filters.Location)
         .map(p => p.partName)
     )).filter(Boolean).sort();
-  }, [parts, allMachines, filters.location, filters.machineId, filters.zone]);
+  }, [parts, allMachines, filters.location, filters.machineId, filters.Location]);
 
   // Filter parts based on current filters
   const filteredParts = parts.filter((part) => {
     // Machine filter: match by ID OR name for maximum compatibility
     if (filters.machineId && part.machineId !== filters.machineId && part.machineName !== filters.machineId) return false;
-    if (filters.zone && part.zone !== filters.zone) return false;
+    if (filters.Location && part.Location !== filters.Location) return false;
     if (filters.partName && part.partName !== filters.partName) return false;
 
     // Location filter: Check machine's location
@@ -303,12 +303,12 @@ export default function Dashboard() {
       // Cascading Reset:
       if (key === "location") {
         newFilters.machineId = "";
-        newFilters.zone = "";
+        newFilters.Location = "";
         newFilters.partName = "";
       } else if (key === "machineId") {
-        newFilters.zone = "";
+        newFilters.Location = "";
         newFilters.partName = "";
-      } else if (key === "zone") {
+      } else if (key === "Location") {
         newFilters.partName = "";
       }
       return newFilters;
@@ -316,12 +316,12 @@ export default function Dashboard() {
   };
 
   const clearFilters = () => {
-    setFilters({ machineId: "", zone: "", partName: "", location: "" });
+    setFilters({ machineId: "", Location: "", partName: "", location: "" });
   };
 
   // Count unique values for filter badges
   const uniqueMachinesCount = availableMachines.length;
-  const uniqueZonesCount = availableZones.length;
+  const uniqueLocationsCount = availableLocations.length;
   const uniquePartNamesCount = availablePartNames.length;
 
   return (
@@ -350,8 +350,8 @@ export default function Dashboard() {
             />
             <StatCard
               icon={<MapPinIcon size={12} />}
-              value={stats.totalZones}
-              label={t("statZones")}
+              value={stats.totalLocations}
+              label={t("statLocations")}
               iconBgColor="bg-accent-cyan/20"
               iconTextColor="text-accent-cyan"
               delay={100}
@@ -474,20 +474,20 @@ export default function Dashboard() {
                     </select>
                   </div>
 
-                  {/* Zone Filter */}
+                  {/* Location Filter */}
                   <div>
                     <label className="flex items-center gap-1.5 text-[10px] text-text-muted mb-1">
                       <MapPinIcon size={10} />
-                      {t("filterZone")}
-                      <span className="badge badge-primary ml-auto text-[9px] py-0 px-1">{uniqueZonesCount}</span>
+                      {t("filterLocation")}
+                      <span className="badge badge-primary ml-auto text-[9px] py-0 px-1">{uniqueLocationsCount}</span>
                     </label>
                     <select
-                      value={filters.zone}
-                      onChange={(e) => handleFilterChange("zone", e.target.value)}
+                      value={filters.Location}
+                      onChange={(e) => handleFilterChange("Location", e.target.value)}
                       className="input select text-[10px] py-0 px-2 h-[37px] leading-none"
                     >
                       <option value="">{t("filterAll")}</option>
-                      {availableZones.map((z) => (
+                      {availableLocations.map((z) => (
                         <option key={z} value={z}>{z}</option>
                       ))}
                     </select>
@@ -570,7 +570,7 @@ export default function Dashboard() {
                       <th className={`px-4 py-4 text-left text-xs font-semibold text-text-muted uppercase tracking-wider ${isTableFullscreen ? "sticky top-0 z-20 bg-bg-tertiary shadow-sm" : ""}`}>{t("tablePartName")}</th>
                       <th className={`px-4 py-4 text-left text-xs font-semibold text-text-muted uppercase tracking-wider ${isTableFullscreen ? "sticky top-0 z-20 bg-bg-tertiary shadow-sm" : ""}`}>{t("tableModelSpec")}</th>
                       <th className={`px-4 py-4 text-left text-xs font-semibold text-text-muted uppercase tracking-wider ${isTableFullscreen ? "sticky top-0 z-20 bg-bg-tertiary shadow-sm" : ""}`}>{t("tableBrand")}</th>
-                      <th className={`px-4 py-4 text-left text-xs font-semibold text-text-muted uppercase tracking-wider ${isTableFullscreen ? "sticky top-0 z-20 bg-bg-tertiary shadow-sm" : ""}`}>{t("tableZone")}</th>
+                      <th className={`px-4 py-4 text-left text-xs font-semibold text-text-muted uppercase tracking-wider ${isTableFullscreen ? "sticky top-0 z-20 bg-bg-tertiary shadow-sm" : ""}`}>{t("tableLocationArea")}</th>
                       <th className={`px-4 py-4 text-left text-xs font-semibold text-text-muted uppercase tracking-wider ${isTableFullscreen ? "sticky top-0 z-20 bg-bg-tertiary shadow-sm" : ""}`}>{t("tableQuantity")}</th>
                       <th className={`px-4 py-4 text-left text-xs font-semibold text-text-muted uppercase tracking-wider ${isTableFullscreen ? "sticky top-0 z-20 bg-bg-tertiary shadow-sm" : ""}`}>{t("tableLocation")}</th>
                       <th className={`px-4 py-4 text-left text-xs font-semibold text-text-muted uppercase tracking-wider ${isTableFullscreen ? "sticky top-0 z-20 bg-bg-tertiary shadow-sm" : ""}`}>{t("tableNotes")}</th>
@@ -620,7 +620,7 @@ export default function Dashboard() {
                           {part.brand || "-"}
                         </td>
                         <td className="py-3 px-4 text-text-secondary text-sm">
-                          {tData(part.zone || "-")}
+                          {tData(part.Location || "-")}
                         </td>
                         <td className="py-3 px-4">
                           <span className="text-sm font-semibold text-text-primary">{part.quantity || 0}</span>
@@ -764,8 +764,8 @@ export default function Dashboard() {
                               <span className="text-[10px] text-white font-medium truncate max-w-[140px]" title={part.modelSpec}>{part.modelSpec || "-"}</span>
                             </div>
                             <div className="bg-white/10 backdrop-blur-md border border-white/20 rounded-md px-1.5 py-0.5 flex flex-col min-w-[40px]">
-                              <span className="text-[8px] text-white/50 uppercase tracking-tighter font-bold">{t("tableZone")}</span>
-                              <span className="text-[10px] text-white font-medium">{tData(part.zone || "-")}</span>
+                              <span className="text-[8px] text-white/50 uppercase tracking-tighter font-bold">{t("tableLocationArea")}</span>
+                              <span className="text-[10px] text-white font-medium">{tData(part.Location || "-")}</span>
                             </div>
 
                             {part.notes && (
@@ -912,10 +912,10 @@ export default function Dashboard() {
                             <span className="text-[8px] text-white/50 uppercase tracking-tighter font-bold">{t("tableModelSpec")}</span>
                             <span className="text-[10px] text-white font-medium truncate max-w-[140px]" title={part.modelSpec}>{part.modelSpec || "-"}</span>
                           </div>
-                          {/* Zone */}
+                          {/* Location Area */}
                           <div className="bg-white/10 backdrop-blur-md border border-white/20 rounded-md px-1.5 py-0.5 flex flex-col min-w-[40px]">
-                            <span className="text-[8px] text-white/50 uppercase tracking-tighter font-bold">{t("tableZone")}</span>
-                            <span className="text-[10px] text-white font-medium">{tData(part.zone || "-")}</span>
+                            <span className="text-[8px] text-white/50 uppercase tracking-tighter font-bold">{t("tableLocationArea")}</span>
+                            <span className="text-[10px] text-white font-medium">{tData(part.Location || "-")}</span>
                           </div>
 
                           {/* Notes - Separate Refined Block */}

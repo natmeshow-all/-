@@ -110,7 +110,8 @@ export default function PMExecutionModal({ isOpen, onClose, plan, onSuccess }: P
                 value: checklistResults[index]?.value || ""
             }));
 
-            const machineZone = plan.locationType === 'machine_zone' ? plan.customLocation : undefined;
+            // Ensure Location is captured correctly for auditing
+            const machineLocation = plan.customLocation || "";
 
             await completePMTask(
                 plan.id,
@@ -125,7 +126,7 @@ export default function PMExecutionModal({ isOpen, onClose, plan, onSuccess }: P
                     technician: technician || "Technician",
                     details: details,
                     checklist: structuredChecklist,
-                    zone: machineZone || "", // Save zone for auditing
+                    Location: machineLocation,
                 },
                 imageFile || undefined
             );

@@ -37,7 +37,7 @@ export default function MachineDetailsModal({
     const [parts, setParts] = useState<Part[]>([]);
     const [loading, setLoading] = useState(false);
     const [lightboxOpen, setLightboxOpen] = useState(false);
-    const [selectedZone, setSelectedZone] = useState<string>("All");
+    const [selectedLocation, setSelectedLocation] = useState<string>("All");
     const [pmConfigOpen, setPmConfigOpen] = useState(false);
 
     // Fetch data when modal opens
@@ -93,18 +93,18 @@ export default function MachineDetailsModal({
 
     // Safety fallback for display
     const displayName = machine?.name || machineName || initialPart?.machineName || "Unknown Machine";
-    const displayZone = machine?.zone || initialPart?.zone || "-";
+    const displayZone = machine?.Location || initialPart?.Location || "-";
     const displayImage = machine?.imageUrl || initialPart?.imageUrl || "";
 
     // Calculate stats & Filter
-    const uniqueZones = Array.from(new Set(parts.map(p => p.zone).filter(Boolean))).sort();
+    const uniqueLocations = Array.from(new Set(parts.map(p => p.Location).filter(Boolean))).sort();
 
-    const displayedParts = selectedZone === "All"
+    const displayedParts = selectedLocation === "All"
         ? parts
-        : parts.filter(p => p.zone === selectedZone);
+        : parts.filter(p => p.Location === selectedLocation);
 
     useEffect(() => {
-        setSelectedZone("All");
+        setSelectedLocation("All");
     }, [machineId, machineName]);
 
     if (!isOpen) return null;
@@ -162,7 +162,7 @@ export default function MachineDetailsModal({
                         machine={machine || {
                             id: machineName || "Unknown",
                             name: machineName || "Unknown",
-                            zone: initialPart?.zone || "All",
+                            Location: initialPart?.Location || "All",
                             location: initialPart?.location || "",
                             status: "active",
                             imageUrl: "",
@@ -232,8 +232,8 @@ export default function MachineDetailsModal({
 
                                 <div className="bg-[#1E293B]/60 p-4 md:p-6 rounded-2xl md:rounded-[2rem] border border-white/5 flex items-center justify-between shadow-lg">
                                     <div>
-                                        <div className="text-xs md:text-sm text-text-muted mb-2 font-medium text-[#A855F7]">{t("statTotalZones")}</div>
-                                        <div className="text-3xl md:text-4xl font-bold text-white leading-none">{uniqueZones.length}</div>
+                                        <div className="text-xs md:text-sm text-text-muted mb-2 font-medium text-[#A855F7]">{t("statTotalLocations")}</div>
+                                        <div className="text-3xl md:text-4xl font-bold text-white leading-none">{uniqueLocations.length}</div>
                                     </div>
                                     <div className="w-12 h-12 md:w-14 md:h-14 rounded-2xl bg-purple-600/20 flex items-center justify-center text-[#A855F7] shadow-inner" style={{ backgroundColor: 'rgba(168, 85, 247, 0.1)' }}>
                                         <MapPinIcon size={24} className="md:w-7 md:h-7" />
@@ -252,12 +252,12 @@ export default function MachineDetailsModal({
                                 <div className="flex items-center gap-3 w-full md:w-auto">
                                     <div className="relative flex-1 md:flex-none">
                                         <select
-                                            value={selectedZone}
-                                            onChange={(e) => setSelectedZone(e.target.value)}
+                                            value={selectedLocation}
+                                            onChange={(e) => setSelectedLocation(e.target.value)}
                                             className="w-full md:w-auto appearance-none bg-[#0F172A] border border-white/10 text-text-primary text-sm rounded-xl px-4 py-2.5 pr-10 focus:outline-none focus:ring-2 focus:ring-blue-500/50 cursor-pointer transition-all"
                                         >
                                             <option value="All">{t("filterAll")}</option>
-                                            {uniqueZones.map(zone => (
+                                            {uniqueLocations.map(zone => (
                                                 <option key={zone} value={zone}>{zone}</option>
                                             ))}
                                         </select>
@@ -316,8 +316,8 @@ export default function MachineDetailsModal({
 
                                                     <div className="grid grid-cols-2 md:grid-cols-4 gap-3 bg-black/20 p-3 md:p-4 rounded-xl border border-white/5">
                                                         <div className="flex flex-col gap-0.5">
-                                                            <span className="text-[10px] text-text-muted uppercase font-semibold">{t("tableZone")}</span>
-                                                            <span className="text-sm font-bold text-indigo-400">{part.zone}</span>
+                                                            <span className="text-[10px] text-text-muted uppercase font-semibold">{t("tableLocationArea")}</span>
+                                                            <span className="text-sm font-bold text-indigo-400">{part.Location}</span>
                                                         </div>
                                                         <div className="flex flex-col gap-0.5">
                                                             <span className="text-[10px] text-text-muted uppercase font-semibold">{t("tableQuantity")}</span>

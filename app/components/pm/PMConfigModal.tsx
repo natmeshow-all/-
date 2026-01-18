@@ -86,12 +86,12 @@ export default function PMConfigModal({ isOpen, onClose, machine, plan, onSucces
             : new Date().toISOString().split('T')[0]
     );
 
-    const [selectedZone, setSelectedZone] = useState(plan?.customLocation || machine.zone || "");
+    const [selectedLocation, setSelectedLocation] = useState(plan?.customLocation || machine.Location || "");
     const [customLocation, setCustomLocation] = useState("");
     const [useCustomLocation, setUseCustomLocation] = useState(plan?.locationType === "custom");
 
     const [allPartNames, setAllPartNames] = useState<string[]>([]);
-    const [allZones, setAllZones] = useState<string[]>([]);
+    const [allLocations, setAllLocations] = useState<string[]>([]);
     const [loadingData, setLoadingData] = useState(false);
 
     const CYCLE_OPTIONS = [
@@ -113,10 +113,10 @@ export default function PMConfigModal({ isOpen, onClose, machine, plan, onSucces
         if (plan) {
             setSelectedMaintenanceType(plan.taskName || "");
             setChecklistItems(plan.checklistItems || []);
-            setSelectedZone(plan.customLocation || machine.zone || "");
+            setSelectedLocation(plan.customLocation || machine.Location || "");
             setUseCustomLocation(plan.locationType === "custom");
         }
-    }, [plan, machine.zone]);
+    }, [plan, machine.Location]);
 
     const fetchPartsData = async () => {
         setLoadingData(true);
@@ -124,8 +124,8 @@ export default function PMConfigModal({ isOpen, onClose, machine, plan, onSucces
             const parts = await getParts();
             const uniquePartNames = Array.from(new Set(parts.map(p => p.partName).filter(Boolean))).sort();
             setAllPartNames(uniquePartNames);
-            const uniqueZones = Array.from(new Set(parts.map(p => p.zone).filter(Boolean))).sort();
-            setAllZones(uniqueZones);
+            const uniqueLocations = Array.from(new Set(parts.map(p => p.Location).filter(Boolean))).sort();
+            setAllLocations(uniqueLocations);
         } catch (error) {
             console.error("Error fetching parts data:", error);
         } finally {
@@ -169,7 +169,7 @@ export default function PMConfigModal({ isOpen, onClose, machine, plan, onSucces
 
     const getLocation = () => {
         if (useCustomLocation) return customLocation;
-        return selectedZone;
+        return selectedLocation;
     };
 
     const handleSubmit = async (e: React.FormEvent) => {
@@ -190,7 +190,7 @@ export default function PMConfigModal({ isOpen, onClose, machine, plan, onSucces
                 weeklyDay: scheduleType === 'weekly' ? weeklyDay : undefined,
                 startDate: start,
                 nextDueDate: finalNextDueDate,
-                locationType: useCustomLocation ? 'custom' : 'machine_zone',
+                locationType: useCustomLocation ? 'custom' : 'machine_Location',
                 customLocation: getLocation(),
             };
 
@@ -228,7 +228,7 @@ export default function PMConfigModal({ isOpen, onClose, machine, plan, onSucces
                         <h3 className="font-bold text-lg text-text-primary">{machine.name}</h3>
                         <div className="flex items-center gap-2 text-sm text-text-muted mt-1">
                             <span className="bg-bg-secondary px-2 py-0.5 rounded text-xs border border-white/5">
-                                {machine.zone}
+                                {machine.Location}
                             </span>
                             <span>•</span>
                             <span>{machine.location}</span>
@@ -457,19 +457,19 @@ export default function PMConfigModal({ isOpen, onClose, machine, plan, onSucces
                                 <div className="relative">
                                     <select
                                         className="input-field w-full appearance-none cursor-pointer"
-                                        value={useCustomLocation ? "custom" : selectedZone}
+                                        value={useCustomLocation ? "custom" : selectedLocation}
                                         onChange={(e) => {
                                             if (e.target.value === "custom") {
                                                 setUseCustomLocation(true);
                                             } else {
                                                 setUseCustomLocation(false);
-                                                setSelectedZone(e.target.value);
+                                                setSelectedLocation(e.target.value);
                                             }
                                         }}
                                     >
-                                        <option value="">{t("placeholderSelectZone")}</option>
-                                        {allZones.map(zone => (
-                                            <option key={zone} value={zone}>{zone}</option>
+                                        <option value="">{t("placeholderSelectLocation")}</option>
+                                        {allLocations.map(loc => (
+                                            <option key={loc} value={loc}>{loc}</option>
                                         ))}
                                         <option value="custom">{t("labelOtherCustom")}</option>
                                     </select>

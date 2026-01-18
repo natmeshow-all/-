@@ -140,6 +140,8 @@ export default function MaintenanceRecordModal({
         machineHours: "",
         changeReason: "worn",
         partCondition: "poor",
+
+        period: "routine",
     });
 
     const [allParts, setAllParts] = useState<Part[]>([]);
@@ -267,7 +269,7 @@ export default function MaintenanceRecordModal({
 
     const filteredMachines = locationFilter === "All"
         ? machines
-        : machines.filter(m => m.location === locationFilter);
+        : machines.filter(m => m.Location === locationFilter);
 
     const filteredParts = allParts.filter(p => {
         if (!formData.machineId) return false;
@@ -373,7 +375,8 @@ export default function MaintenanceRecordModal({
                         shaftBend: formData.shaftBend,
                         dialGauge: formData.dialGauge,
                     }
-                }
+                },
+                period: formData.period || "routine",
             };
 
             await addMaintenanceRecord(dataToSubmit);
@@ -490,7 +493,7 @@ export default function MaintenanceRecordModal({
                                 {filteredParts.map(p => (
                                     <option key={p.id} value={p.id}>
                                         {p.partName} {p.brand ? `(${p.brand})` : ''}
-                                        {p.zone ? ` @ ${p.zone}` : ''}
+                                        {p.Location ? ` @ ${p.Location}` : ''}
                                     </option>
                                 ))}
                             </select>
@@ -637,8 +640,38 @@ export default function MaintenanceRecordModal({
                     </div>
                 </div>
 
-                {/* Section 3: Motor & Gear Data - Only show if Motor or Gear part is selected */}
-                {isMotorOrGear && (
+                {/* Section: Period Selector (For Preventive Only) */}
+                {formData.type === "preventive" && (
+                    <div className="form-section animate-fade-in mt-4">
+                        <h3 className="form-section-title">
+                            <ClockIcon size={16} />
+                            {t("labelPeriod")}
+                        </h3>
+                        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                            <div>
+                                <label className="label">
+                                    <RefreshCwIcon size={14} />
+                                    {t("labelPeriod")}
+                                </label>
+                                <select
+                                    name="period"
+                                    value={formData.period || "routine"}
+                                    onChange={handleInputChange}
+                                    className="input select"
+                                >
+                                    <option value="routine">{t("periodRoutine")}</option>
+                                    <option value="1month">{t("period1Month")}</option>
+                                    <option value="3months">{t("period3Months")}</option>
+                                    <option value="6months">{t("period6Months")}</option>
+                                    <option value="1year">{t("period1Year")}</option>
+                                </select>
+                            </div>
+                        </div>
+                    </div>
+                )}
+
+                {/* Section 3: Motor & Gear Data - Show based on Part Selection OR Period (1 Month+) */}
+                {(isMotorOrGear || (formData.type === 'preventive' && formData.period && formData.period !== 'routine')) && (
                     <div className="form-section animate-fade-in">
                         <h3 className="form-section-title">
                             <SettingsIcon size={16} />
@@ -955,8 +988,9 @@ export default function MaintenanceRecordModal({
                     </div>
                 )}
 
-                {/* Section 4: Shaft & Dial Gauge Data - Hide for part changes */}
-                {!isPartChange && (
+                {/* Section 4: Shaft & Dial Gauge Data - Hide for part changes, Show for 3 Months+ or specific parts */}
+                {(formData.type === 'preventive' && formData.period && ['3months', '6months', '1year'].includes(formData.period)) && (
+
                     <div className="form-section animate-fade-in">
                         <h3 className="form-section-title">
                             <RulerIcon size={16} />

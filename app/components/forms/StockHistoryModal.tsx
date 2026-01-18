@@ -113,8 +113,10 @@ export default function StockHistoryModal({ isOpen, onClose, part }: StockHistor
                                                         <MapPinIcon size={14} className="mt-1 text-text-muted" />
                                                         <div className="min-w-0">
                                                             <p className="text-text-secondary truncate">{txn.machineName || "N/A"}</p>
-                                                            {txn.zone && (
-                                                                <p className="text-[10px] text-text-muted tracking-tight">{t("stockZone")}: {txn.zone}</p>
+                                                            {(txn.Location || (txn as any).zone) && (
+                                                                <p className="text-[10px] text-text-muted tracking-tight">
+                                                                    {t("stockLocation")}: {txn.Location || (txn as any).zone}
+                                                                </p>
                                                             )}
                                                         </div>
                                                     </>

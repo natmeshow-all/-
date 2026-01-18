@@ -17,14 +17,14 @@ export default function GlobalMaintenanceHistoryModal({ isOpen, onClose }: Globa
     const { t } = useLanguage();
     const [records, setRecords] = useState<MaintenanceRecord[]>([]);
     const [allRecordsForStats, setAllRecordsForStats] = useState<MaintenanceRecord[]>([]);
-    const [machines, setMachines] = useState<{ id: string, name: string, zone?: string, location?: string }[]>([]);
+    const [machines, setMachines] = useState<{ id: string, name: string, Location?: string, location?: string }[]>([]);
     const [parts, setParts] = useState<{ id: string, partName: string, machineId: string }[]>([]);
     const [loading, setLoading] = useState(true);
 
     // Filter states
     const [searchTerm, setSearchTerm] = useState("");
     const [selectedMachine, setSelectedMachine] = useState<string>("all");
-    const [selectedZone, setSelectedZone] = useState<string>("all");
+    const [selectedLocation, setSelectedLocation] = useState<string>("all");
     const [selectedMonth, setSelectedMonth] = useState<string>("all"); // YYYY-MM
     const [expandedRecord, setExpandedRecord] = useState<string | null>(null);
     const [isFilterExpanded, setIsFilterExpanded] = useState(false);
@@ -43,7 +43,7 @@ export default function GlobalMaintenanceHistoryModal({ isOpen, onClose }: Globa
                 // Filter records to ONLY show Part Change/Overhaul (type === 'partReplacement')
                 const overhaulRecords = recordsData.filter(r => r.type === 'partReplacement');
                 setRecords(overhaulRecords.sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime()));
-                setMachines(machinesData.map(m => ({ id: m.id, name: m.name, zone: m.zone, location: m.location })));
+                setMachines(machinesData.map(m => ({ id: m.id, name: m.name, Location: m.Location, location: m.location })));
                 setParts(partsData.map(p => ({ id: p.id, partName: p.partName, machineId: p.machineId })));
             } catch (error) {
                 console.error("Error fetching global maintenance history:", error);
@@ -65,16 +65,20 @@ export default function GlobalMaintenanceHistoryModal({ isOpen, onClose }: Globa
 
         const matchesMachine = selectedMachine === "all" || record.machineId === selectedMachine || record.machineName === selectedMachine;
 
-        // Location (Zone) matching logic - updated to match Machines page (FZ, RTE, UT)
-        let matchesZone = selectedZone === "all";
-        if (!matchesZone) {
-            const machine = machines.find(m => m.id === record.machineId || m.name === record.machineName);
-            const machineLocation = machine?.location?.toUpperCase() || "";
+        // Location (Area) matching logic - updated to match Machines page (FZ, RTE, UT)
+        let matchesLocation = selectedLocation === "all";
+        if (!matchesLocation) {
+            let recordLocation = record.Location?.toUpperCase() || "";
 
-            if (selectedZone === "UT") {
-                matchesZone = machineLocation === "UT" || machineLocation === "UTILITY";
+            if (!recordLocation) {
+                const machine = machines.find(m => m.id === record.machineId || m.name === record.machineName);
+                recordLocation = machine?.Location?.toUpperCase() || machine?.location?.toUpperCase() || "";
+            }
+
+            if (selectedLocation === "UT") {
+                matchesLocation = recordLocation === "UT" || recordLocation === "UTILITY";
             } else {
-                matchesZone = machineLocation === selectedZone;
+                matchesLocation = recordLocation === selectedLocation;
             }
         }
 
@@ -82,7 +86,7 @@ export default function GlobalMaintenanceHistoryModal({ isOpen, onClose }: Globa
         const recordMonth = `${recordDate.getFullYear()}-${String(recordDate.getMonth() + 1).padStart(2, '0')}`;
         const matchesMonth = selectedMonth === "all" || recordMonth === selectedMonth;
 
-        return matchesSearch && matchesMachine && matchesZone && matchesMonth;
+        return matchesSearch && matchesMachine && matchesLocation && matchesMonth;
     });
 
     const getMonthOptions = () => {
@@ -94,12 +98,12 @@ export default function GlobalMaintenanceHistoryModal({ isOpen, onClose }: Globa
         return Array.from(months).sort().reverse();
     };
 
-    const getZoneOptions = () => {
-        const zones = new Set<string>();
+    const getLocationOptions = () => {
+        const locations = new Set<string>();
         machines.forEach(m => {
-            if (m.zone) zones.add(m.zone);
+            if (m.Location) locations.add(m.Location);
         });
-        return Array.from(zones).sort();
+        return Array.from(locations).sort();
     };
 
     const toggleExpand = (id: string) => {
@@ -151,11 +155,11 @@ export default function GlobalMaintenanceHistoryModal({ isOpen, onClose }: Globa
                                 <MapPinIcon size={14} className="text-text-muted shrink-0" />
                                 <select
                                     className="input-field w-full h-10 text-xs py-0"
-                                    value={selectedZone}
-                                    onChange={(e) => setSelectedZone(e.target.value)}
+                                    value={selectedLocation}
+                                    onChange={(e) => setSelectedLocation(e.target.value)}
                                 >
                                     <option value="all">{t("filterAllLocations")}</option>
-                                    {getZoneOptions().map(z => (
+                                    {getLocationOptions().map(z => (
                                         <option key={z} value={z}>{z}</option>
                                     ))}
                                 </select>
@@ -169,10 +173,10 @@ export default function GlobalMaintenanceHistoryModal({ isOpen, onClose }: Globa
                                 >
                                     <option value="all">{t("filterAllMachines")}</option>
                                     {machines.filter(m => {
-                                        if (selectedZone === 'all') return true;
-                                        const loc = m.location?.toUpperCase() || "";
-                                        if (selectedZone === 'UT') return loc === 'UT' || loc === 'UTILITY';
-                                        return loc === selectedZone;
+                                        if (selectedLocation === 'all') return true;
+                                        const loc = m.Location?.toUpperCase() || m.location?.toUpperCase() || "";
+                                        if (selectedLocation === 'UT') return loc === 'UT' || loc === 'UTILITY';
+                                        return loc === selectedLocation;
                                     }).map(m => (
                                         <option key={m.id} value={m.id}>{m.name}</option>
                                     ))}
@@ -206,19 +210,22 @@ export default function GlobalMaintenanceHistoryModal({ isOpen, onClose }: Globa
                         ].map((loc) => (
                             <button
                                 key={loc.id}
-                                onClick={() => setSelectedZone(loc.id)}
+                                onClick={() => setSelectedLocation(loc.id)}
                                 className={`px-4 py-2 rounded-xl text-xs font-bold transition-all border flex items-center gap-2
-                                    ${selectedZone === loc.id
+                                    ${selectedLocation === loc.id
                                         ? `bg-${loc.color}/20 border-${loc.color}/40 text-white shadow-lg`
                                         : 'bg-white/5 border-white/10 text-text-muted hover:bg-white/10'}`}
                             >
                                 {loc.label === 'All' ? t("filterAll") : loc.label}
-                                <span className={`px-1.5 py-0.5 rounded text-[10px] ${selectedZone === loc.id ? `bg-${loc.color} text-bg-primary` : 'bg-white/10 text-white/40'}`}>
+                                <span className={`px-1.5 py-0.5 rounded text-[10px] ${selectedLocation === loc.id ? `bg-${loc.color} text-bg-primary` : 'bg-white/10 text-white/40'}`}>
                                     {loc.id === 'all' ? records.length : records.filter(r => {
-                                        const m = machines.find(mach => mach.id === r.machineId || mach.name === r.machineName);
-                                        const locUpper = m?.location?.toUpperCase() || "";
-                                        if (loc.id === 'UT') return locUpper === 'UT' || locUpper === 'UTILITY';
-                                        return locUpper === loc.id;
+                                        let recordLoc = r.Location?.toUpperCase() || "";
+                                        if (!recordLoc) {
+                                            const m = machines.find(mach => mach.id === r.machineId || mach.name === r.machineName);
+                                            recordLoc = m?.Location?.toUpperCase() || m?.location?.toUpperCase() || "";
+                                        }
+                                        if (loc.id === 'UT') return recordLoc === 'UT' || recordLoc === 'UTILITY';
+                                        return recordLoc === loc.id;
                                     }).length}
                                 </span>
                             </button>
