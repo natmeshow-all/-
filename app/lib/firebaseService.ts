@@ -358,6 +358,7 @@ export async function getParts(): Promise<Part[]> {
             quantity,
             modelSpec,
             machineName,
+            Location: data.Location || data.zone || "",
             createdAt: data.createdAt ? new Date(data.createdAt) : new Date(),
             updatedAt: data.updatedAt ? new Date(data.updatedAt) : new Date(),
         });
@@ -1152,7 +1153,7 @@ export async function getDashboardStats() {
         getSpareParts(),
     ]);
 
-    const uniqueLocations = new Set(parts.map((p) => p.Location)).size;
+    const uniqueLocations = new Set(parts.map((p) => p.Location).filter(l => l && l.trim() !== '')).size;
     const pendingRecords = records.filter((r) => r.status !== "completed").length;
 
     // Separate PM and Overhaul counts

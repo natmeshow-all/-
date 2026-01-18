@@ -288,7 +288,7 @@ export interface TranslationKeys {
     categoryTool: string;
     categoryOther: string;
 
-    // Locations (previously Zones)
+    // Zones
     locationTop: string;
     locationBottom: string;
     locationLeft: string;
@@ -750,11 +750,11 @@ const th: TranslationKeys = {
     // Stats
     statTotalParts: "จำนวนอะไหล่ทั้งหมด",
     statMachines: "จำนวนเครื่องจักร",
-    statLocations: "จำนวนสถานที่",
+    statLocations: "จำนวน Zone",
     statMaintenanceRecords: "จำนวนซ่อมบำรุง/Overhaul",
     statStockNormal: "สต็อกปกติ",
     statStockLow: "สต็อกต่ำ (Low)",
-    statTotalLocations: "สถานที่ทั้งหมด",
+    statTotalLocations: "Total Zones",
 
     // Actions
     actionAddPart: "เพิ่มอะไหล่",
@@ -777,7 +777,7 @@ const th: TranslationKeys = {
     // Filters
     filterTitle: "ค้นหาและกรองข้อมูล",
     filterMachine: "ชื่อเครื่องจักร",
-    filterLocation: "สถานที่ (Location)",
+    filterLocation: "Zone",
     filterPartName: "ชื่ออะไหล่",
     filterAll: "ทั้งหมด",
     filterShowResults: "แสดงผล:",
@@ -819,12 +819,12 @@ const th: TranslationKeys = {
     tablePartName: "ชื่ออะไหล่",
     tableModelSpec: "รุ่น/สเปค",
     tableBrand: "ยี่ห้อ",
-    tableLocationArea: "สถานที่",
+    tableLocationArea: "Zone",
     tableStatus: "สถานะ",
     tableDate: "วันที่",
     tableActions: "จัดการ",
     tableQuantity: "จำนวน",
-    tableLocation: "สถานที่",
+    tableLocation: "Zone",
     tableNotes: "หมายเหตุ",
     tableManagement: "การจัดการ",
     tableTitleParts: "รายการอะไหล่เครื่องจักร",
@@ -836,11 +836,11 @@ const th: TranslationKeys = {
     addPartSelectPart: "เลือกชื่ออะไหล่",
     addPartNewPart: "+ เพิ่มชื่ออะไหล่ใหม่",
     addPartModelSpec: "รุ่น/สเปค",
-    addPartLocationArea: "สถานที่",
+    addPartLocationArea: "Zone",
     addPartBrand: "ยี่ห้อ",
     addPartQuantity: "จำนวน",
     addPartUnit: "หน่วยนับ",
-    addPartLocation: "สถานที่",
+    addPartLocation: "สถานที่ (Location)",
     addPartImage: "รูปภาพอะไหล่",
     addPartChooseFile: "Choose File",
     addPartNoFile: "No file chosen",
@@ -1425,11 +1425,11 @@ const en: TranslationKeys = {
     // Stats
     statTotalParts: "Part Names",
     statMachines: "Machines",
-    statLocations: "Locations",
+    statLocations: "Zones",
     statMaintenanceRecords: "Maintenance Records/Overhaul",
     statStockNormal: "In Stock",
     statStockLow: "Low Stock",
-    statTotalLocations: "Total Locations",
+    statTotalLocations: "Total Zones",
 
     // Actions
     actionAddPart: "Add Part",
@@ -1452,7 +1452,7 @@ const en: TranslationKeys = {
     // Filters
     filterTitle: "Search and Filter",
     filterMachine: "Machine Name",
-    filterLocation: "Location",
+    filterLocation: "Zone",
     filterPartName: "Part Name",
     filterAll: "All",
     filterShowResults: "Showing:",
@@ -1494,12 +1494,12 @@ const en: TranslationKeys = {
     tablePartName: "PART NAME",
     tableModelSpec: "MODEL/SPEC",
     tableBrand: "BRAND",
-    tableLocationArea: "LOCATION",
+    tableLocationArea: "ZONE",
     tableStatus: "STATUS",
     tableDate: "DATE",
     tableActions: "ACTIONS",
     tableQuantity: "Quantity",
-    tableLocation: "Location",
+    tableLocation: "Zone",
     tableNotes: "Notes",
     tableManagement: "Management",
     tableTitleParts: "Machine Parts",
@@ -1511,7 +1511,7 @@ const en: TranslationKeys = {
     addPartSelectPart: "Select Part Name",
     addPartNewPart: "+ Add New Part Name",
     addPartModelSpec: "Model/Spec",
-    addPartLocationArea: "Location",
+    addPartLocationArea: "Zone",
     addPartBrand: "Brand",
     addPartQuantity: "Quantity",
     addPartUnit: "Unit",
