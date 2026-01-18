@@ -51,7 +51,7 @@
         // ===== Schedules =====
         "schedules": {
             ".read": true,
-            ".write": "auth != null && (root.child('users').child(auth.uid).child('role').val() == 'admin' || root.child('users').child(auth.uid).child('role').val() == 'supervisor')"
+            ".write": "auth != null && root.child('users').child(auth.uid).child('isApproved').val() == true && root.child('users').child(auth.uid).child('role').val() != 'viewer'"
         },
         // ===== Spare Parts =====
         "spare_parts": {
@@ -84,6 +84,14 @@
         "system_stats": {
             ".read": "auth != null && (root.child('users').child(auth.uid).child('role').val() == 'admin' || root.child('users').child(auth.uid).child('role').val() == 'supervisor')",
             "usage_history": {
+                ".read": "auth != null",
+                ".write": "auth != null"
+            }
+        },
+        // ===== Usage Logs (New) =====
+        "usage_logs": {
+            ".read": "auth != null && (root.child('users').child(auth.uid).child('role').val() == 'admin' || root.child('users').child(auth.uid).child('role').val() == 'supervisor')",
+            "$date": {
                 ".read": "auth != null",
                 ".write": "auth != null"
             }
