@@ -4,8 +4,8 @@ import React, { useState, useEffect } from "react";
 import Modal from "../ui/Modal";
 import { useLanguage } from "../../contexts/LanguageContext";
 import { MaintenanceRecord } from "../../types";
-import { getMaintenanceRecords, getMachines } from "../../lib/firebaseService";
-import { ClockIcon, UserIcon, FileTextIcon, CalendarIcon, BoxIcon, SettingsIcon, SearchIcon, ChevronDownIcon, ChevronUpIcon, FilterIcon, CheckCircleIcon, CameraIcon, MapPinIcon } from "../ui/Icons";
+import { getMaintenanceRecords, getMachines, getParts } from "../../lib/firebaseService";
+import { ClockIcon, UserIcon, FileTextIcon, CalendarIcon, BoxIcon, SettingsIcon, SearchIcon, ChevronDownIcon, ChevronUpIcon, FilterIcon, CheckCircleIcon, CameraIcon, MapPinIcon, RefreshCwIcon, TargetIcon, AlertTriangleIcon, ActivityIcon, InfoIcon } from "../ui/Icons";
 import Image from "next/image";
 
 interface GlobalMaintenanceHistoryModalProps {
@@ -16,7 +16,9 @@ interface GlobalMaintenanceHistoryModalProps {
 export default function GlobalMaintenanceHistoryModal({ isOpen, onClose }: GlobalMaintenanceHistoryModalProps) {
     const { t } = useLanguage();
     const [records, setRecords] = useState<MaintenanceRecord[]>([]);
+    const [allRecordsForStats, setAllRecordsForStats] = useState<MaintenanceRecord[]>([]);
     const [machines, setMachines] = useState<{ id: string, name: string, zone?: string, location?: string }[]>([]);
+    const [parts, setParts] = useState<{ id: string, partName: string, machineId: string }[]>([]);
     const [loading, setLoading] = useState(true);
 
     // Filter states
@@ -25,18 +27,24 @@ export default function GlobalMaintenanceHistoryModal({ isOpen, onClose }: Globa
     const [selectedZone, setSelectedZone] = useState<string>("all");
     const [selectedMonth, setSelectedMonth] = useState<string>("all"); // YYYY-MM
     const [expandedRecord, setExpandedRecord] = useState<string | null>(null);
+    const [isFilterExpanded, setIsFilterExpanded] = useState(false);
 
     useEffect(() => {
         const loadData = async () => {
             if (!isOpen) return;
             setLoading(true);
             try {
-                const [recordsData, machinesData] = await Promise.all([
+                const [recordsData, machinesData, partsData] = await Promise.all([
                     getMaintenanceRecords(),
-                    getMachines()
+                    getMachines(),
+                    getParts()
                 ]);
-                setRecords(recordsData.sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime()));
+                setAllRecordsForStats(recordsData);
+                // Filter records to ONLY show Part Change/Overhaul (type === 'partReplacement')
+                const overhaulRecords = recordsData.filter(r => r.type === 'partReplacement');
+                setRecords(overhaulRecords.sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime()));
                 setMachines(machinesData.map(m => ({ id: m.id, name: m.name, zone: m.zone, location: m.location })));
+                setParts(partsData.map(p => ({ id: p.id, partName: p.partName, machineId: p.machineId })));
             } catch (error) {
                 console.error("Error fetching global maintenance history:", error);
             } finally {
@@ -48,6 +56,8 @@ export default function GlobalMaintenanceHistoryModal({ isOpen, onClose }: Globa
     }, [isOpen]);
 
     const filteredRecords = records.filter(record => {
+        // (Base records already filtered for 'partReplacement')
+
         const matchesSearch =
             record.machineName.toLowerCase().includes(searchTerm.toLowerCase()) ||
             record.technician.toLowerCase().includes(searchTerm.toLowerCase()) ||
@@ -96,65 +106,93 @@ export default function GlobalMaintenanceHistoryModal({ isOpen, onClose }: Globa
         setExpandedRecord(expandedRecord === id ? null : id);
     };
 
+    const getPartChangeCount = (partId: string) => {
+        return records.filter(r => r.partId === partId).length;
+    };
+
     return (
-        <Modal isOpen={isOpen} onClose={onClose} title={t("pmHistoryTitle")} size="lg">
+        <Modal isOpen={isOpen} onClose={onClose} title={t("pmHistoryTitle")} size="xl">
             <div className="space-y-6">
                 {/* Search and Filters */}
-                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3 bg-bg-tertiary/30 p-4 rounded-2xl border border-white/5">
-                    <div className="relative">
-                        <SearchIcon size={14} className="absolute left-3 top-1/2 -translate-y-1/2 text-text-muted" />
-                        <input
-                            type="text"
-                            placeholder={t("placeholderSearchHistory")}
-                            className="input-field w-full pl-9 h-10 text-xs"
-                            value={searchTerm}
-                            onChange={(e) => setSearchTerm(e.target.value)}
-                        />
-                    </div>
+                <div className="bg-bg-tertiary/30 p-4 rounded-2xl border border-white/5 space-y-4">
                     <div className="flex items-center gap-2">
-                        <MapPinIcon size={14} className="text-text-muted shrink-0" />
-                        <select
-                            className="input-field w-full h-10 text-xs py-0"
-                            value={selectedZone}
-                            onChange={(e) => setSelectedZone(e.target.value)}
+                        <div className="relative flex-1 group">
+                            <SearchIcon size={14} className="absolute left-3 top-1/2 -translate-y-1/2 text-text-muted transition-colors group-focus-within:text-accent-blue" />
+                            <input
+                                type="text"
+                                placeholder={t("placeholderSearchHistory")}
+                                className="input-field w-full pl-9 h-10 text-xs transition-all border-white/5 focus:border-accent-blue/30"
+                                value={searchTerm}
+                                onChange={(e) => setSearchTerm(e.target.value)}
+                            />
+                        </div>
+                        <button
+                            onClick={() => setIsFilterExpanded(!isFilterExpanded)}
+                            className={`h-10 px-3 rounded-xl flex items-center gap-2 transition-all duration-300 relative overflow-hidden
+                                ${isFilterExpanded
+                                    ? 'bg-accent-blue/20 text-white border-accent-blue/30'
+                                    : 'bg-white/5 text-text-muted border-white/10 hover:bg-white/10'}
+                                border hover:shadow-[0_0_15px_rgba(0,149,255,0.3)] group`}
                         >
-                            <option value="all">{t("filterAllLocations")}</option>
-                            {getZoneOptions().map(z => (
-                                <option key={z} value={z}>{z}</option>
-                            ))}
-                        </select>
+                            <FilterIcon size={16} className={`${isFilterExpanded ? 'text-accent-blue' : 'text-text-muted'}`} />
+                            <span className="text-[11px] font-bold whitespace-nowrap hidden sm:block">
+                                {isFilterExpanded ? t("filterHide") || 'ซ่อนตัวกรอง' : t("filterShow") || 'ตัวกรอง'}
+                            </span>
+                            {/* Glowing indicator */}
+                            {!isFilterExpanded && (
+                                <div className="absolute right-0 top-0 h-full w-1 bg-accent-blue animate-pulse opacity-50 shadow-[0_0_8px_rgba(0,149,255,0.8)]" />
+                            )}
+                        </button>
                     </div>
-                    <div className="flex items-center gap-2">
-                        <SettingsIcon size={14} className="text-text-muted shrink-0" />
-                        <select
-                            className="input-field w-full h-10 text-xs py-0"
-                            value={selectedMachine}
-                            onChange={(e) => setSelectedMachine(e.target.value)}
-                        >
-                            <option value="all">{t("filterAllMachines")}</option>
-                            {machines.filter(m => {
-                                if (selectedZone === 'all') return true;
-                                const loc = m.location?.toUpperCase() || "";
-                                if (selectedZone === 'UT') return loc === 'UT' || loc === 'UTILITY';
-                                return loc === selectedZone;
-                            }).map(m => (
-                                <option key={m.id} value={m.id}>{m.name}</option>
-                            ))}
-                        </select>
-                    </div>
-                    <div className="flex items-center gap-2">
-                        <CalendarIcon size={14} className="text-text-muted shrink-0" />
-                        <select
-                            className="input-field w-full h-10 text-xs py-0"
-                            value={selectedMonth}
-                            onChange={(e) => setSelectedMonth(e.target.value)}
-                        >
-                            <option value="all">{t("filterAllTime")}</option>
-                            {getMonthOptions().map(m => (
-                                <option key={m} value={m}>{new Date(m).toLocaleDateString(t("language") === 'th' ? 'th-TH' : 'en-US', { month: 'long', year: 'numeric' })}</option>
-                            ))}
-                        </select>
-                    </div>
+
+                    {isFilterExpanded && (
+                        <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 animate-fade-in">
+                            <div className="flex items-center gap-2">
+                                <MapPinIcon size={14} className="text-text-muted shrink-0" />
+                                <select
+                                    className="input-field w-full h-10 text-xs py-0"
+                                    value={selectedZone}
+                                    onChange={(e) => setSelectedZone(e.target.value)}
+                                >
+                                    <option value="all">{t("filterAllLocations")}</option>
+                                    {getZoneOptions().map(z => (
+                                        <option key={z} value={z}>{z}</option>
+                                    ))}
+                                </select>
+                            </div>
+                            <div className="flex items-center gap-2">
+                                <SettingsIcon size={14} className="text-text-muted shrink-0" />
+                                <select
+                                    className="input-field w-full h-10 text-xs py-0"
+                                    value={selectedMachine}
+                                    onChange={(e) => setSelectedMachine(e.target.value)}
+                                >
+                                    <option value="all">{t("filterAllMachines")}</option>
+                                    {machines.filter(m => {
+                                        if (selectedZone === 'all') return true;
+                                        const loc = m.location?.toUpperCase() || "";
+                                        if (selectedZone === 'UT') return loc === 'UT' || loc === 'UTILITY';
+                                        return loc === selectedZone;
+                                    }).map(m => (
+                                        <option key={m.id} value={m.id}>{m.name}</option>
+                                    ))}
+                                </select>
+                            </div>
+                            <div className="flex items-center gap-2">
+                                <CalendarIcon size={14} className="text-text-muted shrink-0" />
+                                <select
+                                    className="input-field w-full h-10 text-xs py-0"
+                                    value={selectedMonth}
+                                    onChange={(e) => setSelectedMonth(e.target.value)}
+                                >
+                                    <option value="all">{t("filterAllTime")}</option>
+                                    {getMonthOptions().map(m => (
+                                        <option key={m} value={m}>{new Date(m).toLocaleDateString(t("language") === 'th' ? 'th-TH' : 'en-US', { month: 'long', year: 'numeric' })}</option>
+                                    ))}
+                                </select>
+                            </div>
+                        </div>
+                    )}
                 </div>
 
                 {/* Status Summary */}
@@ -192,11 +230,11 @@ export default function GlobalMaintenanceHistoryModal({ isOpen, onClose }: Globa
                         <div className="flex items-center gap-3">
                             <div className="flex items-center gap-1">
                                 <div className="w-2 h-2 rounded-full bg-accent-blue" />
-                                <span>PM</span>
+                                <span>PM: <span className="text-text-primary font-bold">{allRecordsForStats.filter(r => r.type === 'preventive').length}</span></span>
                             </div>
                             <div className="flex items-center gap-1">
-                                <div className="w-2 h-2 rounded-full bg-accent-red" />
-                                <span>{t("labelUrgentRepair")}</span>
+                                <div className="w-2 h-2 rounded-full bg-accent-green" />
+                                <span>Overhaul: <span className="text-text-primary font-bold">{allRecordsForStats.filter(r => r.type === 'partReplacement').length}</span></span>
                             </div>
                         </div>
                     </div>
@@ -240,6 +278,16 @@ export default function GlobalMaintenanceHistoryModal({ isOpen, onClose }: Globa
                                                     <CalendarIcon size={12} />
                                                     {new Date(record.date).toLocaleDateString(t("language") === 'th' ? 'th-TH' : 'en-US', { day: 'numeric', month: 'short', year: '2-digit' })}
                                                 </span>
+                                                {record.isOverhaul && (
+                                                    <span className="text-[10px] px-1.5 py-0.5 rounded font-bold bg-accent-yellow/20 text-accent-yellow border border-accent-yellow/30 flex items-center gap-1">
+                                                        <RefreshCwIcon size={8} /> OVERHAUL
+                                                    </span>
+                                                )}
+                                                {record.partId && (
+                                                    <span className="text-[10px] px-1.5 py-0.5 rounded font-bold bg-accent-blue/20 text-accent-blue border border-accent-blue/30 flex items-center gap-1">
+                                                        <BoxIcon size={8} /> {parts.find(p => p.id === record.partId)?.partName || 'Part Change'}
+                                                    </span>
+                                                )}
                                             </div>
                                         </div>
                                         <div className="flex flex-col items-end gap-2">
@@ -258,57 +306,262 @@ export default function GlobalMaintenanceHistoryModal({ isOpen, onClose }: Globa
 
                                     {/* Expanded Audit Details */}
                                     {expandedRecord === record.id && (
-                                        <div className="space-y-4 pt-2 animate-fade-in">
-                                            {/* Details Text Section */}
-                                            <div className="bg-black/20 p-3 rounded-xl border border-white/5">
-                                                <p className="text-xs font-bold text-text-muted uppercase mb-2 flex items-center gap-2">
-                                                    <FileTextIcon size={12} /> {t("labelWorkDetails")}
-                                                </p>
-                                                <div className="text-sm text-text-primary whitespace-pre-wrap leading-relaxed">
-                                                    {record.details}
+                                        <div className="lg:grid lg:grid-cols-2 lg:gap-6">
+                                            {/* Left Column: Details & Evidence */}
+                                            <div className="space-y-4">
+                                                {/* Details Text Section */}
+                                                <div className="bg-black/20 p-3 rounded-xl border border-white/5">
+                                                    <p className="text-xs font-bold text-text-muted uppercase mb-2 flex items-center gap-2">
+                                                        <FileTextIcon size={12} /> {t("labelWorkDetails")}
+                                                    </p>
+                                                    <div className="text-sm text-text-primary whitespace-pre-wrap leading-relaxed">
+                                                        {record.details}
+                                                    </div>
+                                                </div>
+
+                                                {/* Evidence Photo */}
+                                                {record.evidenceImageUrl && (
+                                                    <div className="space-y-2">
+                                                        <p className="text-xs font-bold text-text-muted uppercase flex items-center gap-2">
+                                                            <CameraIcon size={12} /> {t("labelEvidencePhotoShort")}
+                                                        </p>
+                                                        <div className="relative w-full h-48 sm:h-64 rounded-xl overflow-hidden border border-white/10 group">
+                                                            <Image
+                                                                src={record.evidenceImageUrl}
+                                                                alt="Evidence"
+                                                                fill
+                                                                className="object-cover transition-transform group-hover:scale-105"
+                                                            />
+                                                        </div>
+                                                    </div>
+                                                )}
+
+                                                {/* Checklist Audit Section (if on mobile it stays here, on desktop we might move it) */}
+                                                <div className="lg:hidden">
+                                                    {record.checklist && record.checklist.length > 0 && (
+                                                        <div className="space-y-2 pt-2">
+                                                            <p className="text-xs font-bold text-text-muted uppercase flex items-center gap-2">
+                                                                <CheckCircleIcon size={12} className="text-accent-green" /> {t("labelAuditChecklist")}
+                                                            </p>
+                                                            <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
+                                                                {record.checklist.map((item, idx) => (
+                                                                    <div key={idx} className="flex flex-col p-2 rounded-lg bg-white/5 border border-white/5">
+                                                                        <div className="flex items-center justify-between gap-2">
+                                                                            <span className="text-[11px] text-text-secondary font-medium truncate">{item.item}</span>
+                                                                            <span className={`text-[10px] font-bold ${item.completed ? 'text-accent-green' : 'text-accent-red'}`}>
+                                                                                {item.completed ? 'PASS' : 'FAIL'}
+                                                                            </span>
+                                                                        </div>
+                                                                        {item.value && (
+                                                                            <span className="text-[10px] text-white/40 mt-1 italic font-mono">Value: {item.value}</span>
+                                                                        )}
+                                                                    </div>
+                                                                ))}
+                                                            </div>
+                                                        </div>
+                                                    )}
                                                 </div>
                                             </div>
 
-                                            {/* Checklist Audit Section */}
-                                            {record.checklist && record.checklist.length > 0 && (
-                                                <div className="space-y-2">
-                                                    <p className="text-xs font-bold text-text-muted uppercase flex items-center gap-2">
-                                                        <CheckCircleIcon size={12} className="text-accent-green" /> {t("labelAuditChecklist")}
-                                                    </p>
-                                                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
-                                                        {record.checklist.map((item, idx) => (
-                                                            <div key={idx} className="flex flex-col p-2 rounded-lg bg-white/5 border border-white/5">
-                                                                <div className="flex items-center justify-between gap-2">
-                                                                    <span className="text-[11px] text-text-secondary font-medium truncate">{item.item}</span>
-                                                                    <span className={`text-[10px] font-bold ${item.completed ? 'text-accent-green' : 'text-accent-red'}`}>
-                                                                        {item.completed ? 'PASS' : 'FAIL'}
-                                                                    </span>
+                                            {/* Right Column: Technical Data */}
+                                            <div className="space-y-4">
+                                                {/* Part Change Specifics */}
+                                                {(record.partId || record.isOverhaul) && (
+                                                    <div className="space-y-3">
+                                                        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-1 xl:grid-cols-2 gap-3">
+                                                            {(record.machineHours || record.lifespanValue || record.serialNumber || (record as any).partLifespan) && (
+                                                                <div className="bg-bg-primary/40 p-3 rounded-xl border border-white/5">
+                                                                    <p className="text-[10px] font-bold text-text-muted uppercase mb-2 flex items-center gap-2">
+                                                                        <ClockIcon size={12} /> {t("labelLifespanTracking")}
+                                                                    </p>
+                                                                    <div className="space-y-1.5 px-1">
+                                                                        {record.machineHours && (
+                                                                            <div className="flex justify-between text-xs">
+                                                                                <span className="text-text-muted flex items-center gap-1">
+                                                                                    <ClockIcon size={10} /> {t("labelReading")}:
+                                                                                </span>
+                                                                                <span className="text-text-primary font-bold">
+                                                                                    {record.machineHours} {t("labelHoursShort")}
+                                                                                </span>
+                                                                            </div>
+                                                                        )}
+                                                                        {record.lifespanValue && (
+                                                                            <div className="flex justify-between text-xs">
+                                                                                <span className="text-text-muted">{t("labelExpectedLifespan")}:</span>
+                                                                                <span className="text-text-primary font-medium">
+                                                                                    {record.lifespanValue} {record.lifespanUnit ? t(`label${record.lifespanUnit.charAt(0).toUpperCase() + record.lifespanUnit.slice(1)}` as any) : ''}
+                                                                                </span>
+                                                                            </div>
+                                                                        )}
+                                                                        {(record as any).partLifespan && (
+                                                                            <div className="flex justify-between text-xs pt-1 border-t border-white/5">
+                                                                                <span className="text-accent-blue font-semibold">{t("labelActualLifespan")}:</span>
+                                                                                <span className="text-accent-blue font-bold">{(record as any).partLifespan}</span>
+                                                                            </div>
+                                                                        )}
+                                                                        {record.serialNumber && (
+                                                                            <div className="flex justify-between text-xs">
+                                                                                <span className="text-text-muted">{t("labelSerialBatch")}:</span>
+                                                                                <span className="font-mono text-accent-cyan">{record.serialNumber}</span>
+                                                                            </div>
+                                                                        )}
+                                                                    </div>
                                                                 </div>
-                                                                {item.value && (
-                                                                    <span className="text-[10px] text-white/40 mt-1 italic font-mono">Value: {item.value}</span>
+                                                            )}
+                                                            {(record.changeReason || record.partCondition) && (
+                                                                <div className="bg-bg-primary/40 p-3 rounded-xl border border-white/5">
+                                                                    <p className="text-[10px] font-bold text-text-muted uppercase mb-2 flex items-center gap-2">
+                                                                        <ActivityIcon size={12} className="text-accent-blue" /> {t("labelAnalysisContext")}
+                                                                    </p>
+                                                                    <div className="space-y-1.5 px-1">
+                                                                        {record.changeReason && (
+                                                                            <div className="flex justify-between text-xs">
+                                                                                <span className="text-text-muted">{t("maintenanceChangeReason")}:</span>
+                                                                                <span className={`font-bold ${record.changeReason === 'failed' ? 'text-accent-red' : 'text-accent-blue'}`}>
+                                                                                    {t(`maintenanceReason${record.changeReason.charAt(0).toUpperCase() + record.changeReason.slice(1)}` as any)}
+                                                                                </span>
+                                                                            </div>
+                                                                        )}
+                                                                        {record.partCondition && (
+                                                                            <div className="flex justify-between text-xs">
+                                                                                <span className="text-text-muted">{t("maintenanceOldPartStatus")}:</span>
+                                                                                <span className="text-text-primary font-medium">
+                                                                                    {t(`maintenanceCondition${record.partCondition.charAt(0).toUpperCase() + record.partCondition.slice(1)}` as any)}
+                                                                                </span>
+                                                                            </div>
+                                                                        )}
+                                                                        <div className="flex justify-between text-xs pt-1 border-t border-white/5">
+                                                                            <span className="text-text-muted">{t("labelChangeFrequency")}:</span>
+                                                                            <span className="text-white font-bold">
+                                                                                {getPartChangeCount(record.partId || '')} {t("labelTimes")}
+                                                                            </span>
+                                                                        </div>
+                                                                    </div>
+                                                                </div>
+                                                            )}
+                                                        </div>
+
+                                                        {/* Additional Technical Data Section */}
+                                                        {record.motorGearData && (
+                                                            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-1 xl:grid-cols-2 gap-3">
+                                                                {/* Motor & Gear Data Box */}
+                                                                {(record.motorGearData.motorSize || record.motorGearData.temperature || record.motorGearData.currentIdle || record.motorGearData.currentLoad || record.motorGearData.voltageL1 || record.motorGearData.voltageL2 || record.motorGearData.voltageL3) && (
+                                                                    <div className="bg-bg-primary/40 p-3 rounded-xl border border-white/5">
+                                                                        <p className="text-[10px] font-bold text-text-muted uppercase mb-2 flex items-center gap-2">
+                                                                            <ActivityIcon size={12} /> {t("maintenanceMotorGearInfo")}
+                                                                        </p>
+                                                                        <div className="grid grid-cols-2 gap-x-4 gap-y-1.5 px-1">
+                                                                            {record.motorGearData.motorSize && (
+                                                                                <div className="flex justify-between text-[11px]">
+                                                                                    <span className="text-text-muted">{t("labelSize")}:</span>
+                                                                                    <span className="text-text-primary font-medium">{record.motorGearData.motorSize}</span>
+                                                                                </div>
+                                                                            )}
+                                                                            {record.motorGearData.temperature && (
+                                                                                <div className="flex justify-between text-[11px]">
+                                                                                    <span className="text-text-muted">{t("labelTemp")}:</span>
+                                                                                    <span className="text-text-primary font-medium">{record.motorGearData.temperature} °C</span>
+                                                                                </div>
+                                                                            )}
+                                                                            {record.motorGearData.currentIdle && (
+                                                                                <div className="flex justify-between text-[11px]">
+                                                                                    <span className="text-text-muted">{t("labelIdleA")}:</span>
+                                                                                    <span className="text-text-primary font-medium">{record.motorGearData.currentIdle}</span>
+                                                                                </div>
+                                                                            )}
+                                                                            {record.motorGearData.currentLoad && (
+                                                                                <div className="flex justify-between text-[11px]">
+                                                                                    <span className="text-text-muted">{t("labelLoadA")}:</span>
+                                                                                    <span className="text-text-primary font-medium">{record.motorGearData.currentLoad}</span>
+                                                                                </div>
+                                                                            )}
+                                                                            {(record.motorGearData.voltageL1 || record.motorGearData.voltageL2 || record.motorGearData.voltageL3) && (
+                                                                                <div className="col-span-2 flex justify-between text-[10px] pt-1 border-t border-white/5">
+                                                                                    <span className="text-text-muted">{t("labelVoltageL1L2L3")}:</span>
+                                                                                    <span className="text-accent-cyan font-mono">
+                                                                                        {record.motorGearData.voltageL1 || '-'}/{record.motorGearData.voltageL2 || '-'}/{record.motorGearData.voltageL3 || '-'}
+                                                                                    </span>
+                                                                                </div>
+                                                                            )}
+                                                                        </div>
+                                                                    </div>
+                                                                )}
+
+                                                                {/* Shaft & Dial Gauge Data Box */}
+                                                                {(record.motorGearData.shaftData?.shaftBend || record.motorGearData.shaftData?.dialGauge || record.motorGearData.vibrationX?.value || record.motorGearData.vibrationY?.value || record.motorGearData.vibrationZ?.value) && (
+                                                                    <div className="bg-bg-primary/40 p-3 rounded-xl border border-white/5">
+                                                                        <p className="text-[10px] font-bold text-text-muted uppercase mb-2 flex items-center gap-2">
+                                                                            <TargetIcon size={12} /> {t("maintenanceShaftInfo")}
+                                                                        </p>
+                                                                        <div className="space-y-1.5 px-1">
+                                                                            {record.motorGearData.shaftData?.shaftBend && (
+                                                                                <div className="flex justify-between text-[11px]">
+                                                                                    <span className="text-text-muted">{t("maintenanceShaftBend")}:</span>
+                                                                                    <span className="text-text-primary font-medium">{record.motorGearData.shaftData.shaftBend}</span>
+                                                                                </div>
+                                                                            )}
+                                                                            {record.motorGearData.shaftData?.dialGauge && (
+                                                                                <div className="flex justify-between text-[11px]">
+                                                                                    <span className="text-text-muted">{t("maintenanceDialGauge")}:</span>
+                                                                                    <span className="text-text-primary font-medium">{record.motorGearData.shaftData.dialGauge}</span>
+                                                                                </div>
+                                                                            )}
+                                                                            {(record.motorGearData.vibrationX?.value || record.motorGearData.vibrationY?.value || record.motorGearData.vibrationZ?.value) && (
+                                                                                <div className="flex flex-col gap-1 pt-1 border-t border-white/5">
+                                                                                    <span className="text-[10px] text-text-muted">{t("labelVibrationXYZ")}:</span>
+                                                                                    <div className="flex gap-2">
+                                                                                        {record.motorGearData.vibrationX?.value && (
+                                                                                            <span className={`text-[10px] px-1 rounded ${record.motorGearData.vibrationX?.level === 'normal' ? 'bg-accent-green/10 text-accent-green' : record.motorGearData.vibrationX?.level === 'medium' ? 'bg-accent-yellow/10 text-accent-yellow' : 'bg-accent-red/10 text-accent-red'}`}>
+                                                                                                X: {record.motorGearData.vibrationX.value}
+                                                                                            </span>
+                                                                                        )}
+                                                                                        {record.motorGearData.vibrationY?.value && (
+                                                                                            <span className={`text-[10px] px-1 rounded ${record.motorGearData.vibrationY?.level === 'normal' ? 'bg-accent-green/10 text-accent-green' : record.motorGearData.vibrationY?.level === 'medium' ? 'bg-accent-yellow/10 text-accent-yellow' : 'bg-accent-red/10 text-accent-red'}`}>
+                                                                                                Y: {record.motorGearData.vibrationY.value}
+                                                                                            </span>
+                                                                                        )}
+                                                                                        {record.motorGearData.vibrationZ?.value && (
+                                                                                            <span className={`text-[10px] px-1 rounded ${record.motorGearData.vibrationZ?.level === 'normal' ? 'bg-accent-green/10 text-accent-green' : record.motorGearData.vibrationZ?.level === 'medium' ? 'bg-accent-yellow/10 text-accent-yellow' : 'bg-accent-red/10 text-accent-red'}`}>
+                                                                                                Z: {record.motorGearData.vibrationZ.value}
+                                                                                            </span>
+                                                                                        )}
+                                                                                    </div>
+                                                                                </div>
+                                                                            )}
+                                                                        </div>
+                                                                    </div>
                                                                 )}
                                                             </div>
-                                                        ))}
+                                                        )}
                                                     </div>
-                                                </div>
-                                            )}
+                                                )}
 
-                                            {/* Evidence Photo */}
-                                            {record.evidenceImageUrl && (
-                                                <div className="space-y-2">
-                                                    <p className="text-xs font-bold text-text-muted uppercase flex items-center gap-2">
-                                                        <CameraIcon size={12} /> {t("labelEvidencePhotoShort")}
-                                                    </p>
-                                                    <div className="relative w-full h-48 rounded-xl overflow-hidden border border-white/10 group">
-                                                        <Image
-                                                            src={record.evidenceImageUrl}
-                                                            alt="Evidence"
-                                                            fill
-                                                            className="object-cover transition-transform group-hover:scale-105"
-                                                        />
-                                                    </div>
+                                                {/* Checklist Audit Section (Desktop column 2) */}
+                                                <div className="hidden lg:block">
+                                                    {record.checklist && record.checklist.length > 0 && (
+                                                        <div className="space-y-2">
+                                                            <p className="text-xs font-bold text-text-muted uppercase flex items-center gap-2">
+                                                                <CheckCircleIcon size={12} className="text-accent-green" /> {t("labelAuditChecklist")}
+                                                            </p>
+                                                            <div className="grid grid-cols-1 xl:grid-cols-2 gap-2">
+                                                                {record.checklist.map((item, idx) => (
+                                                                    <div key={idx} className="flex flex-col p-2 rounded-lg bg-white/5 border border-white/5">
+                                                                        <div className="flex items-center justify-between gap-2">
+                                                                            <span className="text-[11px] text-text-secondary font-medium truncate">{item.item}</span>
+                                                                            <span className={`text-[10px] font-bold ${item.completed ? 'text-accent-green' : 'text-accent-red'}`}>
+                                                                                {item.completed ? 'PASS' : 'FAIL'}
+                                                                            </span>
+                                                                        </div>
+                                                                        {item.value && (
+                                                                            <span className="text-[10px] text-white/40 mt-1 italic font-mono">Value: {item.value}</span>
+                                                                        )}
+                                                                    </div>
+                                                                ))}
+                                                            </div>
+                                                        </div>
+                                                    )}
                                                 </div>
-                                            )}
+                                            </div>
                                         </div>
                                     )}
                                 </div>
@@ -331,6 +584,6 @@ export default function GlobalMaintenanceHistoryModal({ isOpen, onClose }: Globa
                     </button>
                 </div>
             </div>
-        </Modal>
+        </Modal >
     );
 }

@@ -20,6 +20,8 @@ import {
     CheckIcon,
     AlertTriangleIcon,
     TrashIcon,
+    SettingsIcon,
+    HistoryIcon,
 } from "../components/ui/Icons";
 import { mockMaintenanceRecords } from "../data/mockData";
 
@@ -40,7 +42,9 @@ export default function MaintenancePage() {
         try {
             setLoading(true);
             const data = await getMaintenanceRecords();
-            setRecords(data);
+            // Only show preventive maintenance records on this page
+            const preventiveData = data.filter(r => r.type === 'preventive');
+            setRecords(preventiveData);
         } catch (error) {
             console.error("Error fetching records:", error);
         } finally {
@@ -117,23 +121,14 @@ export default function MaintenancePage() {
                 {/* Page Header */}
                 <div className="flex items-center justify-between mb-6">
                     <div className="flex items-center gap-3">
-                        <div className="w-10 h-10 rounded-xl bg-accent-green/20 flex items-center justify-center">
-                            <WrenchIcon size={20} className="text-accent-green" />
+                        <div className="w-10 h-10 rounded-xl bg-accent-red/20 flex items-center justify-center">
+                            <SettingsIcon size={20} className="text-accent-red" />
                         </div>
                         <div>
-                            <h1 className="text-xl font-bold text-text-primary">{t("navMaintenance")}</h1>
-                            <p className="text-sm text-text-muted">
-                                {loading ? t("msgLoading") : t("filterRecords") + ": " + records.length}
-                            </p>
+                            <h1 className="text-xl font-bold text-text-primary">{t("maintenancePageTitle")}</h1>
+                            <p className="text-sm text-text-muted">{t("maintenanceHistoryTitle")}</p>
                         </div>
                     </div>
-                    <button
-                        onClick={() => { if (checkAuth()) setMaintenanceModalOpen(true); }}
-                        className="btn btn-primary"
-                    >
-                        <PlusIcon size={18} />
-                        <span className="hidden sm:inline">{t("actionRecordMaintenance")}</span>
-                    </button>
                 </div>
 
                 {/* Loading State */}

@@ -138,6 +138,24 @@ export interface MaintenanceRecord {
     notes?: string;
     evidenceImageUrl?: string; // Photo after work completion
     pmPlanId?: string; // Reference to the PMPlan if this was a PM task
+    startTime?: Date;
+    endTime?: Date;
+
+    // Part specific fields
+    partId?: string;
+    isOverhaul?: boolean;
+    lifespanValue?: number;
+    lifespanUnit?: 'hours' | 'days' | 'months';
+    serialNumber?: string;
+    previousChangeId?: string;
+
+    // Advanced Analysis Fields
+    machineHours?: number; // Reading at time of change
+    changeReason?: string; // e.g., 'worn', 'failed', 'planned'
+    partCondition?: string; // condition of old part
+    cost?: number;
+    supplier?: string;
+
     createdAt: Date;
     updatedAt: Date;
 }
@@ -196,6 +214,8 @@ export interface DashboardStats {
     totalMachines: number;
     totalZones: number;
     maintenanceRecords: number;
+    totalPM: number;
+    totalOverhaul: number;
     pendingMaintenance: number;
     upcomingSchedule: number;
 }
@@ -225,6 +245,23 @@ export interface MaintenanceRecordFormData {
     duration: string;
     technician: string;
     status: MaintenanceStatus;
+    startTime: string;
+    endTime: string;
+
+    // Part specific
+    partId?: string;
+    isOverhaul?: boolean;
+    lifespanValue: string;
+    lifespanUnit: 'hours' | 'days' | 'months' | 'years';
+    previousReplacementDate?: string;
+    partLifespan?: string;
+    serialNumber: string;
+
+    // Advanced
+    machineHours: string;
+    changeReason: string;
+    partCondition: string;
+
     motorSize: string;
     vibrationXValue: string;
     vibrationXLevel: VibrationLevel;

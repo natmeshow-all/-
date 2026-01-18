@@ -314,6 +314,8 @@ export const mockStats: DashboardStats = {
     totalMachines: 7,
     totalZones: 12,
     maintenanceRecords: 1,
+    totalPM: 1,
+    totalOverhaul: 0,
     pendingMaintenance: 3,
     upcomingSchedule: 5,
 };

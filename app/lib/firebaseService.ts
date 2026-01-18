@@ -61,8 +61,10 @@ export async function syncTranslation(text: string): Promise<void> {
             });
         }
     } catch (error: any) {
-        // Suppress permission denied errors for viewers/technicians
-        if (error.code !== "PERMISSION_DENIED") {
+        // Silently suppress permission denied errors (user may not be logged in or have permissions)
+        const errorCode = error?.code?.toLowerCase() || '';
+        const errorMessage = error?.message?.toLowerCase() || '';
+        if (!errorCode.includes('permission') && !errorMessage.includes('permission')) {
             console.error("Error syncing translation:", error);
         }
     }
@@ -515,24 +517,46 @@ export async function getMaintenanceRecordsByPMPlan(planId: string): Promise<Mai
     return allRecords.filter(r => r.pmPlanId === planId);
 }
 
-export async function addMaintenanceRecord(
-    record: Omit<MaintenanceRecord, "id" | "createdAt" | "updatedAt">
-): Promise<string> {
+export async function addMaintenanceRecord(record: Omit<MaintenanceRecord, "id" | "createdAt" | "updatedAt">): Promise<string> {
     const recordsRef = ref(database, COLLECTIONS.MAINTENANCE_RECORDS);
     const newRecordRef = push(recordsRef);
-
     const now = new Date();
+
+    // Clean record from undefined values (optional but good practice)
+    const cleanRecord = Object.fromEntries(
+        Object.entries(record).filter(([_, v]) => v !== undefined)
+    );
+
     await set(newRecordRef, {
-        ...record,
-        date: new Date(record.date).toISOString(),
-        createdAt: now.toISOString(),
+        ...cleanRecord,
+        id: newRecordRef.key!,
+        createdAt: now.toISOString(), // Ensure ISO string for better reliability
         updatedAt: now.toISOString(),
     });
-
-    // Auto-translate relevant fields
     if (record.description) syncTranslation(record.description);
     if (record.technician) syncTranslation(record.technician);
     if (record.machineName) syncTranslation(record.machineName);
+    if (record.changeReason) syncTranslation(record.changeReason);
+    if (record.partCondition) syncTranslation(record.partCondition);
+
+    // Update machine operating hours if reported
+    if (record.machineHours && record.machineHours > 0) {
+        try {
+            const machineRef = ref(database, `${COLLECTIONS.MACHINES}/${record.machineId}`);
+            const machineSnap = await get(machineRef);
+            if (machineSnap.exists()) {
+                const currentHours = machineSnap.val().operatingHours || 0;
+                if (record.machineHours > currentHours) {
+                    await update(machineRef, {
+                        operatingHours: record.machineHours,
+                        updatedAt: now.toISOString()
+                    });
+                }
+            }
+        } catch (error) {
+            console.error("Failed to auto-update machine hours:", error);
+        }
+    }
 
     // Phase 4: Auto-update/Create Schedule if it's a preventive task
     if (record.type === "preventive" || record.type === "oilChange" || record.type === "inspection") {
@@ -579,10 +603,11 @@ export async function updateMaintenanceRecord(
 
     await update(recordRef, updateData);
 
-    // Auto-translate updated fields
     if (data.description) syncTranslation(data.description);
     if (data.technician) syncTranslation(data.technician);
     if (data.machineName) syncTranslation(data.machineName);
+    if (data.changeReason) syncTranslation(data.changeReason);
+    if (data.partCondition) syncTranslation(data.partCondition);
 }
 
 export async function deleteMaintenanceRecord(id: string): Promise<void> {
@@ -1130,13 +1155,25 @@ export async function getDashboardStats() {
     const uniqueZones = new Set(parts.map((p) => p.zone)).size;
     const pendingRecords = records.filter((r) => r.status !== "completed").length;
 
-    // Calculate Spare Parts value could go here if needed
+    // Separate PM and Overhaul counts
+    const totalPM = records.filter(r =>
+        r.type === 'preventive' ||
+        r.type === 'oilChange' ||
+        r.type === 'inspection'
+    ).length;
+
+    const totalOverhaul = records.filter(r =>
+        r.type === 'partReplacement' ||
+        r.isOverhaul === true
+    ).length;
 
     return {
         totalParts: parts.length,
         totalMachines: machines.length,
         totalZones: uniqueZones,
         maintenanceRecords: records.length,
+        totalPM,
+        totalOverhaul,
         pendingMaintenance: pendingRecords,
         upcomingSchedule: 0,
         totalSpareParts: spareParts.length

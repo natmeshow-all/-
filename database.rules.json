@@ -36,7 +36,8 @@
             ".indexOn": [
                 "date",
                 "machineId",
-                "pmPlanId"
+                "pmPlanId",
+                "partId"
             ]
         },
         // ===== PM Plans =====
@@ -103,6 +104,11 @@
             "$technicianId": {
                 ".read": "auth != null && (auth.uid == $technicianId || root.child('users').child(auth.uid).child('role').val() == 'admin' || root.child('users').child(auth.uid).child('role').val() == 'supervisor')"
             }
+        },
+        // ===== Data Translations (Auto-Translate) =====
+        "data_translations": {
+            ".read": true,
+            ".write": "auth != null"
         }
     }
 }

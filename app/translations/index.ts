@@ -85,6 +85,7 @@ export interface TranslationKeys {
     actionAddMachine: string;
     actionRecordMaintenance: string;
     actionMaintenanceHistory: string;
+    maintenancePageTitle: string;
     actionExport: string;
     actionClearFilters: string;
     actionSave: string;
@@ -192,6 +193,7 @@ export interface TranslationKeys {
     labelPower: string;
     labelInstall: string;
     labelMonths: string;
+    labelYears: string;
     labelDescription: string;
     labelRemark: string;
 
@@ -248,6 +250,22 @@ export interface TranslationKeys {
     maintenanceDetailDescription: string;
     maintenanceAdditionalNotes: string;
     maintenanceSaveRecord: string;
+    maintenanceHistoryTitle: string;
+
+    // Advanced Tracking
+    maintenanceMachineHours: string;
+    maintenanceChangeReason: string;
+    maintenancePartCondition: string;
+    maintenanceReasonWorn: string;
+    maintenanceReasonFailed: string;
+    maintenanceReasonPlanned: string;
+    maintenanceReasonImprovement: string;
+    maintenanceConditionGood: string;
+    maintenanceConditionFair: string;
+    maintenanceConditionPoor: string;
+    maintenanceConditionBroken: string;
+    maintenanceAdvancedTracking: string;
+    maintenanceOldPartStatus: string;
 
     // Maintenance Types
     typePreventive: string;
@@ -440,6 +458,8 @@ export interface TranslationKeys {
     userLabelDepartment: string;
     userRequestedAt: string;
     userNoPending: string;
+    labelStartDate: string;
+    labelEndDate: string;
     labelLocation: string;
     labelNormal: string;
     labelThreshold: string;
@@ -569,6 +589,8 @@ export interface TranslationKeys {
     actionTakePhoto: string;
     actionConfirmNextCycle: string;
     pmHistoryTitle: string;
+    filterShow: string;
+    filterHide: string;
     placeholderSearchHistory: string;
     filterAllLocations: string;
     filterAllMachines: string;
@@ -577,6 +599,8 @@ export interface TranslationKeys {
     msgLoadingHistory: string;
     msgNoMatchingHistory: string;
     pmHistoryModalTitle: string;
+    statPMCount: string;
+    statOverhaulCount: string;
     msgNoHistoryForItem: string;
     labelWorkDetails: string;
     labelAuditChecklist: string;
@@ -622,12 +646,30 @@ export interface TranslationKeys {
     analyticsPartsTracked: string;
     labelHoursShort: string;
     placeholderDepartment: string;
+    labelPreviousReplacementDate: string;
+    labelPartLifespan: string;
+    labelLifespanTracking: string;
+    labelReading: string;
+    labelExpectedLifespan: string;
+    labelActualLifespan: string;
+    labelSerialBatch: string;
+    labelAnalysisContext: string;
+    labelChangeFrequency: string;
+    labelTimes: string;
+    labelSize: string;
+    labelTemp: string;
+    labelIdleA: string;
+    labelLoadA: string;
+    labelVoltageL1L2L3: string;
+    labelVibrationXYZ: string;
+    labelAnalysisMode: string;
+    placeholderAutoCalc: string;
 }
 
 const th: TranslationKeys = {
     // App
-    appTitle: "ระบบจัดการอะไหล่เครื่องจักร Art of Baking",
-    appSubtitle: "ระบบจัดการอะไหล่เครื่องจักร และซ่อมบำรุง PM TEAM REALTIME DATABASE",
+    appTitle: "ระบบจัดการเครื่องจักร Art of Baking",
+    appSubtitle: "ซ่อมบำรุงขั้นสูง PM TEAM REALTIME DATABASE",
     machineDetailsSubtitle: "รายละเอียดและอะไหล่ทั้งหมด",
 
     // Navigation
@@ -637,7 +679,7 @@ const th: TranslationKeys = {
     navMaintenance: "ซ่อมบำรุง",
     navSchedule: "ตารางงาน",
     navAnalytics: "วิเคราะห์",
-    navPredictive: "การพยากรณ์",
+    navPredictive: "พยากรณ์",
     navAudit: "Audit",
 
     // Predictive Page
@@ -699,7 +741,7 @@ const th: TranslationKeys = {
     statTotalParts: "จำนวนอะไหล่ทั้งหมด",
     statMachines: "จำนวนเครื่องจักร",
     statZones: "จำนวนโซน",
-    statMaintenanceRecords: "จำนวนซ่อมบำรุง",
+    statMaintenanceRecords: "จำนวนซ่อมบำรุง/Overhaul",
     statStockNormal: "สต็อกปกติ",
     statStockLow: "สต็อกต่ำ (Low)",
     statTotalZones: "โซนทั้งหมด",
@@ -707,8 +749,9 @@ const th: TranslationKeys = {
     // Actions
     actionAddPart: "เพิ่มอะไหล่",
     actionAddMachine: "เพิ่มเครื่องจักร",
-    actionRecordMaintenance: "บันทึกซ่อมบำรุง",
-    actionMaintenanceHistory: "ประวัติซ่อมบำรุง",
+    actionRecordMaintenance: "เปลี่ยนอะไหล่/Overhaul",
+    actionMaintenanceHistory: "ประวัติอะไหล่/Overhaul",
+    maintenancePageTitle: "ประวัติงานซ่อมบำรุง",
     actionExport: "ส่งออก",
     actionClearFilters: "ล้างตัวกรอง",
     actionSave: "บันทึก",
@@ -716,7 +759,7 @@ const th: TranslationKeys = {
     actionClose: "ปิด",
     actionEdit: "แก้ไข",
     actionDelete: "ลบ",
-    actionRepair: "ซ่อม",
+    actionRepair: "ซ่อมบำรุง/Overhaul",
     actionSearch: "ค้นหา",
     actionSaveChanges: "บันทึกการเปลี่ยนแปลง",
 
@@ -811,16 +854,17 @@ const th: TranslationKeys = {
     labelCapacity: "กำลังการผลิต",
     labelPowerRating: "กำลังไฟฟ้า",
     labelPerformance: "ประสิทธิภาพ (Capacity/kW)",
-    labelMaintenanceCycle: "รอบการบำรุงรักษา",
+    labelMaintenanceCycle: "รอบการเปลี่ยนตามแผน (ระบุข้อมูล เดือน,ปี)",
     labelHours: "ชั่วโมง",
     labelPower: "ไฟฟ้า",
     labelInstall: "ติดตั้ง",
     labelMonths: "เดือน",
+    labelYears: "ปี",
     labelDescription: "คำอธิบายเพิ่มเติม",
     labelRemark: "หมายเหตุ (Class)",
 
     // Maintenance Record Modal
-    maintenanceTitle: "บันทึกซ่อมบำรุงและการเปลี่ยนถ่ายน้ำมันเกียร์",
+    maintenanceTitle: "บันทึกเปลี่ยนอะไหล่และ Overhaul",
     maintenanceGeneralInfo: "ข้อมูลทั่วไป",
     maintenanceMachine: "เครื่องจักร",
     maintenanceSelectMachine: "เลือกเครื่องจักร",
@@ -834,7 +878,7 @@ const th: TranslationKeys = {
 
     maintenanceOperationInfo: "ข้อมูลการดำเนินการ",
     maintenanceDate: "วันที่ซ่อมบำรุง",
-    maintenanceDuration: "ระยะเวลาซ่อม (นาที)",
+    maintenanceDuration: "ระยะเวลาซ่อม (วัน)",
     maintenanceTechnician: "ช่างผู้รับผิดชอบ",
     maintenanceStatus: "สถานะ",
     maintenanceStatusPending: "รอดำเนินการ",
@@ -871,7 +915,22 @@ const th: TranslationKeys = {
     maintenanceDetailsNotes: "รายละเอียดและหมายเหตุ",
     maintenanceDetailDescription: "รายละเอียดการซ่อมบำรุง",
     maintenanceAdditionalNotes: "หมายเหตุเพิ่มเติม",
-    maintenanceSaveRecord: "บันทึกข้อมูลซ่อมบำรุง",
+    maintenanceSaveRecord: "บันทึกผลการเปลี่ยนอะไหล่",
+    maintenanceHistoryTitle: "ประวัติการบำรุงรักษาเชิงป้องกัน (PM)",
+
+    maintenanceMachineHours: "ชั่วโมงการทำงานของเครื่องจักร",
+    maintenanceChangeReason: "เหตุผลที่เปลี่ยน",
+    maintenancePartCondition: "สภาพอะไหล่เดิม",
+    maintenanceReasonWorn: "สึกหรอตามช่วงเวลาปกติ",
+    maintenanceReasonFailed: "เสียกะทันหัน",
+    maintenanceReasonPlanned: "เปลี่ยนตามแผน",
+    maintenanceReasonImprovement: "เปลี่ยนเพื่อปรับปรุงระบบ",
+    maintenanceConditionGood: "ยังสามารถใช้งานได้",
+    maintenanceConditionFair: "เริ่มสึกหรอ",
+    maintenanceConditionPoor: "สึกหรอมาก",
+    maintenanceConditionBroken: "แตกหัก/เสียหาย",
+    maintenanceAdvancedTracking: "ข้อมูลการติดตามขั้นสูง (เพื่อการวิเคราะห์)",
+    maintenanceOldPartStatus: "สถานะอะไหล่เดิม",
 
     // Maintenance Types
     typePreventive: "บำรุงรักษาเชิงป้องกัน",
@@ -947,7 +1006,7 @@ const th: TranslationKeys = {
     stockReceiveError: "ไม่สามารถรับของเข้าได้",
 
     // Additional Actions/Labels
-    actionMaintenance: "ซ่อมบำรุง",
+    actionMaintenance: "ซ่อมบำรุง/Overhaul",
     statusReadOnly: "อ่านอย่างเดียว",
     labelMachinePart: "ข้อมูลเครื่องจักรและอะไหล่",
     editPartTitle: "แก้ไขข้อมูลอะไหล่",
@@ -962,7 +1021,7 @@ const th: TranslationKeys = {
     placeholderLocation: "เช่น FZ",
     placeholderNotes: "เช่น มอเตอร์กับ CrossRoller สายพาน Timing [2] เปลี่ยนมีตที่รันชาร์ 220 0.29I",
     placeholderTechnician: "ชื่อช่างผู้ดำเนินการ",
-    placeholderDuration: "เช่น 30",
+    placeholderDuration: "เช่น 1",
     placeholderTemperature: "เช่น 65.5",
     placeholderCurrentIdle: "เช่น 1.05",
     placeholderCurrentLoad: "เช่น 2.50",
@@ -1160,7 +1219,7 @@ const th: TranslationKeys = {
     stockOptionalRecommended: "(ไม่บังคับแต่แนะนำ)",
     actionPMSettings: "ตั้งค่า PM อัตโนมัติ",
     pmConfigTitle: "ตั้งค่าแผนซ่อมบำรุงเชิงป้องกัน (PM)",
-    labelMaintenanceType: "การซ่อมบำรุง",
+    labelMaintenanceType: "การซ่อมบำรุง/Overhaul",
     placeholderSelectMaintenanceType: "-- เลือกประเภทการซ่อมบำรุง --",
     labelOtherCustom: "อื่นๆ (ระบุเอง)",
     placeholderSpecifyMaintenanceName: "ระบุชื่อการซ่อมบำรุง...",
@@ -1192,7 +1251,9 @@ const th: TranslationKeys = {
     labelEvidencePhoto: "รูปถ่ายหลังการทำงาน (หลักฐาน)",
     actionTakePhoto: "กดเพื่อถ่ายรูปหรืออัปโหลดรูป",
     actionConfirmNextCycle: "ยืนยันและรันรอบถัดไป",
-    pmHistoryTitle: "ประวัติการซ่อมบำรุงและผลการตรวจเช็ค",
+    pmHistoryTitle: "ประวัติการเปลี่ยนอะไหล่/Overhaul",
+    filterShow: "แสดงตัวกรอง",
+    filterHide: "ซ่อนตัวกรอง",
     placeholderSearchHistory: "ค้นหาช่าง, รายละเอียด...",
     filterAllLocations: "ทุกสถานที่",
     filterAllMachines: "ทุกเครื่องจักร",
@@ -1201,6 +1262,8 @@ const th: TranslationKeys = {
     msgLoadingHistory: "กำลังโหลดประวัติ...",
     msgNoMatchingHistory: "ไม่พบข้อมูลประวัติที่ตรงกับเงื่อนไข",
     pmHistoryModalTitle: "ประวัติการซ่อมบำรุงเชิงป้องกัน (PM)",
+    statPMCount: "จำนวนงานซ่อมบำรุง (PM)",
+    statOverhaulCount: "เปลี่ยนอะไหล่/Overhaul",
     msgNoHistoryForItem: "ยังไม่มีประวัติการซ่อมบำรุงสำหรับรายการนี้",
     labelWorkDetails: "รายละเอียดการทำงาน",
     labelAuditChecklist: "รายการตรวจเช็ค (Audit Checklist)",
@@ -1246,12 +1309,32 @@ const th: TranslationKeys = {
     analyticsPartsTracked: "จำนวนอะไหล่ที่ติดตาม",
     labelHoursShort: "ชม.",
     placeholderDepartment: "เช่น Maintenance",
+    labelStartDate: "วันที่เริ่ม",
+    labelEndDate: "วันที่เสร็จ",
+    labelPreviousReplacementDate: "วันที่เปลี่ยนครั้งก่อน",
+    labelPartLifespan: "อายุการใช้งาน (วัน)",
+    labelLifespanTracking: "การติดตามอายุการใช้งาน",
+    labelReading: "เลขไมล์/ชั่วโมงการทำงาน (Reading)",
+    labelExpectedLifespan: "อายุใช้งานที่คาดหมาย",
+    labelActualLifespan: "อายุใช้งานจริง",
+    labelSerialBatch: "หมายเลขซีเรียล/ล็อต",
+    labelAnalysisContext: "ข้อมูลวิเคราะห์เพิ่มเติม",
+    labelChangeFrequency: "ความถี่ในการเปลี่ยน",
+    labelTimes: "ครั้ง",
+    labelSize: "ขนาด (Size)",
+    labelTemp: "อุณหภูมิ (Temp)",
+    labelIdleA: "กระแสขณะตัวเปล่า (Idle A)",
+    labelLoadA: "กระแสขณะมีโหลด (Load A)",
+    labelVoltageL1L2L3: "แรงดันไฟฟ้า (L1/L2/L3)",
+    labelVibrationXYZ: "ความสั่นสะเทือน (X/Y/Z)",
+    labelAnalysisMode: "โหมดวิเคราะห์รายละเอียด",
+    placeholderAutoCalc: "คำนวณอัตโนมัติ",
 };
 
 const en: TranslationKeys = {
     // App
-    appTitle: "Machine Parts Management - Art of Baking",
-    appSubtitle: "Machine Parts & Maintenance Management - PM TEAM REALTIME DATABASE",
+    appTitle: "Machine Management - Art of Baking",
+    appSubtitle: "Maintenance Management - PM TEAM REALTIME DATABASE",
     machineDetailsSubtitle: "Details and All Parts",
 
     // Navigation
@@ -1323,7 +1406,7 @@ const en: TranslationKeys = {
     statTotalParts: "Part Names",
     statMachines: "Machines",
     statZones: "Zones",
-    statMaintenanceRecords: "Maintenance Records",
+    statMaintenanceRecords: "Maintenance Records/Overhaul",
     statStockNormal: "In Stock",
     statStockLow: "Low Stock",
     statTotalZones: "Total Zones",
@@ -1331,8 +1414,9 @@ const en: TranslationKeys = {
     // Actions
     actionAddPart: "Add Part",
     actionAddMachine: "Add Machine",
-    actionRecordMaintenance: "Record Maintenance",
-    actionMaintenanceHistory: "Maintenance History",
+    actionRecordMaintenance: "Part Change/Overhaul",
+    actionMaintenanceHistory: "Overhaul History",
+    maintenancePageTitle: "Maintenance History",
     actionExport: "Export",
     actionClearFilters: "Clear Filters",
     actionSave: "Save",
@@ -1340,7 +1424,7 @@ const en: TranslationKeys = {
     actionClose: "Close",
     actionEdit: "Edit",
     actionDelete: "Delete",
-    actionRepair: "Repair",
+    actionRepair: "Maintenance/Overhaul",
     actionSearch: "Search",
     actionSaveChanges: "Save Changes",
 
@@ -1435,16 +1519,17 @@ const en: TranslationKeys = {
     labelCapacity: "Capacity",
     labelPowerRating: "Power Rating",
     labelPerformance: "Performance (Capacity/kW)",
-    labelMaintenanceCycle: "Maintenance Cycle",
+    labelMaintenanceCycle: "Planned Replacement Cycle (Specify Month, Year)",
     labelHours: "Hours",
     labelPower: "Power",
     labelInstall: "Install",
     labelMonths: "Months",
+    labelYears: "Years",
     labelDescription: "Additional Description",
     labelRemark: "Remark (Class)",
 
     // Maintenance Record Modal
-    maintenanceTitle: "Maintenance & Oil Change Record",
+    maintenanceTitle: "Part Change & Overhaul Record",
     maintenanceGeneralInfo: "General Information",
     maintenanceMachine: "Machine",
     maintenanceSelectMachine: "Select Machine",
@@ -1458,7 +1543,7 @@ const en: TranslationKeys = {
 
     maintenanceOperationInfo: "Operation Details",
     maintenanceDate: "Maintenance Date",
-    maintenanceDuration: "Duration (minutes)",
+    maintenanceDuration: "Duration (days)",
     maintenanceTechnician: "Technician",
     maintenanceStatus: "Status",
     maintenanceStatusPending: "Pending",
@@ -1495,7 +1580,22 @@ const en: TranslationKeys = {
     maintenanceDetailsNotes: "Details and Notes",
     maintenanceDetailDescription: "Maintenance Details",
     maintenanceAdditionalNotes: "Additional Notes",
-    maintenanceSaveRecord: "Save Maintenance Record",
+    maintenanceSaveRecord: "Save Part Change Record",
+    maintenanceHistoryTitle: "Preventive Maintenance History (PM)",
+
+    maintenanceMachineHours: "Machine Operating Hours",
+    maintenanceChangeReason: "Reason for Change",
+    maintenancePartCondition: "Old Part Condition",
+    maintenanceReasonWorn: "Normal Wear & Tear",
+    maintenanceReasonFailed: "Sudden Failure",
+    maintenanceReasonPlanned: "Planned Replacement",
+    maintenanceReasonImprovement: "System Improvement",
+    maintenanceConditionGood: "Still Good",
+    maintenanceConditionFair: "Fair/Worn",
+    maintenanceConditionPoor: "Critically Worn",
+    maintenanceConditionBroken: "Broken/Damaged",
+    maintenanceAdvancedTracking: "Advanced Tracking (for Analysis)",
+    maintenanceOldPartStatus: "Old Part Status",
 
     // Maintenance Types
     typePreventive: "Preventive Maintenance",
@@ -1571,7 +1671,7 @@ const en: TranslationKeys = {
     stockReceiveError: "Failed to receive stock",
 
     // Additional Actions/Labels
-    actionMaintenance: "Maintenance",
+    actionMaintenance: "Maintenance/Overhaul",
     statusReadOnly: "Read Only",
     labelMachinePart: "Machine & Part Information",
     editPartTitle: "Edit Part Details",
@@ -1585,8 +1685,8 @@ const en: TranslationKeys = {
     placeholderBrand: "e.g. SEW / NORD",
     placeholderLocation: "e.g. FZ",
     placeholderNotes: "e.g. Motor with CrossRoller timing belt [2] changed meter run char 220 0.29I",
-    placeholderTechnician: "Technician name",
-    placeholderDuration: "e.g. 30",
+    placeholderTechnician: "Assigned technician",
+    placeholderDuration: "e.g. 1",
     placeholderTemperature: "e.g. 65.5",
     placeholderCurrentIdle: "e.g. 1.05",
     placeholderCurrentLoad: "e.g. 2.50",
@@ -1784,7 +1884,7 @@ const en: TranslationKeys = {
     stockOptionalRecommended: "(Optional but recommended)",
     actionPMSettings: "Auto PM Settings",
     pmConfigTitle: "PM Plan Configuration",
-    labelMaintenanceType: "Maintenance Type",
+    labelMaintenanceType: "Maintenance Type/Overhaul",
     placeholderSelectMaintenanceType: "-- Select Maintenance Type --",
     labelOtherCustom: "Other (Custom)",
     placeholderSpecifyMaintenanceName: "Specify maintenance name...",
@@ -1816,7 +1916,9 @@ const en: TranslationKeys = {
     labelEvidencePhoto: "Post-Work Photo (Evidence)",
     actionTakePhoto: "Take a photo or upload",
     actionConfirmNextCycle: "Confirm and Start Next Cycle",
-    pmHistoryTitle: "Maintenance History & Audit Results",
+    pmHistoryTitle: "Part Change & Overhaul History",
+    filterShow: "Show Filters",
+    filterHide: "Hide Filters",
     placeholderSearchHistory: "Search technician, details...",
     filterAllLocations: "All Locations",
     filterAllMachines: "All Machines",
@@ -1825,6 +1927,8 @@ const en: TranslationKeys = {
     msgLoadingHistory: "Loading history...",
     msgNoMatchingHistory: "No history found matching the criteria.",
     pmHistoryModalTitle: "Preventive Maintenance (PM) History",
+    statPMCount: "Preventive Maintenance (PM)",
+    statOverhaulCount: "Part Change/Overhaul",
     msgNoHistoryForItem: "No maintenance history found for this item",
     labelWorkDetails: "Work Details",
     labelAuditChecklist: "Audit Checklist",
@@ -1852,6 +1956,10 @@ const en: TranslationKeys = {
     msgAutoScheduleHint: "Schedule will be generated automatically upon saving",
     msgEnterMachineName: "Please enter machine name",
     actionConfirm: "Confirm",
+    labelStartDate: "Start Date",
+    labelEndDate: "End Date",
+    labelPreviousReplacementDate: "Previous Replacement",
+    labelPartLifespan: "Lifespan (Days)",
     notificationAlerts: "Alerts",
     labelActionRequired: "Action Required",
     scannerTitle: "QR Scanner",
@@ -1870,6 +1978,22 @@ const en: TranslationKeys = {
     analyticsPartsTracked: "Parts Tracked",
     labelHoursShort: "hrs",
     placeholderDepartment: "e.g. Maintenance",
+    labelLifespanTracking: "Lifespan & Tracking",
+    labelReading: "Reading (Hr)",
+    labelExpectedLifespan: "Expected Lifespan",
+    labelActualLifespan: "Actual Lifespan",
+    labelSerialBatch: "Serial/Batch",
+    labelAnalysisContext: "Analysis Context",
+    labelChangeFrequency: "Change Frequency",
+    labelTimes: "times",
+    labelSize: "Size",
+    labelTemp: "Temp",
+    labelIdleA: "Idle A",
+    labelLoadA: "Load A",
+    labelVoltageL1L2L3: "Voltage (L1/L2/L3)",
+    labelVibrationXYZ: "Vibration (X/Y/Z)",
+    labelAnalysisMode: "Analysis Mode",
+    placeholderAutoCalc: "Auto-calc",
 };
 
 export const translations: Record<Language, TranslationKeys> = {

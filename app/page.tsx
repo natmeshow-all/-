@@ -66,7 +66,7 @@ export default function Dashboard() {
 
   const handleMaintenancePart = (part: Part) => {
     if (!checkAuth()) return;
-    // Ideally pass part details to maintenance modal
+    setTriggerPart(part);
     setMaintenanceModalOpen(true);
   };
 
@@ -103,6 +103,8 @@ export default function Dashboard() {
     totalMachines: 0,
     totalZones: 0,
     maintenanceRecords: 0,
+    totalPM: 0,
+    totalOverhaul: 0,
     pendingMaintenance: 0,
     upcomingSchedule: 0,
   });
@@ -329,7 +331,7 @@ export default function Dashboard() {
       <main className="main-container px-4 py-6 sm:px-6">
         {/* Stats Section */}
         <section className="mb-6">
-          <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-4">
+          <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-5 gap-3 sm:gap-4">
             <StatCard
               icon={<BoxIcon size={12} />}
               value={stats.totalParts}
@@ -355,12 +357,20 @@ export default function Dashboard() {
               delay={100}
             />
             <StatCard
+              icon={<RefreshIcon size={12} />}
+              value={stats.totalPM}
+              label={t("statPMCount")}
+              iconBgColor="bg-accent-green/20"
+              iconTextColor="text-accent-green"
+              delay={150}
+            />
+            <StatCard
               icon={<AlertTriangleIcon size={12} />}
-              value={stats.maintenanceRecords}
-              label={t("statMaintenanceRecords")}
+              value={stats.totalOverhaul}
+              label={t("statOverhaulCount")}
               iconBgColor="bg-accent-red/20"
               iconTextColor="text-accent-red"
-              delay={150}
+              delay={200}
             />
           </div>
         </section>
@@ -967,8 +977,12 @@ export default function Dashboard() {
       />
       <MaintenanceRecordModal
         isOpen={maintenanceModalOpen}
-        onClose={() => setMaintenanceModalOpen(false)}
+        onClose={() => {
+          setMaintenanceModalOpen(false);
+          setTriggerPart(null);
+        }}
         onSuccess={fetchData}
+        initialPart={triggerPart || undefined}
       />
 
       <ConfirmModal
