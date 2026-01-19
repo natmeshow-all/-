@@ -34,6 +34,30 @@ const COLLECTIONS = {
     PERFORMANCE_EVALUATIONS: "performance_evaluations",
 };
 
+// ==================== IMAGE UPLOAD ====================
+
+/**
+ * Upload a maintenance evidence image with compression.
+ * Returns the download URL.
+ */
+export async function uploadMaintenanceEvidence(file: File): Promise<string> {
+    try {
+        // Compress image
+        const compressedFile = await compressImage(file, 0.6, 1280);
+
+        // Upload to Storage
+        const fileName = `maintenance_evidence/${Date.now()}_${compressedFile.name}`;
+        const sRef = storageRef(storage, fileName);
+        await uploadBytes(sRef, compressedFile);
+        const downloadUrl = await getDownloadURL(sRef);
+
+        return downloadUrl;
+    } catch (error) {
+        console.error("Error uploading maintenance evidence:", error);
+        throw error;
+    }
+}
+
 // ==================== TRANSLATIONS ====================
 
 /**
@@ -807,6 +831,8 @@ export const completePMTask = async (
                 // But strictly scheduled tasks usually stick to the schedule (e.g. Every Monday).
                 // If we successfully did it, next one is next week's same day.
                 nextDue.setDate(nextDue.getDate() + 7);
+            } else if (plan.scheduleType === 'yearly') {
+                nextDue.setFullYear(nextDue.getFullYear() + 1);
             } else {
                 // Monthly default
                 const cycle = plan.cycleMonths || 1;

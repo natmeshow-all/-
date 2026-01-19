@@ -536,6 +536,9 @@ export interface TranslationKeys {
     actionGoToDashboard: string;
     actionRegister: string;
     labelNoImage: string;
+    labelEvidenceImage: string;
+    placeholderChooseImage: string;
+    actionRemoveImage: string;
     labelAll: string;
     predictiveMetricsNormal: string;
     userRegisterTitle: string;
@@ -570,8 +573,10 @@ export interface TranslationKeys {
     labelTimeFormat: string;
     labelMonthly: string;
     labelWeekly: string;
+    labelYearly?: string;
     labelEveryMonthly: string;
     labelEveryWeekly: string;
+    labelEveryYearly?: string;
     labelFirstStartDate: string;
     labelWorkLocation: string;
     placeholderSelectLocation: string;
@@ -1209,6 +1214,9 @@ const th: TranslationKeys = {
     actionGoToDashboard: "กลับหน้าหลัก",
     actionRegister: "ส่งข้อมูลสมัครสมาชิก",
     labelNoImage: "ไม่มีรูปภาพ",
+    labelEvidenceImage: "รูปภาพหลักฐาน",
+    placeholderChooseImage: "เลือกรูปภาพ",
+    actionRemoveImage: "ลบรูปภาพ",
     labelAll: "ทั้งหมด",
     predictiveMetricsNormal: "ปกติ",
     userRegisterTitle: "สมัครสมาชิก",
@@ -1243,8 +1251,10 @@ const th: TranslationKeys = {
     labelTimeFormat: "รูปแบบเวลา",
     labelMonthly: "รายเดือน",
     labelWeekly: "รายสัปดาห์",
+    labelYearly: "รายปี",
     labelEveryMonthly: "รอบทุกๆ (เดือน)",
     labelEveryWeekly: "ทำทุกวัน",
+    labelEveryYearly: "ทำทุกปี",
     labelFirstStartDate: "วันที่เริ่มรอบแรก",
     labelWorkLocation: "สถานที่ปฏิบัติงาน",
     placeholderSelectLocation: "-- เลือกตำแหน่ง/สถานที่ --",
@@ -1884,7 +1894,12 @@ const en: TranslationKeys = {
     actionGoToDashboard: "Return to Dashboard",
     actionRegister: "Submit Registration",
     labelNoImage: "No Image",
+    labelEvidenceImage: "Evidence Image",
+    placeholderChooseImage: "Choose Image",
+    actionRemoveImage: "Remove Image",
     labelAll: "All",
+    labelMonthly: "Monthly",
+    labelWeekly: "Weekly",
     predictiveMetricsNormal: "Normal",
     userRegisterTitle: "Registration",
     userRegisterSubtitle: "Request access to the Parts Management system",
@@ -1916,10 +1931,10 @@ const en: TranslationKeys = {
     placeholderAddSubItem: "Add sub-item...",
     msgNoItems: "- No items -",
     labelTimeFormat: "Time Format",
-    labelMonthly: "Monthly",
-    labelWeekly: "Weekly",
+    labelYearly: "Yearly",
     labelEveryMonthly: "Every (Months)",
     labelEveryWeekly: "Every Day",
+    labelEveryYearly: "Every Year",
     labelFirstStartDate: "First Cycle Start Date",
     labelWorkLocation: "Work Location",
     placeholderSelectLocation: "-- Select Location --",

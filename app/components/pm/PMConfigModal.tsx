@@ -76,7 +76,7 @@ export default function PMConfigModal({ isOpen, onClose, machine, plan, onSucces
     const [newItem, setNewItem] = useState("");
     const [selectedPartType, setSelectedPartType] = useState("");
 
-    const [scheduleType, setScheduleType] = useState<"monthly" | "weekly">(plan?.scheduleType || "monthly");
+    const [scheduleType, setScheduleType] = useState<"monthly" | "weekly" | "yearly">(plan?.scheduleType || "monthly");
     const [cycleMonths, setCycleMonths] = useState<number>(plan?.cycleMonths || 1);
     const [weeklyDay, setWeeklyDay] = useState<number>(plan?.weeklyDay || 1);
 
@@ -392,12 +392,19 @@ export default function PMConfigModal({ isOpen, onClose, machine, plan, onSucces
                                     >
                                         {t("labelWeekly")}
                                     </button>
+                                    <button
+                                        type="button"
+                                        onClick={() => setScheduleType('yearly')}
+                                        className={`flex-1 py-1.5 text-sm font-bold rounded-md transition-all ${scheduleType === 'yearly' ? 'bg-accent-blue text-white shadow-md' : 'text-text-muted hover:text-white'}`}
+                                    >
+                                        {t("labelYearly")}
+                                    </button>
                                 </div>
                             </div>
 
                             <div className="space-y-2">
                                 <label className="text-xs font-bold text-text-muted uppercase tracking-wider">
-                                    {scheduleType === 'monthly' ? t("labelEveryMonthly") : t("labelEveryWeekly")}
+                                    {scheduleType === 'monthly' ? t("labelEveryMonthly") : scheduleType === 'yearly' ? t("labelEveryYearly") : t("labelEveryWeekly")}
                                 </label>
                                 {scheduleType === 'monthly' ? (
                                     <div className="relative">
@@ -413,6 +420,10 @@ export default function PMConfigModal({ isOpen, onClose, machine, plan, onSucces
                                         <div className="absolute right-3 top-1/2 -translate-y-1/2 pointer-events-none text-text-muted">
                                             ▼
                                         </div>
+                                    </div>
+                                ) : scheduleType === 'yearly' ? (
+                                    <div className="bg-bg-tertiary border border-white/10 rounded-lg p-2.5 text-center text-sm font-medium text-text-primary">
+                                        1 {t("labelYears")}
                                     </div>
                                 ) : (
                                     <div className="grid grid-cols-4 gap-2">

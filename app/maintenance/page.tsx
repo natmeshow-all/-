@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useMemo } from "react";
 import Header from "../components/Header";
 import MobileNav from "../components/MobileNav";
 import MaintenanceRecordModal from "../components/forms/MaintenanceRecordModal";
@@ -51,6 +51,7 @@ export default function MaintenancePage() {
     const [selectedMachine, setSelectedMachine] = useState("all");
     const [selectedLocation, setSelectedLocation] = useState("all");
     const [selectedMonth, setSelectedMonth] = useState("all");
+    const [activeQuickFilter, setActiveQuickFilter] = useState<'all' | 'thisMonth' | 'thisWeek' | 'yearly'>('all');
     const [isFilterExpanded, setIsFilterExpanded] = useState(false);
     const [allMachines, setAllMachines] = useState<Machine[]>([]);
     const [allRecordsForStats, setAllRecordsForStats] = useState<MaintenanceRecord[]>([]);
@@ -74,24 +75,65 @@ export default function MaintenancePage() {
         });
     };
 
+    const uniqueMonths = useMemo(() => {
+        const months = new Set<string>();
+        records.forEach(r => {
+            const d = new Date(r.date);
+            months.add(`${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}`);
+        });
+        return Array.from(months).sort().reverse();
+    }, [records]);
+
     const fetchRecords = async () => {
+        setLoading(true);
         try {
-            setLoading(true);
             const [recordsData, machinesData] = await Promise.all([
                 getMaintenanceRecords(),
                 getMachines()
             ]);
-
             setAllRecordsForStats(recordsData);
             // Only show preventive maintenance records as the primary list on this page
             const preventiveData = recordsData.filter(r => r.type === 'preventive');
             setRecords(preventiveData.sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime()));
             setAllMachines(machinesData);
         } catch (error) {
-            console.error("Error fetching data:", error);
+            console.error("Error loading maintenance records:", error);
         } finally {
             setLoading(false);
         }
+    };
+
+    useEffect(() => {
+        setMounted(true);
+        fetchRecords();
+    }, []);
+
+    // Helper for consistency between final logic and counts
+    const getFrequencyType = (r: MaintenanceRecord) => {
+        // 1. Check explicit period in record
+        const p = r.period?.toLowerCase() || "";
+        if (p.includes("week") || p.includes("daily") || p.includes("routine") || p.includes("สัปดาห์") || p.includes("วัน") || p.includes("ประจำวัน")) return 'weekly';
+        if (p.includes("year") || p.includes("ปี")) return 'yearly';
+        if (p.includes("month") || p.includes("เดือน")) return 'monthly';
+
+        // 2. Fallback: Check Description/Details for keywords (for legacy records)
+        const desc = (r.description + " " + (r.details || "")).toLowerCase();
+        if (desc.includes("weekly") || desc.includes("routine") || desc.includes("สัปดาห์") || desc.includes("ประจำวัน")) return 'weekly';
+        if (desc.includes("monthly") || desc.includes("เดือน") || desc.includes("ประจำเดือน")) return 'monthly';
+        if (desc.includes("yearly") || desc.includes("annual") || desc.includes("ปี") || desc.includes("ประจำปี")) return 'yearly';
+
+        // 3. Fallback: Check Machine Schedule (for PM tasks)
+        if (r.type === 'preventive') {
+            const machine = allMachines.find(m => m.id === r.machineId || m.name === r.machineName);
+            // Check legacy maintenanceCycle (days)
+            if (machine?.maintenanceCycle) {
+                if (machine.maintenanceCycle <= 7) return 'weekly';
+                if (machine.maintenanceCycle >= 360) return 'yearly';
+            }
+        }
+
+        // Default to monthly if no other clues found
+        return 'monthly';
     };
 
     const filteredRecords = records.filter(record => {
@@ -105,8 +147,8 @@ export default function MaintenancePage() {
         // Location (Area) matching logic
         let matchesLocation = selectedLocation === "all";
         if (!matchesLocation) {
-            // First try record.Location, then fallback to looking up the machine
-            let recordLocation = record.Location?.toUpperCase() || "";
+            // First try record.location (FZ, RTE, UT), then fallback to machine location
+            let recordLocation = record.location?.toUpperCase() || "";
 
             if (!recordLocation) {
                 const machine = allMachines.find(m => m.id === record.machineId || m.name === record.machineName);
@@ -121,20 +163,30 @@ export default function MaintenancePage() {
         }
 
         const recordDate = new Date(record.date);
-        const recordMonth = `${recordDate.getFullYear()}-${String(recordDate.getMonth() + 1).padStart(2, '0')}`;
-        const matchesMonth = selectedMonth === "all" || recordMonth === selectedMonth;
+        const now = new Date();
 
-        return matchesSearch && matchesMachine && matchesLocation && matchesMonth;
+        let matchesTime = true;
+
+        // Strict Frequency Filtering to prevent overlap
+        if (activeQuickFilter === 'thisMonth') {
+            // Show Monthly AND Legacy (undefined period)
+            matchesTime = getFrequencyType(record) === 'monthly';
+        } else if (activeQuickFilter === 'thisWeek') {
+            // Show Only Explicit Weekly
+            matchesTime = getFrequencyType(record) === 'weekly';
+        } else if (activeQuickFilter === 'yearly') {
+            // Show Only Explicit Yearly
+            matchesTime = getFrequencyType(record) === 'yearly';
+        } else {
+            // 'all' filter - use dropdown month filter if set
+            const recordMonth = `${recordDate.getFullYear()}-${String(recordDate.getMonth() + 1).padStart(2, '0')}`;
+            matchesTime = selectedMonth === "all" || recordMonth === selectedMonth;
+        }
+
+        return matchesSearch && matchesMachine && matchesLocation && matchesTime;
     });
 
-    const getMonthOptions = () => {
-        const months = new Set<string>();
-        records.forEach(r => {
-            const d = new Date(r.date);
-            months.add(`${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}`);
-        });
-        return Array.from(months).sort().reverse();
-    };
+    const getMonthOptions = () => uniqueMonths;
 
     const handleDeleteClick = (record: MaintenanceRecord) => {
         setRecordToDelete(record);
@@ -155,10 +207,7 @@ export default function MaintenancePage() {
         }
     };
 
-    useEffect(() => {
-        setMounted(true);
-        fetchRecords();
-    }, []);
+
 
     const getStatusColor = (status: string) => {
         switch (status) {
@@ -289,10 +338,14 @@ export default function MaintenancePage() {
                                     <select
                                         className="bg-transparent border-0 focus:ring-0 text-xs w-full h-8 text-text-primary appearance-none cursor-pointer"
                                         value={selectedMonth}
-                                        onChange={(e) => setSelectedMonth(e.target.value)}
+                                        onChange={(e) => {
+                                            setSelectedMonth(e.target.value);
+                                            // Reset quick filter when manually selecting month
+                                            if (e.target.value !== 'all') setActiveQuickFilter('all');
+                                        }}
                                     >
                                         <option value="all" className="bg-bg-secondary">{t("filterAllTime")}</option>
-                                        {getMonthOptions().map(m => (
+                                        {uniqueMonths.map(m => (
                                             <option key={m} value={m} className="bg-bg-secondary">
                                                 {new Date(m).toLocaleDateString(t("language") === 'th' ? 'th-TH' : 'en-US', { month: 'long', year: 'numeric' })}
                                             </option>
@@ -324,7 +377,7 @@ export default function MaintenancePage() {
                                         <span className={`px-1.5 py-0.5 rounded text-[10px] ${selectedLocation === loc.id ? `bg-${loc.color} text-white` : 'bg-bg-secondary/60 text-text-muted'}`}>
                                             {loc.id === 'all' ? records.length : records.filter(r => {
                                                 // Count logic should match filtering logic
-                                                let recordLocation = r.Location?.toUpperCase() || "";
+                                                let recordLocation = r.location?.toUpperCase() || "";
                                                 if (!recordLocation) {
                                                     const m = allMachines.find(mach => mach.id === r.machineId || mach.name === r.machineName);
                                                     recordLocation = m?.location?.toUpperCase() || m?.Location?.toUpperCase() || "";
@@ -332,6 +385,36 @@ export default function MaintenancePage() {
 
                                                 if (loc.id === 'UT') return recordLocation === 'UT' || recordLocation === 'UTILITY';
                                                 return recordLocation === loc.id;
+                                            }).length}
+                                        </span>
+                                    </button>
+                                ))}
+                            </div>
+
+                            {/* Time Period Buttons */}
+                            <div className="flex flex-wrap gap-2 pt-2 border-t border-border-light/10">
+                                {[
+                                    { id: 'all', label: t("labelAll") || "All", color: 'accent-blue' },
+                                    { id: 'thisMonth', label: t("labelMonthly") || "Monthly", color: 'accent-cyan' },
+                                    { id: 'thisWeek', label: t("labelWeekly") || "Weekly", color: 'accent-green' },
+                                    { id: 'yearly', label: t("labelYearly") || "Yearly", color: 'accent-blue' }
+                                ].map((filter) => (
+                                    <button
+                                        key={filter.id}
+                                        onClick={() => { setActiveQuickFilter(filter.id as any); setSelectedMonth('all'); }}
+                                        className={`px-4 py-2 rounded-xl text-xs font-bold transition-all border flex items-center gap-2
+                                                ${activeQuickFilter === filter.id
+                                                ? `bg-${filter.color}/20 border-${filter.color}/40 text-white shadow-lg`
+                                                : 'bg-bg-secondary/40 border-border-light/30 text-text-muted hover:bg-bg-secondary/60 hover:text-text-primary hover:border-border-light/50'}`}
+                                    >
+                                        {filter.label}
+                                        <span className={`px-1.5 py-0.5 rounded text-[10px] ${activeQuickFilter === filter.id ? `bg-${filter.color} text-white` : 'bg-bg-secondary/60 text-text-muted'}`}>
+                                            {/* Count Logic: Uses same frequency helper */}
+                                            {filter.id === 'all' ? records.length : records.filter(r => {
+                                                if (filter.id === 'thisMonth') return getFrequencyType(r) === 'monthly';
+                                                if (filter.id === 'thisWeek') return getFrequencyType(r) === 'weekly';
+                                                if (filter.id === 'yearly') return getFrequencyType(r) === 'yearly';
+                                                return false;
                                             }).length}
                                         </span>
                                     </button>
@@ -444,6 +527,11 @@ export default function MaintenancePage() {
                                         <span className="badge badge-primary text-[9px]">
                                             {getTypeText(record.type)}
                                         </span>
+                                        {record.period && (
+                                            <span className="badge badge-secondary text-[9px] bg-bg-tertiary border border-border-light text-text-secondary">
+                                                {record.period}
+                                            </span>
+                                        )}
                                     </div>
 
                                     {/* Expand/Collapse Button */}

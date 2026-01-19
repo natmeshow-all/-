@@ -10,6 +10,7 @@ import { PlusIcon, SettingsIcon, TrashIcon } from "../components/ui/Icons";
 import MachineSettingsModal from "../components/forms/MachineSettingsModal";
 import AddMachineModal from "../components/forms/AddMachineModal";
 import ConfirmModal from "../components/ui/ConfirmModal";
+import MachineDetailsModal from "../components/machines/MachineDetailsModal";
 
 export default function MachinesPage() {
     const { t } = useLanguage();
@@ -23,6 +24,8 @@ export default function MachinesPage() {
     const [selectedMachine, setSelectedMachine] = React.useState<any>(null);
     const [machineToDelete, setMachineToDelete] = React.useState<any>(null);
     const [selectedLocation, setSelectedLocation] = React.useState("ALL");
+    const [detailsModalOpen, setDetailsModalOpen] = React.useState(false);
+    const [machineForDetails, setMachineForDetails] = React.useState<any>(null);
 
     // Location counts
     const counts = React.useMemo(() => {
@@ -86,6 +89,11 @@ export default function MachinesPage() {
             setDeleteConfirmOpen(false); // Close modal
             setMachineToDelete(null);
         }
+    };
+
+    const handleOpenDetails = (machine: any) => {
+        setMachineForDetails(machine);
+        setDetailsModalOpen(true);
     };
 
     return (
@@ -173,7 +181,7 @@ export default function MachinesPage() {
 
                 {/* Machine Grid */}
                 {!loading && (
-                    <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
+                    <div className="grid grid-cols-2 lg:grid-cols-3 gap-3 sm:gap-6">
                         {filteredMachines.map((machine, index) => (
                             <MachineCard
                                 key={machine.id || index}
@@ -182,6 +190,7 @@ export default function MachinesPage() {
                                 onRefresh={fetchMachines}
                                 onOpenSettings={() => handleOpenSettings(machine)}
                                 onOpenDelete={() => handleOpenDelete(machine)}
+                                onOpenDetails={() => handleOpenDetails(machine)}
                             />
                         ))}
                     </div>
@@ -221,12 +230,19 @@ export default function MachinesPage() {
                 cancelText={t("actionCancel")}
                 isDestructive={true}
             />
+
+            <MachineDetailsModal
+                isOpen={detailsModalOpen}
+                onClose={() => setDetailsModalOpen(false)}
+                machineId={machineForDetails?.id}
+                machineName={machineForDetails?.name}
+            />
         </div>
     );
 }
 
 // Sub-component for Machine Card
-function MachineCard({ machine, index, onRefresh, onOpenSettings, onOpenDelete }: { machine: any, index: number, onRefresh: () => void, onOpenSettings: () => void, onOpenDelete: () => void }) {
+function MachineCard({ machine, index, onRefresh, onOpenSettings, onOpenDelete, onOpenDetails }: { machine: any, index: number, onRefresh: () => void, onOpenSettings: () => void, onOpenDelete: () => void, onOpenDetails: () => void }) {
     const { t } = useLanguage();
     const { checkAuth } = useAuth();
     const { success, error: showError } = useToast();
@@ -276,7 +292,8 @@ function MachineCard({ machine, index, onRefresh, onOpenSettings, onOpenDelete }
 
     return (
         <div
-            className={`group relative h-80 rounded-2xl overflow-hidden shadow-lg hover:shadow-2xl ${styles.shadow} transition-all duration-500 animate-fade-in-up border ${styles.border}`}
+            onClick={onOpenDetails}
+            className={`group relative h-80 rounded-2xl overflow-hidden shadow-lg hover:shadow-2xl ${styles.shadow} transition-all duration-500 animate-fade-in-up border ${styles.border} cursor-pointer`}
             style={{ animationDelay: `${index * 50}ms` }}
         >
             {/* Full Background Image */}
@@ -367,7 +384,9 @@ function MachineCard({ machine, index, onRefresh, onOpenSettings, onOpenDelete }
                 </button>
 
                 {/* Upload Button */}
-                <label className={`
+                <label
+                    onClick={(e) => e.stopPropagation()}
+                    className={`
                     relative cursor-pointer 
                     w-10 h-10 rounded-full 
                     bg-white/10 backdrop-blur-md border border-white/20 

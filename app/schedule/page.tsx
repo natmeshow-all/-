@@ -26,15 +26,20 @@ export default function SchedulePage() {
     const [machineSelectOpen, setMachineSelectOpen] = useState(false);
     const [selectedMachine, setSelectedMachine] = useState<Machine | null>(null);
     const [allMachines, setAllMachines] = useState<Machine[]>([]);
-    const [selectedLocation, setSelectedLocation] = useState<string>("All");
+    const [selectedLocation, setSelectedLocation] = useState<string>("all");
 
-    const locations = ["All", "Utility", "FZ", "RTE"];
+    const locations = [
+        { id: 'all', label: t("labelAll") || 'ทั้งหมด', color: 'accent-blue' },
+        { id: 'FZ', label: 'FZ', color: 'accent-cyan' },
+        { id: 'RTE', label: 'RTE', color: 'accent-green' },
+        { id: 'UT', label: 'Utility', color: 'accent-yellow' }
+    ];
 
     const filteredMachines = allMachines.filter(machine => {
-        if (selectedLocation === "All") return true;
+        if (selectedLocation === "all") return true;
 
-        const loc = machine.Location?.toUpperCase() || machine.location?.toUpperCase() || "";
-        if (selectedLocation === "Utility") {
+        const loc = machine.location?.toUpperCase() || "";
+        if (selectedLocation === "UT") {
             return loc === "UT" || loc === "UTILITY";
         }
         return loc === selectedLocation.toUpperCase();
@@ -108,7 +113,7 @@ export default function SchedulePage() {
         const diffTime = due.getTime() - now.getTime();
         const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
 
-        if (diffDays !== 0) {
+        if (diffDays > 0) {
             showError(t("msgNotYetDue"), t("msgNotYetDue"));
             return;
         }
@@ -378,17 +383,24 @@ export default function SchedulePage() {
                 title={t("modalSelectMachinePM")}
             >
                 {/* Location Filter */}
-                <div className="flex gap-2 mb-4 overflow-x-auto pb-2 custom-scrollbar">
+                <div className="flex flex-wrap gap-2 mb-6 px-1">
                     {locations.map(loc => (
                         <button
-                            key={loc}
-                            onClick={() => setSelectedLocation(loc)}
-                            className={`px-3 py-1.5 rounded-lg text-sm font-medium transition-all whitespace-nowrap ${selectedLocation === loc
-                                ? "bg-accent-blue text-white shadow-md"
-                                : "bg-bg-tertiary text-text-muted hover:bg-white/5 hover:text-text-primary border border-white/5"
-                                }`}
+                            key={loc.id}
+                            onClick={() => setSelectedLocation(loc.id)}
+                            className={`px-4 py-2 rounded-xl text-xs font-bold transition-all border flex items-center gap-2
+                                ${selectedLocation === loc.id
+                                    ? `bg-${loc.color}/20 border-${loc.color}/40 text-white shadow-lg`
+                                    : 'bg-bg-tertiary border-white/10 text-text-muted hover:bg-white/5 hover:text-text-primary'}`}
                         >
-                            {loc === "All" ? t("labelAll") : loc}
+                            {loc.label}
+                            <span className={`px-1.5 py-0.5 rounded text-[10px] ${selectedLocation === loc.id ? `bg-${loc.color} text-bg-primary` : 'bg-white/10 text-white/40'}`}>
+                                {loc.id === 'all' ? allMachines.length : allMachines.filter(m => {
+                                    const machineLoc = m.location?.toUpperCase() || "";
+                                    if (loc.id === 'UT') return machineLoc === 'UT' || machineLoc === 'UTILITY';
+                                    return machineLoc === loc.id;
+                                }).length}
+                            </span>
                         </button>
                     ))}
                 </div>

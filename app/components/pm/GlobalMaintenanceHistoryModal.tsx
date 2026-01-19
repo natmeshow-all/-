@@ -68,11 +68,13 @@ export default function GlobalMaintenanceHistoryModal({ isOpen, onClose }: Globa
         // Location (Area) matching logic - updated to match Machines page (FZ, RTE, UT)
         let matchesLocation = selectedLocation === "all";
         if (!matchesLocation) {
-            let recordLocation = record.Location?.toUpperCase() || "";
+            // Prioritize part location (FZ, RTE, UT) which corresponds to lowercase 'location'
+            // Fallback to machine location if part location is missing
+            let recordLocation = record.location?.toUpperCase() || "";
 
             if (!recordLocation) {
                 const machine = machines.find(m => m.id === record.machineId || m.name === record.machineName);
-                recordLocation = machine?.Location?.toUpperCase() || machine?.location?.toUpperCase() || "";
+                recordLocation = machine?.location?.toUpperCase() || "";
             }
 
             if (selectedLocation === "UT") {
@@ -101,7 +103,7 @@ export default function GlobalMaintenanceHistoryModal({ isOpen, onClose }: Globa
     const getLocationOptions = () => {
         const locations = new Set<string>();
         machines.forEach(m => {
-            if (m.Location) locations.add(m.Location);
+            if (m.location) locations.add(m.location);
         });
         return Array.from(locations).sort();
     };
@@ -174,7 +176,7 @@ export default function GlobalMaintenanceHistoryModal({ isOpen, onClose }: Globa
                                     <option value="all">{t("filterAllMachines")}</option>
                                     {machines.filter(m => {
                                         if (selectedLocation === 'all') return true;
-                                        const loc = m.Location?.toUpperCase() || m.location?.toUpperCase() || "";
+                                        const loc = m.location?.toUpperCase() || "";
                                         if (selectedLocation === 'UT') return loc === 'UT' || loc === 'UTILITY';
                                         return loc === selectedLocation;
                                     }).map(m => (
@@ -219,15 +221,16 @@ export default function GlobalMaintenanceHistoryModal({ isOpen, onClose }: Globa
                                 {loc.label === 'All' ? t("filterAll") : loc.label}
                                 <span className={`px-1.5 py-0.5 rounded text-[10px] ${selectedLocation === loc.id ? `bg-${loc.color} text-bg-primary` : 'bg-white/10 text-white/40'}`}>
                                     {loc.id === 'all' ? records.length : records.filter(r => {
-                                        let recordLoc = r.Location?.toUpperCase() || "";
+                                        let recordLoc = r.location?.toUpperCase() || "";
                                         if (!recordLoc) {
                                             const m = machines.find(mach => mach.id === r.machineId || mach.name === r.machineName);
-                                            recordLoc = m?.Location?.toUpperCase() || m?.location?.toUpperCase() || "";
+                                            recordLoc = m?.location?.toUpperCase() || "";
                                         }
                                         if (loc.id === 'UT') return recordLoc === 'UT' || recordLoc === 'UTILITY';
                                         return recordLoc === loc.id;
                                     }).length}
                                 </span>
+
                             </button>
                         ))}
                     </div>

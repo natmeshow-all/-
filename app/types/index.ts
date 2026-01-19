@@ -135,6 +135,7 @@ export interface MaintenanceRecord {
     details?: string;
     checklist?: ChecklistItemResult[];
     Location?: string; // Location of the machine 
+    location?: string; // FZ/RTE/UT 
     notes?: string;
     evidenceImageUrl?: string; // Photo after work completion
     pmPlanId?: string; // Reference to the PMPlan if this was a PM task
@@ -170,7 +171,7 @@ export interface PMPlan {
 
     // Scheduling
     cycleMonths?: number; // kept for backward compatibility or monthly usage
-    scheduleType?: "monthly" | "weekly";
+    scheduleType?: "monthly" | "weekly" | "yearly";
     weeklyDay?: 0 | 1 | 2 | 3 | 4 | 5 | 6; // 0=Sunday
 
     startDate: Date;

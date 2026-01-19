@@ -4,7 +4,7 @@ import React, { useState } from "react";
 import { useLanguage } from "../../contexts/LanguageContext";
 import { useToast } from "../../contexts/ToastContext";
 import Modal from "../ui/Modal";
-import { addMaintenanceRecord } from "../../lib/firebaseService";
+import { addMaintenanceRecord, uploadMaintenanceEvidence } from "../../lib/firebaseService";
 import { useAuth } from "../../contexts/AuthContext";
 import {
     EditIcon,
@@ -24,6 +24,8 @@ import {
     RefreshCwIcon,
     TrendingUpIcon,
     AlertTriangleIcon,
+    ImageIcon,
+    TrashIcon,
 } from "../ui/Icons";
 import { mockMachines, mockVoltageOptions } from "../../data/mockData";
 import { MaintenanceRecordFormData, MaintenanceType, VibrationLevel, Part, Machine } from "../../types";
@@ -149,6 +151,29 @@ export default function MaintenanceRecordModal({
     const [locationFilter, setLocationFilter] = useState<string>("All");
     const [loadingParts, setLoadingParts] = useState(false);
 
+    // Image Upload State
+    const [imageFile, setImageFile] = useState<File | null>(null);
+    const [imagePreview, setImagePreview] = useState<string | null>(null);
+    const [uploadingImage, setUploadingImage] = useState(false);
+
+    // Handle Image Selection
+    const handleImageChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+        const file = e.target.files?.[0];
+        if (file) {
+            setImageFile(file);
+            const reader = new FileReader();
+            reader.onloadend = () => {
+                setImagePreview(reader.result as string);
+            };
+            reader.readAsDataURL(file);
+        }
+    };
+
+    const handleRemoveImage = () => {
+        setImageFile(null);
+        setImagePreview(null);
+    };
+
     useEffect(() => {
         const fetchInitialData = async () => {
             try {
@@ -269,7 +294,11 @@ export default function MaintenanceRecordModal({
 
     const filteredMachines = locationFilter === "All"
         ? machines
-        : machines.filter(m => m.Location === locationFilter);
+        : machines.filter(m => {
+            const loc = (m.location || m.Location || "").toUpperCase();
+            if (locationFilter === "UT") return loc === "UT" || loc === "UTILITY";
+            return loc === locationFilter;
+        });
 
     const filteredParts = allParts.filter(p => {
         if (!formData.machineId) return false;
@@ -379,7 +408,23 @@ export default function MaintenanceRecordModal({
                 period: formData.period || "routine",
             };
 
+            // Upload evidence image if selected
+            if (imageFile) {
+                setUploadingImage(true);
+                try {
+                    const evidenceUrl = await uploadMaintenanceEvidence(imageFile);
+                    dataToSubmit.evidenceImageUrl = evidenceUrl;
+                } catch (imgErr) {
+                    console.error("Error uploading image:", imgErr);
+                    // Continue without image if upload fails
+                }
+                setUploadingImage(false);
+            }
+
             await addMaintenanceRecord(dataToSubmit);
+
+            // Reset image state
+            handleRemoveImage();
 
             // Show success toast
             toast.success(t("msgSaveSuccess"), t("msgSaveSuccess"));
@@ -1028,6 +1073,57 @@ export default function MaintenanceRecordModal({
                         </div>
                     </div>
                 )}
+
+                {/* Section: Evidence Image Upload */}
+                <div className="form-section">
+                    <h3 className="form-section-title">
+                        <ImageIcon size={16} />
+                        {t("labelEvidenceImage")}
+                    </h3>
+                    <div className="space-y-3">
+                        {/* Image Preview */}
+                        {imagePreview && (
+                            <div className="relative w-full max-w-xs mx-auto">
+                                <img
+                                    src={imagePreview}
+                                    alt="Preview"
+                                    className="w-full h-auto rounded-lg border border-border-light shadow-sm"
+                                />
+                                <button
+                                    type="button"
+                                    onClick={handleRemoveImage}
+                                    className="absolute top-2 right-2 p-1.5 rounded-full bg-accent-red/80 text-white hover:bg-accent-red transition-colors shadow-md"
+                                    title={t("actionRemoveImage")}
+                                >
+                                    <TrashIcon size={14} />
+                                </button>
+                            </div>
+                        )}
+
+                        {/* File Input */}
+                        {!imagePreview && (
+                            <label className="flex flex-col items-center justify-center w-full h-32 rounded-lg border-2 border-dashed border-border-light hover:border-primary/50 bg-bg-tertiary/30 hover:bg-bg-tertiary/50 cursor-pointer transition-all group">
+                                <div className="flex flex-col items-center justify-center pt-5 pb-6">
+                                    <ImageIcon size={32} className="text-text-muted group-hover:text-primary transition-colors mb-2" />
+                                    <p className="text-sm text-text-muted group-hover:text-text-primary">{t("placeholderChooseImage")}</p>
+                                </div>
+                                <input
+                                    type="file"
+                                    accept="image/*"
+                                    className="hidden"
+                                    onChange={handleImageChange}
+                                />
+                            </label>
+                        )}
+
+                        {uploadingImage && (
+                            <div className="flex items-center justify-center gap-2 text-sm text-text-muted">
+                                <span className="animate-spin rounded-full h-4 w-4 border-b-2 border-primary"></span>
+                                <span>กำลังอัปโหลดรูปภาพ...</span>
+                            </div>
+                        )}
+                    </div>
+                </div>
 
                 {/* Section 5: Details & Notes - Hide for part changes */}
                 {!isPartChange && (
