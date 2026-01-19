@@ -32,6 +32,7 @@ import {
     ChevronDownIcon,
     ActivityIcon,
     TargetIcon,
+    ImageIcon,
 } from "../components/ui/Icons";
 import { mockMaintenanceRecords } from "../data/mockData";
 
@@ -368,13 +369,13 @@ export default function MaintenancePage() {
                                     <button
                                         key={loc.id}
                                         onClick={() => setSelectedLocation(loc.id)}
-                                        className={`px-4 py-2 rounded-xl text-xs font-bold transition-all border flex items-center gap-2
+                                        className={`px-3 py-1.5 rounded-lg text-[11px] font-bold transition-all border flex items-center gap-1.5
                                                 ${selectedLocation === loc.id
                                                 ? `bg-${loc.color}/20 border-${loc.color}/40 text-white shadow-lg`
                                                 : 'bg-bg-secondary/40 border-border-light/30 text-text-muted hover:bg-bg-secondary/60 hover:text-text-primary hover:border-border-light/50'}`}
                                     >
                                         {loc.label}
-                                        <span className={`px-1.5 py-0.5 rounded text-[10px] ${selectedLocation === loc.id ? `bg-${loc.color} text-white` : 'bg-bg-secondary/60 text-text-muted'}`}>
+                                        <span className={`px-1 py-0.5 rounded text-[9px] ${selectedLocation === loc.id ? `bg-${loc.color} text-white` : 'bg-bg-secondary/60 text-text-muted'}`}>
                                             {loc.id === 'all' ? records.length : records.filter(r => {
                                                 // Count logic should match filtering logic
                                                 let recordLocation = r.location?.toUpperCase() || "";
@@ -402,13 +403,13 @@ export default function MaintenancePage() {
                                     <button
                                         key={filter.id}
                                         onClick={() => { setActiveQuickFilter(filter.id as any); setSelectedMonth('all'); }}
-                                        className={`px-4 py-2 rounded-xl text-xs font-bold transition-all border flex items-center gap-2
+                                        className={`px-3 py-1.5 rounded-lg text-[11px] font-bold transition-all border flex items-center gap-1.5
                                                 ${activeQuickFilter === filter.id
                                                 ? `bg-${filter.color}/20 border-${filter.color}/40 text-white shadow-lg`
                                                 : 'bg-bg-secondary/40 border-border-light/30 text-text-muted hover:bg-bg-secondary/60 hover:text-text-primary hover:border-border-light/50'}`}
                                     >
                                         {filter.label}
-                                        <span className={`px-1.5 py-0.5 rounded text-[10px] ${activeQuickFilter === filter.id ? `bg-${filter.color} text-white` : 'bg-bg-secondary/60 text-text-muted'}`}>
+                                        <span className={`px-1 py-0.5 rounded text-[9px] ${activeQuickFilter === filter.id ? `bg-${filter.color} text-white` : 'bg-bg-secondary/60 text-text-muted'}`}>
                                             {/* Count Logic: Uses same frequency helper */}
                                             {filter.id === 'all' ? records.length : records.filter(r => {
                                                 if (filter.id === 'thisMonth') return getFrequencyType(r) === 'monthly';
@@ -457,104 +458,111 @@ export default function MaintenancePage() {
                             return (
                                 <div
                                     key={record.id}
-                                    className="card animate-fade-in-up overflow-hidden"
+                                    onClick={() => toggleExpand(record.id)} // Specific click handler logic below
+                                    className={`card overflow-hidden transition-all duration-300 ${isExpanded ? 'ring-1 ring-primary/50 shadow-lg scale-[1.01]' : 'hover:bg-white/5 cursor-pointer'}`}
                                     style={{ animationDelay: `${index * 50}ms` }}
                                 >
-                                    {/* Compact Header - Always Visible */}
-                                    <div className="flex items-start justify-between">
-                                        <div className="flex items-center gap-3">
-                                            <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-accent-green/20 to-accent-cyan/20 flex items-center justify-center flex-shrink-0">
-                                                <WrenchIcon size={20} className="text-accent-green" />
+                                    {/* Compact Header - Clickable Area */}
+                                    <div className="flex items-start gap-3 relative">
+                                        {/* Icon Box */}
+                                        <div className={`w-10 h-10 rounded-xl flex items-center justify-center flex-shrink-0 shadow-inner
+                                            ${record.type === 'preventive' ? 'bg-accent-blue/10 text-accent-blue' :
+                                                record.type === 'corrective' ? 'bg-accent-red/10 text-accent-red' :
+                                                    'bg-accent-green/10 text-accent-green'}`}>
+                                            {record.type === 'preventive' ? <RefreshCwIcon size={20} /> :
+                                                record.type === 'corrective' ? <AlertTriangleIcon size={20} /> :
+                                                    <WrenchIcon size={20} />}
+                                        </div>
+
+                                        {/* Main Content */}
+                                        <div className="flex-1 min-w-0 pt-0.5">
+                                            <div className="flex items-start justify-between gap-2">
+                                                <div className="min-w-0">
+                                                    <div className="flex items-center gap-2 mb-0.5">
+                                                        <h3 className={`font-bold text-sm truncate ${isExpanded ? 'text-primary' : 'text-text-primary'}`}>
+                                                            {record.machineName}
+                                                        </h3>
+                                                        {/* Status Dot */}
+                                                        <span className={`w-2 h-2 rounded-full ${record.status === 'completed' ? 'bg-accent-green shadow-[0_0_8px_rgba(34,197,94,0.4)]' : 'bg-accent-yellow'}`}></span>
+                                                    </div>
+
+                                                    {/* Description & Location */}
+                                                    <div className="flex items-center gap-2 text-xs text-text-muted">
+                                                        {(allMachines.find(m => m.id === record.machineId)?.location) && (
+                                                            <span className="font-bold text-[10px] uppercase opacity-80 bg-white/5 px-1 rounded border border-white/10">
+                                                                {allMachines.find(m => m.id === record.machineId)?.location}
+                                                            </span>
+                                                        )}
+                                                        <p className="truncate opacity-70 max-w-[150px] sm:max-w-xs">
+                                                            {record.description || record.type}
+                                                        </p>
+                                                    </div>
+                                                </div>
+
+                                                {/* Right Data */}
+                                                <div className="flex flex-col items-end gap-1 flex-shrink-0">
+                                                    <span className={`badge text-[10px] py-0.5 px-2 font-bold uppercase tracking-wider ${getStatusColor(record.status)}`}>
+                                                        {getStatusText(record.status)}
+                                                    </span>
+                                                    <div className="flex items-center text-[10px] text-text-muted gap-1">
+                                                        <CalendarIcon size={10} />
+                                                        <span>{mounted ? formatDateThai(record.date) : '--/--'}</span>
+                                                    </div>
+                                                </div>
                                             </div>
-                                            <div className="min-w-0">
-                                                <div className="flex items-center gap-2">
-                                                    <h3 className="font-semibold text-text-primary truncate">{record.machineName}</h3>
-                                                    {(record.Location || allMachines.find(m => m.id === record.machineId)?.Location) && (
-                                                        <span className={`px-1.5 py-0.5 rounded text-[9px] font-bold border uppercase
-                                                            ${(record.Location || allMachines.find(m => m.id === record.machineId)?.Location)?.toUpperCase() === 'FZ' ? 'bg-accent-cyan/10 border-accent-cyan/30 text-accent-cyan' :
-                                                                (record.Location || allMachines.find(m => m.id === record.machineId)?.Location)?.toUpperCase() === 'RTE' ? 'bg-accent-green/10 border-accent-green/30 text-accent-green' :
-                                                                    (record.Location || allMachines.find(m => m.id === record.machineId)?.Location)?.toUpperCase() === 'UT' || (record.Location || allMachines.find(m => m.id === record.machineId)?.Location)?.toUpperCase() === 'UTILITY' ? 'bg-accent-yellow/10 border-accent-yellow/30 text-accent-yellow' :
-                                                                        'bg-bg-tertiary border-border-light text-text-muted'}
-                                                        `}>
-                                                            {record.Location || allMachines.find(m => m.id === record.machineId)?.Location}
-                                                        </span>
-                                                    )}
-                                                    {/* Machine Location (FZ, RTE, UT) */}
-                                                    {allMachines.find(m => m.id === record.machineId)?.location && (
-                                                        <span className={`px-1.5 py-0.5 rounded text-[9px] font-bold border uppercase
-                                                            ${allMachines.find(m => m.id === record.machineId)?.location?.toUpperCase() === 'FZ' ? 'bg-accent-cyan/10 border-accent-cyan/30 text-accent-cyan' :
-                                                                allMachines.find(m => m.id === record.machineId)?.location?.toUpperCase() === 'RTE' ? 'bg-accent-green/10 border-accent-green/30 text-accent-green' :
-                                                                    allMachines.find(m => m.id === record.machineId)?.location?.toUpperCase() === 'UT' || allMachines.find(m => m.id === record.machineId)?.location?.toUpperCase() === 'UTILITY' ? 'bg-accent-yellow/10 border-accent-yellow/30 text-accent-yellow' :
-                                                                        'bg-bg-tertiary border-border-light text-text-muted'}
-                                                        `}>
-                                                            {allMachines.find(m => m.id === record.machineId)?.location}
-                                                        </span>
+
+                                            {/* Sub Info Row (Technician, Type, Expand Arrow) */}
+                                            <div className="flex items-center justify-between mt-2 pt-2 border-t border-dashed border-white/10">
+                                                <div className="flex items-center gap-3 text-[11px] text-text-secondary">
+                                                    <div className="flex items-center gap-1.5">
+                                                        <UserIcon size={12} className="text-primary/70" />
+                                                        <span>{record.technician}</span>
+                                                    </div>
+                                                    {record.period && (
+                                                        <div className="flex items-center gap-1.5 pl-3 border-l border-white/10">
+                                                            <ClockIcon size={12} className="text-accent-yellow/70" />
+                                                            <span>{record.period}</span>
+                                                        </div>
                                                     )}
                                                 </div>
-                                                <p className="text-xs text-text-muted truncate">{record.description}</p>
+
+                                                {/* Chevron */}
+                                                <div className={`transition-transform duration-300 ${isExpanded ? 'rotate-180 text-primary' : 'text-text-muted'}`}>
+                                                    <ChevronDownIcon size={16} />
+                                                </div>
                                             </div>
                                         </div>
-                                        <div className="flex items-center gap-1.5 flex-shrink-0">
-                                            {getPriorityIcon(record.priority)}
-                                            <span className={`badge text-[10px] ${getStatusColor(record.status)}`}>
-                                                {getStatusText(record.status)}
-                                            </span>
-                                            {isAdmin && (
+
+                                        {/* Admin Delete Action (Absolute) */}
+                                        {isAdmin && (
+                                            <div className="absolute -top-1 -right-1">
                                                 <button
                                                     onClick={(e) => {
                                                         e.stopPropagation();
                                                         handleDeleteClick(record);
                                                     }}
-                                                    className="p-1 rounded-full hover:bg-accent-red/20 text-text-muted hover:text-accent-red transition-colors"
+                                                    className="p-1.5 rounded-bl-xl bg-bg-primary/80 text-text-muted hover:text-accent-red hover:bg-bg-tertiary transition-all opacity-0 group-hover:opacity-100"
                                                     title={t("actionDelete")}
                                                 >
-                                                    <TrashIcon size={14} />
+                                                    <TrashIcon size={12} />
                                                 </button>
-                                            )}
-                                        </div>
-                                    </div>
-
-                                    {/* Quick Summary Row */}
-                                    <div className="flex flex-wrap items-center gap-3 mt-2 text-xs text-text-muted">
-                                        <span className="flex items-center gap-1">
-                                            <CalendarIcon size={12} />
-                                            {mounted ? formatDateThai(record.date) : '--/--/----'}
-                                        </span>
-                                        <span className="flex items-center gap-1">
-                                            <UserIcon size={12} />
-                                            {record.technician}
-                                        </span>
-                                        <span className="badge badge-primary text-[9px]">
-                                            {getTypeText(record.type)}
-                                        </span>
-                                        {record.period && (
-                                            <span className="badge badge-secondary text-[9px] bg-bg-tertiary border border-border-light text-text-secondary">
-                                                {record.period}
-                                            </span>
+                                            </div>
                                         )}
                                     </div>
 
-                                    {/* Expand/Collapse Button */}
-                                    <button
-                                        onClick={() => toggleExpand(record.id)}
-                                        className="w-full mt-3 pt-2 border-t border-border-light flex items-center justify-center gap-1 text-xs text-text-muted hover:text-primary transition-colors"
-                                    >
-                                        <span>{isExpanded ? t("filterHide") : t("filterShow")}</span>
-                                        <ChevronDownIcon size={14} className={`transition-transform duration-200 ${isExpanded ? 'rotate-180' : ''}`} />
-                                    </button>
-
+                                    {/* Expandable Details */}
                                     {/* Expandable Details */}
                                     {isExpanded && (
-                                        <div className="mt-2 space-y-2 animate-fade-in">
+                                        <div className="mt-2 space-y-2 animate-fade-in bg-black/10 -mx-4 px-4 py-3 border-t border-white/5">
                                             {/* Section 1: ข้อมูลทั่วไป & Motor/Gear (Grid Layout) */}
                                             <div className="grid grid-cols-1 md:grid-cols-2 gap-2">
                                                 {/* ข้อมูลทั่วไป */}
-                                                <div className="bg-bg-tertiary/50 p-2 rounded-lg border border-border-light">
-                                                    <h4 className="text-[11px] font-bold text-primary mb-1 pb-1 border-b border-border-light flex items-center gap-1.5">
+                                                <div className="bg-white/5 p-2 rounded-lg border border-white/5">
+                                                    <h4 className="text-[11px] font-bold text-primary mb-1 pb-1 border-b border-white/10 flex items-center gap-1.5 opacity-80">
                                                         <FileTextIcon size={10} />
                                                         ข้อมูลทั่วไป
                                                     </h4>
-                                                    <div className="grid grid-cols-2 gap-x-2 gap-y-0.5 text-[11px]">
+                                                    <div className="grid grid-cols-2 gap-x-2 gap-y-1 text-[11px]">
                                                         <div className="flex items-center justify-between">
                                                             <span className="text-text-muted">ประเภท:</span>
                                                             <span className="text-text-primary">{getTypeText(record.type)}</span>
@@ -574,12 +582,12 @@ export default function MaintenancePage() {
 
                                                 {/* ข้อมูล Motor/Gear */}
                                                 {hasMotorData && (
-                                                    <div className="bg-bg-tertiary/50 p-2 rounded-lg border border-border-light">
-                                                        <h4 className="text-[11px] font-bold text-accent-cyan mb-1 pb-1 border-b border-border-light flex items-center gap-1.5">
+                                                    <div className="bg-white/5 p-2 rounded-lg border border-white/5">
+                                                        <h4 className="text-[11px] font-bold text-accent-cyan mb-1 pb-1 border-b border-white/10 flex items-center gap-1.5 opacity-80">
                                                             <ActivityIcon size={10} />
                                                             ข้อมูล Motor/Gear
                                                         </h4>
-                                                        <div className="grid grid-cols-2 gap-x-2 gap-y-0.5 text-[11px]">
+                                                        <div className="grid grid-cols-2 gap-x-2 gap-y-1 text-[11px]">
                                                             {record.motorGearData?.motorSize && (
                                                                 <div className="flex items-center justify-between">
                                                                     <span className="text-text-muted">ขนาด:</span>
@@ -611,12 +619,12 @@ export default function MaintenancePage() {
 
                                             {/* Section 2: Shaft & Vibration */}
                                             {(hasShaftData || hasVibrationData) && (
-                                                <div className="bg-bg-tertiary/50 p-2 rounded-lg border border-border-light">
-                                                    <h4 className="text-[11px] font-bold text-accent-green mb-1 pb-1 border-b border-border-light flex items-center gap-1.5">
+                                                <div className="bg-white/5 p-2 rounded-lg border border-white/5">
+                                                    <h4 className="text-[11px] font-bold text-accent-green mb-1 pb-1 border-b border-white/10 flex items-center gap-1.5 opacity-80">
                                                         <TargetIcon size={10} />
                                                         ข้อมูล Shaft & Vibration
                                                     </h4>
-                                                    <div className="grid grid-cols-2 gap-x-4 gap-y-0.5 text-[11px]">
+                                                    <div className="grid grid-cols-2 gap-x-4 gap-y-1 text-[11px]">
                                                         {record.motorGearData?.shaftData?.shaftBend && (
                                                             <div className="flex items-center justify-between">
                                                                 <span className="text-text-muted">Shaft Bend:</span>
@@ -649,8 +657,8 @@ export default function MaintenancePage() {
 
                                             {/* Section 3: Checklist - Compact List */}
                                             {record.checklist && record.checklist.length > 0 && (
-                                                <div className="bg-bg-tertiary/50 p-2 rounded-lg border border-border-light">
-                                                    <h4 className="text-[11px] font-bold text-accent-yellow mb-1 pb-1 border-b border-border-light flex items-center gap-1.5">
+                                                <div className="bg-white/5 p-2 rounded-lg border border-white/5">
+                                                    <h4 className="text-[11px] font-bold text-accent-yellow mb-1 pb-1 border-b border-white/10 flex items-center gap-1.5 opacity-80">
                                                         <CheckIcon size={10} />
                                                         รายการตรวจสอบ
                                                     </h4>
@@ -668,8 +676,8 @@ export default function MaintenancePage() {
                                                             }
 
                                                             return (
-                                                                <div key={idx} className="flex items-center justify-between text-[11px] py-0.5 hover:bg-white/5 px-1 rounded transition-colors">
-                                                                    <span className="text-text-secondary truncate flex-1 mr-2">{item.item}</span>
+                                                                <div key={idx} className="flex items-center justify-between text-[11px] py-0.5 hover:bg-white/5 px-1 rounded transition-colors border-b border-white/5 last:border-0">
+                                                                    <span className="text-text-secondary truncate flex-1 mr-2 opacity-90">{item.item}</span>
                                                                     <div className="flex items-center gap-2 flex-shrink-0">
                                                                         {isVibrationData && vibrationObj ? (
                                                                             <div className="flex gap-1">
@@ -695,20 +703,42 @@ export default function MaintenancePage() {
                                                 </div>
                                             )}
 
-                                            {/* Section 4: Details & Notes */}
+                                            {/* Section 4: Evidence Image */}
+                                            {record.evidenceImageUrl && (
+                                                <div className="bg-white/5 p-2 rounded-lg border border-white/5">
+                                                    <h4 className="text-[11px] font-bold text-accent-cyan mb-2 pb-1 border-b border-white/10 flex items-center gap-1.5 opacity-80">
+                                                        <ImageIcon size={10} />
+                                                        รูปภาพหลักฐาน
+                                                    </h4>
+                                                    <div className="relative rounded-lg overflow-hidden border border-white/10 aspect-video bg-black/20">
+                                                        <img
+                                                            src={record.evidenceImageUrl}
+                                                            alt="Maintenance Evidence"
+                                                            className="w-full h-full object-contain cursor-pointer hover:scale-105 transition-transform duration-500"
+                                                            onClick={(e) => {
+                                                                e.stopPropagation();
+                                                                // You might want to implement a Lightbox here later
+                                                                window.open(record.evidenceImageUrl, '_blank');
+                                                            }}
+                                                        />
+                                                    </div>
+                                                </div>
+                                            )}
+
+                                            {/* Section 5: Details & Notes */}
                                             {(record.details || record.notes) && (
-                                                <div className="bg-bg-tertiary/50 p-2 rounded-lg border border-border-light">
+                                                <div className="bg-white/5 p-2 rounded-lg border border-white/5">
                                                     {record.details && !record.details.includes('{') && (
                                                         <div className="mb-2 last:mb-0">
-                                                            <h4 className="text-[11px] font-bold text-text-secondary mb-0.5 flex items-center gap-1.5">
+                                                            <h4 className="text-[11px] font-bold text-text-secondary mb-0.5 flex items-center gap-1.5 opacity-80">
                                                                 <FileTextIcon size={10} /> รายละเอียด
                                                             </h4>
                                                             <p className="text-[11px] text-text-muted leading-snug">{record.details}</p>
                                                         </div>
                                                     )}
                                                     {record.notes && (
-                                                        <div className="pt-2 border-t border-border-light/50 first:pt-0 first:border-0">
-                                                            <h4 className="text-[11px] font-bold text-text-secondary mb-0.5 flex items-center gap-1.5">
+                                                        <div className="pt-2 border-t border-white/10 first:pt-0 first:border-0">
+                                                            <h4 className="text-[11px] font-bold text-text-secondary mb-0.5 flex items-center gap-1.5 opacity-80">
                                                                 <FileTextIcon size={10} /> หมายเหตุ
                                                             </h4>
                                                             <p className="text-[11px] text-text-muted italic leading-snug">{record.notes}</p>
