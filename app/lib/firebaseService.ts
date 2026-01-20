@@ -1059,6 +1059,7 @@ export async function addSparePart(
     if (part.description) syncTranslation(part.description);
     if (part.brand) syncTranslation(part.brand);
     if (part.location) syncTranslation(part.location);
+    if (part.model) syncTranslation(part.model);
 
     return newPartRef.key!;
 }
@@ -1090,8 +1091,9 @@ export async function updateSparePart(
     if (data.name) syncTranslation(data.name);
     if (data.description) syncTranslation(data.description);
     if (data.brand) syncTranslation(data.brand);
-    if (data.location) syncTranslation(data.location);
-    if (data.notes) syncTranslation(data.notes);
+    if (data.location) syncTranslation(data.location || "");
+    if (data.notes) syncTranslation(data.notes || "");
+    if (data.model) syncTranslation(data.model);
 }
 
 export async function deleteSparePart(id: string): Promise<void> {

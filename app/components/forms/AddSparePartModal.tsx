@@ -4,12 +4,14 @@ import {
     XIcon,
     UploadIcon,
     SaveIcon,
-    LayersIcon
+    LayersIcon,
+    SettingsIcon
 } from "../ui/Icons";
 import { useLanguage } from "../../contexts/LanguageContext";
 import { useToast } from "../../contexts/ToastContext";
-import { addSparePart, getSpareParts } from "../../lib/firebaseService";
+import { addSparePart } from "../../lib/firebaseService";
 import { SparePart } from "../../types";
+import { mockPartNames } from "../../data/mockData";
 
 interface AddSparePartModalProps {
     isOpen: boolean;
@@ -22,7 +24,7 @@ export default function AddSparePartModal({ isOpen, onClose, onSuccess, initialP
     const { t } = useLanguage();
     const { success, error: showError } = useToast();
     const [loading, setLoading] = useState(false);
-    const [existingParts, setExistingParts] = useState<SparePart[]>([]);
+    const [isCustomName, setIsCustomName] = useState(false);
     const fileInputRef = useRef<HTMLInputElement>(null);
 
     const [formData, setFormData] = useState({
@@ -35,32 +37,19 @@ export default function AddSparePartModal({ isOpen, onClose, onSuccess, initialP
         supplier: "",
         pricePerUnit: "",
         description: "",
-        parentId: initialParentId || "",
+        model: "", // Add model field
+        customCategory: "",
     });
 
     const [imageFile, setImageFile] = useState<File | null>(null);
     const [previewUrl, setPreviewUrl] = useState<string | null>(null);
 
-    // Fetch existing parts for parent selection
+    // Simplified effect without parent fetching
     React.useEffect(() => {
         if (isOpen) {
-            const fetchParts = async () => {
-                try {
-                    const data = await getSpareParts();
-                    // Filter out consumables/fluids if desired, but for now allow any part to be a parent
-                    setExistingParts(data);
-                } catch (err) {
-                    console.error("Error fetching parts for parent selection:", err);
-                }
-            };
-            fetchParts();
-
-            // Sync initialParentId if provided
-            if (initialParentId) {
-                setFormData(prev => ({ ...prev, parentId: initialParentId }));
-            }
+            // No data fetching needed for parent selection anymore
         }
-    }, [isOpen, initialParentId]);
+    }, [isOpen]);
 
     if (!isOpen) return null;
 
@@ -85,7 +74,7 @@ export default function AddSparePartModal({ isOpen, onClose, onSuccess, initialP
         try {
             await addSparePart({
                 name: formData.name,
-                category: formData.category,
+                category: formData.category === 'other' ? formData.customCategory : formData.category,
                 quantity: Number(formData.quantity),
                 unit: formData.unit,
                 minStockThreshold: Number(formData.minStockThreshold),
@@ -93,7 +82,7 @@ export default function AddSparePartModal({ isOpen, onClose, onSuccess, initialP
                 supplier: formData.supplier,
                 pricePerUnit: formData.pricePerUnit ? Number(formData.pricePerUnit) : undefined,
                 description: formData.description,
-                parentId: formData.parentId || undefined,
+                model: formData.model, // Pass model to service
             }, imageFile || undefined);
 
             onSuccess();
@@ -110,7 +99,8 @@ export default function AddSparePartModal({ isOpen, onClose, onSuccess, initialP
                 supplier: "",
                 pricePerUnit: "",
                 description: "",
-                parentId: "",
+                model: "",
+                customCategory: "",
             });
             setImageFile(null);
             setPreviewUrl(null);
@@ -171,16 +161,50 @@ export default function AddSparePartModal({ isOpen, onClose, onSuccess, initialP
                         {/* Name & Category */}
                         <div className="sm:col-span-2">
                             <label className="block text-sm font-medium text-text-secondary mb-1.5">
-                                {t("addPartName")} <span className="text-red-400">*</span>
+                                ชื่ออะไหล่หลัก
                             </label>
-                            <input
-                                required
-                                name="name"
-                                value={formData.name}
-                                onChange={handleChange}
-                                placeholder={t("placeholderPartName")}
-                                className="input w-full bg-bg-tertiary border-white/10 focus:border-primary/50"
-                            />
+                            {!isCustomName ? (
+                                <select
+                                    name="name"
+                                    value={mockPartNames.includes(formData.name) ? formData.name : (formData.name ? "other" : "")}
+                                    onChange={(e) => {
+                                        const val = e.target.value;
+                                        if (val === "other") {
+                                            setIsCustomName(true);
+                                            setFormData(prev => ({ ...prev, name: "" }));
+                                        } else {
+                                            setFormData(prev => ({ ...prev, name: val }));
+                                        }
+                                    }}
+                                    className="input w-full bg-bg-tertiary border-white/10 focus:border-primary/50"
+                                >
+                                    <option value="">-- เลือกชื่ออะไหล่หลัก --</option>
+                                    {mockPartNames.map(name => (
+                                        <option key={name} value={name}>{name}</option>
+                                    ))}
+                                    <option value="other">{t("optionOther") || "อื่นๆ (ระบุ)"}</option>
+                                </select>
+                            ) : (
+                                <div className="flex gap-2 animate-fade-in">
+                                    <input
+                                        required
+                                        name="name"
+                                        value={formData.name}
+                                        onChange={handleChange}
+                                        placeholder="ระบุชื่ออะไหล่หลัก เช่น 6205-2RS, เบอร์ 220..."
+                                        className="input flex-1 bg-bg-tertiary border-white/10 focus:border-primary/50"
+                                        autoFocus
+                                    />
+                                    <button
+                                        type="button"
+                                        onClick={() => setIsCustomName(false)}
+                                        className="btn btn-ghost px-2"
+                                        title={t("actionCancel")}
+                                    >
+                                        <XIcon size={18} />
+                                    </button>
+                                </div>
+                            )}
                         </div>
 
                         <div>
@@ -204,71 +228,42 @@ export default function AddSparePartModal({ isOpen, onClose, onSuccess, initialP
                             </select>
                         </div>
 
-                        <div>
-                            <label className="block text-sm font-medium text-text-secondary mb-1.5">
-                                {t("addPartLocation")}
+                        {formData.category === 'other' && (
+                            <div className="animate-fade-in sm:col-span-1">
+                                <label className="block text-sm font-medium text-text-secondary mb-1.5">
+                                    {t("labelCustomCategory") || "หมวดหมู่เพิ่มเติม (Custom Category)"}
+                                </label>
+                                <input
+                                    required={formData.category === 'other'}
+                                    name="customCategory"
+                                    value={formData.customCategory}
+                                    onChange={handleChange}
+                                    placeholder={t("placeholderCustomCategory") || "ระบุหมวดหมู่..."}
+                                    className="input w-full bg-bg-tertiary border-white/10 focus:border-primary/50"
+                                />
+                            </div>
+                        )}
+
+                        {/* Part Model / Spec (New field) */}
+                        <div className="sm:col-span-2 animate-fade-in">
+                            <label className="block text-sm font-medium text-text-secondary mb-1.5 flex items-center gap-2">
+                                <SettingsIcon size={14} className="text-primary" />
+                                รุ่นของอะไหล่
                             </label>
                             <input
-                                name="location"
-                                value={formData.location}
+                                name="model"
+                                value={formData.model}
                                 onChange={handleChange}
-                                placeholder={t("placeholderLocation")}
+                                placeholder="เช่น เบอร์ลูกปืน (6205), เบอร์น้ำมันเกียร์ (VG 220)..."
                                 className="input w-full bg-bg-tertiary border-white/10 focus:border-primary/50"
                             />
                         </div>
 
-                        {/* Parent Part Selection */}
-                        <div className="sm:col-span-2">
-                            <label className="block text-sm font-medium text-text-secondary mb-1.5 flex items-center gap-2">
-                                <LayersIcon size={14} className="text-primary" />
-                                {t("labelParentPart")}
-                            </label>
-                            <select
-                                name="parentId"
-                                value={formData.parentId}
-                                onChange={handleChange}
-                                className="input w-full bg-bg-tertiary border-white/10 focus:border-primary/50"
-                            >
-                                <option value="">-- {t("filterAll")} / Main Part --</option>
-                                {existingParts
-                                    .filter(p => !p.parentId) // Only show main parts as potential parents to avoid deep nesting for now
-                                    .map(p => (
-                                        <option key={p.id} value={p.id}>
-                                            {p.name} {p.brand ? `(${p.brand})` : ''}
-                                        </option>
-                                    ))
-                                }
-                            </select>
-                        </div>
-
-                        {/* Parent Part Selection */}
-                        <div className="sm:col-span-2">
-                            <label className="block text-sm font-medium text-text-secondary mb-1.5 flex items-center gap-2">
-                                <LayersIcon size={14} />
-                                {t("labelParentPart")}
-                            </label>
-                            <select
-                                name="parentId"
-                                value={formData.parentId}
-                                onChange={handleChange}
-                                className="input w-full bg-bg-tertiary border-white/10 focus:border-primary/50"
-                            >
-                                <option value="">-- {t("filterAll")} / Main Part --</option>
-                                {existingParts
-                                    .filter(p => p.category === 'motor' || p.category === 'gear' || p.category === 'pneumatic' || p.category === 'other') // Generally assemblies
-                                    .map(p => (
-                                        <option key={p.id} value={p.id}>
-                                            {p.name} {p.brand ? `(${p.brand})` : ''}
-                                        </option>
-                                    ))
-                                }
-                            </select>
-                        </div>
 
                         {/* Stock Info */}
                         <div>
                             <label className="block text-sm font-medium text-text-secondary mb-1.5">
-                                {t("addPartQuantity")} <span className="text-red-400">*</span>
+                                จำนวนที่ใช้ <span className="text-red-400">*</span>
                             </label>
                             <input
                                 required
@@ -294,19 +289,7 @@ export default function AddSparePartModal({ isOpen, onClose, onSuccess, initialP
                             />
                         </div>
 
-                        <div>
-                            <label className="block text-sm font-medium text-text-secondary mb-1.5">
-                                {t("statusLowStock")}
-                            </label>
-                            <input
-                                type="number"
-                                min="0"
-                                name="minStockThreshold"
-                                value={formData.minStockThreshold}
-                                onChange={handleChange}
-                                className="input w-full bg-bg-tertiary border-white/10 focus:border-primary/50"
-                            />
-                        </div>
+
 
                         <div>
                             <label className="block text-sm font-medium text-text-secondary mb-1.5">

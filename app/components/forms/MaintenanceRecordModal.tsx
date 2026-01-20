@@ -28,8 +28,8 @@ import {
     TrashIcon,
 } from "../ui/Icons";
 import { mockMachines, mockVoltageOptions } from "../../data/mockData";
-import { MaintenanceRecordFormData, MaintenanceType, VibrationLevel, Part, Machine } from "../../types";
-import { getParts, getMachines } from "../../lib/firebaseService";
+import { MaintenanceRecordFormData, MaintenanceType, VibrationLevel, Part, Machine, SparePart } from "../../types";
+import { getParts, getMachines, getSpareParts } from "../../lib/firebaseService";
 import { useEffect } from "react";
 
 import { TranslationKeys } from "../../translations";
@@ -148,6 +148,7 @@ export default function MaintenanceRecordModal({
     });
 
     const [allParts, setAllParts] = useState<Part[]>([]);
+    const [allSpareParts, setAllSpareParts] = useState<SparePart[]>([]);
     const [machines, setMachines] = useState<Machine[]>([]);
     const [locationFilter, setLocationFilter] = useState<string>("All");
     const [loadingParts, setLoadingParts] = useState(false);
@@ -178,12 +179,14 @@ export default function MaintenanceRecordModal({
     useEffect(() => {
         const fetchInitialData = async () => {
             try {
-                const [machinesData, partsData] = await Promise.all([
+                const [machinesData, partsData, sparePartsData] = await Promise.all([
                     getMachines(),
-                    getParts()
+                    getParts(),
+                    getSpareParts()
                 ]);
                 setMachines(machinesData);
                 setAllParts(partsData);
+                setAllSpareParts(sparePartsData);
 
                 // Set initial part data if provided and we have the data
                 if (initialPart) {
@@ -314,17 +317,38 @@ export default function MaintenanceRecordModal({
             return loc === locationFilter;
         });
 
-    const filteredParts = allParts.filter(p => {
-        if (!formData.machineId) return false;
-        const selectedMachine = machines.find(m => m.id === formData.machineId);
+    const filteredParts = [
+        ...allParts.filter(p => {
+            if (!formData.machineId) return false;
+            const selectedMachine = machines.find(m => m.id === formData.machineId);
 
-        return (
-            p.machineId === formData.machineId ||
-            (p.machineName && selectedMachine && p.machineName === selectedMachine.name) ||
-            ((p as any).machine && selectedMachine && (p as any).machine === selectedMachine.name)
-        );
-    });
-    const selectedPartData = allParts.find(p => p.id === formData.partId);
+            return (
+                p.machineId === formData.machineId ||
+                (p.machineName && selectedMachine && p.machineName === selectedMachine.name) ||
+                ((p as any).machine && selectedMachine && (p as any).machine === selectedMachine.name)
+            );
+        }),
+        ...allSpareParts.map(sp => ({
+            id: sp.id,
+            partName: sp.name || sp.partName,
+            brand: sp.brand,
+            Location: sp.location,
+            machineId: "global", // Identifier for global spare parts
+            machineName: "Inventory",
+            modelSpec: sp.model || sp.description,
+            quantity: sp.quantity,
+            brandName: sp.brand
+        } as any))
+    ];
+
+    // Remove duplicates based on part name and brand if they overlap between machine parts and spare parts
+    const uniqueParts = filteredParts.filter((part, index, self) =>
+        index === self.findIndex((t) => (
+            t.partName === part.partName && t.brand === part.brand
+        ))
+    );
+
+    const selectedPartData = [...allParts, ...allSpareParts.map(sp => ({ ...sp, partName: sp.name } as any))].find(p => p.id === formData.partId);
     const isPartChange = !!(initialPart || formData.partId || formData.isOverhaul || formData.type === "partReplacement");
 
     // Check if part is Motor or Gear by category OR part name (case-insensitive)
@@ -567,10 +591,10 @@ export default function MaintenanceRecordModal({
                                 disabled={!formData.machineId}
                             >
                                 <option value="">{t("addPartSelectPart")}</option>
-                                {filteredParts.map(p => (
+                                {uniqueParts.map(p => (
                                     <option key={p.id} value={p.id}>
                                         {p.partName} {p.brand ? `(${p.brand})` : ''}
-                                        {p.Location ? ` @ ${p.Location}` : ''}
+                                        {p.machineName === "Inventory" ? ` [Inventory]` : (p.Location ? ` @ ${p.Location}` : '')}
                                     </option>
                                 ))}
                                 <option value="others">+ {t("labelOther") || "อื่นๆ (ระบุเอง)"}</option>

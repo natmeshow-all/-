@@ -77,7 +77,8 @@ export type PartCategory =
     | "pump"
     | "valve"
     | "electrical"
-    | "other";
+    | "other"
+    | (string & {});
 
 export type MaintenanceType =
     | "preventive"
@@ -296,7 +297,9 @@ export interface MaintenanceRecordFormData {
 export interface SparePart {
     id: string;
     name: string;
+    partName?: string; // Add partName to support flexible field mapping
     description?: string; // Spec details
+    model?: string; // Model or specific code (e.g. bearing number)
     category: string; // bearing, oil, etc.
     brand?: string; // Brand name (e.g. SKF, NSK)
     notes?: string; // Additional notes

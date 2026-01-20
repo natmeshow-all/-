@@ -139,8 +139,8 @@ export default function PartsPage() {
         return acc;
     }, {} as Record<string, SparePart[]>);
 
-    // Identify Low Stock Items
-    const lowStockItems = parts.filter(p => p.quantity <= p.minStockThreshold);
+    // Identify Low Stock Items - No longer used for banner but may be used elsewhere if needed
+    // const lowStockItems = parts.filter(p => p.quantity <= p.minStockThreshold);
 
     return (
         <div className="min-h-screen bg-bg-primary">
@@ -186,28 +186,6 @@ export default function PartsPage() {
                     </div>
                 </div>
 
-                {/* Low Stock Alert Banner */}
-                {lowStockItems.length > 0 && (
-                    <div className="mb-8 p-4 rounded-xl bg-error/10 border border-error/20 flex items-start gap-3 animate-fade-in">
-                        <div className="p-2 rounded-lg bg-error/20 text-error mt-0.5">
-                            <AlertIcon size={20} />
-                        </div>
-                        <div>
-                            <h3 className="font-bold text-error mb-1">{t("partsLowStockAlert", { count: lowStockItems.length })}</h3>
-                            <p className="text-sm text-text-secondary mb-3">
-                                {t("partsLowStockDesc")}
-                            </p>
-                            <div className="flex flex-wrap gap-2">
-                                {lowStockItems.map(item => (
-                                    <span key={item.id} className="inline-flex items-center gap-1 px-2.5 py-1 rounded-md bg-bg-secondary border border-error/30 text-xs text-text-primary">
-                                        <span className="w-1.5 h-1.5 rounded-full bg-error animate-pulse"></span>
-                                        {item.name} ({item.quantity} {item.unit})
-                                    </span>
-                                ))}
-                            </div>
-                        </div>
-                    </div>
-                )}
 
                 {/* Loading State */}
                 {loading && (
@@ -234,175 +212,163 @@ export default function PartsPage() {
                                 </div>
 
                                 {/* Grid */}
-                                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
+                                <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
                                     {items.map(part => (
-                                        <div key={part.id} className="card p-0 overflow-hidden hover:shadow-xl hover:shadow-primary/5 transition-all duration-300 group border border-white/5 bg-bg-secondary/30 relative">
-                                            {/* Admin Delete Button */}
-                                            {isAdmin && (
-                                                <button
-                                                    onClick={(e) => {
-                                                        e.stopPropagation();
-                                                        handleDeleteClick(part);
-                                                    }}
-                                                    className="absolute top-2 right-2 z-10 p-1.5 rounded-lg bg-black/40 text-text-muted hover:bg-accent-red hover:text-white transition-all opacity-0 group-hover:opacity-100"
-                                                    title={t("actionDelete")}
-                                                >
-                                                    <TrashIcon size={14} />
-                                                </button>
-                                            )}
+                                        <div
+                                            key={part.id}
+                                            className="relative w-full h-[300px] rounded-2xl overflow-hidden shadow-xl border border-white/5 group active:scale-[0.99] transition-all duration-300 animate-fade-in"
+                                        >
+                                            {/* Background Image */}
+                                            <div
+                                                className="absolute inset-0 bg-bg-tertiary cursor-pointer"
+                                                onClick={() => openDetailsModal(part)}
+                                            >
+                                                {part.imageUrl ? (
+                                                    <img
+                                                        src={part.imageUrl}
+                                                        alt={part.name}
+                                                        className="object-cover w-full h-full group-hover:scale-105 transition-transform duration-700"
+                                                    />
+                                                ) : (
+                                                    <div className="w-full h-full flex flex-col items-center justify-center text-text-muted bg-bg-secondary">
+                                                        <BoxIcon size={48} className="opacity-10 mb-2" />
+                                                        <span className="text-[10px] opacity-40 font-medium tracking-wider">{t("labelNoImage") || "No Image"}</span>
+                                                    </div>
+                                                )}
 
-                                            <div className="p-4 flex gap-4">
-                                                {/* Image */}
-                                                <div
-                                                    className="w-20 h-20 rounded-xl bg-bg-tertiary shrink-0 overflow-hidden border border-white/5 relative group-hover:border-primary/30 transition-colors cursor-pointer"
-                                                    onClick={() => openDetailsModal(part)}
-                                                >
-                                                    {part.imageUrl ? (
-                                                        <img src={part.imageUrl} alt={part.name} className="w-full h-full object-cover" />
-                                                    ) : (
-                                                        <div className="w-full h-full flex items-center justify-center text-text-muted/30">
-                                                            <BoxIcon size={24} />
-                                                        </div>
-                                                    )}
-                                                    {part.quantity <= part.minStockThreshold && (
-                                                        <div className="absolute inset-0 bg-error/20 flex items-center justify-center backdrop-blur-[1px]">
-                                                            <span className="text-xs font-bold text-white bg-error px-2 py-0.5 rounded shadow-sm">{t("statusLowStock")}</span>
-                                                        </div>
-                                                    )}
-                                                </div>
+                                                {/* Gradient Overlays */}
+                                                <div className="absolute inset-0 bg-gradient-to-t from-bg-primary via-bg-primary/20 to-transparent opacity-90" />
+                                                <div className="absolute inset-0 bg-gradient-to-r from-bg-primary/80 via-transparent to-transparent" />
+                                            </div>
 
-                                                {/* Details */}
-                                                <div className="flex-1 min-w-0 flex flex-col justify-between">
-                                                    <div className="flex justify-between items-start gap-2">
-                                                        <div className="min-w-0">
-                                                            <div className="flex items-center gap-2">
-                                                                <h3
-                                                                    className="font-bold text-text-primary truncate cursor-pointer hover:text-primary transition-colors"
-                                                                    onClick={() => openDetailsModal(part)}
-                                                                >
-                                                                    {part.name}
-                                                                </h3>
-                                                                {subPartsMap[part.id] && (
-                                                                    <div className="flex items-center gap-1 px-1.5 py-0.5 rounded bg-primary/20 text-primary text-[10px] font-bold uppercase tracking-wider">
-                                                                        <LayersIcon size={10} />
-                                                                        {subPartsMap[part.id].length}
-                                                                    </div>
-                                                                )}
-                                                            </div>
-                                                            <p className="text-xs text-text-muted truncate mb-1">{part.description || t("partsNoSpec")}</p>
+                                            {/* Content Overlay */}
+                                            <div className="absolute inset-0 p-4 flex flex-col pointer-events-none">
+                                                {/* Header Row */}
+                                                <div className="flex justify-between items-start pointer-events-auto">
+                                                    <div className="flex-1 min-w-0 pr-4">
+                                                        <h3
+                                                            className="text-xl font-bold text-white drop-shadow-lg leading-tight cursor-pointer hover:text-primary-light transition-colors line-clamp-1"
+                                                            onClick={() => openDetailsModal(part)}
+                                                        >
+                                                            {part.name}
+                                                        </h3>
+                                                        <span className="text-[10px] font-bold text-primary-light uppercase tracking-wider block mt-0.5 opacity-80">
+                                                            {part.category}
+                                                        </span>
+                                                    </div>
+
+                                                    <div className="flex flex-col items-end gap-2 shrink-0">
+                                                        <div className="flex flex-col items-end">
+                                                            <span className={`text-2xl font-black ${part.quantity <= part.minStockThreshold ? 'text-error' : 'text-primary'} drop-shadow-lg`}>
+                                                                x{part.quantity}
+                                                            </span>
+                                                            <span className="text-[9px] font-bold text-white/50 uppercase tracking-widest -mt-1">{part.unit || "pcs"}</span>
                                                         </div>
-                                                        <div className="flex items-center gap-1">
-                                                            <button
-                                                                onClick={() => openHistoryModal(part)}
-                                                                className="p-1.5 rounded-lg bg-bg-tertiary text-text-muted hover:text-primary transition-colors hover:bg-primary/10"
-                                                                title={t("historyItem")}
-                                                            >
-                                                                <HistoryIcon size={14} />
-                                                            </button>
+
+                                                        <div className="flex gap-1.5">
+                                                            {/* Sub-parts Trigger */}
                                                             {subPartsMap[part.id] && (
                                                                 <button
                                                                     onClick={(e) => { e.stopPropagation(); toggleExpand(part.id); }}
-                                                                    className={`p-1.5 rounded-lg transition-all ${expandedParts[part.id] ? 'bg-primary text-white' : 'bg-bg-tertiary text-text-muted hover:bg-primary/10 hover:text-primary'}`}
+                                                                    className={`w-8 h-8 rounded-lg border flex items-center justify-center transition-all shadow-lg ${expandedParts[part.id] ? 'bg-primary border-primary text-white' : 'bg-white/5 border-white/10 text-white hover:bg-white/10 backdrop-blur-xl'}`}
                                                                 >
-                                                                    {expandedParts[part.id] ? <ChevronUpIcon size={14} /> : <ChevronDownIcon size={14} />}
+                                                                    {expandedParts[part.id] ? <ChevronUpIcon size={16} /> : <LayersIcon size={16} />}
+                                                                </button>
+                                                            )}
+
+                                                            {/* Admin Delete */}
+                                                            {isAdmin && (
+                                                                <button
+                                                                    onClick={(e) => {
+                                                                        e.stopPropagation();
+                                                                        handleDeleteClick(part);
+                                                                    }}
+                                                                    className="w-8 h-8 rounded-lg bg-error/10 hover:bg-error border border-error/20 text-error hover:text-white flex items-center justify-center transition-all shadow-lg opacity-0 group-hover:opacity-100"
+                                                                    title={t("actionDelete")}
+                                                                >
+                                                                    <TrashIcon size={16} />
                                                                 </button>
                                                             )}
                                                         </div>
                                                     </div>
+                                                </div>
 
-                                                    <div className="flex flex-wrap gap-2 mt-auto">
-                                                        {part.location && (
-                                                            <div className="inline-flex items-center gap-1.5 px-2 py-0.5 rounded-md bg-bg-tertiary text-[10px] text-text-secondary border border-white/5">
-                                                                <span className="w-1 h-1 rounded-full bg-accent-cyan"></span>
-                                                                {part.location}
-                                                            </div>
-                                                        )}
-                                                        {part.brand && (
-                                                            <div className="inline-flex items-center gap-1.5 px-2 py-0.5 rounded-md bg-bg-tertiary text-[10px] text-text-muted border border-white/5">
-                                                                {part.brand}
-                                                            </div>
-                                                        )}
+                                                {/* Details Grid - Compact Version */}
+                                                <div className="mt-auto grid grid-cols-2 gap-x-4 gap-y-2 pointer-events-auto bg-black/40 backdrop-blur-md rounded-xl p-3 border border-white/5">
+                                                    <div className="flex flex-col">
+                                                        <span className="text-[8px] text-white/40 font-bold uppercase tracking-wider">{t("tableModelSpec") || "Model"}</span>
+                                                        <span className="text-[11px] text-white font-medium truncate" title={part.model || part.description}>
+                                                            {part.model || part.description || "-"}
+                                                        </span>
+                                                    </div>
+                                                    <div className="flex flex-col">
+                                                        <span className="text-[8px] text-white/40 font-bold uppercase tracking-wider">{t("tableBrand") || "Brand"}</span>
+                                                        <span className="text-[11px] text-white font-medium truncate">
+                                                            {part.brand || "-"}
+                                                        </span>
+                                                    </div>
+                                                    <div className="flex flex-col">
+                                                        <span className="text-[8px] text-white/40 font-bold uppercase tracking-wider">{t("tableLocation") || "Location"}</span>
+                                                        <span className="text-[11px] text-white font-medium truncate">
+                                                            {part.location || "-"}
+                                                        </span>
+                                                    </div>
+                                                    <div className="flex flex-col">
+                                                        <span className="text-[8px] text-white/40 font-bold uppercase tracking-wider">{t("tablePrice") || "Price"}</span>
+                                                        <span className="text-[11px] text-accent-orange font-bold">
+                                                            {part.pricePerUnit ? `฿${Number(part.pricePerUnit).toLocaleString()}` : "-"}
+                                                        </span>
                                                     </div>
                                                 </div>
                                             </div>
 
-                                            {/* Sub-Parts List (Expandable) */}
+                                            {/* Sub-Parts List (Expandable Overlay) */}
                                             {subPartsMap[part.id] && expandedParts[part.id] && (
-                                                <div className="px-4 py-3 border-t border-white/5 bg-black/20 space-y-2 animate-fade-in">
-                                                    <div className="flex items-center gap-2 text-[10px] font-bold text-text-muted uppercase tracking-widest mb-1">
-                                                        <LayersIcon size={10} />
-                                                        {t("labelSubParts")}
-                                                    </div>
-                                                    {subPartsMap[part.id].map(sub => (
-                                                        <div
-                                                            key={sub.id}
-                                                            className="flex items-center justify-between p-2 rounded-lg bg-bg-tertiary/50 border border-white/5 hover:border-primary/30 transition-colors cursor-pointer group/sub"
-                                                            onClick={() => openDetailsModal(sub)}
-                                                        >
-                                                            <div className="flex items-center gap-3 overflow-hidden">
-                                                                <div className="w-8 h-8 rounded bg-bg-secondary shrink-0 overflow-hidden border border-white/5">
-                                                                    {sub.imageUrl ? (
-                                                                        <img src={sub.imageUrl} alt={sub.name} className="w-full h-full object-cover" />
-                                                                    ) : (
-                                                                        <div className="w-full h-full flex items-center justify-center text-text-muted/30">
-                                                                            <BoxIcon size={12} />
-                                                                        </div>
-                                                                    )}
-                                                                </div>
-                                                                <div className="min-w-0">
-                                                                    <div className="text-xs font-bold text-text-primary truncate">{sub.name}</div>
-                                                                    <div className="text-[10px] text-text-muted truncate">{sub.description || sub.brand || "-"}</div>
-                                                                </div>
-                                                            </div>
-                                                            <div className="text-right shrink-0 ml-2">
-                                                                <div className={`text-xs font-bold ${sub.quantity <= sub.minStockThreshold ? 'text-error' : 'text-primary'}`}>
-                                                                    {sub.quantity} <span className="text-[9px] font-normal text-text-muted">{sub.unit}</span>
-                                                                </div>
-                                                            </div>
+                                                <div className="absolute inset-0 z-20 bg-bg-primary/95 backdrop-blur-lg flex flex-col p-4 animate-fade-in">
+                                                    <div className="flex items-center justify-between mb-4">
+                                                        <div className="flex items-center gap-2 text-xs font-bold text-text-muted uppercase tracking-widest">
+                                                            <LayersIcon size={14} className="text-primary" />
+                                                            {t("labelSubParts")} ({subPartsMap[part.id].length})
                                                         </div>
-                                                    ))}
+                                                        <button
+                                                            onClick={() => toggleExpand(part.id)}
+                                                            className="p-1 rounded-full bg-white/5 text-text-muted hover:text-white"
+                                                        >
+                                                            <ChevronDownIcon size={18} />
+                                                        </button>
+                                                    </div>
+                                                    <div className="flex-1 overflow-auto space-y-2 custom-scrollbar pr-1">
+                                                        {subPartsMap[part.id].map(sub => (
+                                                            <div
+                                                                key={sub.id}
+                                                                className="flex items-center justify-between p-2 rounded-lg bg-white/5 border border-white/5 hover:border-primary/30 transition-colors cursor-pointer group/sub"
+                                                                onClick={() => openDetailsModal(sub)}
+                                                            >
+                                                                <div className="flex items-center gap-3 overflow-hidden">
+                                                                    <div className="w-10 h-10 rounded-lg bg-bg-secondary shrink-0 overflow-hidden border border-white/5">
+                                                                        {sub.imageUrl ? (
+                                                                            <img src={sub.imageUrl} alt={sub.name} className="w-full h-full object-cover" />
+                                                                        ) : (
+                                                                            <div className="w-full h-full flex items-center justify-center text-text-muted/30">
+                                                                                <BoxIcon size={16} />
+                                                                            </div>
+                                                                        )}
+                                                                    </div>
+                                                                    <div className="min-w-0">
+                                                                        <div className="text-xs font-bold text-text-primary truncate">{sub.name}</div>
+                                                                        <div className="text-[10px] text-text-muted truncate">{sub.description || sub.brand || "-"}</div>
+                                                                    </div>
+                                                                </div>
+                                                                <div className="text-right shrink-0 ml-2">
+                                                                    <div className={`text-xs font-bold ${sub.quantity <= sub.minStockThreshold ? 'text-error' : 'text-primary'}`}>
+                                                                        x{sub.quantity} <span className="text-[9px] font-normal text-text-muted">{sub.unit}</span>
+                                                                    </div>
+                                                                </div>
+                                                            </div>
+                                                        ))}
+                                                    </div>
                                                 </div>
                                             )}
-
-                                            {/* Stock Status Bar */}
-                                            <div className="px-4 pb-3">
-                                                <div className="flex items-end justify-between mb-1.5">
-                                                    <span className="text-xs text-text-muted font-medium">{t("partsInStock")}</span>
-                                                    <div className="text-right">
-                                                        <span className={`text-lg font-bold ${part.quantity <= part.minStockThreshold ? 'text-error' : 'text-primary'}`}>
-                                                            {part.quantity}
-                                                        </span>
-                                                        <span className="text-xs text-text-muted ml-1">{part.unit}</span>
-                                                    </div>
-                                                </div>
-                                                {/* Progress Bar */}
-                                                <div className="h-1.5 w-full bg-bg-tertiary rounded-full overflow-hidden">
-                                                    <div
-                                                        className={`h-full rounded-full ${part.quantity <= part.minStockThreshold ? 'bg-error' : 'bg-primary'}`}
-                                                        style={{ width: `${Math.min((part.quantity / (part.minStockThreshold * 3 || 10)) * 100, 100)}%` }}
-                                                    ></div>
-                                                </div>
-                                            </div>
-
-                                            {/* Action Buttons (Require Login) */}
-                                            <div className="grid grid-cols-2 divide-x divide-white/5 border-t border-white/5">
-                                                <button
-                                                    onClick={() => openStockModal(part, "withdraw")}
-                                                    className="py-3 flex items-center justify-center gap-2 hover:bg-error/10 text-text-secondary hover:text-error transition-colors text-sm font-medium"
-                                                    title={t("partsWithdraw")}
-                                                >
-                                                    <ArrowDownIcon size={16} />
-                                                    {t("partsWithdraw")}
-                                                </button>
-                                                <button
-                                                    onClick={() => openStockModal(part, "restock")}
-                                                    className="py-3 flex items-center justify-center gap-2 hover:bg-success/10 text-text-secondary hover:text-success transition-colors text-sm font-medium"
-                                                    title={t("partsReceive")}
-                                                >
-                                                    <ArrowUpIcon size={16} />
-                                                    {t("partsReceive")}
-                                                </button>
-                                            </div>
                                         </div>
                                     ))}
                                 </div>

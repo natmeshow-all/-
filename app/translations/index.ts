@@ -159,6 +159,8 @@ export interface TranslationKeys {
     tableNotes: string;
     tableManagement: string;
     tableTitleParts: string;
+    tableSupplier: string;
+    tablePrice: string;
 
     // Add Part Modal
     addPartTitle: string;
@@ -176,6 +178,8 @@ export interface TranslationKeys {
     addPartChooseFile: string;
     addPartNoFile: string;
     addPartImageHint: string;
+    labelCustomCategory: string;
+    placeholderCustomCategory: string;
     labelParentPart: string;
     labelSubParts: string;
     labelNoSubParts: string;
@@ -863,6 +867,8 @@ const th: TranslationKeys = {
     tableNotes: "หมายเหตุ",
     tableManagement: "การจัดการ",
     tableTitleParts: "รายการอะไหล่เครื่องจักร",
+    tableSupplier: "ผู้จัดจำหน่าย",
+    tablePrice: "ราคาต่อหน่วย",
 
     // Add Part Modal
     addPartTitle: "เพิ่มชื่ออะไหล่เครื่องจักร",
@@ -881,6 +887,8 @@ const th: TranslationKeys = {
     addPartNoFile: "ยังไม่ได้เลือกไฟล์",
     addPartImageHint: "รองรับไฟล์ JPG, PNG, GIF (ไม่เกิน 5MB)",
     labelParentPart: "อะไหล่หลัก (ถ้ามี)",
+    labelCustomCategory: "หมวดหมู่เพิ่มเติม (Custom Category)",
+    placeholderCustomCategory: "ระบุหมวดหมู่ เช่น สายไฟ, ท่อลม...",
     labelSubParts: "อะไหล่ย่อยภายใต้ชิ้นนี้",
     labelNoSubParts: "ไม่มีอะไหล่าย่อย",
     addPartCategory: "หมวดหมู่",
@@ -1501,6 +1509,8 @@ const en: TranslationKeys = {
     maintenanceTitlePartAndOverhaul: "Record Part Change & Overhaul",
     actionSaveChanges: "Save Changes",
     labelParentPart: "Parent Part (Optional)",
+    labelCustomCategory: "Custom Category",
+    placeholderCustomCategory: "e.g., Electrical, Pneumatic...",
     labelSubParts: "Sub-Parts in this assembly",
     labelNoSubParts: "No sub-parts",
     labelOther: "Others (Custom Name)",
@@ -1564,7 +1574,9 @@ const en: TranslationKeys = {
     tableLocation: "Zone",
     tableNotes: "Notes",
     tableManagement: "Management",
-    tableTitleParts: "Machine Parts",
+    tableTitleParts: "Parts List",
+    tableSupplier: "Supplier",
+    tablePrice: "Price per Unit",
 
     // Add Part Modal
     addPartTitle: "Add Machine Part",
