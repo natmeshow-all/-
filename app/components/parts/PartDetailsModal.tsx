@@ -5,7 +5,7 @@ import Modal from "../ui/Modal";
 import { SparePart } from "../../types";
 import { useLanguage } from "../../contexts/LanguageContext";
 import { useAuth } from "../../contexts/AuthContext";
-import { EditIcon, TrashIcon, BoxIcon, WrenchIcon, XIcon } from "../ui/Icons";
+import { EditIcon, TrashIcon, BoxIcon, WrenchIcon, XIcon, LayersIcon, ChevronRightIcon } from "../ui/Icons";
 
 interface PartDetailsModalProps {
     isOpen: boolean;
@@ -14,6 +14,8 @@ interface PartDetailsModalProps {
     onEdit: (part: SparePart) => void;
     onDelete: (part: SparePart) => void;
     onRepair: (part: SparePart) => void;
+    subParts?: SparePart[];
+    onSelectPart?: (part: SparePart) => void; // To navigate to sub-part details
 }
 
 export default function PartDetailsModal({
@@ -22,7 +24,9 @@ export default function PartDetailsModal({
     part,
     onEdit,
     onDelete,
-    onRepair
+    onRepair,
+    subParts = [],
+    onSelectPart
 }: PartDetailsModalProps) {
     const { t } = useLanguage();
     const { checkAuth, isAdmin } = useAuth();
@@ -141,6 +145,55 @@ export default function PartDetailsModal({
                             </div>
                         </div>
                     </div>
+
+                    {/* Sub-Parts Section */}
+                    {subParts.length > 0 && (
+                        <div className="space-y-3">
+                            <div className="flex items-center justify-between">
+                                <h3 className="text-sm font-bold text-text-primary flex items-center gap-2">
+                                    <LayersIcon size={16} className="text-primary" />
+                                    {t("labelSubParts")}
+                                    <span className="px-2 py-0.5 rounded-full bg-primary/10 text-primary text-xs">
+                                        {subParts.length}
+                                    </span>
+                                </h3>
+                            </div>
+                            <div className="grid grid-cols-1 gap-2">
+                                {subParts.map(sub => (
+                                    <div
+                                        key={sub.id}
+                                        className="flex items-center justify-between p-3 rounded-xl bg-bg-tertiary/30 border border-white/5 hover:border-primary/50 transition-all cursor-pointer group"
+                                        onClick={() => onSelectPart?.(sub)}
+                                    >
+                                        <div className="flex items-center gap-3">
+                                            <div className="w-10 h-10 rounded-lg bg-bg-secondary shrink-0 overflow-hidden border border-white/5">
+                                                {sub.imageUrl ? (
+                                                    <img src={sub.imageUrl} alt={sub.name} className="w-full h-full object-cover" />
+                                                ) : (
+                                                    <div className="w-full h-full flex items-center justify-center text-text-muted/30">
+                                                        <BoxIcon size={18} />
+                                                    </div>
+                                                )}
+                                            </div>
+                                            <div>
+                                                <div className="text-sm font-bold text-text-primary group-hover:text-primary transition-colors">{sub.name}</div>
+                                                <div className="text-xs text-text-muted">{sub.description || sub.brand || "-"}</div>
+                                            </div>
+                                        </div>
+                                        <div className="flex items-center gap-3">
+                                            <div className="text-right">
+                                                <div className={`text-sm font-bold ${sub.quantity <= sub.minStockThreshold ? 'text-error' : 'text-primary'}`}>
+                                                    {sub.quantity}
+                                                </div>
+                                                <div className="text-[10px] text-text-muted">{sub.unit}</div>
+                                            </div>
+                                            <ChevronRightIcon size={16} className="text-text-muted group-hover:text-primary transition-all group-hover:translate-x-0.5" />
+                                        </div>
+                                    </div>
+                                ))}
+                            </div>
+                        </div>
+                    )}
 
                     {/* Action Buttons */}
                     <div className="grid grid-cols-3 gap-3 pt-2">

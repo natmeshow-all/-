@@ -5,7 +5,7 @@ import Header from "../components/Header";
 import MobileNav from "../components/MobileNav";
 import { useLanguage } from "../contexts/LanguageContext";
 import { useAuth } from "../contexts/AuthContext";
-import { CalendarIcon, ClockIcon, SettingsIcon, AlertTriangleIcon, BoxIcon, FolderIcon, CheckCircleIcon, PlusIcon, EditIcon, TrashIcon } from "../components/ui/Icons";
+import { CalendarIcon, ClockIcon, SettingsIcon, AlertTriangleIcon, BoxIcon, FolderIcon, CheckCircleIcon, PlusIcon, EditIcon, TrashIcon, SearchIcon } from "../components/ui/Icons";
 import { getPMPlans, deletePMPlan, getMachines } from "../lib/firebaseService";
 import { PMPlan, Machine } from "../types";
 import PMExecutionModal from "../components/pm/PMExecutionModal";
@@ -27,6 +27,7 @@ export default function SchedulePage() {
     const [selectedMachine, setSelectedMachine] = useState<Machine | null>(null);
     const [allMachines, setAllMachines] = useState<Machine[]>([]);
     const [selectedLocation, setSelectedLocation] = useState<string>("all");
+    const [searchQuery, setSearchQuery] = useState("");
 
     const locations = [
         { id: 'all', label: t("labelAll") || 'ทั้งหมด', color: 'accent-blue' },
@@ -36,9 +37,18 @@ export default function SchedulePage() {
     ];
 
     const filteredMachines = allMachines.filter(machine => {
+        // 1. Text Search Filter
+        if (searchQuery) {
+            const query = searchQuery.toLowerCase();
+            const matchName = machine.name.toLowerCase().includes(query);
+            const matchCode = machine.code?.toLowerCase().includes(query);
+            if (!matchName && !matchCode) return false;
+        }
+
+        // 2. Location Filter
         if (selectedLocation === "all") return true;
 
-        const loc = machine.location?.toUpperCase() || "";
+        const loc = machine.location?.toUpperCase() || machine.Location?.toUpperCase() || "";
         if (selectedLocation === "UT") {
             return loc === "UT" || loc === "UTILITY";
         }
@@ -253,43 +263,62 @@ export default function SchedulePage() {
                             return (
                                 <div
                                     key={item.id}
-                                    className={`card hover-lift animate-fade-in-up border-l-4 ${isOverdue ? "border-l-accent-yellow animate-warning-pulse" :
+                                    className={`card p-3 hover-lift animate-fade-in-up border-l-4 ${isOverdue ? "border-l-accent-yellow animate-warning-pulse" :
                                         isToday ? "border-l-accent-red animate-urgent-pulse" :
                                             status.days <= 7 ? "border-l-accent-blue" :
                                                 "border-l-accent-green"
-                                        } ${priorityColor} border-y border-r transition-all duration-300`}
+                                        } ${priorityColor} transition-all duration-300`}
                                     style={{ animationDelay: `${index * 50}ms` }}
                                 >
-                                    <div className="flex items-start justify-between">
-                                        <div className="flex items-center gap-3">
-                                            <div className={`w-12 h-12 rounded-xl flex items-center justify-center ${status.bg} relative`}>
-                                                <SettingsIcon size={24} className={status.color} />
-                                                {item.completedCount && item.completedCount > 0 && (
-                                                    <span className="absolute -top-1 -right-1 w-5 h-5 bg-accent-blue text-white text-[10px] font-bold rounded-full flex items-center justify-center shadow-sm border border-bg-primary">
-                                                        {item.completedCount}
-                                                    </span>
-                                                )}
-                                            </div>
-                                            <div>
-                                                <div className="flex items-center gap-2">
-                                                    <h3 className="font-bold text-lg text-text-primary">{item.machineName}</h3>
+                                    <div className="flex items-center gap-3">
+                                        {/* Icon */}
+                                        <div className={`shrink-0 w-10 h-10 rounded-lg flex items-center justify-center ${status.bg} relative`}>
+                                            <SettingsIcon size={20} className={status.color} />
+                                            {item.completedCount && item.completedCount > 0 && (
+                                                <span className="absolute -top-1 -right-1 w-4 h-4 bg-accent-blue text-white text-[9px] font-bold rounded-full flex items-center justify-center shadow-sm border border-bg-primary">
+                                                    {item.completedCount}
+                                                </span>
+                                            )}
+                                        </div>
+
+                                        {/* Content */}
+                                        <div className="flex-1 min-w-0">
+                                            <div className="flex items-center justify-between gap-2">
+                                                <div className="flex items-center gap-2 min-w-0">
+                                                    <h3 className="font-bold text-sm sm:text-base text-text-primary truncate">{item.machineName}</h3>
                                                     {priorityBadge && (
-                                                        <span className={`text-[9px] px-1.5 py-0.5 rounded-full uppercase font-bold tracking-wider ${priorityBadge.color}`}>
+                                                        <span className={`text-[9px] px-1.5 py-0.5 rounded-full uppercase font-bold tracking-wider ${priorityBadge.color} shrink-0`}>
                                                             {priorityBadge.label}
                                                         </span>
                                                     )}
                                                 </div>
-                                                <p className="text-sm text-text-muted flex items-center gap-2">
-                                                    {item.taskName}
-                                                    {item.checklistItems && item.checklistItems.length > 0 && (
-                                                        <span className="text-xs bg-bg-tertiary px-1.5 rounded text-text-muted border border-white/5">
+                                                <span className={`badge ${status.bg} ${status.color} border ${status.border} shadow-sm px-2 py-0.5 text-[10px] font-bold uppercase shrink-0`}>
+                                                    {status.label}
+                                                </span>
+                                            </div>
+
+                                            <div className="flex flex-wrap items-center gap-x-2 gap-y-1 mt-0.5 text-xs text-text-muted">
+                                                <span className="truncate max-w-[200px]">{item.taskName}</span>
+                                                <span className="w-1 h-1 rounded-full bg-white/20 shrink-0"></span>
+                                                <div className="flex items-center gap-1">
+                                                    <CalendarIcon size={10} />
+                                                    <span className={status.days === 0 ? "text-accent-red font-bold" : status.days < 0 ? "text-accent-yellow font-bold" : ""}>
+                                                        {item.nextDueDate.toLocaleDateString(language === 'th' ? 'th-TH' : 'en-US', { day: 'numeric', month: 'short', year: 'numeric' })}
+                                                    </span>
+                                                </div>
+                                                {item.checklistItems && item.checklistItems.length > 0 && (
+                                                    <>
+                                                        <span className="w-1 h-1 rounded-full bg-white/20 shrink-0"></span>
+                                                        <span className="text-[10px] bg-bg-tertiary px-1.5 rounded border border-white/5">
                                                             {item.checklistItems.length} items
                                                         </span>
-                                                    )}
-                                                </p>
+                                                    </>
+                                                )}
                                             </div>
                                         </div>
-                                        <div className="flex items-center gap-2">
+
+                                        {/* Actions */}
+                                        <div className="flex items-center gap-2 shrink-0 pl-2 border-l border-white/5">
                                             <div className="flex items-center gap-1">
                                                 <button
                                                     onClick={(e) => {
@@ -314,44 +343,17 @@ export default function SchedulePage() {
                                                     </button>
                                                 )}
                                             </div>
-                                            <span className={`badge ${status.bg} ${status.color} border ${status.border} shadow-sm px-2.5 py-1 text-[10px] font-bold uppercase`}>
-                                                {status.label}
-                                            </span>
-                                        </div>
-                                    </div>
 
-                                    <div className="flex items-center justify-between mt-4 pt-4 border-t border-white/5">
-                                        <div className="flex flex-wrap gap-4 text-xs">
-                                            <div className="flex items-center gap-2 text-text-muted">
-                                                <CalendarIcon size={14} />
-                                                <span>{t("labelDue", { date: item.nextDueDate.toLocaleDateString(language === 'th' ? 'th-TH' : 'en-US', { day: 'numeric', month: 'short', year: 'numeric' }) })}</span>
-                                            </div>
-                                            {item.scheduleType === 'weekly' ? (
-                                                <div className="flex items-center gap-2 text-text-muted">
-                                                    <span>{t("labelEveryDay", { day: [t("calendarSun"), t("calendarMon"), t("calendarTue"), t("calendarWed"), t("calendarThu"), t("calendarFri"), t("calendarSat")][item.weeklyDay || 0] })}</span>
-                                                </div>
-                                            ) : (
-                                                <div className="flex items-center gap-2 text-text-muted">
-                                                    <ClockIcon size={14} />
-                                                    <span className={status.days === 0 ? "text-accent-red font-bold" : status.days < 0 ? "text-accent-yellow font-bold" : ""}>
-                                                        {status.days < 0 ? t("labelOverdueBy", { days: Math.abs(status.days) }) :
-                                                            status.days === 0 ? t("labelToday") :
-                                                                t("labelInDays", { days: status.days })}
-                                                    </span>
-                                                </div>
-                                            )}
-                                        </div>
-
-                                        <div className="flex items-center gap-2">
                                             <button
                                                 onClick={() => handleExecuteClick(item)}
-                                                className={`flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-bold transition-all shadow-md active:scale-95 ${status.days <= 0
+                                                className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-bold transition-all shadow-md active:scale-95 ${status.days <= 0
                                                     ? "bg-accent-blue text-white hover:bg-accent-blue/90"
                                                     : "bg-bg-tertiary text-text-primary hover:bg-white/10"
                                                     }`}
                                             >
-                                                <CheckCircleIcon size={16} />
-                                                <span>{t("actionCloseWork")}</span>
+                                                <CheckCircleIcon size={14} />
+                                                <span className="hidden sm:inline">{t("actionCloseWork")}</span>
+                                                <span className="sm:hidden">{t("actionClose")}</span>
                                             </button>
                                         </div>
                                     </div>
@@ -383,7 +385,23 @@ export default function SchedulePage() {
                 title={t("modalSelectMachinePM")}
             >
                 {/* Location Filter */}
-                <div className="flex flex-wrap gap-2 mb-6 px-1">
+                <div className="px-1 mb-4">
+                    <div className="relative">
+                        <input
+                            type="text"
+                            placeholder={t("placeholderSearchMachine")}
+                            className="input-field w-full pl-10"
+                            value={searchQuery}
+                            onChange={(e) => setSearchQuery(e.target.value)}
+                            autoFocus
+                        />
+                        <div className="absolute left-3 top-1/2 -translate-y-1/2 text-text-muted">
+                            <SearchIcon size={18} />
+                        </div>
+                    </div>
+                </div>
+
+                <div className="flex flex-wrap gap-2 mb-4 px-1">
                     {locations.map(loc => (
                         <button
                             key={loc.id}
@@ -396,7 +414,7 @@ export default function SchedulePage() {
                             {loc.label}
                             <span className={`px-1.5 py-0.5 rounded text-[10px] ${selectedLocation === loc.id ? `bg-${loc.color} text-bg-primary` : 'bg-white/10 text-white/40'}`}>
                                 {loc.id === 'all' ? allMachines.length : allMachines.filter(m => {
-                                    const machineLoc = m.location?.toUpperCase() || "";
+                                    const machineLoc = m.location?.toUpperCase() || m.Location?.toUpperCase() || "";
                                     if (loc.id === 'UT') return machineLoc === 'UT' || machineLoc === 'UTILITY';
                                     return machineLoc === loc.id;
                                 }).length}
@@ -413,6 +431,7 @@ export default function SchedulePage() {
                                 onClick={() => {
                                     setSelectedMachine(machine);
                                     setMachineSelectOpen(false);
+                                    setSearchQuery(""); // Clear search
                                     setConfigModalOpen(true);
                                 }}
                                 className="w-full flex items-center gap-4 p-4 rounded-xl bg-bg-tertiary border border-white/5 hover:border-accent-blue/50 hover:bg-accent-blue/5 transition-all group text-left"
@@ -422,7 +441,10 @@ export default function SchedulePage() {
                                 </div>
                                 <div className="flex-1">
                                     <h3 className="font-bold text-text-primary group-hover:text-accent-blue transition-colors">{machine.name}</h3>
-                                    <p className="text-xs text-text-muted">{machine.Location} • {machine.location || '-'}</p>
+                                    <p className="text-xs text-text-muted">
+                                        {machine.code && <span className="font-mono text-accent-cyan mr-1">{machine.code} •</span>}
+                                        {machine.Location} • {machine.location || '-'}
+                                    </p>
                                 </div>
                                 <PlusIcon size={18} className="text-text-muted group-hover:text-accent-blue" />
                             </button>

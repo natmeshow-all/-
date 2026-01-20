@@ -14,6 +14,7 @@ interface ModalProps {
     size?: "sm" | "md" | "lg" | "xl" | "2xl";
     hideHeader?: boolean;
     noPadding?: boolean;
+    zIndex?: number;
 }
 
 const sizeClasses = {
@@ -34,6 +35,7 @@ export default function Modal({
     size = "lg",
     hideHeader = false,
     noPadding = false,
+    zIndex,
 }: ModalProps) {
     const modalRef = useRef<HTMLDivElement>(null);
     const [isVisible, setIsVisible] = useState(false);
@@ -105,10 +107,11 @@ export default function Modal({
     return (
         <div
             className={`
-                modal-overlay fixed inset-0 z-50 flex items-center justify-center p-4
+                modal-overlay fixed inset-0 flex items-center justify-center p-4
                 transition-all duration-300 ease-out
                 ${isVisible ? "bg-black/60 backdrop-blur-sm" : "bg-black/0 backdrop-blur-none"}
             `}
+            style={{ zIndex: zIndex || 50 }}
             onClick={handleOverlayClick}
             role="dialog"
             aria-modal="true"

@@ -95,6 +95,13 @@ export interface TranslationKeys {
     actionDelete: string;
     actionRepair: string;
     actionSearch: string;
+    placeholderSearchMachine: string;
+    labelOther: string;
+    placeholderOtherPartName: string;
+    labelUsagePeriod: string;
+    unitYear: string;
+    unitMonth: string;
+    unitDay: string;
     actionSaveChanges: string;
     placeholderMachineName: string;
 
@@ -169,6 +176,9 @@ export interface TranslationKeys {
     addPartChooseFile: string;
     addPartNoFile: string;
     addPartImageHint: string;
+    labelParentPart: string;
+    labelSubParts: string;
+    labelNoSubParts: string;
     addPartCategory: string;
     addPartSelectCategory: string;
     addPartSelectMachine: string;
@@ -477,6 +487,8 @@ export interface TranslationKeys {
     adminTabAnalytics: string;
     adminTabTechnicians: string;
     adminTabApprovals: string;
+    adminTabAuditLog: string;
+    adminTabSettings: string;
     adminTechniciansTitle: string;
     adminTechniciansLoading: string;
     adminTechnicalQuality: string;
@@ -547,6 +559,10 @@ export interface TranslationKeys {
     userPendingApprovalDesc: string;
     msgWaitApproval: string;
     altUser: string;
+    labelPartReplacement: string;
+    maintenanceTitlePartChange: string;
+    maintenanceTitleOverhaul: string;
+    maintenanceTitlePartAndOverhaul: string;
     msgRequiredInfo: string;
     msgSelectMachine: string;
     msgSpecifyDetails: string;
@@ -779,7 +795,18 @@ const th: TranslationKeys = {
     actionDelete: "ลบ",
     actionRepair: "ซ่อมบำรุง/Overhaul",
     actionSearch: "ค้นหา",
+    placeholderSearchMachine: "ค้นหาเครื่องจักร (ชื่อ/รหัส)",
+    labelPartReplacement: "เปลี่ยนอะไหล่",
+    maintenanceTitlePartChange: "บันทึกเปลี่ยนอะไหล่",
+    maintenanceTitleOverhaul: "บันทึก Overhaul",
+    maintenanceTitlePartAndOverhaul: "บันทึกเปลี่ยนอะไหล่และ Overhaul",
     actionSaveChanges: "บันทึกการเปลี่ยนแปลง",
+    labelOther: "อื่นๆ (ระบุชื่อเอง)",
+    placeholderOtherPartName: "กรุณาระบุชื่ออะไหล่...",
+    labelUsagePeriod: "อายุการใช้งาน",
+    unitYear: "ปี",
+    unitMonth: "เดือน",
+    unitDay: "วัน",
     placeholderMachineName: "-- เลือกเครื่องจักร --",
 
     // Filters
@@ -850,9 +877,12 @@ const th: TranslationKeys = {
     addPartUnit: "หน่วยนับ",
     addPartLocation: "สถานที่ (Location)",
     addPartImage: "รูปภาพอะไหล่",
-    addPartChooseFile: "Choose File",
-    addPartNoFile: "No file chosen",
-    addPartImageHint: "เลือกไฟล์รูปภาพ (JPG, PNG, GIF) ขนาดไม่เกิน 5MB",
+    addPartChooseFile: "เลือกไฟล์/ถ่ายรูป",
+    addPartNoFile: "ยังไม่ได้เลือกไฟล์",
+    addPartImageHint: "รองรับไฟล์ JPG, PNG, GIF (ไม่เกิน 5MB)",
+    labelParentPart: "อะไหล่หลัก (ถ้ามี)",
+    labelSubParts: "อะไหล่ย่อยภายใต้ชิ้นนี้",
+    labelNoSubParts: "ไม่มีอะไหล่าย่อย",
     addPartCategory: "หมวดหมู่",
     addPartSelectCategory: "เลือกหมวดหมู่",
     addPartSelectMachine: "เลือกเครื่องจักร",
@@ -1158,6 +1188,8 @@ const th: TranslationKeys = {
     adminTabAnalytics: "การวิเคราะห์",
     adminTabTechnicians: "ช่างเทคนิค",
     adminTabApprovals: "การอนุมัติผู้ใช้",
+    adminTabAuditLog: "บันทึกกิจกรรม",
+    adminTabSettings: "ตั้งค่าระบบ",
     adminTechniciansTitle: "ช่างเทคนิคของเรา",
     adminTechniciansLoading: "กำลังโหลดข้อมูลช่างเทคนิค...",
     adminTechnicalQuality: "คะแนนประสิทธิภาพ",
@@ -1462,7 +1494,21 @@ const en: TranslationKeys = {
     actionDelete: "Delete",
     actionRepair: "Maintenance/Overhaul",
     actionSearch: "Search",
+    placeholderSearchMachine: "Search Machine (Name/Code)",
+    labelPartReplacement: "Part Replacement",
+    maintenanceTitlePartChange: "Record Part Change",
+    maintenanceTitleOverhaul: "Record Overhaul",
+    maintenanceTitlePartAndOverhaul: "Record Part Change & Overhaul",
     actionSaveChanges: "Save Changes",
+    labelParentPart: "Parent Part (Optional)",
+    labelSubParts: "Sub-Parts in this assembly",
+    labelNoSubParts: "No sub-parts",
+    labelOther: "Others (Custom Name)",
+    placeholderOtherPartName: "Enter part name...",
+    labelUsagePeriod: "Usage Period",
+    unitYear: "Year(s)",
+    unitMonth: "Month(s)",
+    unitDay: "Day(s)",
     placeholderMachineName: "-- Select Machine --",
 
     // Filters
@@ -1841,6 +1887,8 @@ const en: TranslationKeys = {
     adminTabAnalytics: "Analytics",
     adminTabTechnicians: "Technicians",
     adminTabApprovals: "User Approvals",
+    adminTabAuditLog: "Audit Log",
+    adminTabSettings: "Settings",
     adminTechniciansTitle: "Our Technicians",
     adminTechniciansLoading: "Loading technician data...",
     adminTechnicalQuality: "Performance Score",

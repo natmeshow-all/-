@@ -1,20 +1,28 @@
-import React, { useState, useRef } from "react";
-import { BoxIcon, XIcon, UploadIcon, SaveIcon } from "../ui/Icons";
+import React, { useState, useRef, useEffect } from "react";
+import {
+    BoxIcon,
+    XIcon,
+    UploadIcon,
+    SaveIcon,
+    LayersIcon
+} from "../ui/Icons";
 import { useLanguage } from "../../contexts/LanguageContext";
 import { useToast } from "../../contexts/ToastContext";
-import { addSparePart } from "../../lib/firebaseService";
+import { addSparePart, getSpareParts } from "../../lib/firebaseService";
 import { SparePart } from "../../types";
 
 interface AddSparePartModalProps {
     isOpen: boolean;
     onClose: () => void;
     onSuccess: () => void;
+    initialParentId?: string; // Optional: prepopulate if adding sub-part from a parent
 }
 
-export default function AddSparePartModal({ isOpen, onClose, onSuccess }: AddSparePartModalProps) {
+export default function AddSparePartModal({ isOpen, onClose, onSuccess, initialParentId }: AddSparePartModalProps) {
     const { t } = useLanguage();
     const { success, error: showError } = useToast();
     const [loading, setLoading] = useState(false);
+    const [existingParts, setExistingParts] = useState<SparePart[]>([]);
     const fileInputRef = useRef<HTMLInputElement>(null);
 
     const [formData, setFormData] = useState({
@@ -27,10 +35,32 @@ export default function AddSparePartModal({ isOpen, onClose, onSuccess }: AddSpa
         supplier: "",
         pricePerUnit: "",
         description: "",
+        parentId: initialParentId || "",
     });
 
     const [imageFile, setImageFile] = useState<File | null>(null);
     const [previewUrl, setPreviewUrl] = useState<string | null>(null);
+
+    // Fetch existing parts for parent selection
+    React.useEffect(() => {
+        if (isOpen) {
+            const fetchParts = async () => {
+                try {
+                    const data = await getSpareParts();
+                    // Filter out consumables/fluids if desired, but for now allow any part to be a parent
+                    setExistingParts(data);
+                } catch (err) {
+                    console.error("Error fetching parts for parent selection:", err);
+                }
+            };
+            fetchParts();
+
+            // Sync initialParentId if provided
+            if (initialParentId) {
+                setFormData(prev => ({ ...prev, parentId: initialParentId }));
+            }
+        }
+    }, [isOpen, initialParentId]);
 
     if (!isOpen) return null;
 
@@ -63,6 +93,7 @@ export default function AddSparePartModal({ isOpen, onClose, onSuccess }: AddSpa
                 supplier: formData.supplier,
                 pricePerUnit: formData.pricePerUnit ? Number(formData.pricePerUnit) : undefined,
                 description: formData.description,
+                parentId: formData.parentId || undefined,
             }, imageFile || undefined);
 
             onSuccess();
@@ -79,6 +110,7 @@ export default function AddSparePartModal({ isOpen, onClose, onSuccess }: AddSpa
                 supplier: "",
                 pricePerUnit: "",
                 description: "",
+                parentId: "",
             });
             setImageFile(null);
             setPreviewUrl(null);
@@ -183,6 +215,54 @@ export default function AddSparePartModal({ isOpen, onClose, onSuccess }: AddSpa
                                 placeholder={t("placeholderLocation")}
                                 className="input w-full bg-bg-tertiary border-white/10 focus:border-primary/50"
                             />
+                        </div>
+
+                        {/* Parent Part Selection */}
+                        <div className="sm:col-span-2">
+                            <label className="block text-sm font-medium text-text-secondary mb-1.5 flex items-center gap-2">
+                                <LayersIcon size={14} className="text-primary" />
+                                {t("labelParentPart")}
+                            </label>
+                            <select
+                                name="parentId"
+                                value={formData.parentId}
+                                onChange={handleChange}
+                                className="input w-full bg-bg-tertiary border-white/10 focus:border-primary/50"
+                            >
+                                <option value="">-- {t("filterAll")} / Main Part --</option>
+                                {existingParts
+                                    .filter(p => !p.parentId) // Only show main parts as potential parents to avoid deep nesting for now
+                                    .map(p => (
+                                        <option key={p.id} value={p.id}>
+                                            {p.name} {p.brand ? `(${p.brand})` : ''}
+                                        </option>
+                                    ))
+                                }
+                            </select>
+                        </div>
+
+                        {/* Parent Part Selection */}
+                        <div className="sm:col-span-2">
+                            <label className="block text-sm font-medium text-text-secondary mb-1.5 flex items-center gap-2">
+                                <LayersIcon size={14} />
+                                {t("labelParentPart")}
+                            </label>
+                            <select
+                                name="parentId"
+                                value={formData.parentId}
+                                onChange={handleChange}
+                                className="input w-full bg-bg-tertiary border-white/10 focus:border-primary/50"
+                            >
+                                <option value="">-- {t("filterAll")} / Main Part --</option>
+                                {existingParts
+                                    .filter(p => p.category === 'motor' || p.category === 'gear' || p.category === 'pneumatic' || p.category === 'other') // Generally assemblies
+                                    .map(p => (
+                                        <option key={p.id} value={p.id}>
+                                            {p.name} {p.brand ? `(${p.brand})` : ''}
+                                        </option>
+                                    ))
+                                }
+                            </select>
                         </div>
 
                         {/* Stock Info */}

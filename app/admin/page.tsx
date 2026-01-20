@@ -14,17 +14,21 @@ import {
     UserCircleIcon,
     CheckIcon,
     ActivityIcon,
-    StarIcon
+    StarIcon,
+    SettingsIcon,
+    FileTextIcon
 } from "../components/ui/Icons";
 import { getAdminStats } from "../lib/firebaseService";
 import { AdminStats } from "../types";
 
-// Tab Components (to be created)
+// Tab Components
 import AnalyticsTab from "../components/admin/AnalyticsTab";
 import TechniciansTab from "../components/admin/TechniciansTab";
 import UserApprovalTab from "../components/admin/UserApprovalTab";
+import AuditLogTab from "../components/admin/AuditLogTab";
+import SystemSettingsTab from "../components/admin/SystemSettingsTab";
 
-type AdminTab = "analytics" | "technicians" | "approvals";
+type AdminTab = "analytics" | "technicians" | "approvals" | "auditlog" | "settings";
 
 export default function AdminPage() {
     const { t } = useLanguage();
@@ -143,6 +147,18 @@ export default function AdminPage() {
                         icon={<CheckIcon size={18} />}
                         label={t("adminTabApprovals")}
                     />
+                    <TabButton
+                        active={activeTab === "auditlog"}
+                        onClick={() => setActiveTab("auditlog")}
+                        icon={<FileTextIcon size={18} />}
+                        label={t("adminTabAuditLog")}
+                    />
+                    <TabButton
+                        active={activeTab === "settings"}
+                        onClick={() => setActiveTab("settings")}
+                        icon={<SettingsIcon size={18} />}
+                        label={t("adminTabSettings")}
+                    />
                 </div>
 
                 {/* Content Rendering */}
@@ -150,6 +166,8 @@ export default function AdminPage() {
                     {activeTab === "analytics" && <AnalyticsTab stats={stats} loading={loading} />}
                     {activeTab === "technicians" && <TechniciansTab />}
                     {activeTab === "approvals" && <UserApprovalTab />}
+                    {activeTab === "auditlog" && <AuditLogTab />}
+                    {activeTab === "settings" && <SystemSettingsTab />}
                 </div>
             </main>
 

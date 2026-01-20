@@ -33,8 +33,9 @@ export default function PMExecutionModal({ isOpen, onClose, plan, onSuccess }: P
     const [images, setImages] = useState<{ [key: string]: File | null }>({});
     const [previews, setPreviews] = useState<{ [key: string]: string | null }>({}); // Store previews as strings
 
-    // Determine if this is a monthly plan that requires 3 photos
-    const isMonthly = plan.scheduleType === 'monthly' || (plan.scheduleType === 'custom' && plan.cycleMonths && plan.cycleMonths > 0);
+    // Determine if this is a monthly plan (or any periodic plan except weekly) that requires 3 photos
+    // This ensures Custom/Yearly/Monthly all get the 3-photo treatment
+    const isMonthly = plan.scheduleType !== 'weekly';
 
     // Required photo keys for Monthly
     const requiredPhotos = isMonthly
@@ -192,9 +193,30 @@ export default function PMExecutionModal({ isOpen, onClose, plan, onSuccess }: P
     // Check if all required photos are present
     const hasRequiredPhotos = requiredPhotos.every(key => !!images[key]);
 
+    // Submit Button Footer
+    const footerContent = (
+        <button
+            onClick={handleSubmit}
+            disabled={loading || !hasRequiredPhotos}
+            className="btn-primary w-full justify-center py-3 text-base shadow-lg shadow-accent-blue/20 disabled:opacity-50 disabled:cursor-not-allowed"
+        >
+            {loading ? (
+                <div className="flex items-center gap-2">
+                    <div className="animate-spin w-4 h-4 border-2 border-white/30 border-t-white rounded-full"></div>
+                    <span>{t("msgSaving")}</span>
+                </div>
+            ) : (
+                <div className="flex items-center gap-2">
+                    <CheckCircleIcon size={18} />
+                    <span>{t("actionConfirmNextCycle")}</span>
+                </div>
+            )}
+        </button>
+    );
+
     return (
-        <Modal isOpen={isOpen} onClose={onClose} title={t("pmExecutionTitle")}>
-            <div className="space-y-5 max-h-[75vh] overflow-y-auto custom-scrollbar pr-1">
+        <Modal isOpen={isOpen} onClose={onClose} title={t("pmExecutionTitle")} footer={footerContent}>
+            <div className="space-y-5">
                 {/* Header Information */}
                 <div className="p-4 bg-bg-tertiary rounded-xl border border-white/5 space-y-3">
                     <div className="flex items-center gap-3">
@@ -220,7 +242,7 @@ export default function PMExecutionModal({ isOpen, onClose, plan, onSuccess }: P
                     </div>
                 </div>
 
-                <form onSubmit={handleSubmit} className="space-y-5">
+                <form id="pm-execution-form" onSubmit={handleSubmit} className="space-y-5">
                     {/* Technician Name */}
                     <div className="space-y-2">
                         <label className="text-xs font-semibold text-accent-orange uppercase tracking-wider flex items-center gap-2">
@@ -345,30 +367,9 @@ export default function PMExecutionModal({ isOpen, onClose, plan, onSuccess }: P
                             onChange={(e) => setAdditionalNotes(e.target.value)}
                         />
                     </div>
-
-                    {/* Submit Button */}
-                    <div className="pt-4 border-t border-white/10 sticky bottom-0 bg-[#1E1E1E] p-4 -mx-4 -mb-4 mt-auto z-10">
-                        <button
-                            type="submit"
-                            disabled={loading || !hasRequiredPhotos}
-                            className="btn-primary w-full justify-center py-3 text-base shadow-lg shadow-accent-blue/20 disabled:opacity-50 disabled:cursor-not-allowed"
-                        >
-                            {loading ? (
-                                <div className="flex items-center gap-2">
-                                    <div className="animate-spin w-4 h-4 border-2 border-white/30 border-t-white rounded-full"></div>
-                                    <span>{t("msgSaving")}</span>
-                                </div>
-                            ) : (
-                                <div className="flex items-center gap-2">
-                                    <CheckCircleIcon size={18} />
-                                    <span>{t("actionConfirmNextCycle")}</span>
-                                </div>
-                            )}
-                        </button>
-                    </div>
                 </form>
-            </div >
-        </Modal >
+            </div>
+        </Modal>
     );
 
 }

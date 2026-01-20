@@ -109,6 +109,16 @@
         "data_translations": {
             ".read": true,
             ".write": "auth != null"
+        },
+        // ===== Audit Logs (Admin Only) =====
+        "audit_logs": {
+            ".read": "auth != null && root.child('users').child(auth.uid).child('role').val() == 'admin'",
+            ".write": "auth != null && (root.child('users').child(auth.uid).child('role').val() == 'admin' || root.child('users').child(auth.uid).child('role').val() == 'supervisor')"
+        },
+        // ===== System Settings (Public read for maintenance mode check) =====
+        "system_settings": {
+            ".read": true,
+            ".write": "auth != null && root.child('users').child(auth.uid).child('role').val() == 'admin'"
         }
     }
 }

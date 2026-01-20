@@ -14,7 +14,9 @@ import {
     createPendingUser,
     isPendingUser,
     createInitialAdmin,
-    logAppAccess
+    logAppAccess,
+    getSystemSettings,
+    autoRegisterUser
 } from "../lib/firebaseService";
 
 interface AuthContextType {
@@ -92,7 +94,6 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
                     );
 
                     if (isNewAdmin) {
-                        // Fetch the newly created admin profile
                         const profile = await getUserProfile(firebaseUser.uid);
                         setUserProfile(profile);
                         setIsPending(false);
@@ -106,25 +107,54 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
                     if (profile && profile.isApproved && profile.isActive) {
                         setUserProfile(profile);
                         setIsPending(false);
-                        // Log usage
                         logAppAccess();
                     } else {
+                        // Profile missing or inactive
                         setUserProfile(null);
 
-                        // 3. Check if already pending
+                        // 3. pending check
                         const pending = await isPendingUser(firebaseUser.uid);
 
-                        if (!pending && !profile) {
-                            // 4. Create pending user request
-                            await createPendingUser(
-                                firebaseUser.uid,
-                                firebaseUser.email || "",
-                                firebaseUser.displayName || "Unknown",
-                                firebaseUser.photoURL || undefined
-                            );
+                        if (pending) {
                             setIsPending(true);
+                        } else if (!profile) {
+                            // 4. NEW USER: Check System Settings
+                            const settings = await getSystemSettings();
+
+                            if (settings && !settings.allowNewRegistrations) {
+                                await firebaseSignOut(auth);
+                                alert("Registrations are disabled.");
+                                return;
+                            }
+
+                            if (settings && !settings.requireApproval) {
+                                // Auto-register
+                                await autoRegisterUser(
+                                    firebaseUser.uid,
+                                    firebaseUser.email || "",
+                                    firebaseUser.displayName || "User",
+                                    firebaseUser.photoURL || undefined
+                                );
+                                // Login immediately
+                                const newProfile = await getUserProfile(firebaseUser.uid);
+                                if (newProfile) {
+                                    setUserProfile(newProfile);
+                                    setIsPending(false);
+                                    logAppAccess();
+                                }
+                            } else {
+                                // Default: Create Pending
+                                await createPendingUser(
+                                    firebaseUser.uid,
+                                    firebaseUser.email || "",
+                                    firebaseUser.displayName || "Unknown",
+                                    firebaseUser.photoURL || undefined
+                                );
+                                setIsPending(true);
+                            }
                         } else {
-                            setIsPending(pending);
+                            // Profile exists but inactive, and not pending
+                            setIsPending(false);
                         }
                     }
                 } catch (error) {

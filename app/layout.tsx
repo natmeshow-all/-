@@ -4,6 +4,7 @@ import "./globals.css";
 import { LanguageProvider } from "./contexts/LanguageContext";
 import { AuthProvider } from "./contexts/AuthContext";
 import { ToastProvider } from "./contexts/ToastContext";
+import MaintenanceWrapper from "./components/MaintenanceWrapper";
 
 const promptFont = Prompt({
   weight: ["300", "400", "500", "600", "700"],
@@ -45,7 +46,9 @@ export default function RootLayout({
         <LanguageProvider>
           <ToastProvider>
             <AuthProvider>
-              {children}
+              <MaintenanceWrapper>
+                {children}
+              </MaintenanceWrapper>
             </AuthProvider>
           </ToastProvider>
         </LanguageProvider>

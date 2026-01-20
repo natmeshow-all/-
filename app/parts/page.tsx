@@ -13,7 +13,7 @@ import { getSpareParts, deleteSparePart } from "../lib/firebaseService";
 import { SparePart } from "../types";
 import { useAuth } from "../contexts/AuthContext";
 import { useToast } from "../contexts/ToastContext";
-import { BoxIcon, PlusIcon, SearchIcon, FilterIcon, ArrowUpIcon, ArrowDownIcon, AlertIcon, HistoryIcon, TrashIcon } from "../components/ui/Icons";
+import { BoxIcon, PlusIcon, SearchIcon, FilterIcon, ArrowUpIcon, ArrowDownIcon, AlertIcon, HistoryIcon, TrashIcon, LayersIcon, ChevronDownIcon, ChevronUpIcon } from "../components/ui/Icons";
 
 export default function PartsPage() {
     const { t } = useLanguage();
@@ -33,6 +33,7 @@ export default function PartsPage() {
     const [searchQuery, setSearchQuery] = useState("");
     const [parts, setParts] = useState<SparePart[]>([]);
     const [loading, setLoading] = useState(true);
+    const [expandedParts, setExpandedParts] = useState<Record<string, boolean>>({});
 
     const fetchParts = async () => {
         try {
@@ -111,11 +112,27 @@ export default function PartsPage() {
 
     const filteredParts = parts.filter(part =>
         part.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
-        part.category.toLowerCase().includes(searchQuery.toLowerCase())
+        (part.category && part.category.toLowerCase().includes(searchQuery.toLowerCase())) ||
+        (part.description && part.description.toLowerCase().includes(searchQuery.toLowerCase()))
     );
 
-    // Group by Category
-    const groupedParts = filteredParts.reduce((acc, part) => {
+    const toggleExpand = (id: string) => {
+        setExpandedParts(prev => ({ ...prev, [id]: !prev[id] }));
+    };
+
+    // Grouping logic for hierarchy
+    // 1. Separate Root parts and Sub-parts
+    const rootParts = filteredParts.filter(p => !p.parentId);
+    const subPartsMap = filteredParts.reduce((acc, p) => {
+        if (p.parentId) {
+            if (!acc[p.parentId]) acc[p.parentId] = [];
+            acc[p.parentId].push(p);
+        }
+        return acc;
+    }, {} as Record<string, SparePart[]>);
+
+    // 2. Group Root parts by Category (for the main view)
+    const groupedParts = rootParts.reduce((acc, part) => {
         const cat = part.category || "Other";
         if (!acc[cat]) acc[cat] = [];
         acc[cat].push(part);
@@ -258,21 +275,39 @@ export default function PartsPage() {
                                                 <div className="flex-1 min-w-0 flex flex-col justify-between">
                                                     <div className="flex justify-between items-start gap-2">
                                                         <div className="min-w-0">
-                                                            <h3
-                                                                className="font-bold text-text-primary truncate cursor-pointer hover:text-primary transition-colors"
-                                                                onClick={() => openDetailsModal(part)}
-                                                            >
-                                                                {part.name}
-                                                            </h3>
+                                                            <div className="flex items-center gap-2">
+                                                                <h3
+                                                                    className="font-bold text-text-primary truncate cursor-pointer hover:text-primary transition-colors"
+                                                                    onClick={() => openDetailsModal(part)}
+                                                                >
+                                                                    {part.name}
+                                                                </h3>
+                                                                {subPartsMap[part.id] && (
+                                                                    <div className="flex items-center gap-1 px-1.5 py-0.5 rounded bg-primary/20 text-primary text-[10px] font-bold uppercase tracking-wider">
+                                                                        <LayersIcon size={10} />
+                                                                        {subPartsMap[part.id].length}
+                                                                    </div>
+                                                                )}
+                                                            </div>
                                                             <p className="text-xs text-text-muted truncate mb-1">{part.description || t("partsNoSpec")}</p>
                                                         </div>
-                                                        <button
-                                                            onClick={() => openHistoryModal(part)}
-                                                            className="p-1.5 rounded-lg bg-bg-tertiary text-text-muted hover:text-primary transition-colors hover:bg-primary/10"
-                                                            title={t("historyItem")}
-                                                        >
-                                                            <HistoryIcon size={14} />
-                                                        </button>
+                                                        <div className="flex items-center gap-1">
+                                                            <button
+                                                                onClick={() => openHistoryModal(part)}
+                                                                className="p-1.5 rounded-lg bg-bg-tertiary text-text-muted hover:text-primary transition-colors hover:bg-primary/10"
+                                                                title={t("historyItem")}
+                                                            >
+                                                                <HistoryIcon size={14} />
+                                                            </button>
+                                                            {subPartsMap[part.id] && (
+                                                                <button
+                                                                    onClick={(e) => { e.stopPropagation(); toggleExpand(part.id); }}
+                                                                    className={`p-1.5 rounded-lg transition-all ${expandedParts[part.id] ? 'bg-primary text-white' : 'bg-bg-tertiary text-text-muted hover:bg-primary/10 hover:text-primary'}`}
+                                                                >
+                                                                    {expandedParts[part.id] ? <ChevronUpIcon size={14} /> : <ChevronDownIcon size={14} />}
+                                                                </button>
+                                                            )}
+                                                        </div>
                                                     </div>
 
                                                     <div className="flex flex-wrap gap-2 mt-auto">
@@ -282,9 +317,52 @@ export default function PartsPage() {
                                                                 {part.location}
                                                             </div>
                                                         )}
+                                                        {part.brand && (
+                                                            <div className="inline-flex items-center gap-1.5 px-2 py-0.5 rounded-md bg-bg-tertiary text-[10px] text-text-muted border border-white/5">
+                                                                {part.brand}
+                                                            </div>
+                                                        )}
                                                     </div>
                                                 </div>
                                             </div>
+
+                                            {/* Sub-Parts List (Expandable) */}
+                                            {subPartsMap[part.id] && expandedParts[part.id] && (
+                                                <div className="px-4 py-3 border-t border-white/5 bg-black/20 space-y-2 animate-fade-in">
+                                                    <div className="flex items-center gap-2 text-[10px] font-bold text-text-muted uppercase tracking-widest mb-1">
+                                                        <LayersIcon size={10} />
+                                                        {t("labelSubParts")}
+                                                    </div>
+                                                    {subPartsMap[part.id].map(sub => (
+                                                        <div
+                                                            key={sub.id}
+                                                            className="flex items-center justify-between p-2 rounded-lg bg-bg-tertiary/50 border border-white/5 hover:border-primary/30 transition-colors cursor-pointer group/sub"
+                                                            onClick={() => openDetailsModal(sub)}
+                                                        >
+                                                            <div className="flex items-center gap-3 overflow-hidden">
+                                                                <div className="w-8 h-8 rounded bg-bg-secondary shrink-0 overflow-hidden border border-white/5">
+                                                                    {sub.imageUrl ? (
+                                                                        <img src={sub.imageUrl} alt={sub.name} className="w-full h-full object-cover" />
+                                                                    ) : (
+                                                                        <div className="w-full h-full flex items-center justify-center text-text-muted/30">
+                                                                            <BoxIcon size={12} />
+                                                                        </div>
+                                                                    )}
+                                                                </div>
+                                                                <div className="min-w-0">
+                                                                    <div className="text-xs font-bold text-text-primary truncate">{sub.name}</div>
+                                                                    <div className="text-[10px] text-text-muted truncate">{sub.description || sub.brand || "-"}</div>
+                                                                </div>
+                                                            </div>
+                                                            <div className="text-right shrink-0 ml-2">
+                                                                <div className={`text-xs font-bold ${sub.quantity <= sub.minStockThreshold ? 'text-error' : 'text-primary'}`}>
+                                                                    {sub.quantity} <span className="text-[9px] font-normal text-text-muted">{sub.unit}</span>
+                                                                </div>
+                                                            </div>
+                                                        </div>
+                                                    ))}
+                                                </div>
+                                            )}
 
                                             {/* Stock Status Bar */}
                                             <div className="px-4 pb-3">
@@ -380,6 +458,8 @@ export default function PartsPage() {
                 onEdit={handleEditPart}
                 onDelete={handleDeleteClick}
                 onRepair={handleRepairPart}
+                subParts={viewPart ? subPartsMap[viewPart.id] : []}
+                onSelectPart={(p) => setViewPart(p)}
             />
 
             <ConfirmModal

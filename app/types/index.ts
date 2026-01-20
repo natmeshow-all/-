@@ -61,6 +61,8 @@ export interface Part {
     minStockThreshold: number; // Low stock alert level
     location?: string;
     category: PartCategory;
+    parentId?: string; // For sub-parts (e.g. bearing inside a motor)
+    hasSubParts?: boolean; // If this is an assembly (e.g. a motor)
     imageUrl?: string;
     notes?: string;
     createdAt: Date;
@@ -146,10 +148,13 @@ export interface MaintenanceRecord {
 
     // Part specific fields
     partId?: string;
+    partName?: string;
     isOverhaul?: boolean;
     lifespanValue?: number;
     lifespanUnit?: 'hours' | 'days' | 'months';
     serialNumber?: string;
+    previousReplacementDate?: string;
+    partLifespan?: string;
     previousChangeId?: string;
 
     // Advanced Analysis Fields
@@ -235,6 +240,7 @@ export interface AddPartFormData {
     minStockThreshold: number;
     location: string;
     category: PartCategory;
+    parentId?: string; // For hierarchical association
     imageFile?: File;
     notes: string;
 }
@@ -254,6 +260,7 @@ export interface MaintenanceRecordFormData {
 
     // Part specific
     partId?: string;
+    manualPartName: string;
     isOverhaul?: boolean;
     lifespanValue: string;
     lifespanUnit: 'hours' | 'days' | 'months' | 'years';
@@ -301,6 +308,8 @@ export interface SparePart {
     pricePerUnit?: number; // Cost tracking
     imageUrl?: string;
     lastUpdatedBy?: string;
+    parentId?: string; // For nested spare parts
+    hasSubParts?: boolean;
     createdAt: Date;
     updatedAt: Date;
 }
@@ -365,4 +374,38 @@ export interface AdminStats {
     usageHistory: { date: string; count: number }[];
     technicianCount: number;
     avgPerformance: number;
+}
+
+// ===== Audit Log Types =====
+export type AuditActionType =
+    | "login" | "logout"
+    | "pm_complete" | "pm_create" | "pm_edit" | "pm_delete"
+    | "maintenance_create" | "maintenance_edit"
+    | "user_approve" | "user_reject" | "user_role_change"
+    | "part_add" | "part_edit" | "part_delete" | "stock_change"
+    | "machine_add" | "machine_edit" | "machine_delete"
+    | "settings_change" | "data_export";
+
+export interface AuditLog {
+    id: string;
+    action: AuditActionType;
+    userId: string;
+    userName: string;
+    userRole: UserRole;
+    targetId?: string;       // ID of affected entity (PM plan, user, etc.)
+    targetName?: string;     // Name of affected entity
+    details?: string;        // Additional details or JSON data
+    ipAddress?: string;      // Client IP if available
+    userAgent?: string;      // Browser info
+    timestamp: Date;
+}
+
+// ===== System Settings Types =====
+export interface SystemSettings {
+    maintenanceMode: boolean;
+    allowNewRegistrations: boolean;
+    requireApproval: boolean;
+    dataRetentionDays: number;
+    notificationsEnabled: boolean;
+    lastBackupDate?: string;
 }

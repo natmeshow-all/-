@@ -2,7 +2,7 @@ import React, { useState, useEffect, useRef } from "react";
 import { BellIcon, BoxIcon, AlertTriangleIcon, CheckIcon } from "./Icons";
 import { useLanguage } from "../../contexts/LanguageContext";
 import { NotificationItem, requestNotificationPermission, sendBrowserNotification, checkUpcomingPM } from "../../lib/notificationService";
-import { getSpareParts, getPMPlans } from "../../lib/firebaseService";
+import { getSpareParts, getPMPlans, getSystemSettings } from "../../lib/firebaseService";
 
 export default function NotificationBell() {
     const { t } = useLanguage();
@@ -18,6 +18,18 @@ export default function NotificationBell() {
         }
 
         const checkNotifications = async () => {
+            // Check if notifications are enabled globally
+            try {
+                const settings = await getSystemSettings();
+                if (settings && !settings.notificationsEnabled) {
+                    setNotifications([]); // Clear notifications if disabled
+                    return;
+                }
+            } catch (error) {
+                console.error("Error checking system settings:", error);
+                // Continue on error (default to enabled)
+            }
+
             const newNotifications: NotificationItem[] = [];
 
             // 1. Check Low Stock

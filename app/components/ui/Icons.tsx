@@ -446,6 +446,14 @@ export const StarIcon: React.FC<IconProps> = ({ className = "", size = 24 }) => 
     </svg>
 );
 
+export const LayersIcon: React.FC<IconProps> = ({ className = "", size = 24 }) => (
+    <svg className={className} width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+        <path d="m12.83 2.18a2 2 0 0 0-1.66 0L2.6 6.08a1 1 0 0 0 0 1.83l8.58 3.91a2 2 0 0 0 1.66 0l8.58-3.9a1 1 0 0 0 0-1.83Z" />
+        <path d="m2.2 12.91 8.57 3.91a2 2 0 0 0 1.66 0l8.57-3.9" />
+        <path d="m2.2 17.91 8.57 3.91a2 2 0 0 0 1.66 0l8.57-3.9" />
+    </svg>
+);
+
 export const UsersIcon = UserIcon;
 export const ChartBarIcon = BarChartIcon;
 export const UserCircleIcon = PlusCircleIcon; // Best fallback for now

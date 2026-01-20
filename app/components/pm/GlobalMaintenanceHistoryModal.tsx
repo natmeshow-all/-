@@ -4,9 +4,11 @@ import React, { useState, useEffect } from "react";
 import Modal from "../ui/Modal";
 import { useLanguage } from "../../contexts/LanguageContext";
 import { MaintenanceRecord } from "../../types";
-import { getMaintenanceRecords, getMachines, getParts } from "../../lib/firebaseService";
-import { ClockIcon, UserIcon, FileTextIcon, CalendarIcon, BoxIcon, SettingsIcon, SearchIcon, ChevronDownIcon, ChevronUpIcon, FilterIcon, CheckCircleIcon, CameraIcon, MapPinIcon, RefreshCwIcon, TargetIcon, AlertTriangleIcon, ActivityIcon, InfoIcon } from "../ui/Icons";
+import { getMaintenanceRecords, getMachines, getParts, deleteMaintenanceRecord } from "../../lib/firebaseService";
+import { ClockIcon, UserIcon, FileTextIcon, CalendarIcon, BoxIcon, SettingsIcon, SearchIcon, ChevronDownIcon, ChevronUpIcon, FilterIcon, CheckCircleIcon, CameraIcon, MapPinIcon, RefreshCwIcon, TargetIcon, AlertTriangleIcon, ActivityIcon, InfoIcon, TrashIcon } from "../ui/Icons";
 import Image from "next/image";
+import { useAuth } from "../../contexts/AuthContext";
+import { useToast } from "../../contexts/ToastContext";
 
 interface GlobalMaintenanceHistoryModalProps {
     isOpen: boolean;
@@ -15,11 +17,14 @@ interface GlobalMaintenanceHistoryModalProps {
 
 export default function GlobalMaintenanceHistoryModal({ isOpen, onClose }: GlobalMaintenanceHistoryModalProps) {
     const { t } = useLanguage();
+    const { isAdmin } = useAuth();
+    const { success, error: showError } = useToast();
     const [records, setRecords] = useState<MaintenanceRecord[]>([]);
     const [allRecordsForStats, setAllRecordsForStats] = useState<MaintenanceRecord[]>([]);
     const [machines, setMachines] = useState<{ id: string, name: string, Location?: string, location?: string }[]>([]);
     const [parts, setParts] = useState<{ id: string, partName: string, machineId: string }[]>([]);
     const [loading, setLoading] = useState(true);
+    const [deleteId, setDeleteId] = useState<string | null>(null);
 
     // Filter states
     const [searchTerm, setSearchTerm] = useState("");
@@ -30,30 +35,45 @@ export default function GlobalMaintenanceHistoryModal({ isOpen, onClose }: Globa
     const [isFilterExpanded, setIsFilterExpanded] = useState(false);
 
     useEffect(() => {
-        const loadData = async () => {
-            if (!isOpen) return;
-            setLoading(true);
-            try {
-                const [recordsData, machinesData, partsData] = await Promise.all([
-                    getMaintenanceRecords(),
-                    getMachines(),
-                    getParts()
-                ]);
-                setAllRecordsForStats(recordsData);
-                // Filter records to ONLY show Part Change/Overhaul (type === 'partReplacement')
-                const overhaulRecords = recordsData.filter(r => r.type === 'partReplacement');
-                setRecords(overhaulRecords.sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime()));
-                setMachines(machinesData.map(m => ({ id: m.id, name: m.name, Location: m.Location, location: m.location })));
-                setParts(partsData.map(p => ({ id: p.id, partName: p.partName, machineId: p.machineId })));
-            } catch (error) {
-                console.error("Error fetching global maintenance history:", error);
-            } finally {
-                setLoading(false);
-            }
-        };
-
         loadData();
     }, [isOpen]);
+
+    const loadData = async () => {
+        if (!isOpen) return;
+        setLoading(true);
+        try {
+            const [recordsData, machinesData, partsData] = await Promise.all([
+                getMaintenanceRecords(),
+                getMachines(),
+                getParts()
+            ]);
+            setAllRecordsForStats(recordsData);
+            // Filter records to ONLY show Part Change/Overhaul (type === 'partReplacement')
+            const overhaulRecords = recordsData.filter(r => r.type === 'partReplacement');
+            setRecords(overhaulRecords.sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime()));
+            setMachines(machinesData.map(m => ({ id: m.id, name: m.name, Location: m.Location, location: m.location })));
+            setParts(partsData.map(p => ({ id: p.id, partName: p.partName, machineId: p.machineId })));
+        } catch (error) {
+            console.error("Error fetching global maintenance history:", error);
+        } finally {
+            setLoading(false);
+        }
+    };
+
+    const handleDelete = async () => {
+        if (!deleteId) return;
+        try {
+            await deleteMaintenanceRecord(deleteId);
+            success(t("msgDeleteSuccess") || "Deleted successfully", t("msgDeleteSuccess"));
+            setDeleteId(null);
+
+            // Refresh
+            await loadData();
+        } catch (error) {
+            console.error("Error deleting record:", error);
+            showError(t("msgDeleteError") || "Delete failed", "Error");
+        }
+    };
 
     const filteredRecords = records.filter(record => {
         // (Base records already filtered for 'partReplacement')
@@ -266,47 +286,73 @@ export default function GlobalMaintenanceHistoryModal({ isOpen, onClose }: Globa
                                 />
 
                                 <div
-                                    className={`card border p-4 space-y-3 transition-all cursor-pointer group active:scale-[0.99]
+                                    className={`relative p-5 transition-all cursor-pointer group rounded-2xl border
                                         ${expandedRecord === record.id
-                                            ? 'bg-bg-tertiary border-accent-blue/30 shadow-lg shadow-accent-blue/5'
-                                            : 'bg-bg-secondary/50 border-white/5 hover:bg-bg-tertiary/50'}`}
+                                            ? 'bg-bg-tertiary border-accent-blue/30 shadow-xl shadow-accent-blue/5'
+                                            : 'bg-white/[0.03] border-white/5 hover:bg-white/[0.06] hover:border-white/10'}`}
                                     onClick={() => toggleExpand(record.id)}
                                 >
-                                    <div className="flex items-start justify-between">
-                                        <div>
-                                            <h4 className="font-bold text-text-primary text-sm flex items-center gap-2">
-                                                <SettingsIcon size={14} className="text-text-muted" />
+                                    {/* Action Buttons (Top Right) */}
+                                    <div className="absolute right-4 top-4 flex items-center gap-2 z-10">
+                                        {isAdmin && (
+                                            <button
+                                                onClick={(e) => {
+                                                    e.stopPropagation();
+                                                    setDeleteId(record.id);
+                                                }}
+                                                className="p-2 rounded-xl text-accent-red hover:bg-accent-red/10 transition-all active:scale-95"
+                                                title={t("actionDelete")}
+                                            >
+                                                <TrashIcon size={16} />
+                                            </button>
+                                        )}
+                                        <div className="p-2 rounded-xl text-text-muted group-hover:text-text-primary transition-colors">
+                                            {expandedRecord === record.id ? <ChevronUpIcon size={18} /> : <ChevronDownIcon size={18} />}
+                                        </div>
+                                    </div>
+
+                                    <div className="flex flex-col gap-4">
+                                        {/* Row 1: Machine Name & Tech */}
+                                        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 pr-20">
+                                            <h4 className="font-bold text-text-primary text-base flex items-center gap-2 group-hover:text-accent-blue transition-colors">
+                                                <SettingsIcon size={16} className="text-accent-blue" />
                                                 {record.machineName}
                                             </h4>
-                                            <div className="flex items-center gap-2 mt-1">
-                                                <span className={`text-[10px] px-1.5 py-0.5 rounded font-bold uppercase tracking-wider
-                                                    ${record.type === 'preventive' ? 'bg-accent-blue/10 text-accent-blue border border-accent-blue/20' :
-                                                        record.type === 'corrective' ? 'bg-accent-red/10 text-accent-red border border-accent-red/20' : 'bg-accent-green/10 text-accent-green border border-accent-green/20'}`}>
-                                                    {record.type}
-                                                </span>
-                                                <span className="text-xs text-text-muted flex items-center gap-1">
-                                                    <CalendarIcon size={12} />
-                                                    {new Date(record.date).toLocaleDateString(t("language") === 'th' ? 'th-TH' : 'en-US', { day: 'numeric', month: 'short', year: '2-digit' })}
-                                                </span>
-                                                {record.isOverhaul && (
-                                                    <span className="text-[10px] px-1.5 py-0.5 rounded font-bold bg-accent-yellow/20 text-accent-yellow border border-accent-yellow/30 flex items-center gap-1">
-                                                        <RefreshCwIcon size={8} /> OVERHAUL
-                                                    </span>
-                                                )}
-                                                {record.partId && (
-                                                    <span className="text-[10px] px-1.5 py-0.5 rounded font-bold bg-accent-blue/20 text-accent-blue border border-accent-blue/30 flex items-center gap-1">
-                                                        <BoxIcon size={8} /> {parts.find(p => p.id === record.partId)?.partName || 'Part Change'}
-                                                    </span>
-                                                )}
-                                            </div>
-                                        </div>
-                                        <div className="flex flex-col items-end gap-2">
-                                            <div className="flex items-center gap-1.5 text-xs text-text-muted bg-white/5 px-2 py-1 rounded-md">
+                                            <div className="flex items-center gap-2 text-[11px] text-text-muted bg-white/5 px-2.5 py-1 rounded-lg self-start">
                                                 <UserIcon size={12} />
-                                                {record.technician}
+                                                <span>{record.technician}</span>
                                             </div>
-                                            {expandedRecord === record.id ? <ChevronUpIcon size={14} className="text-text-muted" /> : <ChevronDownIcon size={14} className="text-text-muted" />}
                                         </div>
+
+                                        {/* Row 2: Metadata Badges */}
+                                        <div className="flex flex-wrap items-center gap-2">
+                                            <span className={`text-[10px] px-2 py-1 rounded-lg font-bold uppercase tracking-wider border
+                                                ${record.type === 'preventive' ? 'bg-accent-blue/10 text-accent-blue border-accent-blue/20' :
+                                                    record.type === 'corrective' ? 'bg-accent-red/10 text-accent-red border-accent-red/20' : 'bg-accent-green/10 text-accent-green border-accent-green/20'}`}>
+                                                {record.type}
+                                            </span>
+                                            <div className="flex items-center gap-1.5 text-[11px] text-text-muted bg-white/5 px-2 py-1 rounded-lg">
+                                                <CalendarIcon size={12} />
+                                                <span>{new Date(record.date).toLocaleDateString(t("language") === 'th' ? 'th-TH' : 'en-US', { day: 'numeric', month: 'short', year: '2-digit' })}</span>
+                                            </div>
+                                            {record.isOverhaul && (
+                                                <span className="text-[10px] px-2 py-1 rounded-lg font-bold bg-accent-yellow/10 text-accent-yellow border border-accent-yellow/20 flex items-center gap-1.5">
+                                                    <RefreshCwIcon size={10} /> OVERHAUL
+                                                </span>
+                                            )}
+                                            {record.partId && (
+                                                <span className="text-[10px] px-2 py-1 rounded-lg font-bold bg-accent-blue/20 text-accent-blue border border-accent-blue/30 flex items-center gap-1.5 max-w-[200px] truncate">
+                                                    <BoxIcon size={10} /> {parts.find(p => p.id === record.partId)?.partName || 'Part Change'}
+                                                </span>
+                                            )}
+                                        </div>
+
+                                        {/* Brief Details Preview (only when collapsed) */}
+                                        {!expandedRecord && record.details && (
+                                            <div className="text-sm text-text-muted line-clamp-1 italic bg-black/10 p-2 rounded-lg border border-white/5">
+                                                {record.details}
+                                            </div>
+                                        )}
                                     </div>
 
                                     {/* Brief Details */}
@@ -379,45 +425,45 @@ export default function GlobalMaintenanceHistoryModal({ isOpen, onClose }: Globa
                                                 {(record.partId || record.isOverhaul) && (
                                                     <div className="space-y-3">
                                                         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-1 xl:grid-cols-2 gap-3">
-                                                            {(record.machineHours || record.lifespanValue || record.serialNumber || (record as any).partLifespan) && (
-                                                                <div className="bg-bg-primary/40 p-3 rounded-xl border border-white/5">
-                                                                    <p className="text-[10px] font-bold text-text-muted uppercase mb-2 flex items-center gap-2">
-                                                                        <ClockIcon size={12} /> {t("labelLifespanTracking")}
-                                                                    </p>
-                                                                    <div className="space-y-1.5 px-1">
-                                                                        {record.machineHours && (
-                                                                            <div className="flex justify-between text-xs">
-                                                                                <span className="text-text-muted flex items-center gap-1">
-                                                                                    <ClockIcon size={10} /> {t("labelReading")}:
-                                                                                </span>
-                                                                                <span className="text-text-primary font-bold">
-                                                                                    {record.machineHours} {t("labelHoursShort")}
-                                                                                </span>
-                                                                            </div>
-                                                                        )}
-                                                                        {record.lifespanValue && (
-                                                                            <div className="flex justify-between text-xs">
-                                                                                <span className="text-text-muted">{t("labelExpectedLifespan")}:</span>
-                                                                                <span className="text-text-primary font-medium">
-                                                                                    {record.lifespanValue} {record.lifespanUnit ? t(`label${record.lifespanUnit.charAt(0).toUpperCase() + record.lifespanUnit.slice(1)}` as any) : ''}
-                                                                                </span>
-                                                                            </div>
-                                                                        )}
-                                                                        {(record as any).partLifespan && (
-                                                                            <div className="flex justify-between text-xs pt-1 border-t border-white/5">
-                                                                                <span className="text-accent-blue font-semibold">{t("labelActualLifespan")}:</span>
-                                                                                <span className="text-accent-blue font-bold">{(record as any).partLifespan}</span>
-                                                                            </div>
-                                                                        )}
-                                                                        {record.serialNumber && (
-                                                                            <div className="flex justify-between text-xs">
-                                                                                <span className="text-text-muted">{t("labelSerialBatch")}:</span>
-                                                                                <span className="font-mono text-accent-cyan">{record.serialNumber}</span>
-                                                                            </div>
-                                                                        )}
-                                                                    </div>
+                                                            <div className="bg-bg-primary/40 p-3 rounded-xl border border-white/5">
+                                                                <p className="text-[10px] font-bold text-text-muted uppercase mb-2 flex items-center gap-2">
+                                                                    <ClockIcon size={12} /> {t("labelLifespanTracking") || 'Lifespan Tracking'}
+                                                                </p>
+                                                                <div className="space-y-1.5 px-1">
+                                                                    {record.previousReplacementDate && (
+                                                                        <div className="flex justify-between text-xs">
+                                                                            <span className="text-text-muted flex items-center gap-1">
+                                                                                <CalendarIcon size={10} /> {t("labelPreviousReplacementDate")}:
+                                                                            </span>
+                                                                            <span className="text-text-primary font-medium">
+                                                                                {new Date(record.previousReplacementDate).toLocaleDateString(t("language") === 'th' ? 'th-TH' : 'en-US', { day: 'numeric', month: 'short', year: 'numeric' })}
+                                                                            </span>
+                                                                        </div>
+                                                                    )}
+                                                                    {(record as any).partLifespan && (
+                                                                        <div className="flex justify-between text-xs pt-1 border-t border-white/5">
+                                                                            <span className="text-accent-blue font-semibold">{t("labelUsagePeriod") || 'Usage Period'}:</span>
+                                                                            <span className="text-accent-blue font-bold">{(record as any).partLifespan}</span>
+                                                                        </div>
+                                                                    )}
+                                                                    {record.machineHours && (
+                                                                        <div className="flex justify-between text-xs">
+                                                                            <span className="text-text-muted flex items-center gap-1">
+                                                                                <ClockIcon size={10} /> {t("labelReading")}:
+                                                                            </span>
+                                                                            <span className="text-text-primary font-bold">
+                                                                                {record.machineHours} {t("labelHoursShort")}
+                                                                            </span>
+                                                                        </div>
+                                                                    )}
+                                                                    {record.serialNumber && (
+                                                                        <div className="flex justify-between text-xs">
+                                                                            <span className="text-text-muted">{t("labelSerialBatch")}:</span>
+                                                                            <span className="font-mono text-accent-cyan">{record.serialNumber}</span>
+                                                                        </div>
+                                                                    )}
                                                                 </div>
-                                                            )}
+                                                            </div>
                                                             {(record.changeReason || record.partCondition) && (
                                                                 <div className="bg-bg-primary/40 p-3 rounded-xl border border-white/5">
                                                                     <p className="text-[10px] font-bold text-text-muted uppercase mb-2 flex items-center gap-2">
@@ -594,6 +640,40 @@ export default function GlobalMaintenanceHistoryModal({ isOpen, onClose }: Globa
                     </button>
                 </div>
             </div>
+
+            {/* Delete Confirmation Modal */}
+            <Modal
+                isOpen={!!deleteId}
+                onClose={() => setDeleteId(null)}
+                title={t("modalConfirmDeletePM") || "Confirm Delete"}
+                zIndex={60} // Higher than history modal
+            >
+                <div className="space-y-4">
+                    <div className="flex flex-col items-center justify-center p-6 text-center">
+                        <div className="w-16 h-16 rounded-full bg-accent-red/10 flex items-center justify-center mb-4">
+                            <TrashIcon size={32} className="text-accent-red" />
+                        </div>
+                        <h3 className="text-lg font-bold text-text-primary mb-2">{t("modalAreYouSure")}</h3>
+                        <p className="text-text-muted">
+                            {t("modalDeletePMConfirm", { name: "this record" })}
+                        </p>
+                    </div>
+                    <div className="flex gap-3">
+                        <button
+                            onClick={() => setDeleteId(null)}
+                            className="flex-1 py-3 rounded-xl bg-bg-tertiary text-text-primary font-bold hover:bg-white/10"
+                        >
+                            {t("actionCancel")}
+                        </button>
+                        <button
+                            onClick={handleDelete}
+                            className="flex-1 py-3 rounded-xl bg-accent-red text-white font-bold hover:bg-accent-red/90"
+                        >
+                            {t("actionDelete")}
+                        </button>
+                    </div>
+                </div>
+            </Modal>
         </Modal >
     );
 }
