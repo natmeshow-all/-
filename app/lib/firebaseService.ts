@@ -781,19 +781,26 @@ export async function uploadEvidenceImage(file: File): Promise<string> {
 export const completePMTask = async (
     planId: string,
     record: Omit<MaintenanceRecord, "id" | "createdAt" | "updatedAt">,
-    evidenceFile?: File
+    evidenceFile?: File,
+    additionalEvidenceFiles?: { label: string; file: File }[]
 ): Promise<void> => {
     try {
         let imageUrl = "";
-        let imageHash = "";
 
         if (evidenceFile) {
-            // Calculate hash and check existence
-            // For now, simplify image upload logic similar to above or reuse
-            // Using direct storage upload for simplicity here as main function seems to rely on separate helpers
-            // But per file structure, we have deduplication logic.
-            // Let's use uploadEvidenceImage directly.
             imageUrl = await uploadEvidenceImage(evidenceFile);
+        }
+
+        // Upload additional evidence
+        const additionalEvidence: { label: string; url: string; }[] = [];
+        if (additionalEvidenceFiles && additionalEvidenceFiles.length > 0) {
+            for (const item of additionalEvidenceFiles) {
+                const url = await uploadEvidenceImage(item.file);
+                additionalEvidence.push({
+                    label: item.label,
+                    url
+                });
+            }
         }
 
         // Add Maintenance Record
@@ -802,9 +809,9 @@ export const completePMTask = async (
         const recordData = {
             ...record,
             id: recordRef.key,
-            pmPlanId: planId, // Changed from planId to pmPlanId to match MaintenanceRecord type
-            evidenceImageUrl: imageUrl, // Changed from imageUrl to evidenceImageUrl
-            // imageHash, // This field is not in MaintenanceRecord type
+            pmPlanId: planId,
+            evidenceImageUrl: imageUrl,
+            additionalEvidence: additionalEvidence.length > 0 ? additionalEvidence : undefined,
             createdAt: now.toISOString(),
             updatedAt: now.toISOString(),
         };

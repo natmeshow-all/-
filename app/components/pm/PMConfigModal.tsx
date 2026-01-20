@@ -4,7 +4,7 @@ import React, { useState, useEffect } from "react";
 import Modal from "../ui/Modal";
 import { useLanguage } from "../../contexts/LanguageContext";
 import { Machine, PMPlan } from "../../types";
-import { CalendarIcon, ClockIcon, CheckCircleIcon, SettingsIcon, ActivityIcon, MapPinIcon, ChevronDownIcon } from "../ui/Icons";
+import { CalendarIcon, ClockIcon, CheckCircleIcon, SettingsIcon, ActivityIcon, MapPinIcon, ChevronDownIcon, FileTextIcon } from "../ui/Icons";
 import { addPMPlan, updatePMPlan, getParts } from "../../lib/firebaseService";
 
 interface PMConfigModalProps {
@@ -76,7 +76,7 @@ export default function PMConfigModal({ isOpen, onClose, machine, plan, onSucces
     const [newItem, setNewItem] = useState("");
     const [selectedPartType, setSelectedPartType] = useState("");
 
-    const [scheduleType, setScheduleType] = useState<"monthly" | "weekly" | "yearly">(plan?.scheduleType || "monthly");
+    const [scheduleType, setScheduleType] = useState<"monthly" | "weekly" | "yearly" | "custom">(plan?.scheduleType || "monthly");
     const [cycleMonths, setCycleMonths] = useState<number>(plan?.cycleMonths || 1);
     const [weeklyDay, setWeeklyDay] = useState<number>(plan?.weeklyDay || 1);
 

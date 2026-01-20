@@ -29,51 +29,86 @@ export default function PMExecutionModal({ isOpen, onClose, plan, onSuccess }: P
     const defaultTechnician = userProfile?.nickname || userProfile?.displayName || "";
     const [technician, setTechnician] = useState(defaultTechnician);
     const [additionalNotes, setAdditionalNotes] = useState("");
-    const [imageFile, setImageFile] = useState<File | null>(null);
-    const [imagePreview, setImagePreview] = useState<string | null>(null);
-    const [loading, setLoading] = useState(false);
-    const fileInputRef = useRef<HTMLInputElement>(null);
+    // State for multiple images (for Monthly PM)
+    const [images, setImages] = useState<{ [key: string]: File | null }>({});
+    const [previews, setPreviews] = useState<{ [key: string]: string | null }>({}); // Store previews as strings
 
-    // State for checklist items - each item has completed status and value
-    const [checklistResults, setChecklistResults] = useState<Record<number, ChecklistItemResult>>({});
+    // Determine if this is a monthly plan that requires 3 photos
+    const isMonthly = plan.scheduleType === 'monthly' || (plan.scheduleType === 'custom' && plan.cycleMonths && plan.cycleMonths > 0);
 
-    // Initialize checklist results when plan changes
-    useEffect(() => {
-        if (plan?.checklistItems) {
-            const initialResults: Record<number, ChecklistItemResult> = {};
-            plan.checklistItems.forEach((_, index) => {
-                initialResults[index] = { completed: false, value: "" };
-            });
-            setChecklistResults(initialResults);
+    // Required photo keys for Monthly
+    const requiredPhotos = isMonthly
+        ? ['current', 'vibration', 'other']
+        : ['evidence']; // 'evidence' is the default single photo key
+
+    const getPhotoLabel = (key: string) => {
+        switch (key) {
+            case 'current': return t("labelPhotoAmp") || "ภาพถ่ายกระแสไฟฟ้า (Amp)";
+            case 'vibration': return t("labelPhotoVibration") || "ภาพถ่ายค่าความสั่นสะเทือน";
+            case 'other': return t("labelPhotoOther") || "จุดที่สำคัญอื่นๆ";
+            default: return t("labelEvidencePhoto");
         }
-    }, [plan?.checklistItems]);
-
-    const handleChecklistChange = (index: number, field: "completed" | "value", value: boolean | string) => {
-        setChecklistResults(prev => ({
-            ...prev,
-            [index]: {
-                ...prev[index],
-                [field]: value
-            }
-        }));
     };
 
-    const handleImageChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const [checklistResults, setChecklistResults] = useState<ChecklistItemResult[]>(
+        plan.checklistItems?.map(() => ({ completed: false, value: "" })) || []
+    );
+    const [loading, setLoading] = useState(false);
+
+    useEffect(() => {
+        if (isOpen) {
+            // Reset states when modal opens
+            setTechnician(defaultTechnician);
+            setAdditionalNotes("");
+            setImages({});
+            setPreviews({});
+            setChecklistResults(plan.checklistItems?.map(() => ({ completed: false, value: "" })) || []);
+            setLoading(false);
+        }
+    }, [isOpen, plan, defaultTechnician]);
+
+    const handleChecklistChange = (index: number, completed: boolean, value?: string) => {
+        setChecklistResults(prev => {
+            const newResults = [...prev];
+            newResults[index] = { completed, value: value !== undefined ? value : newResults[index]?.value || "" };
+            return newResults;
+        });
+    };
+
+    const handleMultiImageChange = (key: string, e: React.ChangeEvent<HTMLInputElement>) => {
         const file = e.target.files?.[0];
         if (file) {
-            setImageFile(file);
+            setImages(prev => ({ ...prev, [key]: file }));
             const reader = new FileReader();
             reader.onloadend = () => {
-                setImagePreview(reader.result as string);
+                setPreviews(prev => ({ ...prev, [key]: reader.result as string }));
             };
             reader.readAsDataURL(file);
         }
     };
 
+    const handleRemoveMultiImage = (key: string) => {
+        setImages(prev => {
+            const temp = { ...prev };
+            delete temp[key];
+            return temp;
+        });
+        setPreviews(prev => {
+            const temp = { ...prev };
+            delete temp[key];
+            return temp;
+        });
+        const input = document.getElementById(`file-${key}`) as HTMLInputElement;
+        if (input) input.value = "";
+    };
+
+    // Legacy handler
     const handleRemoveImage = () => {
-        setImageFile(null);
-        setImagePreview(null);
-        if (fileInputRef.current) fileInputRef.current.value = "";
+        // dummy for safety if invoked
+    };
+    // Legacy handler mostly for compatibility if needed, but we'll switch to using the multi-state primarily
+    const handleImageChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+        handleMultiImageChange('evidence', e);
     };
 
     // Build details string from checklist results
@@ -110,8 +145,17 @@ export default function PMExecutionModal({ isOpen, onClose, plan, onSuccess }: P
                 value: checklistResults[index]?.value || ""
             }));
 
-            // Ensure Location is captured correctly for auditing
-            const machineLocation = plan.customLocation || "";
+            // Prepare additional evidence files
+            const additionalFiles: { label: string; file: File }[] = [];
+
+            if (isMonthly) {
+                if (images['current']) additionalFiles.push({ label: 'Electric Current (Amp)', file: images['current']! });
+                if (images['vibration']) additionalFiles.push({ label: 'Vibration', file: images['vibration']! });
+                if (images['other']) additionalFiles.push({ label: 'Other', file: images['other']! });
+            }
+
+            const primaryFile = isMonthly ? images['other'] : images['evidence'];
+            const filteredAdditional = additionalFiles.filter(f => f.file !== primaryFile);
 
             await completePMTask(
                 plan.id,
@@ -126,9 +170,10 @@ export default function PMExecutionModal({ isOpen, onClose, plan, onSuccess }: P
                     technician: technician || "Technician",
                     details: details,
                     checklist: structuredChecklist,
-                    Location: machineLocation,
+                    Location: plan.customLocation || "",
                 },
-                imageFile || undefined
+                primaryFile || undefined,
+                filteredAdditional
             );
 
             onSuccess?.();
@@ -143,6 +188,9 @@ export default function PMExecutionModal({ isOpen, onClose, plan, onSuccess }: P
     const hasChecklistItems = plan?.checklistItems && plan.checklistItems.length > 0;
     const completedCount = Object.values(checklistResults).filter(r => r.completed).length;
     const totalItems = plan?.checklistItems?.length || 0;
+
+    // Check if all required photos are present
+    const hasRequiredPhotos = requiredPhotos.every(key => !!images[key]);
 
     return (
         <Modal isOpen={isOpen} onClose={onClose} title={t("pmExecutionTitle")}>
@@ -188,6 +236,58 @@ export default function PMExecutionModal({ isOpen, onClose, plan, onSuccess }: P
                         />
                     </div>
 
+                    {/* Photo Evidence */}
+                    <div className="space-y-4">
+                        <label className="text-xs font-semibold text-accent-orange uppercase tracking-wider flex items-center gap-2">
+                            {isMonthly ? `${t("labelEvidencePhoto")} (3 Required)` : t("labelEvidencePhoto")}
+                        </label>
+
+                        <div className={`grid gap-3 ${isMonthly ? 'grid-cols-1 sm:grid-cols-3' : 'grid-cols-1'}`}>
+                            {requiredPhotos.map((key) => (
+                                <div key={key} className="space-y-2">
+                                    {isMonthly && (
+                                        <p className="text-xs text-text-muted font-bold ml-1">{getPhotoLabel(key)}</p>
+                                    )}
+
+                                    {!previews[key] ? (
+                                        <button
+                                            type="button"
+                                            onClick={() => document.getElementById(`file-${key}`)?.click()}
+                                            className="w-full h-28 border-2 border-dashed border-white/10 rounded-xl flex flex-col items-center justify-center gap-2 text-text-muted hover:border-accent-blue/50 hover:text-accent-blue transition-all bg-white/5"
+                                        >
+                                            <PlusIcon size={20} />
+                                            <span className="text-[10px] text-center px-2">{t("actionTakePhoto")}</span>
+                                        </button>
+                                    ) : (
+                                        <div className="relative w-full h-28 rounded-xl overflow-hidden border border-white/10 shadow-lg group">
+                                            <Image
+                                                src={previews[key]!}
+                                                alt={key}
+                                                fill
+                                                className="object-cover"
+                                            />
+                                            <button
+                                                type="button"
+                                                onClick={() => handleRemoveMultiImage(key)}
+                                                className="absolute top-1 right-1 w-6 h-6 rounded-full bg-black/60 text-white flex items-center justify-center backdrop-blur-md border border-white/20 hover:bg-accent-red transition-colors"
+                                            >
+                                                <XIcon size={12} />
+                                            </button>
+                                        </div>
+                                    )}
+                                    <input
+                                        id={`file-${key}`}
+                                        type="file"
+                                        accept="image/*"
+                                        capture="environment"
+                                        className="hidden"
+                                        onChange={(e) => handleMultiImageChange(key, e)}
+                                    />
+                                </div>
+                            ))}
+                        </div>
+                    </div>
+
                     {/* Checklist Items - Dynamic based on PM plan */}
                     {hasChecklistItems && (
                         <div className="space-y-3">
@@ -196,324 +296,79 @@ export default function PMExecutionModal({ isOpen, onClose, plan, onSuccess }: P
                                 {t("labelChecklist")} ({completedCount}/{totalItems})
                             </label>
                             <div className="space-y-2">
-                                {plan.checklistItems!.map((item, index) => {
-                                    // Check if item is related to vibration
-                                    const isVibrationItem = item.toLowerCase().includes("vibration") || item.includes("สั่นสะเทือน");
-
-                                    if (isVibrationItem) {
-                                        // Parse existing value if available (expected format: JSON string or pipe-separated)
-                                        // But for new implementation we manage state in a specialized way
-                                        // We'll utilize the existing 'value' field to store the JSON string of the vibration data
-
-                                        // Helper to get vibration data from the stored string
-                                        let vibrationData = {
-                                            x: { value: "", status: "normal" },
-                                            y: { value: "", status: "normal" },
-                                            z: { value: "", status: "normal" }
-                                        };
-                                        try {
-                                            if (checklistResults[index]?.value?.startsWith("{")) {
-                                                vibrationData = JSON.parse(checklistResults[index].value);
-                                            }
-                                        } catch (e) {
-                                            // ignore parse error, use default
-                                        }
-
-                                        const updateVibration = (axis: 'x' | 'y' | 'z', field: 'value' | 'status', val: string) => {
-                                            const newData = {
-                                                ...vibrationData,
-                                                [axis]: {
-                                                    ...vibrationData[axis],
-                                                    [field]: val
-                                                }
-                                            };
-                                            // Save complete object as JSON string to the main value field
-                                            handleChecklistChange(index, "value", JSON.stringify(newData));
-
-                                            // Mark as completed if all values are filled (optional logic, but good for UX)
-                                            if (newData.x.value && newData.y.value && newData.z.value) {
-                                                handleChecklistChange(index, "completed", true);
-                                            }
-                                        };
-
-                                        return (
-                                            <div key={index} className="p-4 rounded-lg border border-white/10 bg-bg-tertiary space-y-4">
-                                                <div className="flex items-center gap-2 mb-2">
-                                                    <ActivityIcon size={16} className="text-accent-orange" />
-                                                    <span className="font-bold text-accent-orange">{item}</span>
-                                                </div>
-
-                                                {/* X Axis */}
-                                                <div className="space-y-2">
-                                                    <label className="text-sm font-bold text-accent-orange flex items-center gap-2">
-                                                        <span className="w-1 h-3 bg-accent-blue rounded-full"></span>
-                                                        {t("maintenanceAxisX") || "X Axis"}
-                                                    </label>
-                                                    <input
-                                                        type="text"
-                                                        placeholder={t("placeholderVibration") || "Value (mm/s)"}
-                                                        className="input-field w-full text-sm py-1.5 mb-2"
-                                                        value={vibrationData.x.value}
-                                                        onChange={(e) => updateVibration('x', 'value', e.target.value)}
-                                                    />
-                                                    <div className="flex gap-2">
-                                                        {[
-                                                            { value: 'normal', label: t("maintenanceVibrationNormal") || "Normal", color: 'bg-accent-green', text: 'text-accent-green' },
-                                                            { value: 'warning', label: t("maintenanceVibrationMedium") || "Warning", color: 'bg-accent-yellow', text: 'text-accent-yellow' },
-                                                            { value: 'critical', label: t("maintenanceVibrationAbnormal") || "Critical", color: 'bg-accent-red', text: 'text-accent-red' }
-                                                        ].map((statusOption) => (
-                                                            <button
-                                                                key={statusOption.value}
-                                                                type="button"
-                                                                onClick={() => updateVibration('x', 'status', statusOption.value)}
-                                                                className={`
-                                                                    flex-1 py-1.5 rounded-md text-[10px] font-bold border transition-all flex items-center justify-center gap-1
-                                                                    ${vibrationData.x.status === statusOption.value
-                                                                        ? `${statusOption.color} text-white border-transparent`
-                                                                        : `bg-transparent border-white/10 text-text-muted hover:border-white/30`
-                                                                    }
-                                                                `}
-                                                            >
-                                                                <div className={`w-2 h-2 rounded-full ${vibrationData.x.status === statusOption.value ? 'bg-white' : statusOption.color}`} />
-                                                                {statusOption.label}
-                                                            </button>
-                                                        ))}
-                                                    </div>
-                                                </div>
-
-                                                {/* Y Axis */}
-                                                <div className="space-y-2">
-                                                    <label className="text-sm font-bold text-accent-orange flex items-center gap-2">
-                                                        <span className="w-1 h-3 bg-accent-purple rounded-full"></span>
-                                                        {t("maintenanceAxisY") || "Y Axis"}
-                                                    </label>
-                                                    <input
-                                                        type="text"
-                                                        placeholder={t("placeholderVibration") || "Value (mm/s)"}
-                                                        className="input-field w-full text-sm py-1.5 mb-2"
-                                                        value={vibrationData.y.value}
-                                                        onChange={(e) => updateVibration('y', 'value', e.target.value)}
-                                                    />
-                                                    <div className="flex gap-2">
-                                                        {[
-                                                            { value: 'normal', label: t("maintenanceVibrationNormal") || "Normal", color: 'bg-accent-green', text: 'text-accent-green' },
-                                                            { value: 'warning', label: t("maintenanceVibrationMedium") || "Warning", color: 'bg-accent-yellow', text: 'text-accent-yellow' },
-                                                            { value: 'critical', label: t("maintenanceVibrationAbnormal") || "Critical", color: 'bg-accent-red', text: 'text-accent-red' }
-                                                        ].map((statusOption) => (
-                                                            <button
-                                                                key={statusOption.value}
-                                                                type="button"
-                                                                onClick={() => updateVibration('y', 'status', statusOption.value)}
-                                                                className={`
-                                                                    flex-1 py-1.5 rounded-md text-[10px] font-bold border transition-all flex items-center justify-center gap-1
-                                                                    ${vibrationData.y.status === statusOption.value
-                                                                        ? `${statusOption.color} text-white border-transparent`
-                                                                        : `bg-transparent border-white/10 text-text-muted hover:border-white/30`
-                                                                    }
-                                                                `}
-                                                            >
-                                                                <div className={`w-2 h-2 rounded-full ${vibrationData.y.status === statusOption.value ? 'bg-white' : statusOption.color}`} />
-                                                                {statusOption.label}
-                                                            </button>
-                                                        ))}
-                                                    </div>
-                                                </div>
-
-                                                {/* Z Axis */}
-                                                <div className="space-y-2">
-                                                    <label className="text-sm font-bold text-accent-orange flex items-center gap-2">
-                                                        <span className="w-1 h-3 bg-accent-orange rounded-full"></span>
-                                                        {t("maintenanceAxisZ") || "Z Axis"}
-                                                    </label>
-                                                    <input
-                                                        type="text"
-                                                        placeholder={t("placeholderVibration") || "Value (mm/s)"}
-                                                        className="input-field w-full text-sm py-1.5 mb-2"
-                                                        value={vibrationData.z.value}
-                                                        onChange={(e) => updateVibration('z', 'value', e.target.value)}
-                                                    />
-                                                    <div className="flex gap-2">
-                                                        {[
-                                                            { value: 'normal', label: t("maintenanceVibrationNormal") || "Normal", color: 'bg-accent-green', text: 'text-accent-green' },
-                                                            { value: 'warning', label: t("maintenanceVibrationMedium") || "Warning", color: 'bg-accent-yellow', text: 'text-accent-yellow' },
-                                                            { value: 'critical', label: t("maintenanceVibrationAbnormal") || "Critical", color: 'bg-accent-red', text: 'text-accent-red' }
-                                                        ].map((statusOption) => (
-                                                            <button
-                                                                key={statusOption.value}
-                                                                type="button"
-                                                                onClick={() => updateVibration('z', 'status', statusOption.value)}
-                                                                className={`
-                                                                    flex-1 py-1.5 rounded-md text-[10px] font-bold border transition-all flex items-center justify-center gap-1
-                                                                    ${vibrationData.z.status === statusOption.value
-                                                                        ? `${statusOption.color} text-white border-transparent`
-                                                                        : `bg-transparent border-white/10 text-text-muted hover:border-white/30`
-                                                                    }
-                                                                `}
-                                                            >
-                                                                <div className={`w-2 h-2 rounded-full ${vibrationData.z.status === statusOption.value ? 'bg-white' : statusOption.color}`} />
-                                                                {statusOption.label}
-                                                            </button>
-                                                        ))}
-                                                    </div>
-                                                </div>
-
-                                                {/* Manual Completed Check (to match standard items behavior) */}
-                                                <label className="flex items-center gap-2 cursor-pointer mt-2 pt-2 border-t border-white/5">
-                                                    <input
-                                                        type="checkbox"
-                                                        className="checkbox checkbox-primary w-5 h-5"
-                                                        checked={checklistResults[index]?.completed || false}
-                                                        onChange={(e) => handleChecklistChange(index, "completed", e.target.checked)}
-                                                    />
-                                                    <span className="text-sm">{t("statusCompleted") || "Mark as Completed"}</span>
-                                                </label>
-                                            </div>
-                                        );
-                                    }
-
-                                    // Standard Checklist Item
-                                    return (
-                                        <div
-                                            key={index}
-                                            className={`p-3 rounded-lg border transition-all ${checklistResults[index]?.completed
-                                                ? 'bg-accent-green/10 border-accent-green/30'
-                                                : 'bg-bg-tertiary border-white/5'
-                                                }`}
-                                        >
-                                            <div className="flex items-start gap-3">
-                                                {/* Checkbox */}
-                                                <button
-                                                    type="button"
-                                                    onClick={() => handleChecklistChange(index, "completed", !checklistResults[index]?.completed)}
-                                                    className={`w-6 h-6 rounded-md border-2 flex items-center justify-center shrink-0 transition-all mt-0.5 ${checklistResults[index]?.completed
-                                                        ? 'bg-accent-green border-accent-green text-white'
-                                                        : 'border-white/20 hover:border-accent-blue'
-                                                        }`}
-                                                >
-                                                    {checklistResults[index]?.completed && (
-                                                        <CheckCircleIcon size={14} />
-                                                    )}
-                                                </button>
-
-                                                {/* Item content */}
-                                                <div className="flex-1 space-y-2">
-                                                    <span className={`text-sm font-medium ${checklistResults[index]?.completed
-                                                        ? 'text-accent-green'
-                                                        : 'text-text-primary'
-                                                        }`}>
-                                                        {item}
-                                                    </span>
-                                                    {/* Value input field */}
-                                                    <input
-                                                        type="text"
-                                                        placeholder={t("placeholderChecklistValue")}
-                                                        className="input-field w-full text-sm py-2"
-                                                        value={checklistResults[index]?.value || ""}
-                                                        onChange={(e) => handleChecklistChange(index, "value", e.target.value)}
-                                                    />
-                                                </div>
-                                            </div>
+                                {plan.checklistItems!.map((item, index) => (
+                                    <div key={index} className="flex flex-col gap-2 p-3 bg-white/5 rounded-lg border border-white/10 hover:border-white/20 transition-all">
+                                        <div className="flex items-start gap-3">
+                                            <button
+                                                type="button"
+                                                onClick={() => handleChecklistChange(index, !checklistResults[index].completed)}
+                                                className={`mt-0.5 flex-shrink-0 w-5 h-5 rounded border flex items-center justify-center transition-colors ${checklistResults[index].completed
+                                                    ? 'bg-accent-blue border-accent-blue text-white'
+                                                    : 'border-white/20 hover:border-accent-blue/50'
+                                                    }`}
+                                            >
+                                                {checklistResults[index].completed && <CheckCircleIcon size={12} />}
+                                            </button>
+                                            <span className={`text-sm cursor-pointer ${checklistResults[index].completed ? 'text-text-muted transition-colors' : 'text-white'}`}
+                                                onClick={() => handleChecklistChange(index, !checklistResults[index].completed)}>
+                                                {item}
+                                            </span>
                                         </div>
-                                    );
-                                })}
+
+                                        {checklistResults[index].completed && (
+                                            <div className="pl-8 animate-in fade-in slide-in-from-top-1 duration-200">
+                                                <input
+                                                    type="text"
+                                                    placeholder={t("placeholderChecklistValue")}
+                                                    value={checklistResults[index].value}
+                                                    onChange={(e) => handleChecklistChange(index, true, e.target.value)}
+                                                    className="input-field text-xs w-full bg-black/20"
+                                                />
+                                            </div>
+                                        )}
+                                    </div>
+                                ))}
                             </div>
                         </div>
                     )}
 
-                    {/* Additional Notes (if no checklist or for extra notes) */}
+                    {/* Additional Notes */}
                     <div className="space-y-2">
                         <label className="text-xs font-semibold text-accent-orange uppercase tracking-wider flex items-center gap-2">
-                            {hasChecklistItems ? t("labelAdditionalNotes") : t("labelMaintenanceDetails")}
+                            <FileTextIcon size={14} />
+                            {t("labelAdditionalNotes")}
                         </label>
                         <textarea
-                            required={!hasChecklistItems}
-                            placeholder={hasChecklistItems
-                                ? t("placeholderAdditionalNotesHint")
-                                : t("placeholderMaintenanceDetailsHint")
-                            }
-                            className="input-field w-full min-h-[80px] py-3 resize-none"
+                            placeholder={t("placeholderAdditionalNotesHint")}
+                            className="input-field w-full min-h-[80px]"
                             value={additionalNotes}
                             onChange={(e) => setAdditionalNotes(e.target.value)}
                         />
                     </div>
 
-                    {/* Photo Evidence */}
-                    <div className="space-y-2">
-                        <label className="text-xs font-semibold text-accent-orange uppercase tracking-wider flex items-center gap-2">
-                            {t("labelEvidencePhoto")}
-                        </label>
-
-                        {!imagePreview ? (
-                            <button
-                                type="button"
-                                onClick={() => fileInputRef.current?.click()}
-                                className="w-full h-28 border-2 border-dashed border-white/10 rounded-xl flex flex-col items-center justify-center gap-2 text-text-muted hover:border-accent-blue/50 hover:text-accent-blue transition-all bg-white/5"
-                            >
-                                <PlusIcon size={20} />
-                                <span className="text-xs">{t("actionTakePhoto")}</span>
-                            </button>
-                        ) : (
-                            <div className="relative w-full h-40 rounded-xl overflow-hidden border border-white/10 shadow-lg group">
-                                <Image
-                                    src={imagePreview}
-                                    alt="Evidence"
-                                    fill
-                                    className="object-cover"
-                                />
-                                <button
-                                    type="button"
-                                    onClick={handleRemoveImage}
-                                    className="absolute top-2 right-2 w-8 h-8 rounded-full bg-black/60 text-white flex items-center justify-center backdrop-blur-md border border-white/20 hover:bg-accent-red transition-colors"
-                                >
-                                    <XIcon size={16} />
-                                </button>
-                            </div>
-                        )}
-                        <input
-                            type="file"
-                            accept="image/*"
-                            capture="environment"
-                            className="hidden"
-                            ref={fileInputRef}
-                            onChange={handleImageChange}
-                        />
-                    </div>
-
-                    {/* Rescheduling Note */}
-                    <div className="bg-accent-green/5 border border-accent-green/20 p-3 rounded-xl">
-                        <p className="text-[11px] text-accent-green/80 flex items-start gap-2 leading-relaxed">
-                            <CheckCircleIcon size={14} className="mt-0.5 shrink-0" />
-                            <span>
-                                {t("msgAutoScheduleHint", { count: plan.cycleMonths || 1 })}
-                            </span>
-                        </p>
-                    </div>
-
-                    {/* Action Buttons */}
-                    <div className="flex gap-3 pt-2">
-                        <button
-                            type="button"
-                            onClick={onClose}
-                            className="flex-1 py-3 rounded-xl bg-bg-tertiary text-text-primary font-bold hover:bg-white/10 transition-colors"
-                        >
-                            {t("actionCancel")}
-                        </button>
+                    {/* Submit Button */}
+                    <div className="pt-4 border-t border-white/10 sticky bottom-0 bg-[#1E1E1E] p-4 -mx-4 -mb-4 mt-auto z-10">
                         <button
                             type="submit"
-                            disabled={loading || !technician || (!hasChecklistItems && !additionalNotes)}
-                            className="flex-[2] btn-primary py-3 flex items-center justify-center gap-2 shadow-lg shadow-accent-blue/20"
+                            disabled={loading || !hasRequiredPhotos}
+                            className="btn-primary w-full justify-center py-3 text-base shadow-lg shadow-accent-blue/20 disabled:opacity-50 disabled:cursor-not-allowed"
                         >
                             {loading ? (
-                                <div className="w-5 h-5 border-2 border-white/30 border-t-white rounded-full animate-spin" />
+                                <div className="flex items-center gap-2">
+                                    <div className="animate-spin w-4 h-4 border-2 border-white/30 border-t-white rounded-full"></div>
+                                    <span>{t("msgSaving")}</span>
+                                </div>
                             ) : (
-                                <>
-                                    {t("actionConfirmNextCycle")}
-                                </>
+                                <div className="flex items-center gap-2">
+                                    <CheckCircleIcon size={18} />
+                                    <span>{t("actionConfirmNextCycle")}</span>
+                                </div>
                             )}
                         </button>
                     </div>
                 </form>
-            </div>
-        </Modal>
+            </div >
+        </Modal >
     );
+
 }

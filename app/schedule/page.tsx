@@ -359,7 +359,7 @@ export default function SchedulePage() {
                             );
                         })
                     ) : (
-                        <div className="flex flex-col items-center justify-center py-20 text-text-muted opacity-50 bg-bg-secondary/30 rounded-3xl border border-dashed border-white/10">
+                        <div className="flex flex-col items-center justify-center py-20 text-text-muted opacity-60 bg-bg-secondary/30 rounded-3xl border border-dashed border-white/10">
                             <BoxIcon size={48} className="mb-4" />
                             <p>{t("msgNoPlans")}</p>
                         </div>

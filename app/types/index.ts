@@ -137,7 +137,8 @@ export interface MaintenanceRecord {
     Location?: string; // Location of the machine 
     location?: string; // FZ/RTE/UT 
     notes?: string;
-    evidenceImageUrl?: string; // Photo after work completion
+    evidenceImageUrl?: string; // Photo after work completion (Legacy/Primary)
+    additionalEvidence?: { label: string; url: string; }[]; // Additional photos (e.g., Vibration, Amp)
     pmPlanId?: string; // Reference to the PMPlan if this was a PM task
     startTime?: Date;
     endTime?: Date;
@@ -171,7 +172,7 @@ export interface PMPlan {
 
     // Scheduling
     cycleMonths?: number; // kept for backward compatibility or monthly usage
-    scheduleType?: "monthly" | "weekly" | "yearly";
+    scheduleType?: "monthly" | "weekly" | "yearly" | "custom";
     weeklyDay?: 0 | 1 | 2 | 3 | 4 | 5 | 6; // 0=Sunday
 
     startDate: Date;

@@ -592,6 +592,9 @@ export interface TranslationKeys {
     placeholderAdditionalNotesHint: string;
     placeholderMaintenanceDetailsHint: string;
     labelEvidencePhoto: string;
+    labelPhotoAmp: string;
+    labelPhotoVibration: string;
+    labelPhotoOther: string;
     actionTakePhoto: string;
     actionConfirmNextCycle: string;
     pmHistoryTitle: string;
@@ -1269,8 +1272,11 @@ const th: TranslationKeys = {
     labelMaintenanceDetails: "รายละเอียดการซ่อมบำรุง",
     placeholderAdditionalNotesHint: "หมายเหตุเพิ่มเติม (ถ้ามี)...",
     placeholderMaintenanceDetailsHint: "ระบุสิ่งที่ทำ เช่น ทำความสะอาด, เปลี่ยนอะไหล่ชิ้นไหน...",
-    labelEvidencePhoto: "รูปถ่ายหลังการทำงาน (หลักฐาน)",
-    actionTakePhoto: "กดเพื่อถ่ายรูปหรืออัปโหลดรูป",
+    labelEvidencePhoto: "รูปถ่ายหลักฐาน",
+    labelPhotoAmp: "ภาพถ่ายกระแสไฟฟ้า (Amp)",
+    labelPhotoVibration: "ภาพถ่ายค่าความสั่นสะเทือน",
+    labelPhotoOther: "จุดที่สำคัญอื่นๆ",
+    actionTakePhoto: "ถ่ายภาพ",
     actionConfirmNextCycle: "ยืนยันและรันรอบถัดไป",
     pmHistoryTitle: "ประวัติการเปลี่ยนอะไหล่/Overhaul",
     filterShow: "แสดงตัวกรอง",
@@ -1949,8 +1955,11 @@ const en: TranslationKeys = {
     labelMaintenanceDetails: "Maintenance Details",
     placeholderAdditionalNotesHint: "Additional notes (if any)...",
     placeholderMaintenanceDetailsHint: "Specify actions (e.g., cleaned, replaced parts)...",
-    labelEvidencePhoto: "Post-Work Photo (Evidence)",
-    actionTakePhoto: "Take a photo or upload",
+    labelEvidencePhoto: "Proof Photo",
+    labelPhotoAmp: "Electric Current (Amp) Photo",
+    labelPhotoVibration: "Vibration Photo",
+    labelPhotoOther: "Other Important Points",
+    actionTakePhoto: "Take Photo",
     actionConfirmNextCycle: "Confirm and Start Next Cycle",
     pmHistoryTitle: "Part Change & Overhaul History",
     filterShow: "Show Filters",
