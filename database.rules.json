@@ -18,12 +18,12 @@
         },
         // ===== เครื่องจักร =====
         "machines": {
-            ".read": true,
+            ".read": "auth != null",
             ".write": "auth != null && (root.child('users').child(auth.uid).child('role').val() == 'admin' || root.child('users').child(auth.uid).child('role').val() == 'supervisor')"
         },
         // ===== Parts =====
         "parts": {
-            ".read": true,
+            ".read": "auth != null",
             ".write": "auth != null && (root.child('users').child(auth.uid).child('role').val() == 'admin' || root.child('users').child(auth.uid).child('role').val() == 'supervisor')",
             ".indexOn": [
                 "machineId"
@@ -31,7 +31,7 @@
         },
         // ===== Maintenance Records =====
         "maintenance_records": {
-            ".read": true,
+            ".read": "auth != null",
             ".write": "auth != null && root.child('users').child(auth.uid).child('isApproved').val() == true && root.child('users').child(auth.uid).child('role').val() != 'viewer'",
             ".indexOn": [
                 "date",
@@ -42,7 +42,7 @@
         },
         // ===== PM Plans =====
         "pm_plans": {
-            ".read": true,
+            ".read": "auth != null",
             ".write": "auth != null && (root.child('users').child(auth.uid).child('role').val() == 'admin' || root.child('users').child(auth.uid).child('role').val() == 'supervisor')",
             ".indexOn": [
                 "machineId",
@@ -107,7 +107,7 @@
         },
         // ===== Data Translations (Auto-Translate) =====
         "data_translations": {
-            ".read": true,
+            ".read": "auth != null",
             ".write": "auth != null"
         },
         // ===== Audit Logs (Admin Only) =====
@@ -118,7 +118,7 @@
         // ===== System Settings (Public read for maintenance mode check) =====
         "system_settings": {
             ".read": true,
-            ".write": "auth != null && root.child('users').child(auth.uid).child('role').val() == 'admin'"
+            ".write": "auth != null && (root.child('users').child(auth.uid).child('role').val() == 'admin' || root.child('users').child(auth.uid).child('role').val() == 'supervisor')"
         }
     }
 }
