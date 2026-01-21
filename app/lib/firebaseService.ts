@@ -172,48 +172,10 @@ export async function getMachines(): Promise<Machine[]> {
             });
         }
 
-        // 2. Fetch parts to discover legacy/inferred machines
-        const partsRef = ref(database, COLLECTIONS.PARTS);
-        const partsSnapshot = await get(partsRef);
-
-        if (partsSnapshot.exists()) {
-            partsSnapshot.forEach((childSnapshot) => {
-                const part = childSnapshot.val();
-                const machineName = part.machineName || part.machine || "Unknown Machine";
-                const zone = part.Location || part.zone || "No Zone";
-                const location = part.location || "";
-
-                if (machineName) {
-                    if (!machinesMap.has(machineName)) {
-                        // Create new inferred machine
-                        machinesMap.set(machineName, {
-                            id: machineName,
-                            name: machineName,
-                            description: "",
-                            Location: zone,
-                            location: location,
-                            status: "active",
-                            imageUrl: part.imageUrl || "",
-                            serialNumber: "",
-                            installationDate: "",
-                            brandModel: "",
-                            operatingHours: 0,
-                            capacity: "",
-                            powerRating: "",
-                            maintenanceCycle: 0,
-                            createdAt: new Date(),
-                            updatedAt: new Date(),
-                        });
-                    } else {
-                        // Enrich existing machine if it lacks image/Location/location
-                        const existing = machinesMap.get(machineName)!;
-                        if (!existing.imageUrl && part.imageUrl) existing.imageUrl = part.imageUrl;
-                        if (existing.Location === "No Zone" && zone && zone !== "No Zone") existing.Location = zone;
-                        if (!existing.location && location) existing.location = location;
-                    }
-                }
-            });
-        }
+        // REMOVED: Legacy machine discovery from parts (Performance Bottleneck)
+        // Previous implementation fetched ALL parts to find machines not in the registry.
+        // This caused severe scalability issues (loading thousands of parts on every dashboard load).
+        // If legacy machines are missing, they should be added to the 'machines' collection explicitly.
 
         // Sort by name
         return Array.from(machinesMap.values()).sort((a, b) => a.name.localeCompare(b.name));
