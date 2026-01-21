@@ -5,6 +5,7 @@ import { LanguageProvider } from "./contexts/LanguageContext";
 import { AuthProvider } from "./contexts/AuthContext";
 import { ToastProvider } from "./contexts/ToastContext";
 import MaintenanceWrapper from "./components/MaintenanceWrapper";
+import { ErrorBoundary } from "./components/ErrorBoundary";
 
 const promptFont = Prompt({
   weight: ["300", "400", "500", "600", "700"],
@@ -43,15 +44,17 @@ export default function RootLayout({
   return (
     <html lang="th" className="dark" suppressHydrationWarning>
       <body className={`${promptFont.className} bg-bg-primary text-text-primary min-h-screen antialiased`} suppressHydrationWarning>
-        <LanguageProvider>
-          <ToastProvider>
-            <AuthProvider>
-              <MaintenanceWrapper>
-                {children}
-              </MaintenanceWrapper>
-            </AuthProvider>
-          </ToastProvider>
-        </LanguageProvider>
+        <ErrorBoundary>
+          <LanguageProvider>
+            <ToastProvider>
+              <AuthProvider>
+                <MaintenanceWrapper>
+                  {children}
+                </MaintenanceWrapper>
+              </AuthProvider>
+            </ToastProvider>
+          </LanguageProvider>
+        </ErrorBoundary>
       </body>
     </html>
   );
