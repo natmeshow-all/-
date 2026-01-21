@@ -452,31 +452,40 @@ export async function getParts(): Promise<Part[]> {
 export async function getPartsByMachine(machineId: string): Promise<Part[]> {
     try {
         const partsRef = ref(database, COLLECTIONS.PARTS);
-        const snapshot = await get(partsRef);
+        const partsQuery = query(partsRef, orderByChild("machineId"), equalTo(machineId));
+        const snapshot = await get(partsQuery);
 
         if (!snapshot.exists()) return [];
 
         const parts: Part[] = [];
         snapshot.forEach((childSnapshot) => {
             const data = childSnapshot.val();
-            // Client-side filtering for machineId to avoid index error
-            // Also handle legacy 'machine' field if needed, but primarily machineId
-            if (data.machineId === machineId) {
-                const imageUrl = data.image || data.image_url || data.imageUrl || "";
-                parts.push({
-                    id: childSnapshot.key!,
-                    ...data,
-                    imageUrl,
-                    createdAt: data.createdAt ? new Date(data.createdAt) : new Date(),
-                    updatedAt: data.updatedAt ? new Date(data.updatedAt) : new Date(),
-                });
-            }
+            
+            // Map image_url to imageUrl if existing
+            const imageUrl = data.image || data.image_url || data.imageUrl || "";
+            
+            // Map legacy fields for consistency with getParts
+            const quantity = data.quantity !== undefined ? data.quantity : (data.qty !== undefined ? data.qty : 0);
+            const modelSpec = data.modelSpec || data.model || "";
+            const machineName = data.machineName || data.machine || "";
+
+            parts.push({
+                id: childSnapshot.key!,
+                ...data,
+                imageUrl,
+                quantity,
+                modelSpec,
+                machineName,
+                Location: data.Location || data.zone || "",
+                createdAt: data.createdAt ? new Date(data.createdAt) : new Date(),
+                updatedAt: data.updatedAt ? new Date(data.updatedAt) : new Date(),
+            });
         });
 
         return parts.sort((a, b) => b.updatedAt.getTime() - a.updatedAt.getTime());
     } catch (error) {
         console.error("Error fetching parts by machine:", error);
-        return [];
+        throw error;
     }
 }
 
