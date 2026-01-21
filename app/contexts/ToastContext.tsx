@@ -38,7 +38,7 @@ export function ToastProvider({ children }: { children: ReactNode }) {
                 type,
                 title,
                 message,
-                duration: duration || 4000,
+                duration: duration || 3000,
             };
             setToasts((prev) => [...prev, newToast]);
         },
@@ -46,27 +46,27 @@ export function ToastProvider({ children }: { children: ReactNode }) {
     );
 
     const success = useCallback(
-        (title: string, message?: string) => showToast("success", title, message),
+        (title: string, message?: string) => showToast("success", title, message, 3000),
         [showToast]
     );
 
     const error = useCallback(
-        (title: string, message?: string) => showToast("error", title, message, 6000),
+        (title: string, message?: string) => showToast("error", title, message, 3000),
         [showToast]
     );
 
     const warning = useCallback(
-        (title: string, message?: string) => showToast("warning", title, message, 5000),
+        (title: string, message?: string) => showToast("warning", title, message, 3000),
         [showToast]
     );
 
     const info = useCallback(
-        (title: string, message?: string) => showToast("info", title, message),
+        (title: string, message?: string) => showToast("info", title, message, 3000),
         [showToast]
     );
 
     const loginRequired = useCallback(
-        () => showToast("error", t("msgNoEditPermission") || "คุณไม่มีสิทธ์แก้ไข", t("msgPleaseLogin") || "กรุณาล็อกอิน", 5000),
+        () => showToast("error", t("msgNoEditPermission") || "คุณไม่มีสิทธ์แก้ไข", t("msgPleaseLogin") || "กรุณาล็อกอิน", 3000),
         [showToast, t]
     );
 

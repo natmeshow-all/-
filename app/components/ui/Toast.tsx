@@ -18,10 +18,10 @@ interface ToastProps {
 }
 
 const iconMap = {
-    success: <CheckIcon size={48} className="text-white" />,
-    error: <CloseIcon size={48} className="text-white" />,
-    warning: <AlertTriangleIcon size={48} className="text-white" />,
-    info: <InfoIcon size={48} className="text-white" />,
+    success: <CheckIcon size={24} className="text-white" />,
+    error: <CloseIcon size={24} className="text-white" />,
+    warning: <AlertTriangleIcon size={24} className="text-white" />,
+    info: <InfoIcon size={24} className="text-white" />,
 };
 
 const colorMap = {
@@ -30,6 +30,8 @@ const colorMap = {
     warning: "bg-accent-yellow shadow-accent-yellow/20",
     info: "bg-accent-cyan shadow-accent-cyan/20",
 };
+
+// ... (colorMap lines 27-32 skipped as they remain same)
 
 export function Toast({ toast, onClose }: ToastProps) {
     const [isVisible, setIsVisible] = useState(false);
@@ -68,10 +70,10 @@ export function Toast({ toast, onClose }: ToastProps) {
         <div
             className={`
                 pointer-events-auto
-                relative flex flex-col items-center justify-center p-8 rounded-3xl 
+                relative flex items-center justify-start p-4 rounded-xl 
                 bg-bg-secondary border border-white/10
-                shadow-2xl shadow-black/50 backdrop-blur-md
-                min-w-[320px] max-w-md text-center
+                shadow-xl shadow-black/40 backdrop-blur-md
+                min-w-[280px] max-w-sm text-left gap-4
                 transform transition-all duration-300 ease-out
                 ${isVisible && !isExiting
                     ? "opacity-100 scale-100 translate-y-0"
@@ -81,33 +83,32 @@ export function Toast({ toast, onClose }: ToastProps) {
         >
             {/* Icon Bubble */}
             <div className={`
-                w-20 h-20 rounded-full flex items-center justify-center mb-6
-                shadow-lg ${colorMap[toast.type]}
-                border-4 border-bg-secondary
+                w-10 h-10 rounded-full flex-shrink-0 flex items-center justify-center
+                shadow-md ${colorMap[toast.type]}
+                border-2 border-bg-secondary
             `}>
                 {iconMap[toast.type]}
             </div>
 
             {/* Content */}
-            <h3 className="text-2xl font-bold text-white mb-2 tracking-tight">
-                {toast.title}
-            </h3>
-            {toast.message && (
-                <p className="text-text-muted text-base mb-6 leading-relaxed">
-                    {toast.message}
-                </p>
-            )}
+            <div className="flex-1 min-w-0">
+                <h3 className="text-base font-bold text-white leading-tight">
+                    {toast.title}
+                </h3>
+                {toast.message && (
+                    <p className="text-text-muted text-sm mt-0.5 leading-snug truncate">
+                        {toast.message}
+                    </p>
+                )}
+            </div>
 
-            {/* Close Button (Icon) Top Right */}
+            {/* Close Button (Icon) */}
             <button
                 onClick={handleClose}
-                className="absolute top-4 right-4 p-2 rounded-full hover:bg-white/5 text-text-muted hover:text-white transition-colors"
+                className="flex-shrink-0 p-1 rounded-full hover:bg-white/5 text-text-muted hover:text-white transition-colors"
             >
-                <XIcon size={20} />
+                <XIcon size={16} />
             </button>
-
-            {/* Close Button (Action) */}
-            {/* Optional: Add a text button for better usability if needed, but icon is fine per design */}
         </div>
     );
 }
@@ -124,22 +125,14 @@ export function ToastContainer({ toasts, onClose }: ToastContainerProps) {
     return (
         <div
             className={`
-                fixed inset-0 z-[100] flex items-center justify-center 
+                fixed inset-0 z-[100] flex items-end justify-center pb-8 pointer-events-none
                 transition-all duration-300
-                ${hasToasts ? "pointer-events-auto" : "pointer-events-none"}
             `}
         >
-            {/* Backdrop */}
-            <div
-                className={`
-                    absolute inset-0 bg-black/60 backdrop-blur-sm transition-opacity duration-300
-                    ${hasToasts ? "opacity-100" : "opacity-0"}
-                `}
-                aria-hidden="true"
-            />
+            {/* No Backdrop for smaller toasts to be less intrusive */}
 
             {/* Toasts Stack */}
-            <div className="relative z-10 flex flex-col items-center gap-4">
+            <div className="relative z-10 flex flex-col items-center gap-3">
                 {toasts.map((toast) => (
                     <Toast key={toast.id} toast={toast} onClose={onClose} />
                 ))}
