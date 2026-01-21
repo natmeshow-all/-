@@ -9,7 +9,7 @@ import StockHistoryModal from "../components/forms/StockHistoryModal";
 import PartDetailsModal from "../components/parts/PartDetailsModal";
 import ConfirmModal from "../components/ui/ConfirmModal";
 import { useLanguage } from "../contexts/LanguageContext";
-import { getSpareParts, deleteSparePart } from "../lib/firebaseService";
+import { getSparePartsPaginated, searchSpareParts, deleteSparePart } from "../lib/firebaseService";
 import { SparePart } from "../types";
 import { useAuth } from "../contexts/AuthContext";
 import { useToast } from "../contexts/ToastContext";
@@ -35,22 +35,69 @@ export default function PartsPage() {
     const [parts, setParts] = useState<SparePart[]>([]);
     const [loading, setLoading] = useState(true);
     const [expandedParts, setExpandedParts] = useState<Record<string, boolean>>({});
+    
+    // Pagination State
+    const [lastCursor, setLastCursor] = useState<{name: string, id: string} | null>(null);
+    const [hasMore, setHasMore] = useState(true);
+    const [isSearching, setIsSearching] = useState(false);
+    const [loadingMore, setLoadingMore] = useState(false);
 
-    const fetchParts = async () => {
+    const loadParts = async (isLoadMore = false) => {
+        if (loading || loadingMore) return;
+        
         try {
-            setLoading(true);
-            const data = await getSpareParts();
-            setParts(data);
+            if (isLoadMore) {
+                if (!hasMore || isSearching) return;
+                setLoadingMore(true);
+                const { parts: newParts, lastItem } = await getSparePartsPaginated(20, lastCursor?.name, lastCursor?.id);
+                setParts(prev => [...prev, ...newParts]);
+                setLastCursor(lastItem);
+                setHasMore(!!lastItem);
+            } else {
+                setLoading(true);
+                // Initial load or reset
+                const { parts: newParts, lastItem } = await getSparePartsPaginated(20);
+                setParts(newParts);
+                setLastCursor(lastItem);
+                setHasMore(!!lastItem);
+            }
         } catch (error) {
             console.error("Error fetching spare parts:", error);
         } finally {
             setLoading(false);
+            setLoadingMore(false);
+        }
+    };
+
+    const performSearch = async (query: string) => {
+        if (!query) {
+            setIsSearching(false);
+            setParts([]);
+            setLastCursor(null);
+            setHasMore(true);
+            setLoading(false); 
+            loadParts(false);
+        } else {
+            setIsSearching(true);
+            setLoading(true);
+            try {
+                const results = await searchSpareParts(query);
+                setParts(results);
+                setHasMore(false);
+            } catch (err) {
+                console.error("Error searching parts:", err);
+            } finally {
+                setLoading(false);
+            }
         }
     };
 
     useEffect(() => {
-        fetchParts();
-    }, []);
+        const timer = setTimeout(() => {
+            performSearch(searchQuery);
+        }, 500);
+        return () => clearTimeout(timer);
+    }, [searchQuery]);
 
     const openStockModal = (part: SparePart, type: "restock" | "withdraw") => {
         if (!checkAuth()) return;
@@ -96,7 +143,7 @@ export default function PartsPage() {
             try {
                 setLoading(true);
                 await deleteSparePart(partToDelete.id);
-                await fetchParts();
+                await loadParts(false);
                 success(t("msgDeleteSuccess") || "ลบข้อมูลเรียบร้อยแล้ว");
             } catch (err) {
                 console.error("Error deleting part:", err);
@@ -115,11 +162,7 @@ export default function PartsPage() {
         openStockModal(part, "withdraw");
     };
 
-    const filteredParts = parts.filter(part =>
-        part.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
-        (part.category && part.category.toLowerCase().includes(searchQuery.toLowerCase())) ||
-        (part.description && part.description.toLowerCase().includes(searchQuery.toLowerCase()))
-    );
+    const filteredParts = parts;
 
     const toggleExpand = (id: string) => {
         setExpandedParts(prev => ({ ...prev, [id]: !prev[id] }));
@@ -380,6 +423,26 @@ export default function PartsPage() {
                             </div>
                         ))}
                     </div>
+
+                    {/* Load More Button */}
+                    {!isSearching && hasMore && (
+                        <div className="flex justify-center mt-8">
+                            <button
+                                onClick={() => loadParts(true)}
+                                disabled={loadingMore}
+                                className="btn btn-secondary px-8"
+                            >
+                                {loadingMore ? (
+                                    <span className="flex items-center gap-2">
+                                        <div className="w-4 h-4 rounded-full border-2 border-current border-t-transparent animate-spin" />
+                                        {t("loading") || "Loading..."}
+                                    </span>
+                                ) : (
+                                    t("actionLoadMore") || "Load More"
+                                )}
+                            </button>
+                        </div>
+                    )}
                 )}
 
                 {!loading && parts.length === 0 && (
@@ -408,14 +471,14 @@ export default function PartsPage() {
                     setAddModalOpen(false);
                     setPartToEdit(null);
                 }}
-                onSuccess={fetchParts}
+                onSuccess={() => loadParts(false)}
                 partToEdit={partToEdit}
             />
 
             <StockActionModal
                 isOpen={stockActionModalOpen}
                 onClose={() => setStockActionModalOpen(false)}
-                onSuccess={fetchParts}
+                onSuccess={() => loadParts(false)}
                 actionType={actionType}
                 part={selectedPart}
             />

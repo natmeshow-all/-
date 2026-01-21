@@ -25,7 +25,10 @@ import {
     remove,
     query,
     orderByChild,
-    equalTo
+    equalTo,
+    limitToFirst,
+    startAfter,
+    startAt
 } from "firebase/database";
 import {
     ref as storageRef,
@@ -515,6 +518,88 @@ export async function updatePart(
 export async function deletePart(id: string): Promise<void> {
     const partRef = ref(database, `${COLLECTIONS.PARTS}/${id}`);
     await remove(partRef);
+}
+
+export const deleteSparePart = deletePart;
+
+function mapSparePartData(key: string, data: any): SparePart {
+    return {
+        id: key,
+        name: data.name || data.partName || "Unknown Part",
+        partName: data.partName || data.name,
+        description: data.description || "",
+        model: data.model || data.modelSpec || "",
+        category: data.category || "other",
+        brand: data.brand || "",
+        notes: data.notes || "",
+        quantity: typeof data.quantity === 'number' ? data.quantity : 0,
+        unit: data.unit || "pcs",
+        minStockThreshold: typeof data.minStockThreshold === 'number' ? data.minStockThreshold : 0,
+        location: data.location || data.Location || "",
+        supplier: data.supplier || "",
+        pricePerUnit: data.pricePerUnit,
+        imageUrl: data.imageUrl || data.image_url || "",
+        parentId: data.parentId,
+        hasSubParts: data.hasSubParts,
+        createdAt: data.createdAt ? new Date(data.createdAt) : new Date(),
+        updatedAt: data.updatedAt ? new Date(data.updatedAt) : new Date(),
+    };
+}
+
+export async function getSparePartsPaginated(limit: number = 20, lastName?: string, lastId?: string): Promise<{ parts: SparePart[], lastItem: {name: string, id: string} | null }> {
+    const partsRef = ref(database, COLLECTIONS.PARTS);
+    let partsQuery;
+
+    if (lastName && lastId) {
+        partsQuery = query(partsRef, orderByChild("name"), startAfter(lastName, lastId), limitToFirst(limit));
+    } else {
+        partsQuery = query(partsRef, orderByChild("name"), limitToFirst(limit));
+    }
+
+    const snapshot = await get(partsQuery);
+    if (!snapshot.exists()) return { parts: [], lastItem: null };
+
+    const parts: SparePart[] = [];
+    let newLastItem = null;
+
+    snapshot.forEach((childSnapshot) => {
+        const part = mapSparePartData(childSnapshot.key!, childSnapshot.val());
+        parts.push(part);
+        newLastItem = { name: part.name, id: part.id };
+    });
+
+    return { parts, lastItem: newLastItem };
+}
+
+export async function searchSpareParts(queryText: string): Promise<SparePart[]> {
+    if (!queryText) return [];
+    
+    const partsRef = ref(database, COLLECTIONS.PARTS);
+    const partsQuery = query(partsRef, orderByChild("name"), startAt(queryText), endAt(queryText + "\uf8ff"));
+    const snapshot = await get(partsQuery);
+
+    if (!snapshot.exists()) return [];
+
+    const parts: SparePart[] = [];
+    snapshot.forEach((childSnapshot) => {
+        parts.push(mapSparePartData(childSnapshot.key!, childSnapshot.val()));
+    });
+    
+    return parts;
+}
+
+export async function getSpareParts(): Promise<SparePart[]> {
+    const partsRef = ref(database, COLLECTIONS.PARTS);
+    const snapshot = await get(partsRef);
+
+    if (!snapshot.exists()) return [];
+
+    const parts: SparePart[] = [];
+    snapshot.forEach((childSnapshot) => {
+        parts.push(mapSparePartData(childSnapshot.key!, childSnapshot.val()));
+    });
+
+    return parts.sort((a, b) => a.name.localeCompare(b.name));
 }
 
 // ==================== MAINTENANCE RECORDS ====================
@@ -1081,6 +1166,78 @@ export async function getSpareParts(): Promise<SparePart[]> {
     });
 
     return parts.sort((a, b) => a.name.localeCompare(b.name));
+}
+
+export async function getSparePartsPaginated(
+    limitCount: number = 20,
+    lastItemName?: string,
+    lastItemId?: string
+): Promise<{ parts: SparePart[], lastItem: { name: string, id: string } | null }> {
+    const partsRef = ref(database, "spare_parts");
+    let partsQuery;
+
+    if (lastItemName && lastItemId) {
+        partsQuery = query(
+            partsRef,
+            orderByChild("name"),
+            startAfter(lastItemName, lastItemId),
+            limitToFirst(limitCount)
+        );
+    } else {
+        partsQuery = query(
+            partsRef,
+            orderByChild("name"),
+            limitToFirst(limitCount)
+        );
+    }
+
+    const snapshot = await get(partsQuery);
+
+    if (!snapshot.exists()) return { parts: [], lastItem: null };
+
+    const parts: SparePart[] = [];
+    snapshot.forEach((childSnapshot) => {
+        const data = childSnapshot.val();
+        parts.push({
+            id: childSnapshot.key!,
+            ...data,
+            createdAt: data.createdAt ? new Date(data.createdAt) : new Date(),
+            updatedAt: data.updatedAt ? new Date(data.updatedAt) : new Date(),
+        });
+    });
+
+    const lastPart = parts[parts.length - 1];
+    const nextCursor = lastPart ? { name: lastPart.name, id: lastPart.id } : null;
+
+    return { parts, lastItem: nextCursor };
+}
+
+export async function searchSpareParts(queryText: string): Promise<SparePart[]> {
+    const partsRef = ref(database, "spare_parts");
+    const partsQuery = query(
+        partsRef,
+        orderByChild("name"),
+        startAt(queryText),
+        endAt(queryText + "\uf8ff"),
+        limitToFirst(50)
+    );
+
+    const snapshot = await get(partsQuery);
+
+    if (!snapshot.exists()) return [];
+
+    const parts: SparePart[] = [];
+    snapshot.forEach((childSnapshot) => {
+        const data = childSnapshot.val();
+        parts.push({
+            id: childSnapshot.key!,
+            ...data,
+            createdAt: data.createdAt ? new Date(data.createdAt) : new Date(),
+            updatedAt: data.updatedAt ? new Date(data.updatedAt) : new Date(),
+        });
+    });
+
+    return parts;
 }
 
 export async function addSparePart(

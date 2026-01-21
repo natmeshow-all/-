@@ -29,7 +29,8 @@
             ".read": "auth != null",
             ".write": "auth != null && (root.child('users').child(auth.uid).child('role').val() == 'admin' || root.child('users').child(auth.uid).child('role').val() == 'supervisor')",
             ".indexOn": [
-                "machineId"
+                "machineId",
+                "name"
             ],
             "$partId": {
                 ".validate": "newData.hasChildren(['name']) && newData.child('name').isString()"
@@ -66,7 +67,10 @@
         // ===== Spare Parts =====
         "spare_parts": {
             ".read": "auth != null",
-            ".write": "auth != null && (root.child('users').child(auth.uid).child('role').val() == 'admin' || root.child('users').child(auth.uid).child('role').val() == 'supervisor')"
+            ".write": "auth != null && (root.child('users').child(auth.uid).child('role').val() == 'admin' || root.child('users').child(auth.uid).child('role').val() == 'supervisor')",
+            ".indexOn": [
+                "name"
+            ]
         },
         // ===== Stock Transactions =====
         "stock_transactions": {
