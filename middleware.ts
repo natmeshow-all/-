@@ -7,12 +7,12 @@ export function middleware(request: NextRequest) {
     const nonce = Buffer.from(crypto.randomUUID()).toString('base64');
 
     // CSP Directives
-    // Note: 'unsafe-eval' and 'unsafe-inline' are currently enabled.
-    // Ideally, these should be removed in favor of nonces in a strict production environment.
+    // Note: 'unsafe-eval' is removed. 'unsafe-inline' is kept as fallback but nonce is added.
+    // Modern browsers will ignore 'unsafe-inline' if nonce is present.
     const cspHeader = `
     default-src 'self';
-    script-src 'self' 'unsafe-inline' https://apis.google.com;
-    style-src 'self' 'unsafe-inline' https://fonts.googleapis.com;
+    script-src 'self' 'nonce-${nonce}' 'unsafe-inline' https://apis.google.com;
+    style-src 'self' 'nonce-${nonce}' 'unsafe-inline' https://fonts.googleapis.com;
     img-src 'self' blob: data: https://firebasestorage.googleapis.com https://lh3.googleusercontent.com;
     font-src 'self' data: https://fonts.gstatic.com;
     object-src 'none';
