@@ -11,7 +11,7 @@ export function middleware(request: NextRequest) {
     // Ideally, these should be removed in favor of nonces in a strict production environment.
     const cspHeader = `
     default-src 'self';
-    script-src 'self' 'unsafe-eval' 'unsafe-inline' https://apis.google.com;
+    script-src 'self' 'unsafe-inline' https://apis.google.com;
     style-src 'self' 'unsafe-inline' https://fonts.googleapis.com;
     img-src 'self' blob: data: https://firebasestorage.googleapis.com https://lh3.googleusercontent.com;
     font-src 'self' data: https://fonts.gstatic.com;
