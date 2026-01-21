@@ -369,6 +369,26 @@ export async function deleteMachine(id: string): Promise<void> {
 
 // ==================== PARTS ====================
 
+// Helper to map legacy/varied part data to Part interface
+function mapPartData(key: string, data: any): Part {
+    const imageUrl = data.image || data.image_url || data.imageUrl || "";
+    const quantity = data.quantity !== undefined ? data.quantity : (data.qty !== undefined ? data.qty : 0);
+    const modelSpec = data.modelSpec || data.model || "";
+    const machineName = data.machineName || data.machine || "";
+
+    return {
+        id: key,
+        ...data,
+        imageUrl,
+        quantity,
+        modelSpec,
+        machineName,
+        Location: data.Location || data.zone || "",
+        createdAt: data.createdAt ? new Date(data.createdAt) : new Date(),
+        updatedAt: data.updatedAt ? new Date(data.updatedAt) : new Date(),
+    };
+}
+
 export async function getParts(): Promise<Part[]> {
     const partsRef = ref(database, COLLECTIONS.PARTS);
     const snapshot = await get(partsRef);
@@ -377,29 +397,7 @@ export async function getParts(): Promise<Part[]> {
 
     const parts: Part[] = [];
     snapshot.forEach((childSnapshot) => {
-        const data = childSnapshot.val();
-
-        // Handle legacy data structure
-        // Map image_url to imageUrl if existing
-        // Prioritize 'image' (legacy) -> 'image_url' (legacy) -> 'imageUrl' (new)
-        const imageUrl = data.image || data.image_url || data.imageUrl || "";
-
-        // Map legacy fields
-        const quantity = data.quantity !== undefined ? data.quantity : (data.qty !== undefined ? data.qty : 0);
-        const modelSpec = data.modelSpec || data.model || "";
-        const machineName = data.machineName || data.machine || "";
-
-        parts.push({
-            id: childSnapshot.key!,
-            ...data,
-            imageUrl,
-            quantity,
-            modelSpec,
-            machineName,
-            Location: data.Location || data.zone || "",
-            createdAt: data.createdAt ? new Date(data.createdAt) : new Date(),
-            updatedAt: data.updatedAt ? new Date(data.updatedAt) : new Date(),
-        });
+        parts.push(mapPartData(childSnapshot.key!, childSnapshot.val()));
     });
 
     // Sort by updatedAt desc (latest first)
@@ -426,27 +424,7 @@ export async function getPartsByMachine(machineId: string): Promise<Part[]> {
 
         const parts: Part[] = [];
         snapshot.forEach((childSnapshot) => {
-            const data = childSnapshot.val();
-            
-            // Map image_url to imageUrl if existing
-            const imageUrl = data.image || data.image_url || data.imageUrl || "";
-            
-            // Map legacy fields for consistency with getParts
-            const quantity = data.quantity !== undefined ? data.quantity : (data.qty !== undefined ? data.qty : 0);
-            const modelSpec = data.modelSpec || data.model || "";
-            const machineName = data.machineName || data.machine || "";
-
-            parts.push({
-                id: childSnapshot.key!,
-                ...data,
-                imageUrl,
-                quantity,
-                modelSpec,
-                machineName,
-                Location: data.Location || data.zone || "",
-                createdAt: data.createdAt ? new Date(data.createdAt) : new Date(),
-                updatedAt: data.updatedAt ? new Date(data.updatedAt) : new Date(),
-            });
+            parts.push(mapPartData(childSnapshot.key!, childSnapshot.val()));
         });
 
         return parts.sort((a, b) => b.updatedAt.getTime() - a.updatedAt.getTime());
