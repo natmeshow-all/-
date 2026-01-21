@@ -133,89 +133,94 @@ export async function getDynamicTranslations(): Promise<Record<string, string>> 
  * @returns Array of Machine objects sorted by name
  */
 export async function getMachines(): Promise<Machine[]> {
-    const machinesMap = new Map<string, Machine>();
+    try {
+        const machinesMap = new Map<string, Machine>();
 
-    // 1. Fetch explicit machine data first
-    const machinesRef = ref(database, COLLECTIONS.MACHINES);
-    const machinesSnapshot = await get(machinesRef);
+        // 1. Fetch explicit machine data first
+        const machinesRef = ref(database, COLLECTIONS.MACHINES);
+        const machinesSnapshot = await get(machinesRef);
 
-    if (machinesSnapshot.exists()) {
-        machinesSnapshot.forEach((child) => {
-            const data = child.val();
-            const machineId = child.key!;
-            const machineName = data.name || machineId;
+        if (machinesSnapshot.exists()) {
+            machinesSnapshot.forEach((child) => {
+                const data = child.val();
+                const machineId = child.key!;
+                const machineName = data.name || machineId;
 
-            machinesMap.set(machineName, {
-                id: machineId,
-                name: machineName,
-                code: data.code || "",
-                brand: data.brand || "",
-                model: data.model || "",
-                performance: data.performance || "",
-                remark: data.remark || "",
-                description: data.description || "",
-                Location: data.Location || data.zone || "No Zone",
-                location: data.location || "",
-                status: data.status || "active",
-                imageUrl: data.imageUrl || "",
-                serialNumber: data.serialNumber || "",
-                installationDate: data.installationDate || "",
-                brandModel: data.brandModel || "",
-                operatingHours: data.operatingHours || 0,
-                capacity: data.capacity || "",
-                powerRating: data.powerRating || "",
-                maintenanceCycle: data.maintenanceCycle || 0,
-                createdAt: data.createdAt ? new Date(data.createdAt) : new Date(),
-                updatedAt: data.updatedAt ? new Date(data.updatedAt) : new Date(),
+                machinesMap.set(machineName, {
+                    id: machineId,
+                    name: machineName,
+                    code: data.code || "",
+                    brand: data.brand || "",
+                    model: data.model || "",
+                    performance: data.performance || "",
+                    remark: data.remark || "",
+                    description: data.description || "",
+                    Location: data.Location || data.zone || "No Zone",
+                    location: data.location || "",
+                    status: data.status || "active",
+                    imageUrl: data.imageUrl || "",
+                    serialNumber: data.serialNumber || "",
+                    installationDate: data.installationDate || "",
+                    brandModel: data.brandModel || "",
+                    operatingHours: data.operatingHours || 0,
+                    capacity: data.capacity || "",
+                    powerRating: data.powerRating || "",
+                    maintenanceCycle: data.maintenanceCycle || 0,
+                    createdAt: data.createdAt ? new Date(data.createdAt) : new Date(),
+                    updatedAt: data.updatedAt ? new Date(data.updatedAt) : new Date(),
+                });
             });
-        });
-    }
+        }
 
-    // 2. Fetch parts to discover legacy/inferred machines
-    const partsRef = ref(database, COLLECTIONS.PARTS);
-    const partsSnapshot = await get(partsRef);
+        // 2. Fetch parts to discover legacy/inferred machines
+        const partsRef = ref(database, COLLECTIONS.PARTS);
+        const partsSnapshot = await get(partsRef);
 
-    if (partsSnapshot.exists()) {
-        partsSnapshot.forEach((childSnapshot) => {
-            const part = childSnapshot.val();
-            const machineName = part.machineName || part.machine || "Unknown Machine";
-            const zone = part.Location || part.zone || "No Zone";
-            const location = part.location || "";
+        if (partsSnapshot.exists()) {
+            partsSnapshot.forEach((childSnapshot) => {
+                const part = childSnapshot.val();
+                const machineName = part.machineName || part.machine || "Unknown Machine";
+                const zone = part.Location || part.zone || "No Zone";
+                const location = part.location || "";
 
-            if (machineName) {
-                if (!machinesMap.has(machineName)) {
-                    // Create new inferred machine
-                    machinesMap.set(machineName, {
-                        id: machineName,
-                        name: machineName,
-                        description: "",
-                        Location: zone,
-                        location: location,
-                        status: "active",
-                        imageUrl: part.imageUrl || "",
-                        serialNumber: "",
-                        installationDate: "",
-                        brandModel: "",
-                        operatingHours: 0,
-                        capacity: "",
-                        powerRating: "",
-                        maintenanceCycle: 0,
-                        createdAt: new Date(),
-                        updatedAt: new Date(),
-                    });
-                } else {
-                    // Enrich existing machine if it lacks image/Location/location
-                    const existing = machinesMap.get(machineName)!;
-                    if (!existing.imageUrl && part.imageUrl) existing.imageUrl = part.imageUrl;
-                    if (existing.Location === "No Zone" && zone && zone !== "No Zone") existing.Location = zone;
-                    if (!existing.location && location) existing.location = location;
+                if (machineName) {
+                    if (!machinesMap.has(machineName)) {
+                        // Create new inferred machine
+                        machinesMap.set(machineName, {
+                            id: machineName,
+                            name: machineName,
+                            description: "",
+                            Location: zone,
+                            location: location,
+                            status: "active",
+                            imageUrl: part.imageUrl || "",
+                            serialNumber: "",
+                            installationDate: "",
+                            brandModel: "",
+                            operatingHours: 0,
+                            capacity: "",
+                            powerRating: "",
+                            maintenanceCycle: 0,
+                            createdAt: new Date(),
+                            updatedAt: new Date(),
+                        });
+                    } else {
+                        // Enrich existing machine if it lacks image/Location/location
+                        const existing = machinesMap.get(machineName)!;
+                        if (!existing.imageUrl && part.imageUrl) existing.imageUrl = part.imageUrl;
+                        if (existing.Location === "No Zone" && zone && zone !== "No Zone") existing.Location = zone;
+                        if (!existing.location && location) existing.location = location;
+                    }
                 }
-            }
-        });
-    }
+            });
+        }
 
-    // Sort by name
-    return Array.from(machinesMap.values()).sort((a, b) => a.name.localeCompare(b.name));
+        // Sort by name
+        return Array.from(machinesMap.values()).sort((a, b) => a.name.localeCompare(b.name));
+    } catch (error) {
+        console.error("Error in getMachines:", error);
+        throw error;
+    }
 }
 
 /**
