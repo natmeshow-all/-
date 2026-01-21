@@ -422,27 +422,27 @@ export default function PartsPage() {
                                 </div>
                             </div>
                         ))}
-                    </div>
 
-                    {/* Load More Button */}
-                    {!isSearching && hasMore && (
-                        <div className="flex justify-center mt-8">
-                            <button
-                                onClick={() => loadParts(true)}
-                                disabled={loadingMore}
-                                className="btn btn-secondary px-8"
-                            >
-                                {loadingMore ? (
-                                    <span className="flex items-center gap-2">
-                                        <div className="w-4 h-4 rounded-full border-2 border-current border-t-transparent animate-spin" />
-                                        {t("loading") || "Loading..."}
-                                    </span>
-                                ) : (
-                                    t("actionLoadMore") || "Load More"
-                                )}
-                            </button>
-                        </div>
-                    )}
+                        {/* Load More Button */}
+                        {!isSearching && hasMore && (
+                            <div className="flex justify-center mt-8">
+                                <button
+                                    onClick={() => loadParts(true)}
+                                    disabled={loadingMore}
+                                    className="btn btn-secondary px-8"
+                                >
+                                    {loadingMore ? (
+                                        <span className="flex items-center gap-2">
+                                            <div className="w-4 h-4 rounded-full border-2 border-current border-t-transparent animate-spin" />
+                                            {t("loading") || "Loading..."}
+                                        </span>
+                                    ) : (
+                                        t("actionLoadMore") || "Load More"
+                                    )}
+                                </button>
+                            </div>
+                        )}
+                    </div>
                 )}
 
                 {!loading && parts.length === 0 && (

@@ -1,7 +1,9 @@
 export type Language = "th" | "en";
 
 export interface TranslationKeys {
-    // App
+    // Common
+    loading: string;
+    actionLoadMore: string;
     appTitle: string;
     appSubtitle: string;
     machineDetailsSubtitle: string;
@@ -705,6 +707,10 @@ export interface TranslationKeys {
 }
 
 const th: TranslationKeys = {
+    // Common
+    loading: "กำลังโหลด...",
+    actionLoadMore: "โหลดเพิ่มเติม",
+
     // App
     appTitle: "ระบบจัดการเครื่องจักร Art of Baking",
     appSubtitle: "PM TEAM REALTIME DATABASE",
@@ -1408,6 +1414,10 @@ const th: TranslationKeys = {
 };
 
 const en: TranslationKeys = {
+    // Common
+    loading: "Loading...",
+    actionLoadMore: "Load More",
+
     // App
     appTitle: "Machine Management - Art of Baking",
     appSubtitle: "PM TEAM REALTIME DATABASE",
