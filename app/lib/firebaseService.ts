@@ -124,6 +124,34 @@ export async function getDynamicTranslations(): Promise<Record<string, string>> 
 
 // ==================== MACHINES ====================
 
+// Helper to map machine data
+function mapMachineData(key: string, data: any): Machine {
+    const machineName = data.name || key;
+    return {
+        id: key,
+        name: machineName,
+        code: data.code || "",
+        brand: data.brand || "",
+        model: data.model || "",
+        performance: data.performance || "",
+        remark: data.remark || "",
+        description: data.description || "",
+        Location: data.Location || data.zone || "No Zone",
+        location: data.location || "",
+        status: data.status || "active",
+        imageUrl: data.imageUrl || "",
+        serialNumber: data.serialNumber || "",
+        installationDate: data.installationDate || "",
+        brandModel: data.brandModel || "",
+        operatingHours: data.operatingHours || 0,
+        capacity: data.capacity || "",
+        powerRating: data.powerRating || "",
+        maintenanceCycle: data.maintenanceCycle || 0,
+        createdAt: data.createdAt ? new Date(data.createdAt) : new Date(),
+        updatedAt: data.updatedAt ? new Date(data.updatedAt) : new Date(),
+    };
+}
+
 /**
  * Fetches all machines from the database.
  * 
@@ -146,32 +174,8 @@ export async function getMachines(): Promise<Machine[]> {
         if (machinesSnapshot.exists()) {
             machinesSnapshot.forEach((child) => {
                 const data = child.val();
-                const machineId = child.key!;
-                const machineName = data.name || machineId;
-
-                machinesMap.set(machineName, {
-                    id: machineId,
-                    name: machineName,
-                    code: data.code || "",
-                    brand: data.brand || "",
-                    model: data.model || "",
-                    performance: data.performance || "",
-                    remark: data.remark || "",
-                    description: data.description || "",
-                    Location: data.Location || data.zone || "No Zone",
-                    location: data.location || "",
-                    status: data.status || "active",
-                    imageUrl: data.imageUrl || "",
-                    serialNumber: data.serialNumber || "",
-                    installationDate: data.installationDate || "",
-                    brandModel: data.brandModel || "",
-                    operatingHours: data.operatingHours || 0,
-                    capacity: data.capacity || "",
-                    powerRating: data.powerRating || "",
-                    maintenanceCycle: data.maintenanceCycle || 0,
-                    createdAt: data.createdAt ? new Date(data.createdAt) : new Date(),
-                    updatedAt: data.updatedAt ? new Date(data.updatedAt) : new Date(),
-                });
+                const machine = mapMachineData(child.key!, data);
+                machinesMap.set(machine.name, machine);
             });
         }
 
@@ -261,27 +265,26 @@ export async function getMachine(id: string): Promise<Machine | null> {
 
     if (!snapshot.exists()) return null;
 
-    const data = snapshot.val();
-    return {
-        id: snapshot.key!,
-        ...data,
-        createdAt: data.createdAt ? new Date(data.createdAt) : new Date(),
-        updatedAt: data.updatedAt ? new Date(data.updatedAt) : new Date(),
-    };
+    return mapMachineData(snapshot.key!, snapshot.val());
 }
 
 export async function addMachine(machine: Omit<Machine, "id" | "createdAt" | "updatedAt">): Promise<string> {
     const machinesRef = ref(database, COLLECTIONS.MACHINES);
     const newMachineRef = push(machinesRef);
 
+    // Clean undefined values
+    const cleanMachine = Object.fromEntries(
+        Object.entries(machine).filter(([_, v]) => v !== undefined)
+    );
+
     await set(newMachineRef, {
-        ...machine,
+        ...cleanMachine,
         createdAt: new Date().toISOString(),
         updatedAt: new Date().toISOString(),
     });
 
     // Auto-translate relevant fields
-    syncTranslation(machine.name);
+    if (machine.name) syncTranslation(machine.name);
     if (machine.brand) syncTranslation(machine.brand);
     if (machine.model) syncTranslation(machine.model);
     if (machine.description) syncTranslation(machine.description);
@@ -378,10 +381,12 @@ function mapPartData(key: string, data: any): Part {
     const quantity = data.quantity !== undefined ? data.quantity : (data.qty !== undefined ? data.qty : 0);
     const modelSpec = data.modelSpec || data.model || "";
     const machineName = data.machineName || data.machine || "";
+    const partName = data.partName || data.name || "Unknown Part";
 
     return {
         id: key,
         ...data,
+        partName,
         imageUrl,
         quantity,
         modelSpec,
@@ -461,11 +466,17 @@ export async function addPart(
     // Create a clean object
     const { imageFile: _ignore, ...safePartData } = part as any;
 
+    // Clean undefined values
+    const cleanPartData = Object.fromEntries(
+        Object.entries(safePartData).filter(([_, v]) => v !== undefined)
+    );
+
     const partsRef = ref(database, COLLECTIONS.PARTS);
     const newPartRef = push(partsRef);
 
     await set(newPartRef, {
-        ...safePartData,
+        ...cleanPartData,
+        name: safePartData.partName || safePartData.name || "Unknown Part", // Ensure name is saved for indexing/validation
         imageUrl,
         // Save both camelCase and snake_case for compatibility if needed, or just new standard
         image_url: imageUrl,
@@ -499,6 +510,10 @@ export async function updatePart(
         ...data,
         updatedAt: new Date().toISOString(),
     };
+
+    if (data.partName) {
+        updateData.name = data.partName; // Ensure name stays in sync
+    }
 
     if (imageUrl !== undefined) {
         updateData.imageUrl = imageUrl;
@@ -631,6 +646,26 @@ export async function getMaintenanceRecords(): Promise<MaintenanceRecord[]> {
         return records.sort((a, b) => b.date.getTime() - a.date.getTime());
     } catch (error) {
         console.error("Error fetching maintenance records:", error);
+        throw error;
+    }
+}
+
+export async function getMaintenanceRecordsByType(type: MaintenanceType): Promise<MaintenanceRecord[]> {
+    try {
+        const recordsRef = ref(database, COLLECTIONS.MAINTENANCE_RECORDS);
+        const recordsQuery = query(recordsRef, orderByChild("type"), equalTo(type));
+        const snapshot = await get(recordsQuery);
+
+        if (!snapshot.exists()) return [];
+
+        const records: MaintenanceRecord[] = [];
+        snapshot.forEach((childSnapshot) => {
+            records.push(mapMaintenanceRecord(childSnapshot.key!, childSnapshot.val()));
+        });
+
+        return records.sort((a, b) => b.date.getTime() - a.date.getTime());
+    } catch (error) {
+        console.error(`Error fetching maintenance records by type ${type}:`, error);
         throw error;
     }
 }

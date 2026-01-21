@@ -44,7 +44,8 @@
                 "date",
                 "machineId",
                 "pmPlanId",
-                "partId"
+                "partId",
+                "type"
             ],
             "$recordId": {
                 ".validate": "newData.hasChildren(['machineId', 'date'])"
