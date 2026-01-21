@@ -3,14 +3,14 @@
         // ===== ข้อมูลผู้ใช้ =====
         "users": {
             "$uid": {
-                ".read": "auth != null && (auth.uid == $uid || root.child('users').child(auth.uid).child('role').val() == 'admin')",
+                ".read": "auth != null && (auth.uid == $uid || root.child('users').child(auth.uid).child('role').val() == 'admin' || root.child('users').child(auth.uid).child('role').val() == 'supervisor')",
                 ".write": "auth != null && (auth.uid == $uid || root.child('users').child(auth.uid).child('role').val() == 'admin')"
             },
-            ".read": "auth != null && root.child('users').child(auth.uid).child('role').val() == 'admin'"
+            ".read": "auth != null && (root.child('users').child(auth.uid).child('role').val() == 'admin' || root.child('users').child(auth.uid).child('role').val() == 'supervisor')"
         },
         // ===== ผู้ใช้รอ Approve =====
         "pendingUsers": {
-            ".read": "auth != null && root.child('users').child(auth.uid).child('role').val() == 'admin'",
+            ".read": "auth != null && (root.child('users').child(auth.uid).child('role').val() == 'admin' || root.child('users').child(auth.uid).child('role').val() == 'supervisor')",
             ".write": "auth != null",
             "$uid": {
                 ".read": "auth != null && auth.uid == $uid"
@@ -19,7 +19,10 @@
         // ===== เครื่องจักร =====
         "machines": {
             ".read": "auth != null",
-            ".write": "auth != null && (root.child('users').child(auth.uid).child('role').val() == 'admin' || root.child('users').child(auth.uid).child('role').val() == 'supervisor')"
+            ".write": "auth != null && (root.child('users').child(auth.uid).child('role').val() == 'admin' || root.child('users').child(auth.uid).child('role').val() == 'supervisor')",
+            "$machineId": {
+                ".validate": "newData.hasChildren(['name']) && newData.child('name').isString()"
+            }
         },
         // ===== Parts =====
         "parts": {
@@ -27,7 +30,10 @@
             ".write": "auth != null && (root.child('users').child(auth.uid).child('role').val() == 'admin' || root.child('users').child(auth.uid).child('role').val() == 'supervisor')",
             ".indexOn": [
                 "machineId"
-            ]
+            ],
+            "$partId": {
+                ".validate": "newData.hasChildren(['name']) && newData.child('name').isString()"
+            }
         },
         // ===== Maintenance Records =====
         "maintenance_records": {
@@ -38,7 +44,10 @@
                 "machineId",
                 "pmPlanId",
                 "partId"
-            ]
+            ],
+            "$recordId": {
+                ".validate": "newData.hasChildren(['machineId', 'date'])"
+            }
         },
         // ===== PM Plans =====
         "pm_plans": {
@@ -51,17 +60,17 @@
         },
         // ===== Schedules =====
         "schedules": {
-            ".read": true,
+            ".read": "auth != null",
             ".write": "auth != null && root.child('users').child(auth.uid).child('isApproved').val() == true && root.child('users').child(auth.uid).child('role').val() != 'viewer'"
         },
         // ===== Spare Parts =====
         "spare_parts": {
-            ".read": true,
+            ".read": "auth != null",
             ".write": "auth != null && (root.child('users').child(auth.uid).child('role').val() == 'admin' || root.child('users').child(auth.uid).child('role').val() == 'supervisor')"
         },
         // ===== Stock Transactions =====
         "stock_transactions": {
-            ".read": true,
+            ".read": "auth != null",
             ".write": "auth != null && root.child('users').child(auth.uid).child('isApproved').val() == true",
             ".indexOn": [
                 "partId"
@@ -69,12 +78,12 @@
         },
         // ===== Image Hashes =====
         "image_hashes": {
-            ".read": true,
+            ".read": "auth != null",
             ".write": "auth != null"
         },
         // ===== Sensor Readings =====
         "sensor_readings": {
-            ".read": true,
+            ".read": "auth != null",
             ".write": "auth != null && root.child('users').child(auth.uid).child('isApproved').val() == true",
             ".indexOn": [
                 "machineId",
@@ -117,7 +126,7 @@
         },
         // ===== System Settings (Public read for maintenance mode check) =====
         "system_settings": {
-            ".read": true,
+            ".read": "auth != null",
             ".write": "auth != null && (root.child('users').child(auth.uid).child('role').val() == 'admin' || root.child('users').child(auth.uid).child('role').val() == 'supervisor')"
         }
     }
