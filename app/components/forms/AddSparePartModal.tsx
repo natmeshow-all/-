@@ -9,18 +9,19 @@ import {
 } from "../ui/Icons";
 import { useLanguage } from "../../contexts/LanguageContext";
 import { useToast } from "../../contexts/ToastContext";
-import { addSparePart } from "../../lib/firebaseService";
+import { addSparePart, updateSparePart } from "../../lib/firebaseService";
 import { SparePart } from "../../types";
-import { mockPartNames } from "../../data/mockData";
+import { PART_NAMES } from "../../constants";
 
 interface AddSparePartModalProps {
     isOpen: boolean;
     onClose: () => void;
     onSuccess: () => void;
     initialParentId?: string; // Optional: prepopulate if adding sub-part from a parent
+    partToEdit?: SparePart | null; // Optional: part to edit
 }
 
-export default function AddSparePartModal({ isOpen, onClose, onSuccess, initialParentId }: AddSparePartModalProps) {
+export default function AddSparePartModal({ isOpen, onClose, onSuccess, initialParentId, partToEdit }: AddSparePartModalProps) {
     const { t } = useLanguage();
     const { success, error: showError } = useToast();
     const [loading, setLoading] = useState(false);
@@ -44,12 +45,46 @@ export default function AddSparePartModal({ isOpen, onClose, onSuccess, initialP
     const [imageFile, setImageFile] = useState<File | null>(null);
     const [previewUrl, setPreviewUrl] = useState<string | null>(null);
 
-    // Simplified effect without parent fetching
+    // Populate form when editing
     React.useEffect(() => {
-        if (isOpen) {
-            // No data fetching needed for parent selection anymore
+        if (isOpen && partToEdit) {
+            setFormData({
+                name: partToEdit.name || "",
+                category: partToEdit.category || "bearing",
+                quantity: partToEdit.quantity || 0,
+                unit: partToEdit.unit || "pcs",
+                minStockThreshold: partToEdit.minStockThreshold || 3,
+                location: partToEdit.location || "",
+                supplier: partToEdit.supplier || "",
+                pricePerUnit: partToEdit.pricePerUnit?.toString() || "",
+                description: partToEdit.description || "",
+                model: partToEdit.model || "",
+                customCategory: partToEdit.category && !["bearing", "belt", "oil", "filter", "seal", "other"].includes(partToEdit.category) ? partToEdit.category : "",
+            });
+            setIsCustomName(!PART_NAMES.includes(partToEdit.name || ""));
+            if (partToEdit.imageUrl) {
+                setPreviewUrl(partToEdit.imageUrl);
+            }
+        } else if (isOpen && !partToEdit) {
+            // Reset form when adding new
+            setFormData({
+                name: "",
+                category: "bearing",
+                quantity: 0,
+                unit: "pcs",
+                minStockThreshold: 3,
+                location: "",
+                supplier: "",
+                pricePerUnit: "",
+                description: "",
+                model: "",
+                customCategory: "",
+            });
+            setIsCustomName(false);
+            setPreviewUrl(null);
+            setImageFile(null);
         }
-    }, [isOpen]);
+    }, [isOpen, partToEdit]);
 
     if (!isOpen) return null;
 
@@ -72,7 +107,7 @@ export default function AddSparePartModal({ isOpen, onClose, onSuccess, initialP
         setLoading(true);
 
         try {
-            await addSparePart({
+            const partData = {
                 name: formData.name,
                 category: formData.category === 'other' ? formData.customCategory : formData.category,
                 quantity: Number(formData.quantity),
@@ -82,11 +117,20 @@ export default function AddSparePartModal({ isOpen, onClose, onSuccess, initialP
                 supplier: formData.supplier,
                 pricePerUnit: formData.pricePerUnit ? Number(formData.pricePerUnit) : undefined,
                 description: formData.description,
-                model: formData.model, // Pass model to service
-            }, imageFile || undefined);
+                model: formData.model,
+            };
+
+            if (partToEdit) {
+                // Update existing part
+                await updateSparePart(partToEdit.id, partData, imageFile || undefined);
+                success(t("msgEditPartSuccess") || "แก้ไขอะไหล่สำเร็จ!", t("msgEditPartDetail", { name: formData.name }));
+            } else {
+                // Add new part
+                await addSparePart(partData, imageFile || undefined);
+                success(t("msgAddPartSuccess") || "เพิ่มอะไหล่สำเร็จ!", t("msgAddPartDetail", { name: formData.name }));
+            }
 
             onSuccess();
-            success(t("msgAddPartSuccess") || "เพิ่มอะไหล่สำเร็จ!", t("msgAddPartDetail", { name: formData.name }));
             onClose();
             // Reset form
             setFormData({
@@ -105,7 +149,7 @@ export default function AddSparePartModal({ isOpen, onClose, onSuccess, initialP
             setImageFile(null);
             setPreviewUrl(null);
         } catch (error: any) {
-            console.error("Error adding spare part:", error);
+            console.error(`Error ${partToEdit ? 'updating' : 'adding'} spare part:`, error);
             showError(t("msgSaveError") || "ไม่สามารถบันทึกได้", error.message);
         } finally {
             setLoading(false);
@@ -166,7 +210,7 @@ export default function AddSparePartModal({ isOpen, onClose, onSuccess, initialP
                             {!isCustomName ? (
                                 <select
                                     name="name"
-                                    value={mockPartNames.includes(formData.name) ? formData.name : (formData.name ? "other" : "")}
+                                    value={PART_NAMES.includes(formData.name) ? formData.name : (formData.name ? "other" : "")}
                                     onChange={(e) => {
                                         const val = e.target.value;
                                         if (val === "other") {
@@ -179,7 +223,7 @@ export default function AddSparePartModal({ isOpen, onClose, onSuccess, initialP
                                     className="input w-full bg-bg-tertiary border-white/10 focus:border-primary/50"
                                 >
                                     <option value="">-- เลือกชื่ออะไหล่หลัก --</option>
-                                    {mockPartNames.map(name => (
+                                    {PART_NAMES.map((name: string) => (
                                         <option key={name} value={name}>{name}</option>
                                     ))}
                                     <option value="other">{t("optionOther") || "อื่นๆ (ระบุ)"}</option>

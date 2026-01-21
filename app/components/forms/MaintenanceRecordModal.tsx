@@ -27,7 +27,7 @@ import {
     ImageIcon,
     TrashIcon,
 } from "../ui/Icons";
-import { mockMachines, mockVoltageOptions } from "../../data/mockData";
+import { VOLTAGE_OPTIONS } from "../../constants";
 import { MaintenanceRecordFormData, MaintenanceType, VibrationLevel, Part, Machine, SparePart } from "../../types";
 import { getParts, getMachines, getSpareParts } from "../../lib/firebaseService";
 import { useEffect } from "react";

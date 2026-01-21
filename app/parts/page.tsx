@@ -20,6 +20,7 @@ export default function PartsPage() {
     const { user, checkAuth, isAdmin } = useAuth();
     const { success, error } = useToast();
     const [addModalOpen, setAddModalOpen] = useState(false);
+    const [partToEdit, setPartToEdit] = useState<SparePart | null>(null);
     const [stockActionModalOpen, setStockActionModalOpen] = useState(false);
     const [historyModalOpen, setHistoryModalOpen] = useState(false);
     const [detailsModalOpen, setDetailsModalOpen] = useState(false);
@@ -70,9 +71,13 @@ export default function PartsPage() {
 
     const handleEditPart = (part: SparePart) => {
         if (!checkAuth()) return;
+        if (!isAdmin) {
+            error(t("msgNoEditPermission") || "คุณไม่มีสิทธ์แก้ไข");
+            return;
+        }
         setDetailsModalOpen(false);
-        // TODO: Implement Edit Modal or pre-fill Add Modal
-        console.log("Edit part:", part);
+        setPartToEdit(part);
+        setAddModalOpen(true);
     };
 
     const handleDeleteClick = (part: SparePart) => {
@@ -399,8 +404,12 @@ export default function PartsPage() {
 
             <AddSparePartModal
                 isOpen={addModalOpen}
-                onClose={() => setAddModalOpen(false)}
+                onClose={() => {
+                    setAddModalOpen(false);
+                    setPartToEdit(null);
+                }}
                 onSuccess={fetchParts}
+                partToEdit={partToEdit}
             />
 
             <StockActionModal

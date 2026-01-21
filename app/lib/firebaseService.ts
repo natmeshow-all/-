@@ -1,4 +1,20 @@
-// Firebase service functions for Maintenance Dashboard using Realtime Database
+/**
+ * @fileoverview Firebase Realtime Database service layer for the Maintenance Dashboard.
+ * 
+ * This module provides all data access functions for:
+ * - Machines (equipment registry)
+ * - Parts (machine components)
+ * - Spare Parts (inventory management)
+ * - Maintenance Records (work history)
+ * - PM Plans (preventive maintenance scheduling)
+ * - Stock Transactions (inventory movements)
+ * - User Management (profiles and permissions)
+ * 
+ * All functions handle data transformation, legacy field mapping, and error handling.
+ * Auto-translation is triggered for Thai text when saving records.
+ * 
+ * @module firebaseService
+ */
 
 import {
     ref,
@@ -105,10 +121,17 @@ export async function getDynamicTranslations(): Promise<Record<string, string>> 
 
 // ==================== MACHINES ====================
 
-// ==================== MACHINES ====================
-
-// ==================== MACHINES ====================
-
+/**
+ * Fetches all machines from the database.
+ * 
+ * This function performs a two-step process:
+ * 1. Fetches explicit machine records from the machines collection
+ * 2. Discovers legacy/inferred machines from parts data (for backward compatibility)
+ * 
+ * Machines are merged and deduplicated by name, with explicit records taking precedence.
+ * 
+ * @returns Array of Machine objects sorted by name
+ */
 export async function getMachines(): Promise<Machine[]> {
     const machinesMap = new Map<string, Machine>();
 
@@ -195,6 +218,17 @@ export async function getMachines(): Promise<Machine[]> {
     return Array.from(machinesMap.values()).sort((a, b) => a.name.localeCompare(b.name));
 }
 
+/**
+ * Updates or creates a machine record with a new image.
+ * 
+ * If machineId is provided, updates the existing machine.
+ * Otherwise, searches for a machine by name or creates a new record.
+ * 
+ * @param machineName - Name of the machine
+ * @param file - Image file to upload (will be compressed)
+ * @param machineId - Optional machine ID for direct update
+ * @returns Download URL of the uploaded image
+ */
 export async function updateMachineImage(machineName: string, file: File, machineId?: string): Promise<string> {
     try {
         // 1. Compress Image
@@ -285,6 +319,19 @@ export async function addMachine(machine: Omit<Machine, "id" | "createdAt" | "up
     return newMachineRef.key!;
 }
 
+/**
+ * Updates a machine record and performs cascading updates if the name changes.
+ * 
+ * When a machine name is changed, this function updates all related records:
+ * - Parts (via machineId lookup)
+ * - Maintenance Records (via machineId lookup)
+ * - Schedules (via machineId lookup)
+ * 
+ * Note: Legacy parts without machineId may not be updated automatically.
+ * 
+ * @param id - Machine ID
+ * @param data - Partial machine data to update
+ */
 export async function updateMachine(id: string, data: Partial<Machine>): Promise<void> {
     const machineRef = ref(database, `${COLLECTIONS.MACHINES}/${id}`);
 
@@ -392,7 +439,16 @@ export async function getParts(): Promise<Part[]> {
     return parts.sort((a, b) => b.updatedAt.getTime() - a.updatedAt.getTime());
 }
 
-// Fallback: Fetch all parts and filter by machine name (client-side filtering)
+/**
+ * Fetches all parts for a specific machine.
+ * 
+ * This is a fallback function that fetches all parts and filters client-side.
+ * For better performance with large datasets, consider adding an index on machineId
+ * and using Firebase queries instead.
+ * 
+ * @param machineId - Machine ID to filter parts by
+ * @returns Array of Part objects for the specified machine
+ */
 export async function getPartsByMachine(machineId: string): Promise<Part[]> {
     try {
         const partsRef = ref(database, COLLECTIONS.PARTS);
@@ -1536,6 +1592,17 @@ export async function getTechnicianEvaluations(technicianId: string): Promise<Pe
 
 /**
  * Fetches metrics about a technician's work for AI evaluation.
+ * 
+ * This function aggregates maintenance records and PM plans to calculate:
+ * - Total completed tasks (preventive vs corrective)
+ * - On-time completion rate
+ * - Average note length (as a proxy for technical knowledge)
+ * 
+ * Note: PM plan statistics are currently incomplete and may need enhancement.
+ * 
+ * @param technicianName - Name of the technician
+ * @param userId - User ID of the technician
+ * @returns Object containing work metrics and statistics
  */
 export async function getTechnicianWorkMetrics(technicianName: string, userId: string) {
     const recordsRef = ref(database, COLLECTIONS.MAINTENANCE_RECORDS);

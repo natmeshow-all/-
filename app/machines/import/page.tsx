@@ -3,7 +3,7 @@
 import React, { useState } from "react";
 import { useLanguage } from "../../contexts/LanguageContext";
 import { addMachine } from "../../lib/firebaseService";
-import machinesData from "../../data/machines_import_7.json";
+import machinesData from "../../../scripts/import/machines_import_7.json";
 import Header from "../../components/Header";
 import MobileNav from "../../components/MobileNav";
 

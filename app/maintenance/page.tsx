@@ -34,7 +34,6 @@ import {
     TargetIcon,
     ImageIcon,
 } from "../components/ui/Icons";
-import { mockMaintenanceRecords } from "../data/mockData";
 
 import RecordDetailsModal from "../components/pm/RecordDetailsModal";
 

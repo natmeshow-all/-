@@ -18,7 +18,7 @@ import {
     AlertTriangleIcon,
     XIcon,
 } from "../ui/Icons";
-import { mockPartNames } from "../../data/mockData";
+import { PART_NAMES } from "../../constants";
 import { AddPartFormData, PartCategory, Part, Machine } from "../../types";
 import Image from "next/image";
 
@@ -90,7 +90,7 @@ export default function AddPartModal({ isOpen, onClose, onSuccess, partToEdit }:
                 notes: partToEdit.notes || "",
             });
             // Check if current part name is custom
-            if (partToEdit.partName && !mockPartNames.includes(partToEdit.partName)) {
+            if (partToEdit.partName && !PART_NAMES.includes(partToEdit.partName)) {
                 setIsCustomPartName(true);
             } else {
                 setIsCustomPartName(false);
@@ -316,7 +316,7 @@ export default function AddPartModal({ isOpen, onClose, onSuccess, partToEdit }:
                         {!isCustomPartName ? (
                             <select
                                 name="selectPartName"
-                                value={mockPartNames.includes(formData.partName) ? formData.partName : (formData.partName ? "other" : "")}
+                                value={PART_NAMES.includes(formData.partName) ? formData.partName : (formData.partName ? "other" : "")}
                                 onChange={(e) => {
                                     const value = e.target.value;
                                     if (value === "other") {
@@ -329,7 +329,7 @@ export default function AddPartModal({ isOpen, onClose, onSuccess, partToEdit }:
                                 className="input select"
                             >
                                 <option value="">{t("addPartSelectPart")}</option>
-                                {mockPartNames.map(name => (
+                                {PART_NAMES.map((name: string) => (
                                     <option key={name} value={name}>{name}</option>
                                 ))}
                                 <option value="other">{t("optionOther") || "Other (Specify)"}</option>
