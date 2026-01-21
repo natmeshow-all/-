@@ -519,37 +519,75 @@ export async function deletePart(id: string): Promise<void> {
 
 // ==================== MAINTENANCE RECORDS ====================
 
+// Helper to map maintenance record data
+function mapMaintenanceRecord(key: string, data: any): MaintenanceRecord {
+    return {
+        id: key,
+        ...data,
+        date: data.date ? new Date(data.date) : new Date(),
+        createdAt: data.createdAt ? new Date(data.createdAt) : new Date(),
+        updatedAt: data.updatedAt ? new Date(data.updatedAt) : new Date(),
+    };
+}
+
 export async function getMaintenanceRecords(): Promise<MaintenanceRecord[]> {
-    const recordsRef = ref(database, COLLECTIONS.MAINTENANCE_RECORDS);
-    const snapshot = await get(recordsRef);
+    try {
+        const recordsRef = ref(database, COLLECTIONS.MAINTENANCE_RECORDS);
+        const snapshot = await get(recordsRef);
 
-    if (!snapshot.exists()) return [];
+        if (!snapshot.exists()) return [];
 
-    const records: MaintenanceRecord[] = [];
-    snapshot.forEach((childSnapshot) => {
-        const data = childSnapshot.val();
-        records.push({
-            id: childSnapshot.key!,
-            ...data,
-            date: data.date ? new Date(data.date) : new Date(),
-            createdAt: data.createdAt ? new Date(data.createdAt) : new Date(),
-            updatedAt: data.updatedAt ? new Date(data.updatedAt) : new Date(),
+        const records: MaintenanceRecord[] = [];
+        snapshot.forEach((childSnapshot) => {
+            records.push(mapMaintenanceRecord(childSnapshot.key!, childSnapshot.val()));
         });
-    });
 
-    // Sort by date desc (client-side)
-    return records.sort((a, b) => b.date.getTime() - a.date.getTime());
+        // Sort by date desc (client-side)
+        return records.sort((a, b) => b.date.getTime() - a.date.getTime());
+    } catch (error) {
+        console.error("Error fetching maintenance records:", error);
+        throw error;
+    }
 }
 
 export async function getMaintenanceRecordsByMachine(machineId: string): Promise<MaintenanceRecord[]> {
-    // Client-side filtering because RTDB can only query by one property
-    const allRecords = await getMaintenanceRecords();
-    return allRecords.filter(r => r.machineId === machineId);
+    try {
+        const recordsRef = ref(database, COLLECTIONS.MAINTENANCE_RECORDS);
+        const recordsQuery = query(recordsRef, orderByChild("machineId"), equalTo(machineId));
+        const snapshot = await get(recordsQuery);
+
+        if (!snapshot.exists()) return [];
+
+        const records: MaintenanceRecord[] = [];
+        snapshot.forEach((childSnapshot) => {
+            records.push(mapMaintenanceRecord(childSnapshot.key!, childSnapshot.val()));
+        });
+
+        return records.sort((a, b) => b.date.getTime() - a.date.getTime());
+    } catch (error) {
+        console.error("Error fetching maintenance records by machine:", error);
+        throw error;
+    }
 }
 
 export async function getMaintenanceRecordsByPMPlan(planId: string): Promise<MaintenanceRecord[]> {
-    const allRecords = await getMaintenanceRecords();
-    return allRecords.filter(r => r.pmPlanId === planId);
+    try {
+        const recordsRef = ref(database, COLLECTIONS.MAINTENANCE_RECORDS);
+        const recordsQuery = query(recordsRef, orderByChild("pmPlanId"), equalTo(planId));
+        const snapshot = await get(recordsQuery);
+
+        if (!snapshot.exists()) return [];
+
+        const records: MaintenanceRecord[] = [];
+        snapshot.forEach((childSnapshot) => {
+            records.push(mapMaintenanceRecord(childSnapshot.key!, childSnapshot.val()));
+        });
+
+        return records.sort((a, b) => b.date.getTime() - a.date.getTime());
+    } catch (error) {
+        console.error("Error fetching maintenance records by PM plan:", error);
+        throw error;
+    }
 }
 
 export async function addMaintenanceRecord(record: Omit<MaintenanceRecord, "id" | "createdAt" | "updatedAt">): Promise<string> {
