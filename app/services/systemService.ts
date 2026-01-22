@@ -23,6 +23,11 @@ export async function logAuditEvent(
     details?: string
 ): Promise<void> {
     try {
+        if (!userId) {
+            console.warn("Attempted to log audit event without userId");
+            return;
+        }
+
         const logRef = push(ref(database, AUDIT_LOGS_PATH));
 
         // Build log data, filtering out undefined values (Firebase doesn't accept undefined)

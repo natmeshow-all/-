@@ -115,10 +115,18 @@ export async function getMaintenanceRecordsPaginated(
     }
 }
 
-export async function getMaintenanceRecords(): Promise<MaintenanceRecord[]> {
+export async function getMaintenanceRecords(limit?: number): Promise<MaintenanceRecord[]> {
     try {
         const recordsRef = ref(database, COLLECTIONS.MAINTENANCE_RECORDS);
-        const snapshot = await get(recordsRef);
+        let recordsQuery;
+
+        if (limit) {
+            recordsQuery = query(recordsRef, orderByChild("date"), limitToLast(limit));
+        } else {
+            recordsQuery = recordsRef;
+        }
+
+        const snapshot = await get(recordsQuery);
 
         if (!snapshot.exists()) return [];
 
@@ -219,6 +227,10 @@ export async function uploadMaintenanceEvidence(file: File): Promise<string> {
 
 export async function addMaintenanceRecord(record: Omit<MaintenanceRecord, "id" | "createdAt" | "updatedAt">): Promise<string> {
     try {
+        if (!record.machineId) throw new Error("Machine ID is required");
+        if (!record.date) throw new Error("Date is required");
+        if (!record.type) throw new Error("Maintenance type is required");
+
         const recordsRef = ref(database, COLLECTIONS.MAINTENANCE_RECORDS);
         const newRecordRef = push(recordsRef);
         const now = new Date();
@@ -298,6 +310,8 @@ export async function updateMaintenanceRecord(
     data: Partial<MaintenanceRecord>
 ): Promise<void> {
     try {
+        if (!id) throw new Error("Maintenance Record ID is required for update");
+        
         const recordRef = ref(database, `${COLLECTIONS.MAINTENANCE_RECORDS}/${id}`);
 
         const updateData: any = {

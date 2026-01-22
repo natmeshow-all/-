@@ -147,7 +147,7 @@ export default function Dashboard() {
       setLoading(true);
       const [statsData, partsData, machinesData] = await Promise.all([
         getDashboardStats(),
-        getParts(),
+        getParts(500), // Limit to 500 newest parts for performance
         getMachines()
       ]);
       setStats(statsData);

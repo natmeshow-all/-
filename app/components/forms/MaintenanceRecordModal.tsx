@@ -49,47 +49,14 @@ const maintenanceTypes: { value: MaintenanceType; labelKey: keyof TranslationKey
     { value: "inspection", labelKey: "typeInspection" },
 ];
 
-const VibrationSection: React.FC<{
-    axis: string;
-    axisLabel: string;
-    value: string;
-    level: VibrationLevel;
-    onValueChange: (value: string) => void;
-    onLevelChange: (level: VibrationLevel) => void;
-    t: (key: keyof TranslationKeys) => string;
-}> = ({ axis, axisLabel, value, level, onValueChange, onLevelChange, t }) => (
-    <div className="bg-bg-primary/50 rounded-lg p-3 border border-border-light">
-        <h4 className="text-sm font-medium text-text-primary mb-2">{axisLabel}</h4>
-        <input
-            type="text"
-            value={value}
-            onChange={(e) => onValueChange(e.target.value)}
-            placeholder={t("placeholderVibration")}
-            className="input text-sm mb-2"
-        />
-        <div className="space-y-1">
-            {(["normal", "medium", "abnormal"] as VibrationLevel[]).map((lvl) => (
-                <label key={lvl} className="flex items-center gap-2 cursor-pointer">
-                    <input
-                        type="radio"
-                        name={`vibration-${axis}`}
-                        checked={level === lvl}
-                        onChange={() => onLevelChange(lvl)}
-                        className="w-3 h-3 accent-primary"
-                    />
-                    <span className={`text-xs ${lvl === "normal" ? "text-accent-green" :
-                        lvl === "medium" ? "text-accent-yellow" :
-                            "text-accent-red"
-                        }`}>
-                        {lvl === "normal" ? `✓ ${t("maintenanceVibrationNormal")}` :
-                            lvl === "medium" ? `⚠ ${t("maintenanceVibrationMedium")}` :
-                                `✕ ${t("maintenanceVibrationAbnormal")}`}
-                    </span>
-                </label>
-            ))}
-        </div>
-    </div>
-);
+import VibrationSection from "./maintenance/VibrationSection";
+import MotorDataSection from "./maintenance/MotorDataSection";
+import VoltageSection from "./maintenance/VoltageSection";
+import AdvancedTrackingSection from "./maintenance/AdvancedTrackingSection";
+import ShaftDataSection from "./maintenance/ShaftDataSection";
+import PeriodSelectorSection from "./maintenance/PeriodSelectorSection";
+import EvidenceImageSection from "./maintenance/EvidenceImageSection";
+import DetailsNotesSection from "./maintenance/DetailsNotesSection";
 
 export default function MaintenanceRecordModal({
     isOpen,
@@ -774,32 +741,11 @@ export default function MaintenanceRecordModal({
                 {/* Section: Period Selector (For Preventive Only) */}
                 {
                     formData.type === "preventive" && (
-                        <div className="form-section animate-fade-in mt-4">
-                            <h3 className="form-section-title">
-                                <ClockIcon size={16} />
-                                {t("labelPeriod")}
-                            </h3>
-                            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                                <div>
-                                    <label className="label">
-                                        <RefreshCwIcon size={14} />
-                                        {t("labelPeriod")}
-                                    </label>
-                                    <select
-                                        name="period"
-                                        value={formData.period || "routine"}
-                                        onChange={handleInputChange}
-                                        className="input select"
-                                    >
-                                        <option value="routine">{t("periodRoutine")}</option>
-                                        <option value="1month">{t("period1Month")}</option>
-                                        <option value="3months">{t("period3Months")}</option>
-                                        <option value="6months">{t("period6Months")}</option>
-                                        <option value="1year">{t("period1Year")}</option>
-                                    </select>
-                                </div>
-                            </div>
-                        </div>
+                        <PeriodSelectorSection
+                            period={formData.period || "routine"}
+                            onInputChange={handleInputChange}
+                            t={t}
+                        />
                     )
                 }
 
@@ -812,46 +758,14 @@ export default function MaintenanceRecordModal({
                                 {t("maintenanceMotorGearInfo")}
                             </h3>
 
-                            {/* Motor Size */}
-                            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                                {/* Motor Size */}
-                                <div className="mb-4">
-                                    <label className="label">
-                                        <SettingsIcon size={14} />
-                                        {t("maintenanceMotorSize")}
-                                        <span className="text-text-muted font-normal ml-1">
-                                            {t("maintenanceMotorSizeHint")}
-                                        </span>
-                                    </label>
-                                    <input
-                                        type="text"
-                                        name="motorSize"
-                                        value={formData.motorSize}
-                                        onChange={handleInputChange}
-                                        placeholder={t("placeholderMotorSize")}
-                                        className="input"
-                                    />
-                                </div>
-
-                                {/* Temperature */}
-                                <div className="mb-4 text-left">
-                                    <label className="label">
-                                        <ThermometerIcon size={14} />
-                                        {t("maintenanceTemperature")}
-                                        <span className="text-text-muted font-normal ml-1">
-                                            {t("maintenanceTemperatureHint")}
-                                        </span>
-                                    </label>
-                                    <input
-                                        type="text"
-                                        name="temperature"
-                                        value={formData.temperature}
-                                        onChange={handleInputChange}
-                                        placeholder={t("placeholderTemperature")}
-                                        className="input"
-                                    />
-                                </div>
-                            </div>
+                            {/* Motor Size & Temperature */}
+                            <MotorDataSection
+                                motorSize={formData.motorSize}
+                                temperature={formData.temperature}
+                                onMotorSizeChange={(v) => handleInputChange({ target: { name: 'motorSize', value: v } } as any)}
+                                onTemperatureChange={(v) => handleInputChange({ target: { name: 'temperature', value: v } } as any)}
+                                t={t}
+                            />
 
                             {/* Vibration */}
                             <div className="mb-4">
@@ -890,66 +804,16 @@ export default function MaintenanceRecordModal({
                                 </div>
                             </div>
 
-                            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                                {/* Voltage */}
-                                <div className="mb-4">
-                                    <label className="label">
-                                        <ZapIcon size={14} />
-                                        {t("maintenanceVoltage")}
-                                    </label>
-                                    <div className="grid grid-cols-3 gap-3">
-                                        {["L1", "L2", "L3"].map((phase, index) => (
-                                            <div key={phase}>
-                                                <span className="text-xs text-text-muted mb-1 block">{phase} (V)</span>
-                                                <input
-                                                    type="text"
-                                                    name={`voltageL${index + 1}`}
-                                                    value={formData[`voltageL${index + 1}` as keyof MaintenanceRecordFormData] as string}
-                                                    onChange={handleInputChange}
-                                                    placeholder="e.g. 380"
-                                                    className="input text-sm px-2"
-                                                />
-                                            </div>
-                                        ))}
-                                    </div>
-                                </div>
-
-                                {/* Current */}
-                                <div className="mb-4">
-                                    <label className="label">
-                                        <ZapIcon size={14} />
-                                        {t("maintenanceCurrent")}
-                                    </label>
-                                    <div className="grid grid-cols-2 gap-3">
-                                        <div>
-                                            <span className="text-xs text-text-muted mb-1 block">
-                                                {t("maintenanceCurrentIdle")}
-                                            </span>
-                                            <input
-                                                type="text"
-                                                name="currentIdle"
-                                                value={formData.currentIdle}
-                                                onChange={handleInputChange}
-                                                placeholder={t("placeholderCurrentIdle")}
-                                                className="input"
-                                            />
-                                        </div>
-                                        <div>
-                                            <span className="text-xs text-text-muted mb-1 block">
-                                                {t("maintenanceCurrentLoad")}
-                                            </span>
-                                            <input
-                                                type="text"
-                                                name="currentLoad"
-                                                value={formData.currentLoad}
-                                                onChange={handleInputChange}
-                                                placeholder={t("placeholderCurrentLoad")}
-                                                className="input"
-                                            />
-                                        </div>
-                                    </div>
-                                </div>
-                            </div>
+                            <VoltageSection
+                                voltageL1={formData.voltageL1 || ""}
+                                voltageL2={formData.voltageL2 || ""}
+                                voltageL3={formData.voltageL3 || ""}
+                                currentIdle={formData.currentIdle}
+                                currentLoad={formData.currentLoad}
+                                onVoltageChange={(phase, v) => handleInputChange({ target: { name: `voltage${phase}`, value: v } } as any)}
+                                onCurrentChange={(type, v) => handleInputChange({ target: { name: type === 'idle' ? 'currentIdle' : 'currentLoad', value: v } } as any)}
+                                t={t}
+                            />
 
                             <p className="mt-2 text-xs text-text-muted flex items-center gap-1">
                                 <InfoIcon size={12} />
@@ -962,302 +826,52 @@ export default function MaintenanceRecordModal({
                 {/* Section: Advanced Tracking (Lifespan & Analysis) */}
                 {
                     (formData.partId || formData.isOverhaul || formData.type === "partReplacement") && (
-                        <div className="form-section animate-fade-in border-l-2 border-l-primary/50">
-                            <div className="flex items-center justify-between mb-3">
-                                <h3 className="form-section-title !mb-0 text-primary-light">
-                                    <TrendingUpIcon size={16} />
-                                    {t("maintenanceAdvancedTracking")}
-                                </h3>
-                                <span className="text-[10px] bg-primary/20 text-primary px-2 py-0.5 rounded-full uppercase font-bold tracking-wider">
-                                    {t("labelAnalysisMode")}
-                                </span>
-                            </div>
-
-                            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                                {/* Left: Hours and Dates */}
-                                <div className="space-y-4">
-                                    {/* Machine Hours Reading */}
-                                    <div>
-                                        <label className="label">
-                                            <ClockIcon size={14} />
-                                            {t("maintenanceMachineHours")}
-                                        </label>
-                                        <div className="relative">
-                                            <input
-                                                type="number"
-                                                name="machineHours"
-                                                value={formData.machineHours}
-                                                onChange={handleInputChange}
-                                                placeholder="0.00"
-                                                className="input pl-9"
-                                            />
-                                            <div className="absolute left-3 top-1/2 -translate-y-1/2 text-text-muted">
-                                                <TrendingUpIcon size={16} />
-                                            </div>
-                                            <div className="absolute right-3 top-1/2 -translate-y-1/2 text-xs text-text-muted">
-                                                {t("labelHoursShort")}
-                                            </div>
-                                        </div>
-                                    </div>
-
-                                    {/* Previous Replacement Date & Lifespan */}
-                                    <div className="grid grid-cols-2 gap-4">
-                                        <div>
-                                            <label className="label">
-                                                <CalendarIcon size={14} />
-                                                {t("labelPreviousReplacementDate")}
-                                            </label>
-                                            <input
-                                                type="date"
-                                                name="previousReplacementDate"
-                                                value={formData.previousReplacementDate || ""}
-                                                onChange={handleInputChange}
-                                                className="input"
-                                            />
-                                        </div>
-                                        <div>
-                                            <label className="label">
-                                                <ClockIcon size={14} />
-                                                {t("labelUsagePeriod") || t("labelPartLifespan")}
-                                            </label>
-                                            <input
-                                                type="text"
-                                                name="partLifespan"
-                                                value={formData.partLifespan || ""}
-                                                readOnly
-                                                placeholder={t("placeholderAutoCalc")}
-                                                className="input bg-bg-tertiary/50 text-text-muted cursor-not-allowed"
-                                            />
-                                        </div>
-                                    </div>
-                                </div>
-
-                                {/* Right: Analysis (Reason & Condition) */}
-                                <div className="grid grid-cols-2 gap-4">
-                                    <div className="bg-bg-primary/30 p-3 rounded-lg border border-border-light/50">
-                                        <label className="label">
-                                            <AlertTriangleIcon size={14} className="text-accent-yellow" />
-                                            {t("maintenanceChangeReason")}
-                                        </label>
-                                        <div className="grid grid-cols-1 gap-1.5 mt-2">
-                                            {[
-                                                { val: "worn", label: "maintenanceReasonWorn" },
-                                                { val: "failed", label: "maintenanceReasonFailed" },
-                                                { val: "planned", label: "maintenanceReasonPlanned" },
-                                                { val: "improvement", label: "maintenanceReasonImprovement" }
-                                            ].map((reason) => (
-                                                <label key={reason.val} className="flex items-center gap-2 cursor-pointer p-1 rounded-md hover:bg-bg-tertiary transition-colors group">
-                                                    <input
-                                                        type="radio"
-                                                        name="changeReason"
-                                                        checked={formData.changeReason === reason.val}
-                                                        onChange={() => setFormData(prev => ({ ...prev, changeReason: reason.val }))}
-                                                        className="w-3 h-3 accent-primary"
-                                                    />
-                                                    <span className={`text-[11px] ${formData.changeReason === reason.val ? 'text-primary font-bold' : 'text-text-secondary group-hover:text-text-primary'}`}>
-                                                        {t(reason.label as keyof TranslationKeys)}
-                                                    </span>
-                                                </label>
-                                            ))}
-                                        </div>
-                                    </div>
-
-                                    <div className="bg-bg-primary/30 p-3 rounded-lg border border-border-light/50">
-                                        <label className="label">
-                                            <InfoIcon size={14} className="text-accent-cyan" />
-                                            {t("maintenanceOldPartStatus")}
-                                        </label>
-                                        <div className="grid grid-cols-1 gap-1.5 mt-2">
-                                            {[
-                                                { val: "good", label: "maintenanceConditionGood" },
-                                                { val: "fair", label: "maintenanceConditionFair" },
-                                                { val: "poor", label: "maintenanceConditionPoor" },
-                                                { val: "broken", label: "maintenanceConditionBroken" }
-                                            ].map((cond) => (
-                                                <label key={cond.val} className="flex items-center gap-2 cursor-pointer p-1 rounded-md hover:bg-bg-tertiary transition-colors group">
-                                                    <input
-                                                        type="radio"
-                                                        name="partCondition"
-                                                        checked={formData.partCondition === cond.val}
-                                                        onChange={() => setFormData(prev => ({ ...prev, partCondition: cond.val }))}
-                                                        className="w-3 h-3 accent-primary"
-                                                    />
-                                                    <span className={`text-[11px] ${formData.partCondition === cond.val ? 'text-primary font-bold' : 'text-text-secondary group-hover:text-text-primary'}`}>
-                                                        {t(cond.label as keyof TranslationKeys)}
-                                                    </span>
-                                                </label>
-                                            ))}
-                                        </div>
-                                    </div>
-                                </div>
-                            </div>
-
-                            {/* Predicted Lifespan setting */}
-                            <div className="mt-4 pt-4 border-t border-border-light/50">
-                                <label className="label">
-                                    <RefreshCwIcon size={14} />
-                                    {t("labelMaintenanceCycle")}
-                                </label>
-                                <div className="grid grid-cols-2 gap-2">
-                                    <input
-                                        type="number"
-                                        name="lifespanValue"
-                                        value={formData.lifespanValue}
-                                        onChange={handleInputChange}
-                                        placeholder="0"
-                                        className="input"
-                                    />
-                                    <select
-                                        name="lifespanUnit"
-                                        value={formData.lifespanUnit}
-                                        onChange={handleInputChange}
-                                        className="input select"
-                                    >
-                                        <option value="months">{t("labelMonths")}</option>
-                                        <option value="years">{t("labelYears")}</option>
-                                    </select>
-                                </div>
-                                <p className="text-[10px] text-text-muted mt-2 pl-1">
-                                    * {t("msgMaintenanceDocHint")}
-                                </p>
-                            </div>
-                        </div>
+                        <AdvancedTrackingSection
+                            machineHours={formData.machineHours}
+                            previousReplacementDate={formData.previousReplacementDate || null}
+                            partLifespan={formData.partLifespan || null}
+                            changeReason={formData.changeReason}
+                            partCondition={formData.partCondition}
+                            lifespanValue={formData.lifespanValue}
+                            lifespanUnit={formData.lifespanUnit}
+                            onInputChange={handleInputChange}
+                            onReasonChange={(val) => setFormData(prev => ({ ...prev, changeReason: val }))}
+                            onConditionChange={(val) => setFormData(prev => ({ ...prev, partCondition: val }))}
+                            t={t}
+                        />
                     )
                 }
 
                 {/* Section 4: Shaft & Dial Gauge Data - Hide for part changes, Show for 3 Months+ or specific parts */}
                 {
                     (formData.type === 'preventive' && formData.period && ['3months', '6months', '1year'].includes(formData.period)) && (
-
-                        <div className="form-section animate-fade-in">
-                            <h3 className="form-section-title">
-                                <RulerIcon size={16} />
-                                {t("maintenanceShaftInfo")}
-                            </h3>
-                            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                                <div>
-                                    <label className="label">
-                                        <TargetIcon size={14} />
-                                        {t("maintenanceShaftBend")}
-                                    </label>
-                                    <input
-                                        type="text"
-                                        name="shaftBend"
-                                        value={formData.shaftBend}
-                                        onChange={handleInputChange}
-                                        placeholder={t("placeholderShaftBend")}
-                                        className="input"
-                                    />
-                                </div>
-                                <div>
-                                    <label className="label">
-                                        <RulerIcon size={14} />
-                                        {t("maintenanceDialGauge")}
-                                    </label>
-                                    <input
-                                        type="text"
-                                        name="dialGauge"
-                                        value={formData.dialGauge}
-                                        onChange={handleInputChange}
-                                        placeholder={t("placeholderDialGauge")}
-                                        className="input"
-                                    />
-                                </div>
-                            </div>
-                        </div>
+                        <ShaftDataSection
+                            shaftBend={formData.shaftBend}
+                            dialGauge={formData.dialGauge}
+                            onInputChange={handleInputChange}
+                            t={t}
+                        />
                     )
                 }
 
                 {/* Section: Evidence Image Upload */}
-                <div className="form-section">
-                    <h3 className="form-section-title">
-                        <ImageIcon size={16} />
-                        {t("labelEvidenceImage")}
-                    </h3>
-                    <div className="space-y-3">
-                        {/* Image Preview */}
-                        {imagePreview && (
-                            <div className="relative w-full max-w-xs mx-auto">
-                                <img
-                                    src={imagePreview}
-                                    alt="Preview"
-                                    className="w-full h-auto rounded-lg border border-border-light shadow-sm"
-                                />
-                                <button
-                                    type="button"
-                                    onClick={handleRemoveImage}
-                                    className="absolute top-2 right-2 p-1.5 rounded-full bg-accent-red/80 text-white hover:bg-accent-red transition-colors shadow-md"
-                                    title={t("actionRemoveImage")}
-                                >
-                                    <TrashIcon size={14} />
-                                </button>
-                            </div>
-                        )}
-
-                        {/* File Input */}
-                        {!imagePreview && (
-                            <label className="flex flex-col items-center justify-center w-full h-32 rounded-lg border-2 border-dashed border-border-light hover:border-primary/50 bg-bg-tertiary/30 hover:bg-bg-tertiary/50 cursor-pointer transition-all group">
-                                <div className="flex flex-col items-center justify-center pt-5 pb-6">
-                                    <ImageIcon size={32} className="text-text-muted group-hover:text-primary transition-colors mb-2" />
-                                    <p className="text-sm text-text-muted group-hover:text-text-primary">{t("placeholderChooseImage")}</p>
-                                </div>
-                                <input
-                                    type="file"
-                                    accept="image/*"
-                                    className="hidden"
-                                    onChange={handleImageChange}
-                                />
-                            </label>
-                        )}
-
-                        {uploadingImage && (
-                            <div className="flex items-center justify-center gap-2 text-sm text-text-muted">
-                                <span className="animate-spin rounded-full h-4 w-4 border-b-2 border-primary"></span>
-                                <span>กำลังอัปโหลดรูปภาพ...</span>
-                            </div>
-                        )}
-                    </div>
-                </div>
+                <EvidenceImageSection
+                    imagePreview={imagePreview}
+                    uploadingImage={uploadingImage}
+                    onImageChange={handleImageChange}
+                    onRemoveImage={handleRemoveImage}
+                    t={t}
+                />
 
                 {/* Section 5: Details & Notes - Hide for part changes */}
                 {
                     !isPartChange && (
-                        <div className="form-section">
-                            <h3 className="form-section-title">
-                                <FileTextIcon size={16} />
-                                {t("maintenanceDetailsNotes")}
-                            </h3>
-                            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                                <div>
-                                    <label className="label">
-                                        <FileTextIcon size={14} />
-                                        {t("maintenanceDetailDescription")}
-                                    </label>
-                                    <textarea
-                                        name="details"
-                                        value={formData.details}
-                                        onChange={handleInputChange}
-                                        placeholder={t("placeholderMaintenanceDetails")}
-                                        rows={4}
-                                        className="input resize-none"
-                                    />
-                                </div>
-                                <div>
-                                    <label className="label">
-                                        <EditIcon size={14} />
-                                        {t("maintenanceAdditionalNotes")}
-                                    </label>
-                                    <textarea
-                                        name="notes"
-                                        value={formData.notes}
-                                        onChange={handleInputChange}
-                                        placeholder={t("placeholderAdditionalNotes")}
-                                        rows={4}
-                                        className="input resize-none"
-                                    />
-                                </div>
-                            </div>
-                        </div>
+                        <DetailsNotesSection
+                            details={formData.details}
+                            notes={formData.notes}
+                            onInputChange={handleInputChange}
+                            t={t}
+                        />
                     )
                 }
             </div >

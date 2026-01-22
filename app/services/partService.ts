@@ -236,10 +236,18 @@ export async function deletePartImage(imageUrl: string): Promise<void> {
 
 // ==================== PARTS ====================
 
-export async function getParts(): Promise<Part[]> {
+export async function getParts(limit?: number): Promise<Part[]> {
     try {
         const partsRef = ref(database, COLLECTIONS.PARTS);
-        const snapshot = await get(partsRef);
+        let partsQuery;
+
+        if (limit) {
+            partsQuery = query(partsRef, orderByChild("updatedAt"), limitToLast(limit));
+        } else {
+            partsQuery = partsRef;
+        }
+
+        const snapshot = await get(partsQuery);
 
         if (!snapshot.exists()) return [];
 
@@ -583,6 +591,8 @@ export async function addSparePart(
     imageFile?: File
 ): Promise<string> {
     try {
+        if (!part.name) throw new Error("Spare part name is required");
+        
         let imageUrl = "";
         if (imageFile) {
             imageUrl = await uploadPartImage(imageFile); // Reuse part image upload for now
@@ -618,6 +628,8 @@ export async function updateSparePart(
     imageFile?: File
 ): Promise<void> {
     try {
+        if (!id) throw new Error("Spare part ID is required for update");
+
         let imageUrl = data.imageUrl;
 
         if (imageFile) {
@@ -656,6 +668,10 @@ export async function adjustStock(
     evidenceImageFile?: File
 ): Promise<void> {
     try {
+        if (!transaction.partId) throw new Error("Part ID is required for stock adjustment");
+        if (!transaction.type) throw new Error("Transaction type is required");
+        if (transaction.quantity === undefined || transaction.quantity === null) throw new Error("Quantity is required");
+
         // 1. Upload Evidence Image if provided
         let evidenceImageUrl = "";
         if (evidenceImageFile) {

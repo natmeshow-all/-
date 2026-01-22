@@ -9,7 +9,7 @@ import { useLanguage } from "../contexts/LanguageContext";
 import { useAuth } from "../contexts/AuthContext";
 import { useToast } from "../contexts/ToastContext";
 import { formatDateThai } from "../lib/dateUtils";
-import { getMaintenanceRecords, deleteMaintenanceRecord, getMachines } from "../lib/firebaseService";
+import { getMaintenanceRecordsPaginated, deleteMaintenanceRecord, getMachines } from "../lib/firebaseService";
 import { MaintenanceRecord, Machine } from "../types";
 import {
     WrenchIcon,
@@ -62,6 +62,11 @@ export default function MaintenancePage() {
     const [mounted, setMounted] = useState(false);
     const [records, setRecords] = useState<MaintenanceRecord[]>([]);
     const [loading, setLoading] = useState(true);
+    const [allFetchedRecords, setAllFetchedRecords] = useState<MaintenanceRecord[]>([]);
+    const [loadingMore, setLoadingMore] = useState(false);
+    const [cursor, setCursor] = useState<{ date: string, key: string } | undefined>(undefined);
+    const [hasMore, setHasMore] = useState(true);
+    const PAGE_SIZE = 50;
 
     const toggleExpand = (id: string) => {
         setExpandedRecords(prev => {
@@ -84,17 +89,27 @@ export default function MaintenancePage() {
         return Array.from(months).sort().reverse();
     }, [records]);
 
-    const fetchRecords = async () => {
+    const fetchInitialRecords = async () => {
         setLoading(true);
         try {
-            const [recordsData, machinesData] = await Promise.all([
-                getMaintenanceRecords(),
+            const [paginatedData, machinesData] = await Promise.all([
+                getMaintenanceRecordsPaginated(PAGE_SIZE),
                 getMachines()
             ]);
-            setAllRecordsForStats(recordsData);
+            
+            const { records: newRecords, nextCursor } = paginatedData;
+            
+            setAllFetchedRecords(newRecords);
+            setAllRecordsForStats(newRecords);
+            
             // Only show preventive maintenance records as the primary list on this page
-            const preventiveData = recordsData.filter(r => r.type === 'preventive');
-            setRecords(preventiveData.sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime()));
+            // Note: This filters from the currently fetched batch. 
+            // Users may need to "Load More" to see older preventive records if the recent batch is full of other types.
+            const preventiveData = newRecords.filter(r => r.type === 'preventive');
+            setRecords(preventiveData);
+            
+            setCursor(nextCursor);
+            setHasMore(!!nextCursor);
             setAllMachines(machinesData);
         } catch (error) {
             console.error("Error loading maintenance records:", error);
@@ -103,9 +118,31 @@ export default function MaintenancePage() {
         }
     };
 
+    const handleLoadMore = async () => {
+        if (!cursor || loadingMore) return;
+        
+        setLoadingMore(true);
+        try {
+            const { records: newRecords, nextCursor } = await getMaintenanceRecordsPaginated(PAGE_SIZE, cursor.date, cursor.key);
+            
+            setAllFetchedRecords(prev => [...prev, ...newRecords]);
+            setAllRecordsForStats(prev => [...prev, ...newRecords]);
+            
+            const newPreventiveData = newRecords.filter(r => r.type === 'preventive');
+            setRecords(prev => [...prev, ...newPreventiveData]);
+            
+            setCursor(nextCursor);
+            setHasMore(!!nextCursor);
+        } catch (error) {
+            console.error("Error loading more records:", error);
+        } finally {
+            setLoadingMore(false);
+        }
+    };
+
     useEffect(() => {
         setMounted(true);
-        fetchRecords();
+        fetchInitialRecords();
     }, []);
 
     // Helper for consistency between final logic and counts
@@ -767,7 +804,7 @@ export default function MaintenancePage() {
             <MaintenanceRecordModal
                 isOpen={maintenanceModalOpen}
                 onClose={() => setMaintenanceModalOpen(false)}
-                onSuccess={fetchRecords}
+                onSuccess={fetchInitialRecords}
             />
 
             <RecordDetailsModal
