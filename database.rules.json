@@ -89,7 +89,7 @@
         // ===== Image Hashes =====
         "image_hashes": {
             ".read": "auth != null",
-            ".write": "auth != null"
+            ".write": "auth != null && root.child('users').child(auth.uid).child('isApproved').val() == true"
         },
         // ===== Sensor Readings =====
         "sensor_readings": {
@@ -103,6 +103,7 @@
         // ===== System Stats (For Usage History) =====
         "system_stats": {
             ".read": "auth != null",
+            ".write": "auth != null && root.child('users').child(auth.uid).child('isApproved').val() == true",
             "usage_history": {
                 ".read": "auth != null",
                 ".write": "auth != null"
@@ -127,7 +128,7 @@
         // ===== Data Translations (Auto-Translate) =====
         "data_translations": {
             ".read": "auth != null",
-            ".write": "auth != null"
+            ".write": "auth != null && root.child('users').child(auth.uid).child('isApproved').val() == true"
         },
         // ===== Audit Logs (Admin Only) =====
         "audit_logs": {
