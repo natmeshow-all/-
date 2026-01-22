@@ -13,7 +13,7 @@ import {
     AlertTriangleIcon,
     TrashIcon
 } from "../ui/Icons";
-import { getAdminStats, getDashboardStats, getSystemErrors, clearSystemErrors, getPendingUsers } from "../../lib/firebaseService";
+import { getAdminStats, getDashboardStats, getSystemErrors, clearSystemErrors, getPendingUsers, getDatabaseStats } from "../../lib/firebaseService";
 import { AdminStats, DashboardStats, SystemErrorLog } from "../../types";
 import ConfirmModal from "../ui/ConfirmModal";
 import { useToast } from "../../contexts/ToastContext";
@@ -25,6 +25,7 @@ export default function SystemMonitorTab() {
     const [latency, setLatency] = useState<number | null>(null);
     const [stats, setStats] = useState<AdminStats | null>(null);
     const [dashStats, setDashStats] = useState<DashboardStats | null>(null);
+    const [dbStats, setDbStats] = useState<Record<string, number> | null>(null);
     const [errors, setErrors] = useState<SystemErrorLog[]>([]);
     const [pendingCount, setPendingCount] = useState(0);
     const [userAgent, setUserAgent] = useState("");
@@ -55,14 +56,18 @@ export default function SystemMonitorTab() {
     const fetchStats = async () => {
         const start = Date.now();
         try {
-            const [adminData, dashData, errorsData] = await Promise.all([
+            const [adminData, dashData, errorsData, pendingUsers, dbStatsData] = await Promise.all([
                 getAdminStats(),
                 getDashboardStats(),
-                getSystemErrors(10)
+                getSystemErrors(50),
+                getPendingUsers(),
+                getDatabaseStats()
             ]);
             setStats(adminData);
             setDashStats(dashData);
             setErrors(errorsData);
+            setPendingCount(pendingUsers.length);
+            setDbStats(dbStatsData);
             setLatency(Date.now() - start);
         } catch (error) {
             console.error("Error fetching stats:", error);
@@ -79,6 +84,17 @@ export default function SystemMonitorTab() {
             toastError(t("errorTitle"));
         }
     };
+
+    // Calculate Error Frequency
+    const errorFrequency = errors.reduce((acc, err) => {
+        const msg = err.message || "Unknown Error";
+        acc[msg] = (acc[msg] || 0) + 1;
+        return acc;
+    }, {} as Record<string, number>);
+
+    const topErrors = Object.entries(errorFrequency)
+        .sort(([, a], [, b]) => b - a)
+        .slice(0, 3);
 
     const StatusIndicator = ({ status, label }: { status: boolean | null, label: string }) => (
         <div className="flex items-center justify-between p-4 bg-bg-secondary rounded-lg border border-white/5">
@@ -98,35 +114,52 @@ export default function SystemMonitorTab() {
                 {/* System Health Panel */}
                 <div className="bg-bg-primary rounded-xl border border-white/5 p-6">
                     <div className="flex items-center gap-3 mb-6">
-                        <ActivityIcon className="text-accent-blue" />
-                        <h3 className="text-lg font-bold text-text-primary">{t("adminSystemHealth")}</h3>
+                        <div className="w-10 h-10 rounded-lg bg-blue-500/10 flex items-center justify-center">
+                            <ActivityIcon size={20} className="text-blue-500" />
+                        </div>
+                        <div>
+                            <h3 className="text-lg font-bold text-text-primary">{t("adminSystemHealth") || "System Health"}</h3>
+                            <p className="text-xs text-text-muted">Real-time system status metrics</p>
+                        </div>
                     </div>
-                    
-                    <div className="space-y-3">
-                        <StatusIndicator status={dbConnected} label={t("adminDbResponse")} />
+
+                    <div className="space-y-4">
+                        <StatusIndicator 
+                            status={dbConnected} 
+                            label={t("adminDatabaseConnection") || "Database Connection"} 
+                        />
                         
                         <div className="flex items-center justify-between p-4 bg-bg-secondary rounded-lg border border-white/5">
                             <span className="text-text-secondary">Latency</span>
-                            <span className="text-text-primary font-mono">{latency ? `${latency}ms` : "-"}</span>
+                            <span className={`text-sm font-mono ${!latency ? 'text-text-muted' : latency < 200 ? 'text-accent-green' : latency < 500 ? 'text-accent-yellow' : 'text-accent-red'}`}>
+                                {latency ? `${latency}ms` : 'Calculating...'}
+                            </span>
                         </div>
 
-                        <div className="flex items-center justify-between p-4 bg-bg-secondary rounded-lg border border-white/5">
-                            <span className="text-text-secondary">Environment</span>
-                            <span className="text-text-primary text-sm max-w-[200px] truncate" title={userAgent}>
-                                {process.env.NODE_ENV || "development"}
-                            </span>
+                        <div className="p-4 bg-bg-secondary rounded-lg border border-white/5">
+                            <div className="flex justify-between mb-2">
+                                <span className="text-text-secondary text-sm">Client Info</span>
+                            </div>
+                            <div className="text-xs text-text-muted font-mono break-all">
+                                {userAgent}
+                            </div>
+                             <div className="mt-2 text-xs text-text-muted grid grid-cols-2 gap-2">
+                                <div>Screen: {typeof window !== 'undefined' ? `${window.screen.width}x${window.screen.height}` : 'N/A'}</div>
+                                <div>Timezone: {Intl.DateTimeFormat().resolvedOptions().timeZone}</div>
+                            </div>
                         </div>
                     </div>
                 </div>
 
+
                 {/* System Overview */}
-                <div className="bg-bg-primary rounded-xl border border-white/5 p-6">
+                <div className="bg-bg-primary rounded-xl border border-white/5 p-6 flex flex-col">
                     <div className="flex items-center gap-3 mb-6">
                         <BoxIcon className="text-accent-purple" />
                         <h3 className="text-lg font-bold text-text-primary">{t("adminSystemOverview")}</h3>
                     </div>
 
-                    <div className="grid grid-cols-2 gap-4">
+                    <div className="grid grid-cols-2 gap-4 mb-4">
                         <div className="p-4 bg-bg-secondary rounded-lg border border-white/5 text-center">
                             <div className="text-2xl font-bold text-text-primary mb-1">{stats?.technicianCount || 0}</div>
                             <div className="text-xs text-text-muted">Technicians</div>
@@ -143,7 +176,52 @@ export default function SystemMonitorTab() {
                             <div className="text-2xl font-bold text-text-primary mb-1">{dashStats?.maintenanceRecords || 0}</div>
                             <div className="text-xs text-text-muted">Records</div>
                         </div>
+                        <div className="p-4 bg-bg-secondary rounded-lg border border-white/5 text-center relative overflow-hidden col-span-2">
+                            <div className={`absolute inset-0 opacity-10 ${pendingCount > 0 ? 'bg-accent-orange animate-pulse' : ''}`}></div>
+                            <div className={`text-2xl font-bold mb-1 ${pendingCount > 0 ? 'text-accent-orange' : 'text-text-primary'}`}>{pendingCount}</div>
+                            <div className="text-xs text-text-muted">Pending Users</div>
+                        </div>
                     </div>
+
+                    {/* Database Records Summary */}
+                    {dbStats && (
+                        <div className="mb-4">
+                            <h4 className="text-xs font-bold text-text-muted uppercase mb-2">Database Records</h4>
+                            <div className="grid grid-cols-2 gap-2 text-xs">
+                                <div className="flex justify-between p-2 bg-bg-secondary/50 rounded">
+                                    <span className="text-text-secondary">Users</span>
+                                    <span className="font-mono">{dbStats.users || 0}</span>
+                                </div>
+                                <div className="flex justify-between p-2 bg-bg-secondary/50 rounded">
+                                    <span className="text-text-secondary">Machines</span>
+                                    <span className="font-mono">{dbStats.machines || 0}</span>
+                                </div>
+                                <div className="flex justify-between p-2 bg-bg-secondary/50 rounded">
+                                    <span className="text-text-secondary">Parts</span>
+                                    <span className="font-mono">{dbStats.parts || 0}</span>
+                                </div>
+                                <div className="flex justify-between p-2 bg-bg-secondary/50 rounded">
+                                    <span className="text-text-secondary">Records</span>
+                                    <span className="font-mono">{dbStats.maintenance_records || 0}</span>
+                                </div>
+                            </div>
+                        </div>
+                    )}
+
+                    {/* Top Errors Summary */}
+                    {topErrors.length > 0 && (
+                        <div className="mt-auto pt-4 border-t border-white/5">
+                            <h4 className="text-xs font-bold text-text-muted uppercase mb-2">Top System Errors</h4>
+                            <div className="space-y-2">
+                                {topErrors.map(([msg, count], idx) => (
+                                    <div key={idx} className="flex items-center justify-between text-xs">
+                                        <span className="truncate text-text-secondary mr-2" title={msg}>{msg}</span>
+                                        <span className="font-mono font-bold text-accent-red bg-accent-red/10 px-1.5 py-0.5 rounded">{count}</span>
+                                    </div>
+                                ))}
+                            </div>
+                        </div>
+                    )}
                 </div>
             </div>
             

@@ -465,6 +465,7 @@ export interface TranslationKeys {
     userConfirmReject: string;
     userEditTitle: string;
     msgSuccess: string;
+    msgWelcomeBack: string;
     navAdminDashboard: string;
     aiAnalyze: string;
     aiAnalyzing: string;
@@ -517,6 +518,7 @@ export interface TranslationKeys {
     adminUsageDailyActivity: string;
     adminUsageRecent: string;
     adminSystemHealth: string;
+    adminDatabaseConnection: string;
     adminDbResponse: string;
     adminStorageUsage: string;
     adminAuthSystem: string;
@@ -526,6 +528,18 @@ export interface TranslationKeys {
     adminInsightPeak: string;
     adminInsightMobile: string;
     adminInsightStable: string;
+    
+    // Translation Management
+    adminTabTranslations: string;
+    adminTranslationTitle: string;
+    adminTranslationSubtitle: string;
+    adminTranslationSearch: string;
+    adminTranslationKey: string;
+    adminTranslationValue: string;
+    adminActionDeleteTranslation: string;
+    adminActionSaveTranslation: string;
+    adminTranslationEmpty: string;
+
     // Analytics Page
     analyticsSubtitle: string;
     analyticsMonthlyMaintenance: string;
@@ -1045,6 +1059,7 @@ const th: TranslationKeys = {
     msgSaveSuccess: "บันทึกข้อมูลสำเร็จ",
     msgSaveError: "เกิดข้อผิดพลาดในการบันทึก",
     msgConfirmDelete: "คุณแน่ใจหรือไม่ว่าต้องการลบ?",
+    msgWelcomeBack: "ยินดีต้อนรับกลับมา",
     msgSuccess: "ดำเนินการสำเร็จ",
     userEditTitle: "แก้ไขข้อมูลผู้ใช้งาน",
     navAdminDashboard: "แดชบอร์ดผู้ดูแลระบบ",
@@ -1237,6 +1252,7 @@ const th: TranslationKeys = {
     adminUsageDailyActivity: "กิจกรรมรายวัน (ครั้ง/วัน)",
     adminUsageRecent: "ล่าสุด",
     adminSystemHealth: "สถานะของระบบ",
+    adminDatabaseConnection: "การเชื่อมต่อฐานข้อมูล",
     adminDbResponse: "การตอบสนองของฐานข้อมูล",
     adminStorageUsage: "การใช้งานหน่วยความจำ",
     adminAuthSystem: "ระบบการยืนยันตัวตน",
@@ -1433,6 +1449,16 @@ const th: TranslationKeys = {
     period6Months: "6 เดือน",
     period1Year: "1 ปี",
     msgNotYetDue: "ยังไม่ถึงกำหนดเวลา",
+    // Translation Management
+    adminTabTranslations: "การแปลภาษา",
+    adminTranslationTitle: "จัดการการแปลภาษา",
+    adminTranslationSubtitle: "จัดการข้อความและการแปลภาษาในระบบแบบ Real-time",
+    adminTranslationSearch: "ค้นหาข้อความ...",
+    adminTranslationKey: "ข้อความภาษาไทย (Key)",
+    adminTranslationValue: "คำแปลภาษาอังกฤษ",
+    adminActionDeleteTranslation: "ลบ",
+    adminActionSaveTranslation: "บันทึก",
+    adminTranslationEmpty: "ไม่พบข้อมูลการแปล",
 };
 
 const en: TranslationKeys = {
@@ -1763,6 +1789,7 @@ const en: TranslationKeys = {
     msgSaveSuccess: "Data saved successfully",
     msgSaveError: "Error saving data",
     msgConfirmDelete: "Are you sure you want to delete?",
+    msgWelcomeBack: "Welcome back",
     msgSuccess: "Action successful",
     userEditTitle: "Edit User",
     navAdminDashboard: "Admin Dashboard",
@@ -1955,6 +1982,7 @@ const en: TranslationKeys = {
     adminUsageDailyActivity: "Daily Activity (Hits/Day)",
     adminUsageRecent: "Recent",
     adminSystemHealth: "System Health",
+    adminDatabaseConnection: "Database Connection",
     adminDbResponse: "Database Response",
     adminStorageUsage: "Storage Usage",
     adminAuthSystem: "Auth System",
@@ -2151,6 +2179,17 @@ const en: TranslationKeys = {
     period6Months: "6 Months",
     period1Year: "1 Year",
     msgNotYetDue: "Not yet due",
+
+    // Translation Management
+    adminTabTranslations: "Translations",
+    adminTranslationTitle: "Translation Management",
+    adminTranslationSubtitle: "Manage text and translations in real-time",
+    adminTranslationSearch: "Search text...",
+    adminTranslationKey: "Thai Text (Key)",
+    adminTranslationValue: "English Translation",
+    adminActionDeleteTranslation: "Delete",
+    adminActionSaveTranslation: "Save",
+    adminTranslationEmpty: "No translations found",
 };
 
 export const translations: Record<Language, TranslationKeys> = {

@@ -48,6 +48,39 @@ export async function translateToEnglish(text: string): Promise<string> {
 }
 
 /**
+ * Updates a specific translation.
+ */
+export async function updateTranslation(key: string, newValue: string): Promise<void> {
+    if (!key) return;
+    const translationsRef = ref(database, DATA_TRANSLATIONS_COLLECTION);
+    try {
+        await update(translationsRef, {
+            [key]: newValue
+        });
+    } catch (error) {
+        console.error("Error updating translation:", error);
+        throw error;
+    }
+}
+
+/**
+ * Deletes a specific translation.
+ */
+export async function deleteTranslation(key: string): Promise<void> {
+    if (!key) return;
+    const translationsRef = ref(database, `${DATA_TRANSLATIONS_COLLECTION}/${key}`);
+    try {
+        // In Firebase Realtime Database, setting a path to null deletes it
+        await update(ref(database, DATA_TRANSLATIONS_COLLECTION), {
+            [key]: null
+        });
+    } catch (error) {
+        console.error("Error deleting translation:", error);
+        throw error;
+    }
+}
+
+/**
  * Synchronizes a translation for a piece of text.
  */
 export async function syncTranslation(text: string): Promise<void> {

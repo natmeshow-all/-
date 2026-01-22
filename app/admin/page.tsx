@@ -16,7 +16,8 @@ import {
     ActivityIcon,
     StarIcon,
     SettingsIcon,
-    FileTextIcon
+    FileTextIcon,
+    GlobeIcon
 } from "../components/ui/Icons";
 import { getAdminStats } from "../lib/firebaseService";
 import { AdminStats } from "../types";
@@ -28,8 +29,9 @@ import UserApprovalTab from "../components/admin/UserApprovalTab";
 import AuditLogTab from "../components/admin/AuditLogTab";
 import SystemSettingsTab from "../components/admin/SystemSettingsTab";
 import SystemMonitorTab from "../components/admin/SystemMonitorTab";
+import TranslationManagementTab from "../components/admin/TranslationManagementTab";
 
-type AdminTab = "analytics" | "technicians" | "approvals" | "auditlog" | "settings" | "monitor";
+type AdminTab = "analytics" | "technicians" | "approvals" | "auditlog" | "settings" | "monitor" | "translations";
 
 export default function AdminPage() {
     const { t } = useLanguage();
@@ -161,6 +163,12 @@ export default function AdminPage() {
                         label={t("adminTabMonitor")}
                     />
                     <TabButton
+                        active={activeTab === "translations"}
+                        onClick={() => setActiveTab("translations")}
+                        icon={<GlobeIcon size={18} />}
+                        label={t("adminTabTranslations") || "Translations"}
+                    />
+                    <TabButton
                         active={activeTab === "settings"}
                         onClick={() => setActiveTab("settings")}
                         icon={<SettingsIcon size={18} />}
@@ -175,6 +183,7 @@ export default function AdminPage() {
                     {activeTab === "approvals" && <UserApprovalTab />}
                     {activeTab === "auditlog" && <AuditLogTab />}
                     {activeTab === "monitor" && <SystemMonitorTab />}
+                    {activeTab === "translations" && <TranslationManagementTab />}
                     {activeTab === "settings" && <SystemSettingsTab />}
                 </div>
             </main>

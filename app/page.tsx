@@ -110,6 +110,13 @@ export default function Dashboard() {
     pendingMaintenance: 0,
     upcomingSchedule: 0,
     totalSpareParts: 0,
+    lastUpdated: 0,
+    locationCounts: {
+      ALL: 0,
+      FZ: 0,
+      RTE: 0,
+      UT: 0
+    }
   });
   const [parts, setParts] = useState<Part[]>([]);
   const [filters, setFilters] = useState<PartFilters>({
@@ -135,6 +142,13 @@ export default function Dashboard() {
         pendingMaintenance: 0,
         upcomingSchedule: 0,
         totalSpareParts: 0,
+        lastUpdated: 0,
+        locationCounts: {
+          ALL: 0,
+          FZ: 0,
+          RTE: 0,
+          UT: 0
+        }
       });
       setParts([]);
       setAllMachines([]);
@@ -158,7 +172,11 @@ export default function Dashboard() {
       // Double check sessionStorage here to prevent race conditions in React StrictMode
       const isShownNow = typeof window !== 'undefined' && sessionStorage.getItem('db_notification_shown');
       if (!hasShownNotification && !isShownNow) {
-        success(t("msgDbConnected"), t("msgDbReady"));
+        if (user) {
+             success(t("msgWelcomeBack") || "Welcome back", `${user.displayName || 'User'}`);
+        } else {
+             success(t("msgDbConnected"), t("msgDbReady"));
+        }
         sessionStorage.setItem('db_notification_shown', 'true');
       }
     } catch (error) {
@@ -189,21 +207,26 @@ export default function Dashboard() {
             if (filters.machineId) {
                 // filters.machineId holds the Name
                 const res = await getPartsByMachineName(filters.machineId);
-                setParts(res);
+                setParts(res || []); // Ensure array
                 setHasMore(false);
             } else if (filters.Location) {
                 const res = await getPartsByLocation(filters.Location);
-                setParts(res);
+                setParts(res || []); // Ensure array
                 setHasMore(false);
             } else {
                 // Default: Pagination (Recent Items)
                 const res = await getPartsPaginated(50);
-                setParts(res.parts);
-                setCursor(res.lastItem);
-                setHasMore(!!res.lastItem);
+                if (res) {
+                    setParts(res.parts || []);
+                    setCursor(res.lastItem);
+                    setHasMore(!!res.lastItem);
+                } else {
+                    setParts([]);
+                }
             }
         } catch (error) {
             console.error("Error loading parts:", error);
+            setParts([]); // Fallback to empty
         } finally {
             setLoading(false);
         }
@@ -249,23 +272,24 @@ export default function Dashboard() {
   // Derive unique values for filters from real data with cascading logic
 
   // 0. Location Counts (for the filter buttons)
+  // Use server-side stats if available, otherwise fallback to safe default
   const locationCounts = React.useMemo(() => {
-    return {
-      ALL: parts.length,
-      FZ: parts.filter(p => p.location?.toUpperCase() === 'FZ' || allMachines.find(m => (m.name === p.machineName || m.id === p.machineId) && m.location?.toUpperCase() === 'FZ')).length,
-      RTE: parts.filter(p => p.location?.toUpperCase() === 'RTE' || allMachines.find(m => (m.name === p.machineName || m.id === p.machineId) && m.location?.toUpperCase() === 'RTE')).length,
-      UT: parts.filter(p => p.location?.toUpperCase() === 'UT' || p.location?.toUpperCase() === 'UTILITY' || allMachines.find(m => (m.name === p.machineName || m.id === p.machineId) && (m.location?.toUpperCase() === 'UT' || m.location?.toUpperCase() === 'UTILITY'))).length,
+    return stats.locationCounts || {
+      ALL: stats.totalParts || 0,
+      FZ: 0,
+      RTE: 0,
+      UT: 0,
     };
-  }, [parts, allMachines]);
+  }, [stats]);
 
   // 1. Available Machines: Filtered by location
   const availableMachines = React.useMemo(() => {
-    let filteredMachines = allMachines;
+    let filteredMachines = allMachines || [];
     if (filters.location) {
       if (filters.location === 'UT') {
-        filteredMachines = allMachines.filter(m => m.location?.toUpperCase() === 'UT' || m.location?.toUpperCase() === 'UTILITY');
+        filteredMachines = filteredMachines.filter(m => m.location?.toUpperCase() === 'UT' || m.location?.toUpperCase() === 'UTILITY');
       } else {
-        filteredMachines = allMachines.filter(m => m.location?.toUpperCase() === filters.location);
+        filteredMachines = filteredMachines.filter(m => m.location?.toUpperCase() === filters.location);
       }
     }
     return filteredMachines.map(m => m.name || m.id).sort();
@@ -273,11 +297,12 @@ export default function Dashboard() {
 
   // 2. Available Locations: Filtered by area AND selected machine
   const availableLocations = React.useMemo(() => {
+    if (!parts) return [];
     return Array.from(new Set(
       parts
         .filter(p => {
           if (!filters.location) return true;
-          const machine = allMachines.find(m => m.name === p.machineName || m.id === p.machineId);
+          const machine = allMachines?.find(m => m.name === p.machineName || m.id === p.machineId);
           const mLoc = machine?.location?.toUpperCase();
           if (filters.location === 'UT') return mLoc === 'UT' || mLoc === 'UTILITY';
           return mLoc === filters.location;
@@ -313,7 +338,7 @@ export default function Dashboard() {
 
     // Location filter: Check machine's location
     if (filters.location) {
-      const machine = allMachines.find(m => m.id === part.machineId || m.name === part.machineName);
+      const machine = allMachines?.find(m => m.id === part.machineId || m.name === part.machineName);
       const mLoc = machine?.location?.toUpperCase();
       if (filters.location === 'UT') {
         if (mLoc !== 'UT' && mLoc !== 'UTILITY') return false;

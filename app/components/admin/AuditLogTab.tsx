@@ -44,15 +44,22 @@ export default function AuditLogTab() {
     const [loading, setLoading] = useState(true);
     const [searchTerm, setSearchTerm] = useState("");
     const [filterAction, setFilterAction] = useState<AuditActionType | "all">("all");
+    const [startDate, setStartDate] = useState<string>("");
+    const [endDate, setEndDate] = useState<string>("");
 
     useEffect(() => {
         fetchLogs();
-    }, []);
+    }, [startDate, endDate]);
 
     const fetchLogs = async () => {
         try {
             setLoading(true);
-            const data = await getAuditLogs(200);
+            const start = startDate ? new Date(startDate) : undefined;
+            const end = endDate ? new Date(endDate) : undefined;
+            // If date range is set, fetch more logs (e.g. 1000), otherwise 200 recent
+            const limit = (start && end) ? 1000 : 200;
+            
+            const data = await getAuditLogs(limit, start, end);
             setLogs(data);
         } catch (error) {
             console.error("Error fetching audit logs:", error);
@@ -74,16 +81,33 @@ export default function AuditLogTab() {
 
     const exportToCSV = () => {
         const headers = ["Timestamp", "User", "Action", "Target", "Details"];
+        
+        // Helper to sanitize CSV fields to prevent formula injection
+        const sanitize = (str: string | undefined | null) => {
+            if (!str) return "";
+            const val = String(str);
+            // If the string starts with =, +, -, or @, prepend a single quote
+            if (/^[=+\-@]/.test(val)) {
+                return "'" + val;
+            }
+            // Escape double quotes by doubling them
+            return val.replace(/"/g, '""');
+        };
+
         const rows = filteredLogs.map(log => [
             log.timestamp.toISOString(),
-            log.userName,
-            log.action,
-            log.targetName || "",
-            log.details || ""
+            sanitize(log.userName),
+            sanitize(log.action),
+            sanitize(log.targetName),
+            sanitize(log.details)
         ]);
 
-        const csv = [headers, ...rows].map(row => row.join(",")).join("\n");
-        const blob = new Blob([csv], { type: "text/csv" });
+        const csv = [
+            headers.join(","), 
+            ...rows.map(row => row.map(cell => `"${cell}"`).join(","))
+        ].join("\n");
+        
+        const blob = new Blob([csv], { type: "text/csv;charset=utf-8;" });
         const url = URL.createObjectURL(blob);
         const a = document.createElement("a");
         a.href = url;
@@ -123,30 +147,61 @@ export default function AuditLogTab() {
             </div>
 
             {/* Filters */}
-            <div className="flex flex-col sm:flex-row gap-3">
-                <div className="relative flex-1">
-                    <SearchIcon size={16} className="absolute left-3 top-1/2 -translate-y-1/2 text-text-muted" />
-                    <input
-                        type="text"
-                        placeholder={language === 'th' ? 'ค้นหาผู้ใช้, เป้าหมาย...' : 'Search user, target...'}
-                        value={searchTerm}
-                        onChange={(e) => setSearchTerm(e.target.value)}
-                        className="input-field w-full pl-9 text-sm"
-                    />
+            <div className="flex flex-col gap-3">
+                <div className="flex flex-col sm:flex-row gap-3">
+                    <div className="relative flex-1">
+                        <SearchIcon size={16} className="absolute left-3 top-1/2 -translate-y-1/2 text-text-muted" />
+                        <input
+                            type="text"
+                            placeholder={language === 'th' ? 'ค้นหาผู้ใช้, เป้าหมาย...' : 'Search user, target...'}
+                            value={searchTerm}
+                            onChange={(e) => setSearchTerm(e.target.value)}
+                            className="input-field w-full pl-9 text-sm"
+                        />
+                    </div>
+
+                    <select
+                        value={filterAction}
+                        onChange={(e) => setFilterAction(e.target.value as AuditActionType | "all")}
+                        className="input-field text-sm min-w-[150px]"
+                    >
+                        <option value="all">{language === 'th' ? 'ทุกการกระทำ' : 'All Actions'}</option>
+                        {Object.entries(actionLabels).map(([key, label]) => (
+                            <option key={key} value={key}>
+                                {language === 'th' ? label.th : label.en}
+                            </option>
+                        ))}
+                    </select>
                 </div>
 
-                <select
-                    value={filterAction}
-                    onChange={(e) => setFilterAction(e.target.value as AuditActionType | "all")}
-                    className="input-field text-sm min-w-[150px]"
-                >
-                    <option value="all">{language === 'th' ? 'ทุกการกระทำ' : 'All Actions'}</option>
-                    {Object.entries(actionLabels).map(([key, label]) => (
-                        <option key={key} value={key}>
-                            {language === 'th' ? label.th : label.en}
-                        </option>
-                    ))}
-                </select>
+                <div className="flex flex-col sm:flex-row gap-3 items-center">
+                    <div className="flex items-center gap-2 w-full sm:w-auto">
+                        <span className="text-xs text-text-muted whitespace-nowrap">{language === 'th' ? 'ตั้งแต่:' : 'From:'}</span>
+                        <input
+                            type="date"
+                            value={startDate}
+                            onChange={(e) => setStartDate(e.target.value)}
+                            className="input-field text-sm py-1.5 flex-1 sm:w-auto"
+                        />
+                    </div>
+                    <div className="flex items-center gap-2 w-full sm:w-auto">
+                        <span className="text-xs text-text-muted whitespace-nowrap">{language === 'th' ? 'ถึง:' : 'To:'}</span>
+                        <input
+                            type="date"
+                            value={endDate}
+                            onChange={(e) => setEndDate(e.target.value)}
+                            className="input-field text-sm py-1.5 flex-1 sm:w-auto"
+                        />
+                    </div>
+                    {(startDate || endDate) && (
+                        <button
+                            onClick={() => { setStartDate(""); setEndDate(""); }}
+                            className="text-xs text-accent-red hover:underline whitespace-nowrap ml-auto sm:ml-0"
+                        >
+                            {language === 'th' ? 'ล้างวันที่' : 'Clear Dates'}
+                        </button>
+                    )}
+                </div>
             </div>
 
             {/* Log List */}

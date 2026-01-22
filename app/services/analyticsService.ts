@@ -72,6 +72,30 @@ export async function getDashboardStats(): Promise<DashboardStats> {
             r.isOverhaul === true
         ).length;
 
+        // Calculate Location Counts
+        const locationCounts = {
+            ALL: parts.length,
+            FZ: 0,
+            RTE: 0,
+            UT: 0
+        };
+
+        parts.forEach(p => {
+            let loc = p.location?.toUpperCase() || p.Location?.toUpperCase();
+            
+            // If part location is missing or generic, check machine location
+            if (!loc || loc === 'UNDEFINED') {
+                const machine = machines.find(m => m.name === p.machineName || m.id === p.machineId);
+                if (machine && machine.location) {
+                    loc = machine.location.toUpperCase();
+                }
+            }
+
+            if (loc === 'FZ') locationCounts.FZ++;
+            else if (loc === 'RTE') locationCounts.RTE++;
+            else if (loc === 'UT' || loc === 'UTILITY') locationCounts.UT++;
+        });
+
         const newStats: DashboardStats = {
             totalParts: parts.length,
             totalMachines: machines.length,
@@ -82,7 +106,8 @@ export async function getDashboardStats(): Promise<DashboardStats> {
             pendingMaintenance: pendingRecords,
             upcomingSchedule: 0,
             totalSpareParts: spareParts.length,
-            lastUpdated: Date.now()
+            lastUpdated: Date.now(),
+            locationCounts
         };
 
         // 3. Update cache (Best effort - ignore if permission denied)

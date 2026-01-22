@@ -115,7 +115,7 @@
             ".read": "auth != null && (root.child('users').child(auth.uid).child('role').val() == 'admin' || root.child('users').child(auth.uid).child('role').val() == 'supervisor')",
             "$date": {
                 ".read": "auth != null",
-                ".write": "auth != null"
+                ".write": "auth != null && root.child('users').child(auth.uid).child('isApproved').val() == true"
             }
         },
         // ===== Performance Evaluations =====
@@ -134,9 +134,21 @@
         // ===== Audit Logs (Admin Only) =====
         "audit_logs": {
             ".read": "auth != null && root.child('users').child(auth.uid).child('role').val() == 'admin'",
-            ".write": "auth != null && (root.child('users').child(auth.uid).child('role').val() == 'admin' || root.child('users').child(auth.uid).child('role').val() == 'supervisor')",
+            // Allow all approved users to write audit logs (for their own actions)
+            ".write": "auth != null && root.child('users').child(auth.uid).child('isApproved').val() == true",
+            ".indexOn": ["action", "userId", "timestamp"],
             "$logId": {
                 ".validate": "newData.hasChildren(['action', 'userId', 'timestamp'])"
+            }
+        },
+        // ===== System Errors (For Dev Admin) =====
+        "system_errors": {
+            ".read": "auth != null && (root.child('users').child(auth.uid).child('role').val() == 'admin' || root.child('users').child(auth.uid).child('role').val() == 'supervisor')",
+            // Allow any user to log an error
+            ".write": "auth != null",
+            ".indexOn": ["timestamp", "severity"],
+            "$errorId": {
+                ".validate": "newData.hasChildren(['message', 'timestamp'])"
             }
         },
         // ===== System Settings (Public read for maintenance mode check) =====

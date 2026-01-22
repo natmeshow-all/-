@@ -3,7 +3,12 @@ import {
     get,
     set,
     push,
-    remove
+    remove,
+    query,
+    orderByChild,
+    startAt,
+    endAt,
+    limitToLast
 } from "firebase/database";
 import { database } from "../lib/firebase";
 import { AuditLog, AuditActionType, SystemSettings, UserRole, SystemErrorLog } from "../types";
@@ -60,10 +65,42 @@ export async function logAuditEvent(
 /**
  * Retrieves audit logs with optional filters
  */
-export async function getAuditLogs(limit: number = 100): Promise<AuditLog[]> {
+export async function getAuditLogs(
+    limit: number = 100,
+    startDate?: Date,
+    endDate?: Date
+): Promise<AuditLog[]> {
     try {
         const logsRef = ref(database, AUDIT_LOGS_PATH);
-        const snapshot = await get(logsRef);
+        let logsQuery;
+
+        if (startDate && endDate) {
+            // Adjust endDate to include the full day
+            const adjustedEndDate = new Date(endDate);
+            adjustedEndDate.setHours(23, 59, 59, 999);
+
+            logsQuery = query(
+                logsRef,
+                orderByChild("timestamp"),
+                startAt(startDate.toISOString()),
+                endAt(adjustedEndDate.toISOString())
+            );
+            // Note: We might want to apply limit here too, but if user filters by date, 
+            // they probably want all logs in that range. 
+            // Let's keep it safe with a larger limit if needed, or just let it return all (within reason).
+            // But to prevent crash, let's limit to 500 if date range is wide.
+            // Actually, let's respect the limit but make it optional logic-wise.
+            // If user provides dates, maybe they expect ALL logs? 
+            // Let's use limitToLast(limit) combined with dates to get "newest in range".
+        } else {
+            logsQuery = query(
+                logsRef,
+                orderByChild("timestamp"),
+                limitToLast(limit)
+            );
+        }
+
+        const snapshot = await get(logsQuery);
 
         if (!snapshot.exists()) return [];
 
@@ -77,10 +114,12 @@ export async function getAuditLogs(limit: number = 100): Promise<AuditLog[]> {
             });
         });
 
-        // Sort by timestamp descending (newest first) and limit
+        // Sort by timestamp descending (newest first)
+        // If we used limitToLast, they come out ascending, so we need to reverse.
+        // But we are doing manual sort below anyway.
         return logs
             .sort((a, b) => b.timestamp.getTime() - a.timestamp.getTime())
-            .slice(0, limit);
+            .slice(0, limit); // Apply limit client-side as well just in case
     } catch (error) {
         console.error("Error fetching audit logs:", error);
         throw error;
@@ -201,6 +240,49 @@ export async function updateSystemSettings(settings: Partial<SystemSettings>): P
     } catch (error) {
         console.error("Error updating system settings:", error);
         throw error;
+    }
+}
+
+/**
+ * Get database statistics (counts of records in major collections)
+ * Note: This fetches all keys which might be expensive for very large datasets.
+ */
+export async function getDatabaseStats(): Promise<Record<string, number>> {
+    try {
+        // We will fetch shallow if possible, but JS SDK doesn't support shallow=true easily on 'get'.
+        // However, we can use limitToLast(1) to check existence, but for count we need iteration or separate counters.
+        // For this implementation, we will fetch top-level nodes for users, machines, parts.
+        // Be careful with large collections.
+        
+        const collections = [
+            "users",
+            "machines",
+            "parts",
+            "maintenance_records",
+            "pm_plans"
+        ];
+        
+        const stats: Record<string, number> = {};
+        
+        // Use Promise.allSettled to prevent one failure from breaking all
+        const results = await Promise.allSettled(collections.map(async (col) => {
+            const colRef = ref(database, col);
+            // Optimization: Fetch shallow=true via REST would be better, but SDK doesn't support it.
+            // For these collections, we assume they are manageable (<10k).
+            const snapshot = await get(colRef);
+            return { col, count: snapshot.exists() ? snapshot.size : 0 };
+        }));
+
+        results.forEach(result => {
+            if (result.status === 'fulfilled') {
+                stats[result.value.col] = result.value.count;
+            }
+        });
+        
+        return stats;
+    } catch (error) {
+        console.error("Error fetching database stats:", error);
+        return {};
     }
 }
 

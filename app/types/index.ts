@@ -233,6 +233,14 @@ export interface DashboardStats {
     totalOverhaul: number;
     pendingMaintenance: number;
     upcomingSchedule: number;
+    totalSpareParts: number;
+    lastUpdated: number;
+    locationCounts: {
+        ALL: number;
+        FZ: number;
+        RTE: number;
+        UT: number;
+    };
 }
 
 // Form types
@@ -426,18 +434,7 @@ export interface SystemErrorLog {
     userAgent: string;
 }
 
-export interface DashboardStats {
-    totalParts: number;
-    totalMachines: number;
-    totalLocations: number;
-    maintenanceRecords: number;
-    totalPM: number;
-    totalOverhaul: number;
-    pendingMaintenance: number;
-    upcomingSchedule: number;
-    totalSpareParts: number;
-    lastUpdated?: number; // Timestamp
-}
+
 
 // ===== System Settings Types =====
 export interface SystemSettings {
