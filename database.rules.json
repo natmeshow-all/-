@@ -1,13 +1,6 @@
 {
     "rules": {
-        // ===== ข้อมูลผู้ใช้ =====
-        "users": {
-            "$uid": {
-                ".read": "auth != null && (auth.uid == $uid || root.child('users').child(auth.uid).child('role').val() == 'admin' || root.child('users').child(auth.uid).child('role').val() == 'supervisor')",
-                ".write": "auth != null && (auth.uid == $uid || root.child('users').child(auth.uid).child('role').val() == 'admin')"
-            },
-            ".read": "auth != null && (root.child('users').child(auth.uid).child('role').val() == 'admin' || root.child('users').child(auth.uid).child('role').val() == 'supervisor')"
-        },
+        // ===== ข้อมูลผู้ใช้ (moved to bottom to avoid duplication) =====
         // ===== ผู้ใช้รอ Approve =====
         "pendingUsers": {
             ".read": "auth != null && (root.child('users').child(auth.uid).child('role').val() == 'admin' || root.child('users').child(auth.uid).child('role').val() == 'supervisor')",
@@ -63,7 +56,10 @@
         // ===== Schedules =====
         "schedules": {
             ".read": "auth != null",
-            ".write": "auth != null && root.child('users').child(auth.uid).child('isApproved').val() == true && root.child('users').child(auth.uid).child('role').val() != 'viewer'"
+            ".write": "auth != null && root.child('users').child(auth.uid).child('isApproved').val() == true && root.child('users').child(auth.uid).child('role').val() != 'viewer'",
+            "$scheduleId": {
+                ".validate": "newData.hasChildren(['machineId', 'nextDue'])"
+            }
         },
         // ===== Spare Parts =====
         "spare_parts": {
@@ -133,6 +129,14 @@
         "system_settings": {
             ".read": "auth != null",
             ".write": "auth != null && (root.child('users').child(auth.uid).child('role').val() == 'admin' || root.child('users').child(auth.uid).child('role').val() == 'supervisor')"
+        },
+        // ===== Users =====
+        "users": {
+            "$uid": {
+                ".read": "auth != null && (auth.uid == $uid || root.child('users').child(auth.uid).child('role').val() == 'admin' || root.child('users').child(auth.uid).child('role').val() == 'supervisor' || root.child('users').child(auth.uid).child('role').val() == 'technician')",
+                ".write": "auth != null && (auth.uid == $uid || root.child('users').child(auth.uid).child('role').val() == 'admin')"
+            },
+            ".read": "auth != null && (root.child('users').child(auth.uid).child('role').val() == 'admin' || root.child('users').child(auth.uid).child('role').val() == 'supervisor' || root.child('users').child(auth.uid).child('role').val() == 'technician')"
         }
     }
 }
