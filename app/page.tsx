@@ -10,7 +10,7 @@ import ConfirmModal from "./components/ui/ConfirmModal"; // Import ConfirmModal
 import { useLanguage } from "./contexts/LanguageContext";
 import { useAuth } from "./contexts/AuthContext";
 import { useToast } from "./contexts/ToastContext";
-import { getDashboardStats, getParts, deletePart, getMachines } from "./lib/firebaseService";
+import { getDashboardStats, getParts, deletePart, getMachines, getPartsPaginated, getPartsByMachineName, getPartsByLocation } from "./lib/firebaseService";
 import MachineDetailsModal from "./components/machines/MachineDetailsModal"; // Import MachineDetailsModal
 import GlobalMaintenanceHistoryModal from "./components/pm/GlobalMaintenanceHistoryModal";
 import Lightbox from "./components/ui/Lightbox"; // Import Lightbox
@@ -56,6 +56,8 @@ export default function Dashboard() {
   const [isFilterExpanded, setIsFilterExpanded] = useState(false); // Default to collapsed
   const tableSectionRef = React.useRef<HTMLDivElement>(null);
   const [loading, setLoading] = useState(true);
+  const [cursor, setCursor] = useState<{updatedAt: string, id: string} | null>(null);
+  const [hasMore, setHasMore] = useState(true);
 
   // Handlers for action buttons
   const handleEditPart = (part: Part) => {
@@ -145,13 +147,11 @@ export default function Dashboard() {
 
     try {
       setLoading(true);
-      const [statsData, partsData, machinesData] = await Promise.all([
+      const [statsData, machinesData] = await Promise.all([
         getDashboardStats(),
-        getParts(500), // Limit to 500 newest parts for performance
         getMachines()
       ]);
       setStats(statsData);
-      setParts(partsData);
       setAllMachines(machinesData);
 
       // Trigger success toast only once per session
@@ -179,6 +179,58 @@ export default function Dashboard() {
     // Ensure fullscreen is off on mount (fix for user reported bug)
     setIsTableFullscreen(false);
   }, [user, authLoading]);
+
+  // Load parts when filters change (Server-side filtering for scalability)
+  useEffect(() => {
+    const loadFilteredParts = async () => {
+        if (!user) return;
+        setLoading(true);
+        try {
+            if (filters.machineId) {
+                // filters.machineId holds the Name
+                const res = await getPartsByMachineName(filters.machineId);
+                setParts(res);
+                setHasMore(false);
+            } else if (filters.Location) {
+                const res = await getPartsByLocation(filters.Location);
+                setParts(res);
+                setHasMore(false);
+            } else {
+                // Default: Pagination (Recent Items)
+                const res = await getPartsPaginated(50);
+                setParts(res.parts);
+                setCursor(res.lastItem);
+                setHasMore(!!res.lastItem);
+            }
+        } catch (error) {
+            console.error("Error loading parts:", error);
+        } finally {
+            setLoading(false);
+        }
+    };
+
+    // Debounce to prevent rapid firing
+    const timer = setTimeout(() => {
+        loadFilteredParts();
+    }, 300);
+
+    return () => clearTimeout(timer);
+  }, [filters.machineId, filters.Location, user]);
+
+  const handleLoadMore = async () => {
+    if (!hasMore || loading || !cursor) return;
+    setLoading(true);
+    try {
+        const res = await getPartsPaginated(50, cursor.updatedAt, cursor.id);
+        setParts(prev => [...prev, ...res.parts]);
+        setCursor(res.lastItem);
+        setHasMore(!!res.lastItem);
+    } catch (error) {
+        console.error("Error loading more parts:", error);
+    } finally {
+        setLoading(false);
+    }
+  };
 
   // Body scroll lock for fullscreen
   useEffect(() => {
@@ -636,6 +688,17 @@ export default function Dashboard() {
                     ))}
                   </tbody>
                 </table>
+                {hasMore && !filters.machineId && !filters.Location && (
+                  <div className="flex justify-center p-4 border-t border-border-light">
+                    <button 
+                      onClick={handleLoadMore} 
+                      disabled={loading} 
+                      className="btn btn-sm btn-ghost text-primary hover:bg-primary/10"
+                    >
+                        {loading ? "..." : t("actionLoadMore") || "Load More"}
+                    </button>
+                  </div>
+                )}
               </div>
             </div>
 

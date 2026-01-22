@@ -3,7 +3,11 @@ export type Language = "th" | "en";
 export interface TranslationKeys {
     // Common
     loading: string;
+    errorTitle: string;
+    errorMessage: string;
     actionLoadMore: string;
+    actionRefresh: string;
+    actionTryAgain: string;
     appTitle: string;
     appSubtitle: string;
     machineDetailsSubtitle: string;
@@ -709,7 +713,11 @@ export interface TranslationKeys {
 const th: TranslationKeys = {
     // Common
     loading: "กำลังโหลด...",
+    errorTitle: "เกิดข้อผิดพลาด!",
+    errorMessage: "เกิดข้อผิดพลาดที่ไม่คาดคิด",
     actionLoadMore: "โหลดเพิ่มเติม",
+    actionRefresh: "รีโหลดหน้า",
+    actionTryAgain: "ลองอีกครั้ง",
 
     // App
     appTitle: "ระบบจัดการเครื่องจักร Art of Baking",
@@ -1416,7 +1424,11 @@ const th: TranslationKeys = {
 const en: TranslationKeys = {
     // Common
     loading: "Loading...",
+    errorTitle: "Something went wrong!",
+    errorMessage: "An unexpected error occurred.",
     actionLoadMore: "Load More",
+    actionRefresh: "Reload Page",
+    actionTryAgain: "Try Again",
 
     // App
     appTitle: "Machine Management - Art of Baking",

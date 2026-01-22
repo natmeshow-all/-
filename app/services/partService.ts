@@ -409,6 +409,27 @@ export async function getPartsByMachineName(machineName: string): Promise<Part[]
     }
 }
 
+export async function getPartsByLocation(location: string): Promise<Part[]> {
+    try {
+        const partsRef = ref(database, COLLECTIONS.PARTS);
+        // Use server-side filtering with the Location index
+        const partsQuery = query(partsRef, orderByChild("Location"), equalTo(location));
+        const snapshot = await get(partsQuery);
+
+        if (!snapshot.exists()) return [];
+
+        const parts: Part[] = [];
+        snapshot.forEach((childSnapshot) => {
+            parts.push(mapPartData(childSnapshot.key!, childSnapshot.val()));
+        });
+
+        return parts.sort((a, b) => b.updatedAt.getTime() - a.updatedAt.getTime());
+    } catch (error) {
+        console.error("Error fetching parts by location:", error);
+        throw error;
+    }
+}
+
 export async function addPart(
     part: Omit<Part, "id" | "createdAt" | "updatedAt">,
     imageFile?: File

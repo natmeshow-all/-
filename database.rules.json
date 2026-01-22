@@ -26,7 +26,8 @@
                 "machineId",
                 "name",
                 "machineName",
-                "updatedAt"
+                "updatedAt",
+                "Location"
             ],
             "$partId": {
                 ".validate": "newData.hasChildren(['name']) && newData.child('name').isString()"
