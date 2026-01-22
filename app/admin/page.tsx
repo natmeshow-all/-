@@ -27,8 +27,9 @@ import TechniciansTab from "../components/admin/TechniciansTab";
 import UserApprovalTab from "../components/admin/UserApprovalTab";
 import AuditLogTab from "../components/admin/AuditLogTab";
 import SystemSettingsTab from "../components/admin/SystemSettingsTab";
+import SystemMonitorTab from "../components/admin/SystemMonitorTab";
 
-type AdminTab = "analytics" | "technicians" | "approvals" | "auditlog" | "settings";
+type AdminTab = "analytics" | "technicians" | "approvals" | "auditlog" | "settings" | "monitor";
 
 export default function AdminPage() {
     const { t } = useLanguage();
@@ -154,6 +155,12 @@ export default function AdminPage() {
                         label={t("adminTabAuditLog")}
                     />
                     <TabButton
+                        active={activeTab === "monitor"}
+                        onClick={() => setActiveTab("monitor")}
+                        icon={<ActivityIcon size={18} />}
+                        label={t("adminTabMonitor")}
+                    />
+                    <TabButton
                         active={activeTab === "settings"}
                         onClick={() => setActiveTab("settings")}
                         icon={<SettingsIcon size={18} />}
@@ -167,6 +174,7 @@ export default function AdminPage() {
                     {activeTab === "technicians" && <TechniciansTab />}
                     {activeTab === "approvals" && <UserApprovalTab />}
                     {activeTab === "auditlog" && <AuditLogTab />}
+                    {activeTab === "monitor" && <SystemMonitorTab />}
                     {activeTab === "settings" && <SystemSettingsTab />}
                 </div>
             </main>

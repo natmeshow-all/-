@@ -499,6 +499,7 @@ export interface TranslationKeys {
     adminTabApprovals: string;
     adminTabAuditLog: string;
     adminTabSettings: string;
+    adminTabMonitor: string;
     adminTechniciansTitle: string;
     adminTechniciansLoading: string;
     adminTechnicalQuality: string;
@@ -1212,6 +1213,7 @@ const th: TranslationKeys = {
     adminTabApprovals: "การอนุมัติผู้ใช้",
     adminTabAuditLog: "บันทึกกิจกรรม",
     adminTabSettings: "ตั้งค่าระบบ",
+    adminTabMonitor: "ตรวจสอบระบบ",
     adminTechniciansTitle: "ช่างเทคนิคของเรา",
     adminTechniciansLoading: "กำลังโหลดข้อมูลช่างเทคนิค...",
     adminTechnicalQuality: "คะแนนประสิทธิภาพ",
@@ -1923,6 +1925,7 @@ const en: TranslationKeys = {
     adminTabApprovals: "User Approvals",
     adminTabAuditLog: "Audit Log",
     adminTabSettings: "Settings",
+    adminTabMonitor: "System Monitor",
     adminTechniciansTitle: "Our Technicians",
     adminTechniciansLoading: "Loading technician data...",
     adminTechnicalQuality: "Performance Score",
