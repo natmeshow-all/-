@@ -9,8 +9,8 @@ import StockHistoryModal from "../components/forms/StockHistoryModal";
 import PartDetailsModal from "../components/parts/PartDetailsModal";
 import ConfirmModal from "../components/ui/ConfirmModal";
 import { useLanguage } from "../contexts/LanguageContext";
-import { getSparePartsPaginated, searchSpareParts, deleteSparePart } from "../lib/firebaseService";
-import { SparePart } from "../types";
+import { getPartsPaginated, searchSpareParts, deleteSparePart } from "../lib/firebaseService";
+import { Part } from "../types";
 import { useAuth } from "../contexts/AuthContext";
 import { useToast } from "../contexts/ToastContext";
 import { BoxIcon, PlusIcon, SearchIcon, FilterIcon, ArrowUpIcon, ArrowDownIcon, AlertIcon, HistoryIcon, TrashIcon, LayersIcon, ChevronDownIcon, ChevronUpIcon } from "../components/ui/Icons";
@@ -20,24 +20,24 @@ export default function PartsPage() {
     const { user, checkAuth, isAdmin } = useAuth();
     const { success, error } = useToast();
     const [addModalOpen, setAddModalOpen] = useState(false);
-    const [partToEdit, setPartToEdit] = useState<SparePart | null>(null);
+    const [partToEdit, setPartToEdit] = useState<Part | null>(null);
     const [stockActionModalOpen, setStockActionModalOpen] = useState(false);
     const [historyModalOpen, setHistoryModalOpen] = useState(false);
     const [detailsModalOpen, setDetailsModalOpen] = useState(false);
     const [confirmDeleteOpen, setConfirmDeleteOpen] = useState(false);
-    const [selectedPart, setSelectedPart] = useState<SparePart | null>(null); // For actions
-    const [viewPart, setViewPart] = useState<SparePart | null>(null); // For details view
-    const [partToDelete, setPartToDelete] = useState<SparePart | null>(null);
+    const [selectedPart, setSelectedPart] = useState<Part | null>(null); // For actions
+    const [viewPart, setViewPart] = useState<Part | null>(null); // For details view
+    const [partToDelete, setPartToDelete] = useState<Part | null>(null);
 
     const [actionType, setActionType] = useState<"restock" | "withdraw">("withdraw");
 
     const [searchQuery, setSearchQuery] = useState("");
-    const [parts, setParts] = useState<SparePart[]>([]);
+    const [parts, setParts] = useState<Part[]>([]);
     const [loading, setLoading] = useState(true);
     const [expandedParts, setExpandedParts] = useState<Record<string, boolean>>({});
     
     // Pagination State
-    const [lastCursor, setLastCursor] = useState<{name: string, id: string} | null>(null);
+    const [lastCursor, setLastCursor] = useState<{updatedAt: string, id: string} | null>(null);
     const [hasMore, setHasMore] = useState(true);
     const [isSearching, setIsSearching] = useState(false);
     const [loadingMore, setLoadingMore] = useState(false);
@@ -49,14 +49,14 @@ export default function PartsPage() {
             if (isLoadMore) {
                 if (!hasMore || isSearching) return;
                 setLoadingMore(true);
-                const { parts: newParts, lastItem } = await getSparePartsPaginated(20, lastCursor?.name, lastCursor?.id);
+                const { parts: newParts, lastItem } = await getPartsPaginated(20, lastCursor?.updatedAt, lastCursor?.id);
                 setParts(prev => [...prev, ...newParts]);
                 setLastCursor(lastItem);
                 setHasMore(!!lastItem);
             } else {
                 setLoading(true);
                 // Initial load or reset
-                const { parts: newParts, lastItem } = await getSparePartsPaginated(20);
+                const { parts: newParts, lastItem } = await getPartsPaginated(20);
                 setParts(newParts);
                 setLastCursor(lastItem);
                 setHasMore(!!lastItem);
@@ -99,24 +99,24 @@ export default function PartsPage() {
         return () => clearTimeout(timer);
     }, [searchQuery]);
 
-    const openStockModal = (part: SparePart, type: "restock" | "withdraw") => {
+    const openStockModal = (part: Part, type: "restock" | "withdraw") => {
         if (!checkAuth()) return;
         setSelectedPart(part);
         setActionType(type);
         setStockActionModalOpen(true);
     };
 
-    const openHistoryModal = (part: SparePart) => {
+    const openHistoryModal = (part: Part) => {
         setSelectedPart(part);
         setHistoryModalOpen(true);
     };
 
-    const openDetailsModal = (part: SparePart) => {
+    const openDetailsModal = (part: Part) => {
         setViewPart(part);
         setDetailsModalOpen(true);
     };
 
-    const handleEditPart = (part: SparePart) => {
+    const handleEditPart = (part: Part) => {
         if (!checkAuth()) return;
         if (!isAdmin) {
             error(t("msgNoEditPermission") || "คุณไม่มีสิทธ์แก้ไข");
@@ -127,7 +127,7 @@ export default function PartsPage() {
         setAddModalOpen(true);
     };
 
-    const handleDeleteClick = (part: SparePart) => {
+    const handleDeleteClick = (part: Part) => {
         if (!checkAuth()) return;
         if (!isAdmin) {
             error(t("msgNoEditPermission") || "คุณไม่มีสิทธ์แก้ไข");
@@ -156,7 +156,7 @@ export default function PartsPage() {
         }
     };
 
-    const handleRepairPart = (part: SparePart) => {
+    const handleRepairPart = (part: Part) => {
         setDetailsModalOpen(false);
         // Open stock modal for withdraw as repair action
         openStockModal(part, "withdraw");
@@ -177,7 +177,7 @@ export default function PartsPage() {
             acc[p.parentId].push(p);
         }
         return acc;
-    }, {} as Record<string, SparePart[]>);
+    }, {} as Record<string, Part[]>);
 
     // 2. Group Root parts by Category (for the main view)
     const groupedParts = rootParts.reduce((acc, part) => {
@@ -185,7 +185,7 @@ export default function PartsPage() {
         if (!acc[cat]) acc[cat] = [];
         acc[cat].push(part);
         return acc;
-    }, {} as Record<string, SparePart[]>);
+    }, {} as Record<string, Part[]>);
 
     // Identify Low Stock Items - No longer used for banner but may be used elsewhere if needed
     // const lowStockItems = parts.filter(p => p.quantity <= p.minStockThreshold);

@@ -2,12 +2,12 @@ import React, { useState, useEffect } from "react";
 import { XIcon, HistoryIcon, ArrowUpIcon, ArrowDownIcon, UserIcon, ClockIcon, MapPinIcon, ImageIcon, BoxIcon } from "../ui/Icons";
 import { useLanguage } from "../../contexts/LanguageContext";
 import { getStockTransactions } from "../../lib/firebaseService";
-import { SparePart, StockTransaction } from "../../types";
+import { Part, StockTransaction } from "../../types";
 
 interface StockHistoryModalProps {
     isOpen: boolean;
     onClose: () => void;
-    part: SparePart | null;
+    part: Part | null;
 }
 
 export default function StockHistoryModal({ isOpen, onClose, part }: StockHistoryModalProps) {
@@ -38,7 +38,7 @@ export default function StockHistoryModal({ isOpen, onClose, part }: StockHistor
                         </div>
                         <div>
                             <h2 className="text-xl font-bold text-text-primary">{t("historyTitle")}</h2>
-                            <p className="text-sm text-text-muted">{part.name}</p>
+                            <p className="text-sm text-text-muted">{part.partName || part.name}</p>
                         </div>
                     </div>
                     <button

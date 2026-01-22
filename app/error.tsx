@@ -2,6 +2,7 @@
 
 import { useEffect } from "react";
 import { useLanguage } from "./contexts/LanguageContext";
+import { logSystemError } from "./lib/firebaseService";
 
 export default function Error({
   error,
@@ -15,6 +16,7 @@ export default function Error({
   useEffect(() => {
     // Log the error to an error reporting service
     console.error("Global Error Boundary caught:", error);
+    logSystemError(error, error.digest);
   }, [error]);
 
   return (

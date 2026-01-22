@@ -2,12 +2,14 @@ import {
     ref,
     get,
     set,
-    push
+    push,
+    remove
 } from "firebase/database";
 import { database } from "../lib/firebase";
-import { AuditLog, AuditActionType, SystemSettings, UserRole } from "../types";
+import { AuditLog, AuditActionType, SystemSettings, UserRole, SystemErrorLog } from "../types";
 
 const AUDIT_LOGS_PATH = "audit_logs";
+const SYSTEM_ERRORS_PATH = "system_errors";
 const SYSTEM_SETTINGS_PATH = "system_settings";
 
 /**
@@ -81,6 +83,84 @@ export async function getAuditLogs(limit: number = 100): Promise<AuditLog[]> {
             .slice(0, limit);
     } catch (error) {
         console.error("Error fetching audit logs:", error);
+        throw error;
+    }
+}
+
+/**
+ * Logs a system error
+ */
+export async function logSystemError(
+    error: Error,
+    componentStack?: string,
+    user?: { uid: string; displayName: string } | null
+): Promise<void> {
+    try {
+        const errorRef = push(ref(database, SYSTEM_ERRORS_PATH));
+        
+        const errorData: any = {
+            id: errorRef.key,
+            message: error.message || "Unknown Error",
+            stack: error.stack,
+            url: typeof window !== 'undefined' ? window.location.href : 'server',
+            timestamp: new Date().toISOString(),
+            userAgent: typeof window !== 'undefined' ? window.navigator.userAgent : 'server',
+        };
+
+        if (componentStack) {
+            errorData.componentStack = componentStack;
+        }
+
+        if (user) {
+            errorData.userId = user.uid;
+            errorData.userName = user.displayName;
+        }
+
+        await set(errorRef, errorData);
+    } catch (err) {
+        console.error("Failed to log system error to Firebase:", err);
+    }
+}
+
+/**
+ * Retrieves system errors
+ */
+export async function getSystemErrors(limit: number = 50): Promise<SystemErrorLog[]> {
+    try {
+        const errorsRef = ref(database, SYSTEM_ERRORS_PATH);
+        const snapshot = await get(errorsRef);
+
+        if (!snapshot.exists()) return [];
+
+        const errors: SystemErrorLog[] = [];
+        snapshot.forEach((child) => {
+            const data = child.val();
+            errors.push({
+                ...data,
+                id: child.key || data.id,
+                timestamp: new Date(data.timestamp)
+            });
+        });
+
+        // Sort by timestamp descending
+        return errors
+            .sort((a, b) => b.timestamp.getTime() - a.timestamp.getTime())
+            .slice(0, limit);
+    } catch (error) {
+        console.error("Error fetching system errors:", error);
+        return [];
+    }
+}
+
+/**
+ * Clears all system errors
+ */
+export async function clearSystemErrors(): Promise<void> {
+    try {
+        const errorsRef = ref(database, SYSTEM_ERRORS_PATH);
+        await remove(errorsRef);
+    } catch (error) {
+        console.error("Error clearing system errors:", error);
         throw error;
     }
 }

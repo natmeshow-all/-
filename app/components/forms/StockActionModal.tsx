@@ -2,7 +2,7 @@ import React, { useState, useRef, useEffect } from "react";
 import { BoxIcon, XIcon, UploadIcon, SaveIcon, ArrowUpIcon, ArrowDownIcon } from "../ui/Icons";
 import { useLanguage } from "../../contexts/LanguageContext";
 import { adjustStock, getMachines } from "../../lib/firebaseService";
-import { Machine, SparePart, TransactionType } from "../../types";
+import { Machine, Part, TransactionType } from "../../types";
 import { useAuth } from "../../contexts/AuthContext";
 import { useToast } from "../../contexts/ToastContext";
 
@@ -11,7 +11,7 @@ interface StockActionModalProps {
     onClose: () => void;
     onSuccess: () => void;
     actionType: TransactionType; // "restock" or "withdraw"
-    part: SparePart | null;
+    part: Part | null;
 }
 
 export default function StockActionModal({ isOpen, onClose, onSuccess, actionType, part }: StockActionModalProps) {
@@ -87,7 +87,7 @@ export default function StockActionModal({ isOpen, onClose, onSuccess, actionTyp
         try {
             await adjustStock({
                 partId: part.id,
-                partName: part.name,
+                partName: part.partName || part.name || "Unknown Part",
                 type: actionType,
                 quantity: Number(formData.quantity),
                 machineId: actionType === "withdraw" ? formData.machineId : undefined,

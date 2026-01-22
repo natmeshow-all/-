@@ -51,20 +51,26 @@ export interface Machine {
 
 export interface Part {
     id: string;
-    machineId: string;
-    machineName: string;
+    machineId?: string; // Optional for Spare Parts (Inventory)
+    machineName?: string; // Optional for Spare Parts (Inventory)
     partName: string;
+    name?: string; // Alias for partName (for backward compatibility)
     modelSpec: string;
+    model?: string; // Alias for modelSpec
     brand: string;
     Location: string;
     quantity: number;
+    unit?: string; // e.g. pcs, set, box
     minStockThreshold: number; // Low stock alert level
     location?: string;
     category: PartCategory;
     parentId?: string; // For sub-parts (e.g. bearing inside a motor)
     hasSubParts?: boolean; // If this is an assembly (e.g. a motor)
     imageUrl?: string;
+    description?: string;
     notes?: string;
+    supplier?: string;
+    pricePerUnit?: number;
     createdAt: Date;
     updatedAt: Date;
 }
@@ -391,7 +397,8 @@ export type AuditActionType =
     | "user_approve" | "user_reject" | "user_role_change"
     | "part_add" | "part_edit" | "part_delete" | "stock_change"
     | "machine_add" | "machine_edit" | "machine_delete"
-    | "settings_change" | "data_export";
+    | "settings_change" | "data_export"
+    | "system_error";
 
 export interface AuditLog {
     id: string;
@@ -405,6 +412,18 @@ export interface AuditLog {
     ipAddress?: string;      // Client IP if available
     userAgent?: string;      // Browser info
     timestamp: Date;
+}
+
+export interface SystemErrorLog {
+    id: string;
+    message: string;
+    stack?: string;
+    componentStack?: string;
+    url: string;
+    userId?: string;
+    userName?: string;
+    timestamp: Date;
+    userAgent: string;
 }
 
 export interface DashboardStats {

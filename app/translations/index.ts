@@ -500,6 +500,12 @@ export interface TranslationKeys {
     adminTabAuditLog: string;
     adminTabSettings: string;
     adminTabMonitor: string;
+    adminSystemOverview: string;
+    adminSystemErrors: string;
+    adminNoErrors: string;
+    adminErrorsCleared: string;
+    adminClearErrorsTitle: string;
+    adminClearErrorsMessage: string;
     adminTechniciansTitle: string;
     adminTechniciansLoading: string;
     adminTechnicalQuality: string;
@@ -1214,6 +1220,12 @@ const th: TranslationKeys = {
     adminTabAuditLog: "บันทึกกิจกรรม",
     adminTabSettings: "ตั้งค่าระบบ",
     adminTabMonitor: "ตรวจสอบระบบ",
+    adminSystemOverview: "ภาพรวมระบบ",
+    adminSystemErrors: "ข้อผิดพลาดของระบบ",
+    adminNoErrors: "ไม่พบข้อผิดพลาดของระบบ",
+    adminErrorsCleared: "ล้างบันทึกข้อผิดพลาดเรียบร้อยแล้ว",
+    adminClearErrorsTitle: "ล้างบันทึกข้อผิดพลาด",
+    adminClearErrorsMessage: "คุณแน่ใจหรือไม่ที่จะล้างบันทึกข้อผิดพลาดทั้งหมด? การกระทำนี้ไม่สามารถย้อนกลับได้",
     adminTechniciansTitle: "ช่างเทคนิคของเรา",
     adminTechniciansLoading: "กำลังโหลดข้อมูลช่างเทคนิค...",
     adminTechnicalQuality: "คะแนนประสิทธิภาพ",
@@ -1926,6 +1938,12 @@ const en: TranslationKeys = {
     adminTabAuditLog: "Audit Log",
     adminTabSettings: "Settings",
     adminTabMonitor: "System Monitor",
+    adminSystemOverview: "System Overview",
+    adminSystemErrors: "System Errors",
+    adminNoErrors: "No errors found",
+    adminErrorsCleared: "Error logs cleared successfully",
+    adminClearErrorsTitle: "Clear System Errors",
+    adminClearErrorsMessage: "Are you sure you want to clear all system error logs? This action cannot be undone.",
     adminTechniciansTitle: "Our Technicians",
     adminTechniciansLoading: "Loading technician data...",
     adminTechnicalQuality: "Performance Score",

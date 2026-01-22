@@ -53,7 +53,7 @@ export default function GlobalMaintenanceHistoryModal({ isOpen, onClose }: Globa
             // Records are already filtered by type, just sort them
             setRecords(recordsData.sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime()));
             setMachines(machinesData.map(m => ({ id: m.id, name: m.name, Location: m.Location, location: m.location })));
-            setParts(partsData.map(p => ({ id: p.id, partName: p.partName, machineId: p.machineId })));
+            setParts(partsData.map(p => ({ id: p.id, partName: p.partName, machineId: p.machineId || "" })));
 
             setPmCount(statsData.totalPM);
             setOverhaulCount(statsData.totalOverhaul);

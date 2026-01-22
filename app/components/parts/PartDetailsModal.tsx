@@ -2,7 +2,7 @@
 
 import React, { useState } from "react";
 import Modal from "../ui/Modal";
-import { SparePart } from "../../types";
+import { Part } from "../../types";
 import { useLanguage } from "../../contexts/LanguageContext";
 import { useAuth } from "../../contexts/AuthContext";
 import { EditIcon, TrashIcon, BoxIcon, WrenchIcon, XIcon, LayersIcon, ChevronRightIcon } from "../ui/Icons";
@@ -10,12 +10,12 @@ import { EditIcon, TrashIcon, BoxIcon, WrenchIcon, XIcon, LayersIcon, ChevronRig
 interface PartDetailsModalProps {
     isOpen: boolean;
     onClose: () => void;
-    part: SparePart | null;
-    onEdit: (part: SparePart) => void;
-    onDelete: (part: SparePart) => void;
-    onRepair: (part: SparePart) => void;
-    subParts?: SparePart[];
-    onSelectPart?: (part: SparePart) => void; // To navigate to sub-part details
+    part: Part | null;
+    onEdit: (part: Part) => void;
+    onDelete: (part: Part) => void;
+    onRepair: (part: Part) => void;
+    subParts?: Part[];
+    onSelectPart?: (part: Part) => void; // To navigate to sub-part details
 }
 
 export default function PartDetailsModal({
@@ -51,7 +51,7 @@ export default function PartDetailsModal({
                 </button>
                 <img
                     src={part.imageUrl}
-                    alt={part.name || t("altImage")}
+                    alt={part.partName || part.name || t("altImage")}
                     className="max-w-full max-h-screen object-contain rounded-lg shadow-2xl animate-scale-in"
                     onClick={(e) => e.stopPropagation()}
                 />
@@ -64,7 +64,7 @@ export default function PartDetailsModal({
             <Modal
                 isOpen={isOpen}
                 onClose={onClose}
-                title={part.name}
+                title={part.partName || part.name || ""}
                 titleIcon={<BoxIcon size={24} className="text-primary" />}
                 size="lg"
             >
@@ -75,7 +75,7 @@ export default function PartDetailsModal({
                             <>
                                 <img
                                     src={part.imageUrl}
-                                    alt={part.name}
+                                    alt={part.partName || part.name}
                                     className="w-full h-full object-cover cursor-pointer hover:scale-105 transition-transform duration-500"
                                     onClick={() => setLightboxOpen(true)}
                                 />

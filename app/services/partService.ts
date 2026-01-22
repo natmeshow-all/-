@@ -48,11 +48,18 @@ function mapPartData(key: string, data: any): Part {
         id: key,
         ...data,
         partName,
+        name: partName, // Alias
         imageUrl,
         quantity,
         modelSpec,
+        model: modelSpec, // Alias
         machineName,
         Location: data.Location || data.zone || "",
+        unit: data.unit || "pcs",
+        supplier: data.supplier || "",
+        pricePerUnit: data.pricePerUnit,
+        description: data.description || "",
+        notes: data.notes || "",
         createdAt: data.createdAt ? new Date(data.createdAt) : new Date(),
         updatedAt: data.updatedAt ? new Date(data.updatedAt) : new Date(),
     };
@@ -575,7 +582,7 @@ export async function getSparePartsPaginated(limit: number = 20, lastName?: stri
     }
 }
 
-export async function searchSpareParts(queryText: string): Promise<SparePart[]> {
+export async function searchSpareParts(queryText: string): Promise<Part[]> {
     try {
         if (!queryText) return [];
         
@@ -585,14 +592,14 @@ export async function searchSpareParts(queryText: string): Promise<SparePart[]> 
 
         if (!snapshot.exists()) return [];
 
-        const parts: SparePart[] = [];
+        const parts: Part[] = [];
         snapshot.forEach((childSnapshot) => {
-            parts.push(mapSparePartData(childSnapshot.key!, childSnapshot.val()));
+            parts.push(mapPartData(childSnapshot.key!, childSnapshot.val()));
         });
         
         return parts;
     } catch (error) {
-        console.error("Error searching spare parts:", error);
+        console.error("Error searching parts:", error);
         throw error;
     }
 }

@@ -9,18 +9,26 @@ import {
     BoxIcon,
     ShieldCheckIcon,
     SettingsIcon,
-    UserIcon
+    UserIcon,
+    AlertTriangleIcon,
+    TrashIcon
 } from "../ui/Icons";
-import { getAdminStats, getDashboardStats } from "../../lib/firebaseService";
-import { AdminStats, DashboardStats } from "../../types";
+import { getAdminStats, getDashboardStats, getSystemErrors, clearSystemErrors, getPendingUsers } from "../../lib/firebaseService";
+import { AdminStats, DashboardStats, SystemErrorLog } from "../../types";
+import ConfirmModal from "../ui/ConfirmModal";
+import { useToast } from "../../contexts/ToastContext";
 
 export default function SystemMonitorTab() {
     const { t } = useLanguage();
+    const { success, error: toastError } = useToast();
     const [dbConnected, setDbConnected] = useState<boolean | null>(null);
     const [latency, setLatency] = useState<number | null>(null);
     const [stats, setStats] = useState<AdminStats | null>(null);
     const [dashStats, setDashStats] = useState<DashboardStats | null>(null);
+    const [errors, setErrors] = useState<SystemErrorLog[]>([]);
+    const [pendingCount, setPendingCount] = useState(0);
     const [userAgent, setUserAgent] = useState("");
+    const [clearConfirmOpen, setClearConfirmOpen] = useState(false);
 
     useEffect(() => {
         // Check Firebase connection
@@ -47,15 +55,28 @@ export default function SystemMonitorTab() {
     const fetchStats = async () => {
         const start = Date.now();
         try {
-            const [adminData, dashData] = await Promise.all([
+            const [adminData, dashData, errorsData] = await Promise.all([
                 getAdminStats(),
-                getDashboardStats()
+                getDashboardStats(),
+                getSystemErrors(10)
             ]);
             setStats(adminData);
             setDashStats(dashData);
+            setErrors(errorsData);
             setLatency(Date.now() - start);
         } catch (error) {
             console.error("Error fetching stats:", error);
+        }
+    };
+
+    const handleClearErrors = async () => {
+        try {
+            await clearSystemErrors();
+            success(t("adminErrorsCleared"));
+            fetchStats();
+        } catch (err) {
+            console.error("Error clearing errors:", err);
+            toastError(t("errorTitle"));
         }
     };
 
@@ -98,13 +119,13 @@ export default function SystemMonitorTab() {
                     </div>
                 </div>
 
-                {/* Database Stats Panel */}
+                {/* System Overview */}
                 <div className="bg-bg-primary rounded-xl border border-white/5 p-6">
                     <div className="flex items-center gap-3 mb-6">
                         <BoxIcon className="text-accent-purple" />
-                        <h3 className="text-lg font-bold text-text-primary">Database Nodes</h3>
+                        <h3 className="text-lg font-bold text-text-primary">{t("adminSystemOverview")}</h3>
                     </div>
-                    
+
                     <div className="grid grid-cols-2 gap-4">
                         <div className="p-4 bg-bg-secondary rounded-lg border border-white/5 text-center">
                             <div className="text-2xl font-bold text-text-primary mb-1">{stats?.technicianCount || 0}</div>
@@ -125,17 +146,62 @@ export default function SystemMonitorTab() {
                     </div>
                 </div>
             </div>
-
-            {/* Client Info */}
+            
+            {/* System Errors Section */}
             <div className="bg-bg-primary rounded-xl border border-white/5 p-6">
-                <div className="flex items-center gap-3 mb-4">
-                    <ShieldCheckIcon className="text-accent-cyan" />
-                    <h3 className="text-lg font-bold text-text-primary">Client Information</h3>
+                <div className="flex items-center justify-between mb-6">
+                    <div className="flex items-center gap-3">
+                        <AlertTriangleIcon className="text-accent-red" />
+                        <h3 className="text-lg font-bold text-text-primary">{t("adminSystemErrors")}</h3>
+                    </div>
+                    {errors.length > 0 && (
+                        <button
+                            onClick={() => setClearConfirmOpen(true)}
+                            className="btn btn-sm btn-ghost text-accent-red hover:bg-accent-red/10"
+                        >
+                            <TrashIcon size={16} className="mr-2" />
+                            Clear Logs
+                        </button>
+                    )}
                 </div>
-                <div className="p-4 bg-bg-secondary rounded-lg border border-white/5 font-mono text-xs text-text-muted break-all">
-                    {userAgent}
+
+                <div className="space-y-3 max-h-[300px] overflow-y-auto custom-scrollbar pr-2">
+                    {errors.length === 0 ? (
+                        <div className="text-center py-8 text-text-muted border border-dashed border-white/10 rounded-lg">
+                            <p>{t("adminNoErrors")}</p>
+                        </div>
+                    ) : (
+                        errors.map((err) => (
+                            <div key={err.id} className="p-3 bg-bg-secondary/50 rounded-lg border border-white/5 hover:bg-bg-secondary transition-colors text-left">
+                                <div className="flex justify-between items-start gap-4">
+                                    <div className="min-w-0 flex-1">
+                                        <p className="text-sm font-bold text-accent-red truncate">{err.message}</p>
+                                        <p className="text-xs text-text-muted mt-1 font-mono truncate">{err.url}</p>
+                                    </div>
+                                    <span className="text-[10px] text-text-muted whitespace-nowrap">
+                                        {new Date(err.timestamp).toLocaleString()}
+                                    </span>
+                                </div>
+                                {err.userName && (
+                                    <p className="text-xs text-text-primary mt-2 flex items-center gap-1">
+                                        <UserIcon size={10} /> {err.userName}
+                                    </p>
+                                )}
+                            </div>
+                        ))
+                    )}
                 </div>
             </div>
+
+            <ConfirmModal
+                isOpen={clearConfirmOpen}
+                onClose={() => setClearConfirmOpen(false)}
+                onConfirm={handleClearErrors}
+                title={t("adminClearErrorsTitle") || "Clear System Errors"}
+                message={t("adminClearErrorsMessage") || "Are you sure you want to clear all system error logs? This action cannot be undone."}
+                confirmText={t("actionDelete")}
+                isDestructive={true}
+            />
         </div>
     );
 }

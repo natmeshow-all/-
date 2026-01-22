@@ -10,7 +10,7 @@ import {
 import { useLanguage } from "../../contexts/LanguageContext";
 import { useToast } from "../../contexts/ToastContext";
 import { addSparePart, updateSparePart } from "../../lib/firebaseService";
-import { SparePart } from "../../types";
+import { Part } from "../../types";
 import { PART_NAMES } from "../../constants";
 
 interface AddSparePartModalProps {
@@ -18,7 +18,7 @@ interface AddSparePartModalProps {
     onClose: () => void;
     onSuccess: () => void;
     initialParentId?: string; // Optional: prepopulate if adding sub-part from a parent
-    partToEdit?: SparePart | null; // Optional: part to edit
+    partToEdit?: Part | null; // Optional: part to edit
 }
 
 export default function AddSparePartModal({ isOpen, onClose, onSuccess, initialParentId, partToEdit }: AddSparePartModalProps) {
@@ -49,19 +49,19 @@ export default function AddSparePartModal({ isOpen, onClose, onSuccess, initialP
     React.useEffect(() => {
         if (isOpen && partToEdit) {
             setFormData({
-                name: partToEdit.name || "",
+                name: partToEdit.partName || partToEdit.name || "",
                 category: partToEdit.category || "bearing",
                 quantity: partToEdit.quantity || 0,
                 unit: partToEdit.unit || "pcs",
                 minStockThreshold: partToEdit.minStockThreshold || 3,
-                location: partToEdit.location || "",
+                location: partToEdit.location || partToEdit.Location || "",
                 supplier: partToEdit.supplier || "",
                 pricePerUnit: partToEdit.pricePerUnit?.toString() || "",
                 description: partToEdit.description || "",
-                model: partToEdit.model || "",
+                model: partToEdit.modelSpec || partToEdit.model || "",
                 customCategory: partToEdit.category && !["bearing", "belt", "oil", "filter", "seal", "other"].includes(partToEdit.category) ? partToEdit.category : "",
             });
-            setIsCustomName(!PART_NAMES.includes(partToEdit.name || ""));
+            setIsCustomName(!PART_NAMES.includes(partToEdit.partName || partToEdit.name || ""));
             if (partToEdit.imageUrl) {
                 setPreviewUrl(partToEdit.imageUrl);
             }

@@ -34,7 +34,8 @@ const actionLabels: Record<AuditActionType, { th: string; en: string; color: str
     machine_edit: { th: "แก้ไขเครื่องจักร", en: "Machine Edited", color: "text-accent-orange" },
     machine_delete: { th: "ลบเครื่องจักร", en: "Machine Deleted", color: "text-accent-red" },
     settings_change: { th: "เปลี่ยนการตั้งค่า", en: "Settings Changed", color: "text-accent-purple" },
-    data_export: { th: "Export ข้อมูล", en: "Data Exported", color: "text-accent-blue" }
+    data_export: { th: "Export ข้อมูล", en: "Data Exported", color: "text-accent-blue" },
+    system_error: { th: "ข้อผิดพลาดระบบ", en: "System Error", color: "text-accent-red" }
 };
 
 export default function AuditLogTab() {
