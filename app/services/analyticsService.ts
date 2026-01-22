@@ -5,7 +5,7 @@ import {
     push
 } from "firebase/database";
 import { database } from "../lib/firebase";
-import { AdminStats, PerformanceEvaluation, MaintenanceRecord } from "../types";
+import { AdminStats, PerformanceEvaluation, MaintenanceRecord, DashboardStats } from "../types";
 import { COLLECTIONS } from "./constants";
 import { getParts, getSpareParts } from "./partService";
 import { getMachines } from "./machineService";
@@ -13,40 +13,69 @@ import { getMaintenanceRecords } from "./maintenanceService";
 
 // ==================== STATISTICS ====================
 
-export async function getDashboardStats() {
-    const [parts, machines, records, spareParts] = await Promise.all([
-        getParts(),
-        getMachines(),
-        getMaintenanceRecords(),
-        getSpareParts(),
-    ]);
+export async function getDashboardStats(): Promise<DashboardStats> {
+    try {
+        // 1. Try to get cached stats
+        const statsRef = ref(database, COLLECTIONS.SYSTEM_STATS);
+        const statsSnapshot = await get(statsRef);
+        const CACHE_DURATION = 5 * 60 * 1000; // 5 minutes
 
-    const uniqueLocations = new Set(parts.map((p) => p.Location).filter(l => l && l.trim() !== '')).size;
-    const pendingRecords = records.filter((r) => r.status !== "completed").length;
+        if (statsSnapshot.exists()) {
+            const cachedStats = statsSnapshot.val() as DashboardStats;
+            const now = Date.now();
+            if (cachedStats.lastUpdated && (now - cachedStats.lastUpdated < CACHE_DURATION)) {
+                return cachedStats;
+            }
+        }
 
-    // Separate PM and Overhaul counts
-    const totalPM = records.filter(r =>
-        r.type === 'preventive' ||
-        r.type === 'oilChange' ||
-        r.type === 'inspection'
-    ).length;
+        // 2. Calculate if cache missing or expired
+        const [parts, machines, records, spareParts] = await Promise.all([
+            getParts(),
+            getMachines(),
+            getMaintenanceRecords(),
+            getSpareParts(),
+        ]);
 
-    const totalOverhaul = records.filter(r =>
-        r.type === 'partReplacement' ||
-        r.isOverhaul === true
-    ).length;
+        const uniqueLocations = new Set(parts.map((p) => p.Location).filter(l => l && l.trim() !== '')).size;
+        const pendingRecords = records.filter((r) => r.status !== "completed").length;
 
-    return {
-        totalParts: parts.length,
-        totalMachines: machines.length,
-        totalLocations: uniqueLocations,
-        maintenanceRecords: records.length,
-        totalPM,
-        totalOverhaul,
-        pendingMaintenance: pendingRecords,
-        upcomingSchedule: 0,
-        totalSpareParts: spareParts.length
-    };
+        // Separate PM and Overhaul counts
+        const totalPM = records.filter(r =>
+            r.type === 'preventive' ||
+            r.type === 'oilChange' ||
+            r.type === 'inspection'
+        ).length;
+
+        const totalOverhaul = records.filter(r =>
+            r.type === 'partReplacement' ||
+            r.isOverhaul === true
+        ).length;
+
+        const newStats: DashboardStats = {
+            totalParts: parts.length,
+            totalMachines: machines.length,
+            totalLocations: uniqueLocations,
+            maintenanceRecords: records.length,
+            totalPM,
+            totalOverhaul,
+            pendingMaintenance: pendingRecords,
+            upcomingSchedule: 0,
+            totalSpareParts: spareParts.length,
+            lastUpdated: Date.now()
+        };
+
+        // 3. Update cache (Best effort - ignore if permission denied)
+        try {
+            await set(statsRef, newStats);
+        } catch (cacheError) {
+            console.warn("Could not update dashboard cache (likely permission issue):", cacheError);
+        }
+
+        return newStats;
+    } catch (error) {
+        console.error("Error getting dashboard stats:", error);
+        throw error;
+    }
 }
 
 // ==================== ADMIN & ANALYTICS ====================
@@ -98,31 +127,27 @@ export async function getAdminStats(): Promise<AdminStats> {
         // Calculate average performance across all technicians
         let totalScore = 0;
         let evalCount = 0;
+
         Object.values(evalsData).forEach((techEvals: any) => {
-            Object.values(techEvals).forEach((ev: any) => {
-                totalScore += ev.averageScore || 0;
+            Object.values(techEvals).forEach((evaluation: any) => {
+                totalScore += evaluation.averageScore || 0;
                 evalCount++;
             });
         });
 
-        const avgPerformance = evalCount > 0 ? totalScore / evalCount : 0;
+        const avgPerformanceScore = evalCount > 0 ? totalScore / evalCount : 0;
 
         return {
             totalLogins,
+            usageHistory,
+            systemHealth: 100, // Placeholder
             avgLoginsPerDay,
-            usageHistory: usageHistory.slice(-30),
             technicianCount,
-            avgPerformance
+            avgPerformance: avgPerformanceScore
         };
     } catch (error) {
         console.error("Error fetching admin stats:", error);
-        return {
-            totalLogins: 0,
-            avgLoginsPerDay: 0,
-            usageHistory: [],
-            technicianCount: 0,
-            avgPerformance: 0
-        };
+        throw error;
     }
 }
 

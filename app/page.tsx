@@ -34,7 +34,7 @@ import Image from "next/image";
 
 export default function Dashboard() {
   const { t, language, setLanguage, tData } = useLanguage();
-  const { user, checkAuth } = useAuth();
+  const { user, checkAuth, loading: authLoading } = useAuth();
   const { success, error: showError } = useToast();
   const [addPartModalOpen, setAddPartModalOpen] = useState(false);
   const [maintenanceModalOpen, setMaintenanceModalOpen] = useState(false);
@@ -107,6 +107,7 @@ export default function Dashboard() {
     totalOverhaul: 0,
     pendingMaintenance: 0,
     upcomingSchedule: 0,
+    totalSpareParts: 0,
   });
   const [parts, setParts] = useState<Part[]>([]);
   const [filters, setFilters] = useState<PartFilters>({
@@ -117,6 +118,28 @@ export default function Dashboard() {
   });
   const [allMachines, setAllMachines] = useState<any[]>([]);
   const fetchData = async () => {
+    // Wait for auth check to complete
+    if (authLoading) return;
+
+    // If not logged in, clear data and return
+    if (!user) {
+      setStats({
+        totalParts: 0,
+        totalMachines: 0,
+        totalLocations: 0,
+        maintenanceRecords: 0,
+        totalPM: 0,
+        totalOverhaul: 0,
+        pendingMaintenance: 0,
+        upcomingSchedule: 0,
+        totalSpareParts: 0,
+      });
+      setParts([]);
+      setAllMachines([]);
+      setLoading(false);
+      return;
+    }
+
     // Check session storage to see if we've already shown the startup notification
     const hasShownNotification = typeof window !== 'undefined' && sessionStorage.getItem('db_notification_shown');
 
@@ -153,7 +176,9 @@ export default function Dashboard() {
 
   useEffect(() => {
     fetchData();
-  }, []);
+    // Ensure fullscreen is off on mount (fix for user reported bug)
+    setIsTableFullscreen(false);
+  }, [user, authLoading]);
 
   // Body scroll lock for fullscreen
   useEffect(() => {

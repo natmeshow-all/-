@@ -92,6 +92,7 @@ export default function EvaluationModal({ isOpen, onClose, technician, onSuccess
 
             await submitEvaluation({
                 technicianId: technician.uid,
+                technicianName: technician.displayName,
                 evaluatorId: userProfile.uid,
                 evaluatorName: userProfile.displayName,
                 date: new Date(),

@@ -4,7 +4,7 @@ import React, { useState, useEffect } from "react";
 import Modal from "../ui/Modal";
 import { useLanguage } from "../../contexts/LanguageContext";
 import { MaintenanceRecord } from "../../types";
-import { getMaintenanceRecords, getMachines, getParts, deleteMaintenanceRecord } from "../../lib/firebaseService";
+import { getMaintenanceRecordsByType, getMachines, getParts, deleteMaintenanceRecord, getDashboardStats } from "../../lib/firebaseService";
 import { ClockIcon, UserIcon, FileTextIcon, CalendarIcon, BoxIcon, SettingsIcon, SearchIcon, ChevronDownIcon, ChevronUpIcon, FilterIcon, CheckCircleIcon, CameraIcon, MapPinIcon, RefreshCwIcon, TargetIcon, AlertTriangleIcon, ActivityIcon, InfoIcon, TrashIcon } from "../ui/Icons";
 import Image from "next/image";
 import { useAuth } from "../../contexts/AuthContext";
@@ -20,7 +20,8 @@ export default function GlobalMaintenanceHistoryModal({ isOpen, onClose }: Globa
     const { isAdmin } = useAuth();
     const { success, error: showError } = useToast();
     const [records, setRecords] = useState<MaintenanceRecord[]>([]);
-    const [allRecordsForStats, setAllRecordsForStats] = useState<MaintenanceRecord[]>([]);
+    const [pmCount, setPmCount] = useState(0);
+    const [overhaulCount, setOverhaulCount] = useState(0);
     const [machines, setMachines] = useState<{ id: string, name: string, Location?: string, location?: string }[]>([]);
     const [parts, setParts] = useState<{ id: string, partName: string, machineId: string }[]>([]);
     const [loading, setLoading] = useState(true);
@@ -42,17 +43,20 @@ export default function GlobalMaintenanceHistoryModal({ isOpen, onClose }: Globa
         if (!isOpen) return;
         setLoading(true);
         try {
-            const [recordsData, machinesData, partsData] = await Promise.all([
-                getMaintenanceRecords(),
+            const [recordsData, machinesData, partsData, statsData] = await Promise.all([
+                getMaintenanceRecordsByType('partReplacement'),
                 getMachines(),
-                getParts()
+                getParts(),
+                getDashboardStats()
             ]);
-            setAllRecordsForStats(recordsData);
-            // Filter records to ONLY show Part Change/Overhaul (type === 'partReplacement')
-            const overhaulRecords = recordsData.filter(r => r.type === 'partReplacement');
-            setRecords(overhaulRecords.sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime()));
+            
+            // Records are already filtered by type, just sort them
+            setRecords(recordsData.sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime()));
             setMachines(machinesData.map(m => ({ id: m.id, name: m.name, Location: m.Location, location: m.location })));
             setParts(partsData.map(p => ({ id: p.id, partName: p.partName, machineId: p.machineId })));
+
+            setPmCount(statsData.totalPM);
+            setOverhaulCount(statsData.totalOverhaul);
         } catch (error) {
             console.error("Error fetching global maintenance history:", error);
         } finally {
@@ -260,11 +264,11 @@ export default function GlobalMaintenanceHistoryModal({ isOpen, onClose }: Globa
                         <div className="flex items-center gap-3">
                             <div className="flex items-center gap-1">
                                 <div className="w-2 h-2 rounded-full bg-accent-blue" />
-                                <span>PM: <span className="text-text-primary font-bold">{allRecordsForStats.filter(r => r.type === 'preventive').length}</span></span>
+                                <span>PM: <span className="text-text-primary font-bold">{pmCount}</span></span>
                             </div>
                             <div className="flex items-center gap-1">
                                 <div className="w-2 h-2 rounded-full bg-accent-green" />
-                                <span>Overhaul: <span className="text-text-primary font-bold">{allRecordsForStats.filter(r => r.type === 'partReplacement').length}</span></span>
+                                <span>Overhaul: <span className="text-text-primary font-bold">{overhaulCount}</span></span>
                             </div>
                         </div>
                     </div>

@@ -50,7 +50,7 @@ export const useAuth = () => useContext(AuthContext);
 import { useToast } from "./ToastContext";
 
 export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
-    const { loginRequired } = useToast();
+    const { loginRequired, success, info } = useToast();
     const [user, setUser] = useState<User | null>(null);
     const [userProfile, setUserProfile] = useState<UserProfile | null>(null);
     const [loading, setLoading] = useState(true);
@@ -173,7 +173,9 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
 
     const signInWithGoogle = async () => {
         try {
-            await signInWithPopup(auth, googleProvider);
+            const result = await signInWithPopup(auth, googleProvider);
+            const userName = result.user.displayName || "User";
+            success("Login Successful", `Welcome back, ${userName}!`);
         } catch (error) {
             console.error("Error signing in with Google:", error);
             throw error;
@@ -185,6 +187,7 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
             await firebaseSignOut(auth);
             setUserProfile(null);
             setIsPending(false);
+            info("Signed Out", "See you again soon!");
         } catch (error) {
             console.error("Error signing out:", error);
             throw error;

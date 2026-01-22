@@ -7,7 +7,12 @@ import {
     remove,
     query,
     orderByChild,
-    equalTo
+    equalTo,
+    limitToLast,
+    endAt,
+    startAt,
+    startAfter,
+    limitToFirst
 } from "firebase/database";
 import {
     ref as storageRef,
@@ -213,239 +218,291 @@ export async function uploadMaintenanceEvidence(file: File): Promise<string> {
 }
 
 export async function addMaintenanceRecord(record: Omit<MaintenanceRecord, "id" | "createdAt" | "updatedAt">): Promise<string> {
-    const recordsRef = ref(database, COLLECTIONS.MAINTENANCE_RECORDS);
-    const newRecordRef = push(recordsRef);
-    const now = new Date();
+    try {
+        const recordsRef = ref(database, COLLECTIONS.MAINTENANCE_RECORDS);
+        const newRecordRef = push(recordsRef);
+        const now = new Date();
 
-    // Clean record from undefined values (optional but good practice)
-    const cleanRecord = Object.fromEntries(
-        Object.entries(record).filter(([_, v]) => v !== undefined)
-    );
+        // Clean record from undefined values (optional but good practice)
+        const cleanRecord = Object.fromEntries(
+            Object.entries(record).filter(([_, v]) => v !== undefined)
+        );
 
-    await set(newRecordRef, {
-        ...cleanRecord,
-        id: newRecordRef.key!,
-        createdAt: now.toISOString(), // Ensure ISO string for better reliability
-        updatedAt: now.toISOString(),
-    });
-    if (record.description) syncTranslation(record.description);
-    if (record.technician) syncTranslation(record.technician);
-    if (record.machineName) syncTranslation(record.machineName);
-    if (record.changeReason) syncTranslation(record.changeReason);
-    if (record.partCondition) syncTranslation(record.partCondition);
+        await set(newRecordRef, {
+            ...cleanRecord,
+            id: newRecordRef.key!,
+            createdAt: now.toISOString(), // Ensure ISO string for better reliability
+            updatedAt: now.toISOString(),
+        });
+        if (record.description) syncTranslation(record.description);
+        if (record.technician) syncTranslation(record.technician);
+        if (record.machineName) syncTranslation(record.machineName);
+        if (record.changeReason) syncTranslation(record.changeReason);
+        if (record.partCondition) syncTranslation(record.partCondition);
 
-    // Update machine operating hours if reported
-    if (record.machineHours && record.machineHours > 0) {
-        try {
-            const machineRef = ref(database, `${COLLECTIONS.MACHINES}/${record.machineId}`);
-            const machineSnap = await get(machineRef);
-            if (machineSnap.exists()) {
-                const currentHours = machineSnap.val().operatingHours || 0;
-                if (record.machineHours > currentHours) {
-                    await update(machineRef, {
-                        operatingHours: record.machineHours,
-                        updatedAt: now.toISOString()
+        // Update machine operating hours if reported
+        if (record.machineHours && record.machineHours > 0) {
+            try {
+                const machineRef = ref(database, `${COLLECTIONS.MACHINES}/${record.machineId}`);
+                const machineSnap = await get(machineRef);
+                if (machineSnap.exists()) {
+                    const currentHours = machineSnap.val().operatingHours || 0;
+                    if (record.machineHours > currentHours) {
+                        await update(machineRef, {
+                            operatingHours: record.machineHours,
+                            updatedAt: now.toISOString()
+                        });
+                    }
+                }
+            } catch (error) {
+                console.error("Failed to auto-update machine hours:", error);
+                // Non-critical, so we don't throw
+            }
+        }
+
+        // Phase 4: Auto-update/Create Schedule if it's a preventive task
+        if (record.type === "preventive" || record.type === "oilChange" || record.type === "inspection") {
+            try {
+                const machines = await getMachines();
+                const machine = machines.find(m => m.id === record.machineId || m.name === record.machineName);
+
+                if (machine && machine.maintenanceCycle && machine.maintenanceCycle > 0) {
+                    const nextDueDate = new Date(record.date);
+                    nextDueDate.setDate(nextDueDate.getDate() + (machine.maintenanceCycle || 0));
+
+                    await upsertSchedule({
+                        machineId: machine.id,
+                        machineName: machine.name,
+                        type: record.type,
+                        scheduledDate: nextDueDate,
+                        intervalDays: machine.maintenanceCycle || 0,
+                        lastCompleted: new Date(record.date),
+                        nextDue: nextDueDate,
                     });
                 }
+            } catch (error) {
+                console.error("Failed to auto-update schedule:", error);
+                // Non-critical, so we don't throw
             }
-        } catch (error) {
-            console.error("Failed to auto-update machine hours:", error);
         }
+
+        return newRecordRef.key!;
+    } catch (error) {
+        console.error("Error adding maintenance record:", error);
+        throw error;
     }
-
-    // Phase 4: Auto-update/Create Schedule if it's a preventive task
-    if (record.type === "preventive" || record.type === "oilChange" || record.type === "inspection") {
-        try {
-            const machines = await getMachines();
-            const machine = machines.find(m => m.id === record.machineId || m.name === record.machineName);
-
-            if (machine && machine.maintenanceCycle && machine.maintenanceCycle > 0) {
-                const nextDueDate = new Date(record.date);
-                nextDueDate.setDate(nextDueDate.getDate() + (machine.maintenanceCycle || 0));
-
-                await upsertSchedule({
-                    machineId: machine.id,
-                    machineName: machine.name,
-                    type: record.type,
-                    scheduledDate: nextDueDate,
-                    intervalDays: machine.maintenanceCycle || 0,
-                    lastCompleted: new Date(record.date),
-                    nextDue: nextDueDate,
-                });
-            }
-        } catch (error) {
-            console.error("Failed to auto-update schedule:", error);
-        }
-    }
-
-    return newRecordRef.key!;
 }
 
 export async function updateMaintenanceRecord(
     id: string,
     data: Partial<MaintenanceRecord>
 ): Promise<void> {
-    const recordRef = ref(database, `${COLLECTIONS.MAINTENANCE_RECORDS}/${id}`);
+    try {
+        const recordRef = ref(database, `${COLLECTIONS.MAINTENANCE_RECORDS}/${id}`);
 
-    const updateData: any = {
-        ...data,
-        updatedAt: new Date().toISOString(),
-    };
+        const updateData: any = {
+            ...data,
+            updatedAt: new Date().toISOString(),
+        };
 
-    if (data.date) {
-        updateData.date = new Date(data.date).toISOString();
+        if (data.date) {
+            updateData.date = new Date(data.date).toISOString();
+        }
+
+        await update(recordRef, updateData);
+
+        if (data.description) syncTranslation(data.description);
+        if (data.technician) syncTranslation(data.technician);
+        if (data.machineName) syncTranslation(data.machineName);
+        if (data.changeReason) syncTranslation(data.changeReason);
+        if (data.partCondition) syncTranslation(data.partCondition);
+    } catch (error) {
+        console.error(`Error updating maintenance record ${id}:`, error);
+        throw error;
     }
-
-    await update(recordRef, updateData);
-
-    if (data.description) syncTranslation(data.description);
-    if (data.technician) syncTranslation(data.technician);
-    if (data.machineName) syncTranslation(data.machineName);
-    if (data.changeReason) syncTranslation(data.changeReason);
-    if (data.partCondition) syncTranslation(data.partCondition);
 }
 
 export async function deleteMaintenanceRecord(id: string): Promise<void> {
-    const recordRef = ref(database, `${COLLECTIONS.MAINTENANCE_RECORDS}/${id}`);
-    await remove(recordRef);
+    try {
+        const recordRef = ref(database, `${COLLECTIONS.MAINTENANCE_RECORDS}/${id}`);
+        await remove(recordRef);
+    } catch (error) {
+        console.error(`Error deleting maintenance record ${id}:`, error);
+        throw error;
+    }
 }
 
 // ==================== SCHEDULES (PHASE 4) ====================
 
 export async function getSchedules(): Promise<MaintenanceSchedule[]> {
-    const schedulesRef = ref(database, COLLECTIONS.SCHEDULES);
-    const snapshot = await get(schedulesRef);
+    try {
+        const schedulesRef = ref(database, COLLECTIONS.SCHEDULES);
+        const snapshot = await get(schedulesRef);
 
-    if (!snapshot.exists()) return [];
+        if (!snapshot.exists()) return [];
 
-    const schedules: MaintenanceSchedule[] = [];
-    snapshot.forEach((child) => {
-        const data = child.val();
-        schedules.push({
-            id: child.key!,
-            ...data,
-            scheduledDate: new Date(data.scheduledDate),
-            lastCompleted: data.lastCompleted ? new Date(data.lastCompleted) : undefined,
-            nextDue: new Date(data.nextDue),
+        const schedules: MaintenanceSchedule[] = [];
+        snapshot.forEach((child) => {
+            const data = child.val();
+            schedules.push({
+                id: child.key!,
+                ...data,
+                scheduledDate: new Date(data.scheduledDate),
+                lastCompleted: data.lastCompleted ? new Date(data.lastCompleted) : undefined,
+                nextDue: new Date(data.nextDue),
+            });
         });
-    });
 
-    return schedules;
+        return schedules;
+    } catch (error) {
+        console.error("Error fetching schedules:", error);
+        throw error;
+    }
 }
 
 export async function upsertSchedule(
     schedule: Omit<MaintenanceSchedule, "id">
 ): Promise<string> {
-    const schedulesRef = ref(database, COLLECTIONS.SCHEDULES);
+    try {
+        const schedulesRef = ref(database, COLLECTIONS.SCHEDULES);
 
-    // Check if machine already has a schedule of this type
-    const q = query(schedulesRef, orderByChild("machineId"), equalTo(schedule.machineId));
-    const snapshot = await get(q);
+        // Check if machine already has a schedule of this type
+        const q = query(schedulesRef, orderByChild("machineId"), equalTo(schedule.machineId));
+        const snapshot = await get(q);
 
-    let targetRef;
-    let existingId = null;
+        let targetRef;
+        let existingId = null;
 
-    if (snapshot.exists()) {
-        snapshot.forEach(child => {
-            const data = child.val();
-            if (data.type === schedule.type) {
-                existingId = child.key;
-            }
-        });
-    }
+        if (snapshot.exists()) {
+            snapshot.forEach(child => {
+                const data = child.val();
+                if (data.type === schedule.type) {
+                    existingId = child.key;
+                }
+            });
+        }
 
-    if (existingId) {
-        targetRef = ref(database, `${COLLECTIONS.SCHEDULES}/${existingId}`);
-        await update(targetRef, {
-            ...schedule,
-            scheduledDate: schedule.scheduledDate.toISOString(),
-            lastCompleted: schedule.lastCompleted?.toISOString(),
-            nextDue: schedule.nextDue.toISOString(),
-        });
-        return existingId;
-    } else {
-        targetRef = push(schedulesRef);
-        await set(targetRef, {
-            ...schedule,
-            scheduledDate: schedule.scheduledDate.toISOString(),
-            lastCompleted: schedule.lastCompleted?.toISOString(),
-            nextDue: schedule.nextDue.toISOString(),
-        });
-        return targetRef.key!;
+        if (existingId) {
+            targetRef = ref(database, `${COLLECTIONS.SCHEDULES}/${existingId}`);
+            await update(targetRef, {
+                ...schedule,
+                scheduledDate: schedule.scheduledDate.toISOString(),
+                lastCompleted: schedule.lastCompleted?.toISOString(),
+                nextDue: schedule.nextDue.toISOString(),
+            });
+            return existingId;
+        } else {
+            targetRef = push(schedulesRef);
+            await set(targetRef, {
+                ...schedule,
+                scheduledDate: schedule.scheduledDate.toISOString(),
+                lastCompleted: schedule.lastCompleted?.toISOString(),
+                nextDue: schedule.nextDue.toISOString(),
+            });
+            return targetRef.key!;
+        }
+    } catch (error) {
+        console.error("Error upserting schedule:", error);
+        throw error;
     }
 }
 
 export async function getPMPlans(): Promise<PMPlan[]> {
-    const plansRef = ref(database, COLLECTIONS.PM_PLANS);
-    const snapshot = await get(plansRef);
+    try {
+        const plansRef = ref(database, COLLECTIONS.PM_PLANS);
+        const snapshot = await get(plansRef);
 
-    if (!snapshot.exists()) return [];
+        if (!snapshot.exists()) return [];
 
-    const plans: PMPlan[] = [];
-    snapshot.forEach((child) => {
-        const data = child.val();
-        plans.push({
-            id: child.key!,
-            ...data,
-            startDate: new Date(data.startDate),
-            nextDueDate: new Date(data.nextDueDate),
-            lastCompletedDate: data.lastCompletedDate ? new Date(data.lastCompletedDate) : undefined,
-            createdAt: new Date(data.createdAt),
-            updatedAt: new Date(data.updatedAt),
+        const plans: PMPlan[] = [];
+        snapshot.forEach((child) => {
+            const data = child.val();
+            plans.push({
+                id: child.key!,
+                ...data,
+                startDate: new Date(data.startDate),
+                nextDueDate: new Date(data.nextDueDate),
+                lastCompletedDate: data.lastCompletedDate ? new Date(data.lastCompletedDate) : undefined,
+                createdAt: new Date(data.createdAt),
+                updatedAt: new Date(data.updatedAt),
+            });
         });
-    });
 
-    return plans.sort((a, b) => a.nextDueDate.getTime() - b.nextDueDate.getTime());
+        return plans.sort((a, b) => a.nextDueDate.getTime() - b.nextDueDate.getTime());
+    } catch (error) {
+        console.error("Error fetching PM plans:", error);
+        throw error;
+    }
 }
 
 export async function addPMPlan(plan: Omit<PMPlan, "id" | "createdAt" | "updatedAt">): Promise<string> {
-    const plansRef = ref(database, COLLECTIONS.PM_PLANS);
-    const newPlanRef = push(plansRef);
+    try {
+        const plansRef = ref(database, COLLECTIONS.PM_PLANS);
+        const newPlanRef = push(plansRef);
 
-    await set(newPlanRef, cleanObject({
-        ...plan,
-        startDate: plan.startDate.toISOString(),
-        nextDueDate: plan.nextDueDate.toISOString(),
-        lastCompletedDate: plan.lastCompletedDate?.toISOString() || null,
-        createdAt: new Date().toISOString(),
-        updatedAt: new Date().toISOString(),
-    }));
+        await set(newPlanRef, cleanObject({
+            ...plan,
+            startDate: plan.startDate.toISOString(),
+            nextDueDate: plan.nextDueDate.toISOString(),
+            lastCompletedDate: plan.lastCompletedDate?.toISOString() || null,
+            createdAt: new Date().toISOString(),
+            updatedAt: new Date().toISOString(),
+        }));
 
-    // Auto-translate relevant fields
-    if (plan.machineName) syncTranslation(plan.machineName);
-    if (plan.taskName) syncTranslation(plan.taskName);
-    if (plan.notes) syncTranslation(plan.notes);
+        // Auto-translate relevant fields
+        if (plan.machineName) syncTranslation(plan.machineName);
+        if (plan.taskName) syncTranslation(plan.taskName);
+        if (plan.notes) syncTranslation(plan.notes);
 
-    return newPlanRef.key!;
+        return newPlanRef.key!;
+    } catch (error) {
+        console.error("Error adding PM plan:", error);
+        throw error;
+    }
 }
 
 export async function updatePMPlan(id: string, data: Partial<PMPlan>): Promise<void> {
-    const planRef = ref(database, `${COLLECTIONS.PM_PLANS}/${id}`);
-    const updateData: any = { ...data, updatedAt: new Date().toISOString() };
+    try {
+        const planRef = ref(database, `${COLLECTIONS.PM_PLANS}/${id}`);
+        const updateData: any = { ...data, updatedAt: new Date().toISOString() };
 
-    if (data.startDate) updateData.startDate = data.startDate.toISOString();
-    if (data.nextDueDate) updateData.nextDueDate = data.nextDueDate.toISOString();
-    if (data.lastCompletedDate) updateData.lastCompletedDate = data.lastCompletedDate.toISOString();
+        if (data.startDate) updateData.startDate = data.startDate.toISOString();
+        if (data.nextDueDate) updateData.nextDueDate = data.nextDueDate.toISOString();
+        if (data.lastCompletedDate) updateData.lastCompletedDate = data.lastCompletedDate.toISOString();
 
-    await update(planRef, cleanObject(updateData));
+        await update(planRef, cleanObject(updateData));
 
-    // Auto-translate updated fields
-    if (data.machineName) syncTranslation(data.machineName);
-    if (data.taskName) syncTranslation(data.taskName);
-    if (data.notes) syncTranslation(data.notes);
+        // Auto-translate updated fields
+        if (data.machineName) syncTranslation(data.machineName);
+        if (data.taskName) syncTranslation(data.taskName);
+        if (data.notes) syncTranslation(data.notes);
+    } catch (error) {
+        console.error(`Error updating PM plan ${id}:`, error);
+        throw error;
+    }
 }
 
 export async function deletePMPlan(id: string): Promise<void> {
-    const planRef = ref(database, `${COLLECTIONS.PM_PLANS}/${id}`);
-    await remove(planRef);
+    try {
+        const planRef = ref(database, `${COLLECTIONS.PM_PLANS}/${id}`);
+        await remove(planRef);
+    } catch (error) {
+        console.error(`Error deleting PM plan ${id}:`, error);
+        throw error;
+    }
 }
 
 export async function uploadEvidenceImage(file: File): Promise<string> {
-    const compressedFile = await compressImage(file);
-    const fileName = `evidence/pm_${Date.now()}_${compressedFile.name}`;
-    const sRef = storageRef(storage, fileName);
-    await uploadBytes(sRef, compressedFile);
-    return await getDownloadURL(sRef);
+    try {
+        const compressedFile = await compressImage(file);
+        const fileName = `evidence/pm_${Date.now()}_${compressedFile.name}`;
+        const sRef = storageRef(storage, fileName);
+        await uploadBytes(sRef, compressedFile);
+        return await getDownloadURL(sRef);
+    } catch (error) {
+        console.error("Error uploading evidence image:", error);
+        throw error;
+    }
 }
 
 export const completePMTask = async (

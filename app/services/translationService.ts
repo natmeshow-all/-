@@ -85,7 +85,12 @@ export async function syncTranslation(text: string): Promise<void> {
  * Fetches all dynamic translations.
  */
 export async function getDynamicTranslations(): Promise<Record<string, string>> {
-    const translationsRef = ref(database, DATA_TRANSLATIONS_COLLECTION);
-    const snapshot = await get(translationsRef);
-    return snapshot.exists() ? snapshot.val() : {};
+    try {
+        const translationsRef = ref(database, DATA_TRANSLATIONS_COLLECTION);
+        const snapshot = await get(translationsRef);
+        return snapshot.exists() ? snapshot.val() : {};
+    } catch (error) {
+        console.error("Error fetching dynamic translations:", error);
+        return {}; // Return empty object on error to prevent app crash
+    }
 }

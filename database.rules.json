@@ -13,6 +13,7 @@
         "machines": {
             ".read": "auth != null",
             ".write": "auth != null && (root.child('users').child(auth.uid).child('role').val() == 'admin' || root.child('users').child(auth.uid).child('role').val() == 'supervisor')",
+            ".indexOn": ["name"],
             "$machineId": {
                 ".validate": "newData.hasChildren(['name']) && newData.child('name').isString()"
             }
@@ -23,7 +24,9 @@
             ".write": "auth != null && (root.child('users').child(auth.uid).child('role').val() == 'admin' || root.child('users').child(auth.uid).child('role').val() == 'supervisor')",
             ".indexOn": [
                 "machineId",
-                "name"
+                "name",
+                "machineName",
+                "updatedAt"
             ],
             "$partId": {
                 ".validate": "newData.hasChildren(['name']) && newData.child('name').isString()"
@@ -99,7 +102,7 @@
         },
         // ===== System Stats (For Usage History) =====
         "system_stats": {
-            ".read": "auth != null && (root.child('users').child(auth.uid).child('role').val() == 'admin' || root.child('users').child(auth.uid).child('role').val() == 'supervisor')",
+            ".read": "auth != null",
             "usage_history": {
                 ".read": "auth != null",
                 ".write": "auth != null"
@@ -143,7 +146,9 @@
         "users": {
             "$uid": {
                 ".read": "auth != null && (auth.uid == $uid || root.child('users').child(auth.uid).child('role').val() == 'admin' || root.child('users').child(auth.uid).child('role').val() == 'supervisor' || root.child('users').child(auth.uid).child('role').val() == 'technician')",
-                ".write": "auth != null && (auth.uid == $uid || root.child('users').child(auth.uid).child('role').val() == 'admin')"
+                // Allow write if Admin OR (Self AND NOT changing sensitive fields)
+                ".write": "auth != null && (root.child('users').child(auth.uid).child('role').val() == 'admin' || (auth.uid == $uid && (!newData.hasChild('role') || newData.child('role').val() === data.child('role').val()) && (!newData.hasChild('isApproved') || newData.child('isApproved').val() === data.child('isApproved').val()) && (!newData.hasChild('isActive') || newData.child('isActive').val() === data.child('isActive').val())))",
+                ".validate": "newData.hasChildren(['email', 'displayName', 'role'])"
             },
             ".read": "auth != null && (root.child('users').child(auth.uid).child('role').val() == 'admin' || root.child('users').child(auth.uid).child('role').val() == 'supervisor' || root.child('users').child(auth.uid).child('role').val() == 'technician')"
         }

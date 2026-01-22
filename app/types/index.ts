@@ -246,6 +246,8 @@ export interface AddPartFormData {
     notes: string;
 }
 
+
+
 export interface MaintenanceRecordFormData {
     machineId: string;
     description: string;
@@ -363,6 +365,7 @@ export interface PerformanceScore {
 export interface PerformanceEvaluation {
     id: string;
     technicianId: string;
+    technicianName: string;
     evaluatorId: string;
     evaluatorName: string;
     date: Date;
@@ -377,6 +380,7 @@ export interface AdminStats {
     usageHistory: { date: string; count: number }[];
     technicianCount: number;
     avgPerformance: number;
+    systemHealth: number;
 }
 
 // ===== Audit Log Types =====
@@ -401,6 +405,19 @@ export interface AuditLog {
     ipAddress?: string;      // Client IP if available
     userAgent?: string;      // Browser info
     timestamp: Date;
+}
+
+export interface DashboardStats {
+    totalParts: number;
+    totalMachines: number;
+    totalLocations: number;
+    maintenanceRecords: number;
+    totalPM: number;
+    totalOverhaul: number;
+    pendingMaintenance: number;
+    upcomingSchedule: number;
+    totalSpareParts: number;
+    lastUpdated?: number; // Timestamp
 }
 
 // ===== System Settings Types =====

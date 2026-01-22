@@ -9,8 +9,9 @@ import {
     orderByChild,
     equalTo,
     limitToFirst,
-    startAfter,
+    limitToLast,
     startAt,
+    startAfter,
     endAt
 } from "firebase/database";
 import {
@@ -127,26 +128,36 @@ async function findImageByHash(hash: string): Promise<any | null> {
 
 // Helper: Save new image hash record
 async function saveImageHashRecord(file: File, hash: string, url: string) {
-    const hashesRef = ref(database, "image_hashes");
-    const newHashRef = push(hashesRef);
-    await set(newHashRef, {
-        hash,
-        url,
-        fileName: file.name,
-        size: file.size,
-        usageCount: 1,
-        createdAt: new Date().toISOString(),
-        updatedAt: new Date().toISOString(),
-    });
+    try {
+        const hashesRef = ref(database, "image_hashes");
+        const newHashRef = push(hashesRef);
+        await set(newHashRef, {
+            hash,
+            url,
+            fileName: file.name,
+            size: file.size,
+            usageCount: 1,
+            createdAt: new Date().toISOString(),
+            updatedAt: new Date().toISOString(),
+        });
+    } catch (error) {
+        console.error("Error saving image hash record:", error);
+        throw error;
+    }
 }
 
 // Helper: Increment usage count
 async function incrementImageUsage(key: string, currentCount: number) {
-    const hashRef = ref(database, `image_hashes/${key}`);
-    await update(hashRef, {
-        usageCount: currentCount + 1,
-        updatedAt: new Date().toISOString(),
-    });
+    try {
+        const hashRef = ref(database, `image_hashes/${key}`);
+        await update(hashRef, {
+            usageCount: currentCount + 1,
+            updatedAt: new Date().toISOString(),
+        });
+    } catch (error) {
+        console.error("Error incrementing image usage:", error);
+        throw error;
+    }
 }
 
 export async function uploadPartImage(file: File): Promise<string> {
@@ -226,18 +237,88 @@ export async function deletePartImage(imageUrl: string): Promise<void> {
 // ==================== PARTS ====================
 
 export async function getParts(): Promise<Part[]> {
-    const partsRef = ref(database, COLLECTIONS.PARTS);
-    const snapshot = await get(partsRef);
+    try {
+        const partsRef = ref(database, COLLECTIONS.PARTS);
+        const snapshot = await get(partsRef);
 
-    if (!snapshot.exists()) return [];
+        if (!snapshot.exists()) return [];
 
-    const parts: Part[] = [];
-    snapshot.forEach((childSnapshot) => {
-        parts.push(mapPartData(childSnapshot.key!, childSnapshot.val()));
-    });
+        const parts: Part[] = [];
+        snapshot.forEach((childSnapshot) => {
+            parts.push(mapPartData(childSnapshot.key!, childSnapshot.val()));
+        });
 
-    // Sort by updatedAt desc (latest first)
-    return parts.sort((a, b) => b.updatedAt.getTime() - a.updatedAt.getTime());
+        // Sort by updatedAt desc (latest first)
+        return parts.sort((a, b) => b.updatedAt.getTime() - a.updatedAt.getTime());
+    } catch (error) {
+        console.error("Error fetching parts:", error);
+        throw error;
+    }
+}
+
+/**
+ * Fetches parts with pagination (sorted by updatedAt descending).
+ */
+export async function getPartsPaginated(
+    limit: number = 20,
+    lastDate?: string,
+    lastId?: string
+): Promise<{ parts: Part[], lastItem: { updatedAt: string, id: string } | null }> {
+    try {
+        const partsRef = ref(database, COLLECTIONS.PARTS);
+        let partsQuery;
+
+        if (lastDate && lastId) {
+             // Fetch next page (older items)
+             partsQuery = query(
+                partsRef,
+                orderByChild("updatedAt"),
+                endAt(lastDate, lastId),
+                limitToLast(limit + 1)
+             );
+        } else {
+             // First page (newest items)
+             partsQuery = query(
+                partsRef,
+                orderByChild("updatedAt"),
+                limitToLast(limit)
+             );
+        }
+
+        const snapshot = await get(partsQuery);
+        if (!snapshot.exists()) return { parts: [], lastItem: null };
+
+        const parts: Part[] = [];
+        snapshot.forEach((childSnapshot) => {
+             parts.push(mapPartData(childSnapshot.key!, childSnapshot.val()));
+        });
+
+        // Firebase returns ascending (oldest -> newest)
+        // We want newest -> oldest
+        parts.reverse();
+
+        // Handle cursor overlap
+        if (lastDate && lastId) {
+             const cursorIndex = parts.findIndex(p => p.id === lastId);
+             if (cursorIndex !== -1) {
+                 parts.splice(cursorIndex, 1);
+             }
+        }
+
+        let newLastItem = null;
+        if (parts.length > 0) {
+            const lastPart = parts[parts.length - 1];
+            newLastItem = {
+                updatedAt: lastPart.updatedAt.toISOString(),
+                id: lastPart.id
+            };
+        }
+
+        return { parts, lastItem: newLastItem };
+    } catch (error) {
+        console.error("Error fetching paginated parts:", error);
+        throw error;
+    }
 }
 
 /**
@@ -271,54 +352,103 @@ export async function getPartsByMachine(machineId: string): Promise<Part[]> {
 }
 
 // Fallback: Fetch all parts and filter by machine name (client-side filtering)
-// This is useful when the Firebase index is not set up
+// Optimized to use server-side filtering if index exists
 export async function getPartsByMachineName(machineName: string): Promise<Part[]> {
-    const allParts = await getParts();
-    return allParts.filter(p =>
-        p.machineName?.toLowerCase() === machineName.toLowerCase() ||
-        (p as any).machine?.toLowerCase() === machineName.toLowerCase()
-    );
+    try {
+        const partsRef = ref(database, COLLECTIONS.PARTS);
+        
+        // Attempt server-side filtering using the new index
+        try {
+            const partsQuery = query(partsRef, orderByChild("machineName"), equalTo(machineName));
+            const snapshot = await get(partsQuery);
+
+            if (snapshot.exists()) {
+                const parts: Part[] = [];
+                snapshot.forEach((childSnapshot) => {
+                    parts.push(mapPartData(childSnapshot.key!, childSnapshot.val()));
+                });
+                return parts.sort((a, b) => b.updatedAt.getTime() - a.updatedAt.getTime());
+            }
+            
+            // If no exact match on machineName, check legacy field 'machine' or fallback to client-side
+            // But strict machineName match is preferred.
+            // If snapshot is empty, it might mean no parts found OR index missing (if rules not deployed).
+            // But with index, it just returns empty.
+            
+            // To be safe against "index not built yet" or mixed data, we might want to fallback if 0 results?
+            // No, if query works, it returns results or empty.
+            
+            // However, we also need to check the legacy 'machine' field.
+            // Since we can only query one field, let's try 'machine' field query if machineName returned nothing?
+            // Or just rely on client-side fallback if we really suspect legacy data.
+            
+            if (snapshot.exists()) return []; // Found nothing with machineName
+            
+        } catch (queryError) {
+             console.warn("Server-side query failed (likely index missing), falling back to client-side:", queryError);
+        }
+
+        // Fallback to client-side filtering (Legacy behavior)
+        const allParts = await getParts();
+        return allParts.filter(p =>
+            p.machineName?.toLowerCase() === machineName.toLowerCase() ||
+            (p as any).machine?.toLowerCase() === machineName.toLowerCase()
+        );
+    } catch (error) {
+        console.error("Error fetching parts by machine name:", error);
+        throw error;
+    }
 }
 
 export async function addPart(
     part: Omit<Part, "id" | "createdAt" | "updatedAt">,
     imageFile?: File
 ): Promise<string> {
-    let imageUrl = "";
+    try {
+        const safePartData = cleanObject(part);
 
-    // Upload image if provided
-    if (imageFile) {
-        imageUrl = await uploadPartImage(imageFile);
+        // Input validation
+        if (!safePartData.partName || safePartData.partName.trim().length === 0) {
+            throw new Error("Part name is required");
+        }
+        if (safePartData.partName.length > 200) {
+            throw new Error("Part name is too long (max 200 chars)");
+        }
+        if (safePartData.quantity !== undefined && safePartData.quantity < 0) {
+            throw new Error("Quantity cannot be negative");
+        }
+
+        const partsRef = ref(database, COLLECTIONS.PARTS);
+        const newPartRef = push(partsRef);
+
+        let imageUrl = "";
+        if (imageFile) {
+            imageUrl = await uploadPartImage(imageFile);
+        } else if (safePartData.imageUrl) {
+            imageUrl = safePartData.imageUrl;
+        }
+
+        await set(newPartRef, {
+            ...safePartData,
+            name: safePartData.partName, // Ensure 'name' field exists for sorting/indexing
+            imageUrl,
+            // Save both camelCase and snake_case for compatibility if needed, or just new standard
+            image_url: imageUrl,
+            createdAt: new Date().toISOString(),
+            updatedAt: new Date().toISOString(),
+        });
+
+        // Auto-translate relevant fields
+        syncTranslation(safePartData.partName);
+        if (safePartData.modelSpec) syncTranslation(safePartData.modelSpec);
+        if (safePartData.brand) syncTranslation(safePartData.brand);
+        if (safePartData.location) syncTranslation(safePartData.location);
+
+        return newPartRef.key!;
+    } catch (error) {
+        console.error("Error adding part:", error);
+        throw error;
     }
-
-    // Create a clean object
-    const { imageFile: _ignore, ...safePartData } = part as any;
-
-    // Clean undefined values
-    const cleanPartData = Object.fromEntries(
-        Object.entries(safePartData).filter(([_, v]) => v !== undefined)
-    );
-
-    const partsRef = ref(database, COLLECTIONS.PARTS);
-    const newPartRef = push(partsRef);
-
-    await set(newPartRef, {
-        ...cleanPartData,
-        name: safePartData.partName || safePartData.name || "Unknown Part", // Ensure name is saved for indexing/validation
-        imageUrl,
-        // Save both camelCase and snake_case for compatibility if needed, or just new standard
-        image_url: imageUrl,
-        createdAt: new Date().toISOString(),
-        updatedAt: new Date().toISOString(),
-    });
-
-    // Auto-translate relevant fields
-    syncTranslation(safePartData.partName);
-    if (safePartData.modelSpec) syncTranslation(safePartData.modelSpec);
-    if (safePartData.brand) syncTranslation(safePartData.brand);
-    if (safePartData.location) syncTranslation(safePartData.location);
-
-    return newPartRef.key!;
 }
 
 export async function updatePart(
@@ -326,41 +456,51 @@ export async function updatePart(
     data: Partial<Part>,
     imageFile?: File
 ): Promise<void> {
-    let imageUrl = data.imageUrl;
+    try {
+        let imageUrl = data.imageUrl;
 
-    if (imageFile) {
-        imageUrl = await uploadPartImage(imageFile);
+        if (imageFile) {
+            imageUrl = await uploadPartImage(imageFile);
+        }
+
+        const partRef = ref(database, `${COLLECTIONS.PARTS}/${id}`);
+
+        const updateData: any = {
+            ...data,
+            updatedAt: new Date().toISOString(),
+        };
+
+        if (data.partName) {
+            updateData.name = data.partName; // Ensure name stays in sync
+        }
+
+        if (imageUrl !== undefined) {
+            updateData.imageUrl = imageUrl;
+            updateData.image_url = imageUrl; // Keep sync
+        }
+
+        await update(partRef, updateData);
+
+        // Auto-translate updated fields
+        if (data.partName) syncTranslation(data.partName);
+        if (data.modelSpec) syncTranslation(data.modelSpec);
+        if (data.brand) syncTranslation(data.brand);
+        if (data.location) syncTranslation(data.location);
+        if (data.notes) syncTranslation(data.notes);
+    } catch (error) {
+        console.error(`Error updating part ${id}:`, error);
+        throw error;
     }
-
-    const partRef = ref(database, `${COLLECTIONS.PARTS}/${id}`);
-
-    const updateData: any = {
-        ...data,
-        updatedAt: new Date().toISOString(),
-    };
-
-    if (data.partName) {
-        updateData.name = data.partName; // Ensure name stays in sync
-    }
-
-    if (imageUrl !== undefined) {
-        updateData.imageUrl = imageUrl;
-        updateData.image_url = imageUrl; // Keep sync
-    }
-
-    await update(partRef, updateData);
-
-    // Auto-translate updated fields
-    if (data.partName) syncTranslation(data.partName);
-    if (data.modelSpec) syncTranslation(data.modelSpec);
-    if (data.brand) syncTranslation(data.brand);
-    if (data.location) syncTranslation(data.location);
-    if (data.notes) syncTranslation(data.notes);
 }
 
 export async function deletePart(id: string): Promise<void> {
-    const partRef = ref(database, `${COLLECTIONS.PARTS}/${id}`);
-    await remove(partRef);
+    try {
+        const partRef = ref(database, `${COLLECTIONS.PARTS}/${id}`);
+        await remove(partRef);
+    } catch (error) {
+        console.error(`Error deleting part ${id}:`, error);
+        throw error;
+    }
 }
 
 export const deleteSparePart = deletePart;
@@ -368,88 +508,108 @@ export const deleteSparePart = deletePart;
 // ==================== SPARE PARTS (CONSUMABLES) ====================
 
 export async function getSparePartsPaginated(limit: number = 20, lastName?: string, lastId?: string): Promise<{ parts: SparePart[], lastItem: {name: string, id: string} | null }> {
-    const partsRef = ref(database, COLLECTIONS.PARTS);
-    let partsQuery;
+    try {
+        const partsRef = ref(database, COLLECTIONS.PARTS);
+        let partsQuery;
 
-    if (lastName && lastId) {
-        partsQuery = query(partsRef, orderByChild("name"), startAfter(lastName, lastId), limitToFirst(limit));
-    } else {
-        partsQuery = query(partsRef, orderByChild("name"), limitToFirst(limit));
+        if (lastName && lastId) {
+            partsQuery = query(partsRef, orderByChild("name"), startAfter(lastName, lastId), limitToFirst(limit));
+        } else {
+            partsQuery = query(partsRef, orderByChild("name"), limitToFirst(limit));
+        }
+
+        const snapshot = await get(partsQuery);
+        if (!snapshot.exists()) return { parts: [], lastItem: null };
+
+        const parts: SparePart[] = [];
+        let newLastItem = null;
+
+        snapshot.forEach((childSnapshot) => {
+            const part = mapSparePartData(childSnapshot.key!, childSnapshot.val());
+            parts.push(part);
+            newLastItem = { name: part.name, id: part.id };
+        });
+
+        return { parts, lastItem: newLastItem };
+    } catch (error) {
+        console.error("Error fetching paginated spare parts:", error);
+        throw error;
     }
-
-    const snapshot = await get(partsQuery);
-    if (!snapshot.exists()) return { parts: [], lastItem: null };
-
-    const parts: SparePart[] = [];
-    let newLastItem = null;
-
-    snapshot.forEach((childSnapshot) => {
-        const part = mapSparePartData(childSnapshot.key!, childSnapshot.val());
-        parts.push(part);
-        newLastItem = { name: part.name, id: part.id };
-    });
-
-    return { parts, lastItem: newLastItem };
 }
 
 export async function searchSpareParts(queryText: string): Promise<SparePart[]> {
-    if (!queryText) return [];
-    
-    const partsRef = ref(database, COLLECTIONS.PARTS);
-    const partsQuery = query(partsRef, orderByChild("name"), startAt(queryText), endAt(queryText + "\uf8ff"));
-    const snapshot = await get(partsQuery);
+    try {
+        if (!queryText) return [];
+        
+        const partsRef = ref(database, COLLECTIONS.PARTS);
+        const partsQuery = query(partsRef, orderByChild("name"), startAt(queryText), endAt(queryText + "\uf8ff"));
+        const snapshot = await get(partsQuery);
 
-    if (!snapshot.exists()) return [];
+        if (!snapshot.exists()) return [];
 
-    const parts: SparePart[] = [];
-    snapshot.forEach((childSnapshot) => {
-        parts.push(mapSparePartData(childSnapshot.key!, childSnapshot.val()));
-    });
-    
-    return parts;
+        const parts: SparePart[] = [];
+        snapshot.forEach((childSnapshot) => {
+            parts.push(mapSparePartData(childSnapshot.key!, childSnapshot.val()));
+        });
+        
+        return parts;
+    } catch (error) {
+        console.error("Error searching spare parts:", error);
+        throw error;
+    }
 }
 
 export async function getSpareParts(): Promise<SparePart[]> {
-    const partsRef = ref(database, COLLECTIONS.PARTS);
-    const snapshot = await get(partsRef);
+    try {
+        const partsRef = ref(database, COLLECTIONS.PARTS);
+        const snapshot = await get(partsRef);
 
-    if (!snapshot.exists()) return [];
+        if (!snapshot.exists()) return [];
 
-    const parts: SparePart[] = [];
-    snapshot.forEach((childSnapshot) => {
-        parts.push(mapSparePartData(childSnapshot.key!, childSnapshot.val()));
-    });
+        const parts: SparePart[] = [];
+        snapshot.forEach((childSnapshot) => {
+            parts.push(mapSparePartData(childSnapshot.key!, childSnapshot.val()));
+        });
 
-    return parts.sort((a, b) => a.name.localeCompare(b.name));
+        return parts.sort((a, b) => a.name.localeCompare(b.name));
+    } catch (error) {
+        console.error("Error fetching spare parts:", error);
+        throw error;
+    }
 }
 
 export async function addSparePart(
     part: Omit<SparePart, "id" | "createdAt" | "updatedAt">,
     imageFile?: File
 ): Promise<string> {
-    let imageUrl = "";
-    if (imageFile) {
-        imageUrl = await uploadPartImage(imageFile); // Reuse part image upload for now
+    try {
+        let imageUrl = "";
+        if (imageFile) {
+            imageUrl = await uploadPartImage(imageFile); // Reuse part image upload for now
+        }
+
+        const partsRef = ref(database, COLLECTIONS.PARTS);
+        const newPartRef = push(partsRef);
+
+        await set(newPartRef, cleanObject({
+            ...part,
+            imageUrl,
+            createdAt: new Date().toISOString(),
+            updatedAt: new Date().toISOString(),
+        }));
+
+        // Auto-translate relevant fields
+        syncTranslation(part.name);
+        if (part.description) syncTranslation(part.description);
+        if (part.brand) syncTranslation(part.brand);
+        if (part.location) syncTranslation(part.location);
+        if (part.model) syncTranslation(part.model);
+
+        return newPartRef.key!;
+    } catch (error) {
+        console.error("Error adding spare part:", error);
+        throw error;
     }
-
-    const partsRef = ref(database, COLLECTIONS.PARTS);
-    const newPartRef = push(partsRef);
-
-    await set(newPartRef, cleanObject({
-        ...part,
-        imageUrl,
-        createdAt: new Date().toISOString(),
-        updatedAt: new Date().toISOString(),
-    }));
-
-    // Auto-translate relevant fields
-    syncTranslation(part.name);
-    if (part.description) syncTranslation(part.description);
-    if (part.brand) syncTranslation(part.brand);
-    if (part.location) syncTranslation(part.location);
-    if (part.model) syncTranslation(part.model);
-
-    return newPartRef.key!;
 }
 
 export async function updateSparePart(
@@ -457,31 +617,36 @@ export async function updateSparePart(
     data: Partial<SparePart>,
     imageFile?: File
 ): Promise<void> {
-    let imageUrl = data.imageUrl;
+    try {
+        let imageUrl = data.imageUrl;
 
-    if (imageFile) {
-        imageUrl = await uploadPartImage(imageFile);
+        if (imageFile) {
+            imageUrl = await uploadPartImage(imageFile);
+        }
+
+        const partRef = ref(database, `${COLLECTIONS.PARTS}/${id}`);
+        const updateData: any = {
+            ...data,
+            updatedAt: new Date().toISOString(),
+        };
+
+        if (imageUrl !== undefined) {
+            updateData.imageUrl = imageUrl;
+        }
+
+        await update(partRef, cleanObject(updateData));
+
+        // Auto-translate updated fields
+        if (data.name) syncTranslation(data.name);
+        if (data.description) syncTranslation(data.description);
+        if (data.brand) syncTranslation(data.brand);
+        if (data.location) syncTranslation(data.location || "");
+        if (data.notes) syncTranslation(data.notes || "");
+        if (data.model) syncTranslation(data.model);
+    } catch (error) {
+        console.error(`Error updating spare part ${id}:`, error);
+        throw error;
     }
-
-    const partRef = ref(database, `${COLLECTIONS.PARTS}/${id}`);
-    const updateData: any = {
-        ...data,
-        updatedAt: new Date().toISOString(),
-    };
-
-    if (imageUrl !== undefined) {
-        updateData.imageUrl = imageUrl;
-    }
-
-    await update(partRef, cleanObject(updateData));
-
-    // Auto-translate updated fields
-    if (data.name) syncTranslation(data.name);
-    if (data.description) syncTranslation(data.description);
-    if (data.brand) syncTranslation(data.brand);
-    if (data.location) syncTranslation(data.location || "");
-    if (data.notes) syncTranslation(data.notes || "");
-    if (data.model) syncTranslation(data.model);
 }
 
 // ==================== STOCK TRANSACTIONS ====================
@@ -490,73 +655,83 @@ export async function adjustStock(
     transaction: Omit<StockTransaction, "id">,
     evidenceImageFile?: File
 ): Promise<void> {
-    // 1. Upload Evidence Image if provided
-    let evidenceImageUrl = "";
-    if (evidenceImageFile) {
-        const compressedFile = await compressImage(evidenceImageFile);
-        const fileName = `evidence/${Date.now()}_${compressedFile.name}`;
-        const sRef = storageRef(storage, fileName);
-        await uploadBytes(sRef, compressedFile);
-        evidenceImageUrl = await getDownloadURL(sRef);
-    }
-
-    // 2. Record Transaction
-    const txnRef = ref(database, "stock_transactions");
-    const newTxnRef = push(txnRef);
-
-    await set(newTxnRef, cleanObject({
-        ...transaction,
-        evidenceImageUrl: evidenceImageUrl || transaction.evidenceImageUrl || "",
-        performedAt: transaction.performedAt.toISOString(),
-    }));
-
-    // Auto-translate relevant fields
-    if (transaction.notes) syncTranslation(transaction.notes);
-    if (transaction.machineName) syncTranslation(transaction.machineName);
-    if (transaction.partName) syncTranslation(transaction.partName);
-    if (transaction.performedBy) syncTranslation(transaction.performedBy);
-
-    // 3. Update Stock Level
-    const partRef = ref(database, `${COLLECTIONS.PARTS}/${transaction.partId}`);
-    const partSnapshot = await get(partRef);
-
-    if (partSnapshot.exists()) {
-        const partData = partSnapshot.val();
-        let newQuantity = partData.quantity || 0;
-
-        if (transaction.type === "restock") {
-            newQuantity += transaction.quantity;
-        } else if (transaction.type === "withdraw") {
-            newQuantity -= transaction.quantity;
+    try {
+        // 1. Upload Evidence Image if provided
+        let evidenceImageUrl = "";
+        if (evidenceImageFile) {
+            const compressedFile = await compressImage(evidenceImageFile);
+            const fileName = `evidence/${Date.now()}_${compressedFile.name}`;
+            const sRef = storageRef(storage, fileName);
+            await uploadBytes(sRef, compressedFile);
+            evidenceImageUrl = await getDownloadURL(sRef);
         }
 
-        await update(partRef, {
-            quantity: newQuantity,
-            updatedAt: new Date().toISOString(),
-        });
+        // 2. Record Transaction
+        const txnRef = ref(database, "stock_transactions");
+        const newTxnRef = push(txnRef);
+
+        await set(newTxnRef, cleanObject({
+            ...transaction,
+            evidenceImageUrl: evidenceImageUrl || transaction.evidenceImageUrl || "",
+            performedAt: transaction.performedAt.toISOString(),
+        }));
+
+        // Auto-translate relevant fields
+        if (transaction.notes) syncTranslation(transaction.notes);
+        if (transaction.machineName) syncTranslation(transaction.machineName);
+        if (transaction.partName) syncTranslation(transaction.partName);
+        if (transaction.performedBy) syncTranslation(transaction.performedBy);
+
+        // 3. Update Stock Level
+        const partRef = ref(database, `${COLLECTIONS.PARTS}/${transaction.partId}`);
+        const partSnapshot = await get(partRef);
+
+        if (partSnapshot.exists()) {
+            const partData = partSnapshot.val();
+            let newQuantity = partData.quantity || 0;
+
+            if (transaction.type === "restock") {
+                newQuantity += transaction.quantity;
+            } else if (transaction.type === "withdraw") {
+                newQuantity -= transaction.quantity;
+            }
+
+            await update(partRef, {
+                quantity: newQuantity,
+                updatedAt: new Date().toISOString(),
+            });
+        }
+    } catch (error) {
+        console.error("Error adjusting stock:", error);
+        throw error;
     }
 }
 
 export async function getStockTransactions(partId?: string): Promise<StockTransaction[]> {
-    const txnRef = ref(database, "stock_transactions");
-    let q = query(txnRef);
+    try {
+        const txnRef = ref(database, "stock_transactions");
+        let q = query(txnRef);
 
-    if (partId) {
-        q = query(txnRef, orderByChild("partId"), equalTo(partId));
-    }
+        if (partId) {
+            q = query(txnRef, orderByChild("partId"), equalTo(partId));
+        }
 
-    const snapshot = await get(q);
-    if (!snapshot.exists()) return [];
+        const snapshot = await get(q);
+        if (!snapshot.exists()) return [];
 
-    const txns: StockTransaction[] = [];
-    snapshot.forEach((childSnapshot) => {
-        const data = childSnapshot.val();
-        txns.push({
-            id: childSnapshot.key!,
-            ...data,
-            performedAt: new Date(data.performedAt),
+        const txns: StockTransaction[] = [];
+        snapshot.forEach((childSnapshot) => {
+            const data = childSnapshot.val();
+            txns.push({
+                id: childSnapshot.key!,
+                ...data,
+                performedAt: new Date(data.performedAt),
+            });
         });
-    });
 
-    return txns.sort((a, b) => b.performedAt.getTime() - a.performedAt.getTime());
+        return txns.sort((a, b) => b.performedAt.getTime() - a.performedAt.getTime());
+    } catch (error) {
+        console.error("Error fetching stock transactions:", error);
+        throw error;
+    }
 }

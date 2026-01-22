@@ -76,7 +76,7 @@ export async function getAuditLogs(limit: number = 100): Promise<AuditLog[]> {
             .slice(0, limit);
     } catch (error) {
         console.error("Error fetching audit logs:", error);
-        return [];
+        throw error;
     }
 }
 
@@ -115,6 +115,20 @@ export async function updateSystemSettings(settings: Partial<SystemSettings>): P
         await set(settingsRef, settings);
     } catch (error) {
         console.error("Error updating system settings:", error);
+        throw error;
+    }
+}
+
+/**
+ * Export all data for backup
+ */
+export async function exportDataForBackup(): Promise<any> {
+    try {
+        const rootRef = ref(database, "/");
+        const snapshot = await get(rootRef);
+        return snapshot.exists() ? snapshot.val() : null;
+    } catch (error) {
+        console.error("Error exporting data for backup:", error);
         throw error;
     }
 }
