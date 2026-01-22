@@ -42,8 +42,8 @@ export default function PartsPage() {
     const [isSearching, setIsSearching] = useState(false);
     const [loadingMore, setLoadingMore] = useState(false);
 
-    const loadParts = async (isLoadMore = false) => {
-        if (loading || loadingMore) return;
+    const loadParts = async (isLoadMore = false, force = false) => {
+        if ((loading && !force) || loadingMore) return;
         
         try {
             if (isLoadMore) {
@@ -75,8 +75,9 @@ export default function PartsPage() {
             setParts([]);
             setLastCursor(null);
             setHasMore(true);
-            setLoading(false); 
-            loadParts(false);
+            // Don't set loading to false here, let loadParts handle it
+            // Force load to bypass the initial loading state check
+            loadParts(false, true);
         } else {
             setIsSearching(true);
             setLoading(true);
