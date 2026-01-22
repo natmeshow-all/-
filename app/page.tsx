@@ -132,15 +132,18 @@ export default function Dashboard() {
       setAllMachines(machinesData);
 
       // Trigger success toast only once per session
-      if (!hasShownNotification) {
+      // Double check sessionStorage here to prevent race conditions in React StrictMode
+      const isShownNow = typeof window !== 'undefined' && sessionStorage.getItem('db_notification_shown');
+      if (!hasShownNotification && !isShownNow) {
         success(t("msgDbConnected"), t("msgDbReady"));
         sessionStorage.setItem('db_notification_shown', 'true');
       }
     } catch (error) {
       console.error("Error fetching dashboard data:", error);
       // Trigger error toast only once per session if initial load failed
-      if (!hasShownNotification) {
-        useToast().error(t("msgDbConnectError"), t("msgDbErrorDetail"));
+      const isShownNow = typeof window !== 'undefined' && sessionStorage.getItem('db_notification_shown');
+      if (!hasShownNotification && !isShownNow) {
+        showError(t("msgDbConnectError"), t("msgDbErrorDetail")); // Use showError instead of useToast().error
         sessionStorage.setItem('db_notification_shown', 'true');
       }
     } finally {
@@ -164,59 +167,7 @@ export default function Dashboard() {
     };
   }, [isTableFullscreen]);
 
-  // Auto-fullscreen logic
-  useEffect(() => {
-    if (loading || isTableFullscreen) return; // Removed isTableFullscreen check to allow re-triggering? No, if it's already full, don't trigger. 
-    // Wait, if it's full, setting it to true again does nothing. 
-    // If user minimized it (isTableFullscreen = false), we want it to trigger again ONLY if they scroll away and back?
-    // The IntersectionObserver only fires changes. If they minimize while in view, checking "isTableFullscreen" in dependency might cause loop if we are not careful?
-    // Actually, if they minimize, `isTableFullscreen` becomes false. The effect re-runs.
-    // Observer is re-created. Checks entry. If intersecting -> sets true immediately. 
-    // This basically implies "You cannot minimize it while it's in view", it will pop back up.
-    // That might be annoying. But user said "Every time scroll down to".
-    // Usually "Scroll down to" implies entering the view.
-    // If I keep `isTableFullscreen` in the dependency array and early return, then when they close it, the effect runs, sees `isTableFullscreen` is false, creates observer. Observer sees it's visible, triggers true.
-    // User won't be able to close it!
-    // I should probably ONLY trigger if it *crosses* the threshold (not just "is visible upon mount").
-    // But IntersectionObserver fires initial check.
-
-    // To solve "Cannot close":
-    // 1. Only auto-trigger if they are SCROLLING INTO view.
-    // 2. If they are already there and close it, don't reopen.
-    // Logic: `hasTriggered` per intersection instance?
-    // Or, remove `isTableFullscreen` from dependency array?
-    // If I remove `isTableFullscreen` from dependency, the effect only runs on mount (or updates to `loading`).
-    // The observer callback closes over `setIsTableFullscreen`. That's fine.
-    // If they close it, `isTableFullscreen` becomes false. Changes state. Re-renders. Effect doesn't run.
-    // Observer is still alive.
-    // If they scroll out and back in, observer callback fires. `entries[0].isIntersecting` becomes true. `setIsTableFullscreen(true)`.
-    // THIS IS WHAT WE WANT.
-    // So removing `isTableFullscreen` from dependency array is key?
-    // Wait, the observer variable needs to be cleaned up.
-    // If I remove `isTableFullscreen` from deps, I should make sure I don't stale-closure something important? No, `setIsTableFullscreen` is stable.
-
-    // Let's try removing `isTableFullscreen` from the early return and dependency array.
-
-    const observer = new IntersectionObserver(
-      (entries) => {
-        if (entries[0].isIntersecting) {
-          // Only auto-fullscreen on mobile/tablets (< 768px)
-          if (window.innerWidth < 768) {
-            setIsTableFullscreen(true);
-          }
-        }
-      },
-      {
-        threshold: 0.1,
-      }
-    );
-
-    if (tableSectionRef.current) {
-      observer.observe(tableSectionRef.current);
-    }
-
-    return () => observer.disconnect();
-  }, [loading]); // Run once when loading finishes.
+  // Auto-fullscreen logic removed as per user request to prevent unwanted popup on refresh
 
   // Derive unique values for filters from real data with cascading logic
 

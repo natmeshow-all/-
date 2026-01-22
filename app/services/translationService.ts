@@ -4,7 +4,7 @@
  */
 
 import { ref, get, update } from "firebase/database";
-import { database } from "./firebase";
+import { database } from "../lib/firebase";
 
 const MEMORY_API_URL = "https://api.mymemory.translated.net/get";
 const DATA_TRANSLATIONS_COLLECTION = "data_translations";

@@ -125,7 +125,7 @@ export function ToastContainer({ toasts, onClose }: ToastContainerProps) {
     return (
         <div
             className={`
-                fixed inset-0 z-[100] flex items-end justify-center pb-8 pointer-events-none
+                fixed inset-0 z-[100] flex items-center justify-center pointer-events-none
                 transition-all duration-300
             `}
         >

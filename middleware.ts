@@ -7,12 +7,14 @@ export function middleware(request: NextRequest) {
     const nonce = Buffer.from(crypto.randomUUID()).toString('base64');
 
     // CSP Directives
-    // Note: 'unsafe-eval' is removed. 'unsafe-inline' is kept as fallback but nonce is added.
-    // Modern browsers will ignore 'unsafe-inline' if nonce is present.
+    // Note: 'unsafe-eval' is removed.
+    // 'nonce-${nonce}' is added to script-src to allow Next.js to authorize its scripts.
+    // 'unsafe-inline' is kept in style-src because we use style attributes (style={{...}}) in React components.
+    // Browsers ignore 'unsafe-inline' for scripts if a nonce is present, enforcing strict security for scripts.
     const cspHeader = `
     default-src 'self';
     script-src 'self' 'nonce-${nonce}' 'unsafe-inline' https://apis.google.com;
-    style-src 'self' 'nonce-${nonce}' 'unsafe-inline' https://fonts.googleapis.com;
+    style-src 'self' 'unsafe-inline' https://fonts.googleapis.com;
     img-src 'self' blob: data: https://firebasestorage.googleapis.com https://lh3.googleusercontent.com;
     font-src 'self' data: https://fonts.gstatic.com;
     object-src 'none';
@@ -43,6 +45,11 @@ export function middleware(request: NextRequest) {
 
     // Set the CSP header on the response
     response.headers.set('Content-Security-Policy', cspHeader);
+
+    // Set other security headers
+    response.headers.set('X-Content-Type-Options', 'nosniff');
+    response.headers.set('X-Frame-Options', 'DENY');
+    response.headers.set('Referrer-Policy', 'strict-origin-when-cross-origin');
 
     return response;
 }

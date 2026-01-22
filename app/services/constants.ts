@@ -1,0 +1,17 @@
+export const COLLECTIONS = {
+    MACHINES: "machines",
+    PARTS: "parts",
+    MAINTENANCE_RECORDS: "maintenance_records",
+    SCHEDULES: "schedules",
+    PM_PLANS: "pm_plans",
+    DATA_TRANSLATIONS: "data_translations",
+    USAGE_LOGS: "usage_logs",
+    PERFORMANCE_EVALUATIONS: "performance_evaluations",
+    SPARE_PARTS: "spare_parts",
+    STOCK_TRANSACTIONS: "stock_transactions",
+    IMAGE_HASHES: "image_hashes",
+    SENSOR_READINGS: "sensor_readings",
+    SYSTEM_STATS: "system_stats",
+    AUDIT_LOGS: "audit_logs",
+    SYSTEM_SETTINGS: "system_settings",
+};
