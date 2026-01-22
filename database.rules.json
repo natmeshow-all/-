@@ -67,7 +67,10 @@
             ".write": "auth != null && (root.child('users').child(auth.uid).child('role').val() == 'admin' || root.child('users').child(auth.uid).child('role').val() == 'supervisor')",
             ".indexOn": [
                 "name"
-            ]
+            ],
+            "$partId": {
+                ".validate": "newData.hasChildren(['name']) && newData.child('name').isString()"
+            }
         },
         // ===== Stock Transactions =====
         "stock_transactions": {
@@ -75,7 +78,10 @@
             ".write": "auth != null && root.child('users').child(auth.uid).child('isApproved').val() == true",
             ".indexOn": [
                 "partId"
-            ]
+            ],
+            "$transactionId": {
+                ".validate": "newData.hasChildren(['partId', 'type', 'quantity']) && newData.child('quantity').isNumber()"
+            }
         },
         // ===== Image Hashes =====
         "image_hashes": {
@@ -123,7 +129,10 @@
         // ===== Audit Logs (Admin Only) =====
         "audit_logs": {
             ".read": "auth != null && root.child('users').child(auth.uid).child('role').val() == 'admin'",
-            ".write": "auth != null && (root.child('users').child(auth.uid).child('role').val() == 'admin' || root.child('users').child(auth.uid).child('role').val() == 'supervisor')"
+            ".write": "auth != null && (root.child('users').child(auth.uid).child('role').val() == 'admin' || root.child('users').child(auth.uid).child('role').val() == 'supervisor')",
+            "$logId": {
+                ".validate": "newData.hasChildren(['action', 'userId', 'timestamp'])"
+            }
         },
         // ===== System Settings (Public read for maintenance mode check) =====
         "system_settings": {
