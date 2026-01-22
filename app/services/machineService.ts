@@ -21,6 +21,7 @@ import { Machine } from "../types";
 import { syncTranslation } from "./translationService";
 import { compressImage } from "../lib/imageCompression";
 import { COLLECTIONS } from "./constants";
+import { incrementDashboardStat } from "./analyticsService";
 
 // Helper to map machine data
 export function mapMachineData(key: string, data: any): Machine {
@@ -224,6 +225,9 @@ export async function addMachine(machine: Omit<Machine, "id" | "createdAt" | "up
             updatedAt: new Date().toISOString(),
         });
 
+        // Update stats
+        incrementDashboardStat("totalMachines", 1);
+
         // Auto-translate relevant fields
         if (machine.name) syncTranslation(machine.name);
         if (machine.brand) syncTranslation(machine.brand);
@@ -307,6 +311,9 @@ export async function deleteMachine(id: string): Promise<void> {
     try {
         const machineRef = ref(database, `${COLLECTIONS.MACHINES}/${id}`);
         await remove(machineRef);
+
+        // Update stats
+        incrementDashboardStat("totalMachines", -1);
     } catch (error) {
         console.error(`Error deleting machine ${id}:`, error);
         throw error;

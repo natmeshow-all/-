@@ -25,6 +25,7 @@ import { Part, SparePart, StockTransaction } from "../types";
 import { syncTranslation } from "./translationService";
 import { compressImage } from "../lib/imageCompression";
 import { COLLECTIONS } from "./constants";
+import { incrementDashboardStat } from "./analyticsService";
 
 // ==================== HELPERS ====================
 
@@ -446,6 +447,10 @@ export async function addPart(
             updatedAt: new Date().toISOString(),
         });
 
+        // Update stats
+        incrementDashboardStat("totalParts", 1);
+        incrementDashboardStat("totalSpareParts", 1);
+
         // Auto-translate relevant fields
         syncTranslation(safePartData.partName);
         if (safePartData.modelSpec) syncTranslation(safePartData.modelSpec);
@@ -505,6 +510,10 @@ export async function deletePart(id: string): Promise<void> {
     try {
         const partRef = ref(database, `${COLLECTIONS.PARTS}/${id}`);
         await remove(partRef);
+        
+        // Update stats
+        incrementDashboardStat("totalParts", -1);
+        incrementDashboardStat("totalSpareParts", -1);
     } catch (error) {
         console.error(`Error deleting part ${id}:`, error);
         throw error;
@@ -607,6 +616,10 @@ export async function addSparePart(
             createdAt: new Date().toISOString(),
             updatedAt: new Date().toISOString(),
         }));
+
+        // Update stats
+        incrementDashboardStat("totalParts", 1);
+        incrementDashboardStat("totalSpareParts", 1);
 
         // Auto-translate relevant fields
         syncTranslation(part.name);

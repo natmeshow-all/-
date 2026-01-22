@@ -26,6 +26,7 @@ import { syncTranslation } from "./translationService";
 import { compressImage } from "../lib/imageCompression";
 import { COLLECTIONS } from "./constants";
 import { getMachines } from "./machineService";
+import { incrementDashboardStat } from "./analyticsService";
 
 // ==================== HELPERS ====================
 
@@ -339,6 +340,28 @@ export async function updateMaintenanceRecord(
 export async function deleteMaintenanceRecord(id: string): Promise<void> {
     try {
         const recordRef = ref(database, `${COLLECTIONS.MAINTENANCE_RECORDS}/${id}`);
+        
+        // Get record details before deleting to update stats
+        const snapshot = await get(recordRef);
+        if (snapshot.exists()) {
+            const record = snapshot.val();
+            
+            // Update stats
+            incrementDashboardStat("maintenanceRecords", -1);
+            
+            if (record.type === "preventive" || record.type === "oilChange" || record.type === "inspection") {
+                incrementDashboardStat("totalPM", -1);
+            }
+            
+            if (record.type === "partReplacement" || record.isOverhaul) {
+                incrementDashboardStat("totalOverhaul", -1);
+            }
+            
+            if (record.status !== "completed") {
+                incrementDashboardStat("pendingMaintenance", -1);
+            }
+        }
+        
         await remove(recordRef);
     } catch (error) {
         console.error(`Error deleting maintenance record ${id}:`, error);

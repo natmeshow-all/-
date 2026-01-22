@@ -2,7 +2,8 @@ import {
     ref,
     get,
     set,
-    push
+    push,
+    runTransaction
 } from "firebase/database";
 import { database } from "../lib/firebase";
 import { AdminStats, PerformanceEvaluation, MaintenanceRecord, DashboardStats } from "../types";
@@ -12,6 +13,26 @@ import { getMachines } from "./machineService";
 import { getMaintenanceRecords } from "./maintenanceService";
 
 // ==================== STATISTICS ====================
+
+/**
+ * Increment or decrement a dashboard statistic counter.
+ * Use this in add/delete operations to keep stats in sync without full re-fetch.
+ */
+export async function incrementDashboardStat(key: keyof DashboardStats, amount: number = 1): Promise<void> {
+    try {
+        const statsRef = ref(database, `${COLLECTIONS.SYSTEM_STATS}/${key}`);
+        await runTransaction(statsRef, (currentValue) => {
+            return (currentValue || 0) + amount;
+        });
+        
+        // Update timestamp
+        const lastUpdatedRef = ref(database, `${COLLECTIONS.SYSTEM_STATS}/lastUpdated`);
+        await set(lastUpdatedRef, Date.now());
+    } catch (error) {
+        console.error(`Error updating stat ${key}:`, error);
+        // Non-critical
+    }
+}
 
 export async function getDashboardStats(): Promise<DashboardStats> {
     try {
