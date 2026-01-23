@@ -32,6 +32,9 @@ export function LanguageProvider({ children }: { children: ReactNode }) {
             if (snapshot.exists()) {
                 setDynamicTranslations(snapshot.val());
             }
+        }, (error) => {
+            console.error("Error fetching translations:", error);
+            // Don't crash the app, just ignore dynamic translations
         });
 
         return () => unsubscribe();

@@ -84,81 +84,110 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
             if (firebaseUser) {
                 setUser(firebaseUser);
 
+                // Create a promise that rejects after 5 seconds to prevent infinite loading
+                const timeoutPromise = new Promise((_, reject) => 
+                    setTimeout(() => reject(new Error("Auth profile fetch timeout")), 8000)
+                );
+
                 try {
-                    // 1. Check if this is the initial admin
-                    const isNewAdmin = await createInitialAdmin(
-                        firebaseUser.uid,
-                        firebaseUser.email || "",
-                        firebaseUser.displayName || "Admin",
-                        firebaseUser.photoURL || undefined
-                    );
+                    // Wrap the profile fetching logic in a race with the timeout
+                    await Promise.race([
+                        (async () => {
+                            // 1. Check if this is the initial admin
+                            const isNewAdmin = await createInitialAdmin(
+                                firebaseUser.uid,
+                                firebaseUser.email || "",
+                                firebaseUser.displayName || "Admin",
+                                firebaseUser.photoURL || undefined
+                            );
 
-                    if (isNewAdmin) {
-                        const profile = await getUserProfile(firebaseUser.uid);
-                        setUserProfile(profile);
-                        setIsPending(false);
-                        setLoading(false);
-                        return;
-                    }
-
-                    // 2. Check if user exists in users collection
-                    const profile = await getUserProfile(firebaseUser.uid);
-
-                    if (profile && profile.isApproved && profile.isActive) {
-                        setUserProfile(profile);
-                        setIsPending(false);
-                        logAppAccess();
-                    } else {
-                        // Profile missing or inactive
-                        setUserProfile(null);
-
-                        // 3. pending check
-                        const pending = await isPendingUser(firebaseUser.uid);
-
-                        if (pending) {
-                            setIsPending(true);
-                        } else if (!profile) {
-                            // 4. NEW USER: Check System Settings
-                            const settings = await getSystemSettings();
-
-                            if (settings && !settings.allowNewRegistrations) {
-                                await firebaseSignOut(auth);
-                                alert("Registrations are disabled.");
+                            if (isNewAdmin) {
+                                const profile = await getUserProfile(firebaseUser.uid);
+                                setUserProfile(profile);
+                                setIsPending(false);
                                 return;
                             }
 
-                            if (settings && !settings.requireApproval) {
-                                // Auto-register
-                                await autoRegisterUser(
-                                    firebaseUser.uid,
-                                    firebaseUser.email || "",
-                                    firebaseUser.displayName || "User",
-                                    firebaseUser.photoURL || undefined
-                                );
-                                // Login immediately
-                                const newProfile = await getUserProfile(firebaseUser.uid);
-                                if (newProfile) {
-                                    setUserProfile(newProfile);
-                                    setIsPending(false);
-                                    logAppAccess();
-                                }
+                            // 2. Check if user exists in users collection
+                            const profile = await getUserProfile(firebaseUser.uid);
+
+                            if (profile && profile.isApproved && profile.isActive) {
+                                setUserProfile(profile);
+                                setIsPending(false);
+                                logAppAccess();
                             } else {
-                                // Default: Create Pending
-                                await createPendingUser(
-                                    firebaseUser.uid,
-                                    firebaseUser.email || "",
-                                    firebaseUser.displayName || "Unknown",
-                                    firebaseUser.photoURL || undefined
-                                );
-                                setIsPending(true);
+                                // Profile missing or inactive
+                                setUserProfile(null);
+
+                                // 3. pending check
+                                const pending = await isPendingUser(firebaseUser.uid);
+
+                                if (pending) {
+                                    setIsPending(true);
+                                } else if (!profile) {
+                                    // 4. NEW USER: Check System Settings
+                                    const settings = await getSystemSettings();
+
+                                    if (settings && !settings.allowNewRegistrations) {
+                                        await firebaseSignOut(auth);
+                                        alert("Registrations are disabled.");
+                                        return;
+                                    }
+
+                                    if (settings && !settings.requireApproval) {
+                                        // Auto-register
+                                        await autoRegisterUser(
+                                            firebaseUser.uid,
+                                            firebaseUser.email || "",
+                                            firebaseUser.displayName || "User",
+                                            firebaseUser.photoURL || undefined
+                                        );
+                                        // Login immediately
+                                        const newProfile = await getUserProfile(firebaseUser.uid);
+                                        if (newProfile) {
+                                            setUserProfile(newProfile);
+                                            setIsPending(false);
+                                            logAppAccess();
+                                        }
+                                    } else {
+                                        // Default: Create Pending
+                                        await createPendingUser(
+                                            firebaseUser.uid,
+                                            firebaseUser.email || "",
+                                            firebaseUser.displayName || "Unknown",
+                                            firebaseUser.photoURL || undefined
+                                        );
+                                        setIsPending(true);
+                                    }
+                                } else {
+                                    // Profile exists but inactive, and not pending
+                                    setIsPending(false);
+                                }
                             }
-                        } else {
-                            // Profile exists but inactive, and not pending
-                            setIsPending(false);
-                        }
-                    }
-                } catch (error) {
+                        })(),
+                        timeoutPromise
+                    ]);
+                } catch (error: any) {
                     console.error("Error handling auth state:", error);
+                    
+                    // If we get a permission denied error while trying to fetch user profile,
+                    // it likely means the user has been deleted or disabled in the database,
+                    // but the auth token is still valid. We should sign them out to fix the state.
+                    if (error.code === 'PERMISSION_DENIED' || error.message?.includes('permission_denied')) {
+                        console.warn("Permission denied for authenticated user. Signing out...");
+                        await firebaseSignOut(auth);
+                        setUser(null);
+                        setUserProfile(null);
+                        setIsPending(false);
+                    }
+                    // If timeout, we just let loading complete so user isn't stuck
+                    if (error.message === "Auth profile fetch timeout") {
+                        console.warn("Auth profile fetch timed out. Session might be stale. Signing out...");
+                        await firebaseSignOut(auth);
+                        setUser(null);
+                        setUserProfile(null);
+                        setIsPending(false);
+                    }
                 }
             } else {
                 setUser(null);
