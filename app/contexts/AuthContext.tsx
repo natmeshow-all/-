@@ -84,28 +84,27 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
             if (firebaseUser) {
                 setUser(firebaseUser);
 
-                // Create a promise that rejects after 5 seconds to prevent infinite loading
+                // Create a promise that rejects after 15 seconds to prevent infinite loading
+                // Increased from 8s to 15s to handle slow connections
                 const timeoutPromise = new Promise((_, reject) => 
-                    setTimeout(() => reject(new Error("Auth profile fetch timeout")), 8000)
+                    setTimeout(() => reject(new Error("Auth profile fetch timeout")), 15000)
                 );
 
                 try {
                     // Wrap the profile fetching logic in a race with the timeout
                     await Promise.race([
                         (async () => {
-                            // 1. Check if this is the initial admin
-                            const isNewAdmin = await createInitialAdmin(
-                                firebaseUser.uid,
-                                firebaseUser.email || "",
-                                firebaseUser.displayName || "Admin",
-                                firebaseUser.photoURL || undefined
-                            );
-
-                            if (isNewAdmin) {
-                                const profile = await getUserProfile(firebaseUser.uid);
-                                setUserProfile(profile);
-                                setIsPending(false);
-                                return;
+                            try {
+                                // 1. Check if this is the initial admin
+                                // We wrap this in try-catch to ignore permission errors if rules prevent writing role
+                                await createInitialAdmin(
+                                    firebaseUser.uid,
+                                    firebaseUser.email || "",
+                                    firebaseUser.displayName || "Admin",
+                                    firebaseUser.photoURL || undefined
+                                ).catch(e => console.warn("Initial admin creation skipped/failed:", e));
+                            } catch (e) {
+                                // Ignore initial admin errors
                             }
 
                             // 2. Check if user exists in users collection
@@ -180,13 +179,11 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
                         setUserProfile(null);
                         setIsPending(false);
                     }
-                    // If timeout, we just let loading complete so user isn't stuck
+                    // If timeout, do NOT sign out automatically. Just warn.
                     if (error.message === "Auth profile fetch timeout") {
-                        console.warn("Auth profile fetch timed out. Session might be stale. Signing out...");
-                        await firebaseSignOut(auth);
-                        setUser(null);
-                        setUserProfile(null);
-                        setIsPending(false);
+                        console.warn("Auth profile fetch timed out. Connection might be slow.");
+                        // Allow the user to remain "logged in" but with potentially missing profile
+                        // The UI should handle null userProfile gracefully (e.g. showing "Loading..." or restricted view)
                     }
                 }
             } else {
