@@ -14,6 +14,7 @@ import { getDashboardStats, getParts, deletePart, getMachines, getPartsPaginated
 import MachineDetailsModal from "./components/machines/MachineDetailsModal"; // Import MachineDetailsModal
 import GlobalMaintenanceHistoryModal from "./components/pm/GlobalMaintenanceHistoryModal";
 import Lightbox from "./components/ui/Lightbox"; // Import Lightbox
+import PriorityPMAlert from "./components/ui/PriorityPMAlert"; // Import PriorityPMAlert
 import {
   BoxIcon,
   SettingsIcon,
@@ -380,8 +381,12 @@ export default function Dashboard() {
   return (
     <div className="min-h-screen bg-bg-primary">
       <Header />
+      <MobileNav />
 
       <main className="main-container px-4 py-6 sm:px-6">
+        {/* Priority Alert Section */}
+        <PriorityPMAlert />
+
         {/* Stats Section */}
         <section className="mb-6">
           <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-5 gap-3 sm:gap-4">
