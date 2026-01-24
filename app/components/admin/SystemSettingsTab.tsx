@@ -12,7 +12,8 @@ import {
     BellIcon,
     CheckCircleIcon,
     ShieldCheckIcon,
-    BoxIcon
+    BoxIcon,
+    InfoIcon
 } from "../ui/Icons";
 
 export default function SystemSettingsTab() {
@@ -24,9 +25,20 @@ export default function SystemSettingsTab() {
     const [saving, setSaving] = useState(false);
     const [exporting, setExporting] = useState(false);
 
+    // Local state for text inputs to avoid too many writes
+    const [announcementMsg, setAnnouncementMsg] = useState("");
+    const [retentionDays, setRetentionDays] = useState(365);
+
     useEffect(() => {
         fetchSettings();
     }, []);
+
+    useEffect(() => {
+        if (settings) {
+            setAnnouncementMsg(settings.announcement?.message || "");
+            setRetentionDays(settings.dataRetentionDays || 365);
+        }
+    }, [settings]);
 
     const fetchSettings = async () => {
         try {
@@ -106,6 +118,60 @@ export default function SystemSettingsTab() {
         }
     };
 
+    const handleSaveAnnouncement = async () => {
+        if (!settings) return;
+        try {
+            setSaving(true);
+            const newAnnouncement = {
+                enabled: settings.announcement?.enabled || false,
+                message: announcementMsg,
+                level: settings.announcement?.level || 'info'
+            };
+            
+            // @ts-ignore - Partial update
+            await updateSystemSettings({ announcement: newAnnouncement });
+            setSettings(prev => prev ? { ...prev, announcement: newAnnouncement } : prev);
+            
+            showToast('success', language === 'th' ? 'บันทึกประกาศแล้ว' : 'Announcement saved');
+        } catch (error) {
+            console.error("Error saving announcement:", error);
+            showToast('error', language === 'th' ? 'เกิดข้อผิดพลาด' : 'Error occurred');
+        } finally {
+            setSaving(false);
+        }
+    };
+
+    const handleSaveRetention = async () => {
+        if (!settings) return;
+        try {
+            setSaving(true);
+            await updateSystemSettings({ dataRetentionDays: retentionDays });
+            setSettings(prev => prev ? { ...prev, dataRetentionDays: retentionDays } : prev);
+            showToast('success', language === 'th' ? 'บันทึกการตั้งค่าแล้ว' : 'Settings saved');
+        } catch (error) {
+            console.error("Error saving retention:", error);
+        } finally {
+            setSaving(false);
+        }
+    };
+
+    const handleAnnouncementToggle = async () => {
+        if (!settings) return;
+        try {
+            setSaving(true);
+            const current = settings.announcement || { enabled: false, message: "", level: 'info' };
+            const newAnnouncement = { ...current, enabled: !current.enabled };
+            
+            // @ts-ignore
+            await updateSystemSettings({ announcement: newAnnouncement });
+            setSettings(prev => prev ? { ...prev, announcement: newAnnouncement } : prev);
+        } catch (error) {
+            console.error(error);
+        } finally {
+            setSaving(false);
+        }
+    };
+
     if (loading) {
         return (
             <div className="flex justify-center py-12">
@@ -165,7 +231,7 @@ export default function SystemSettingsTab() {
                 <div className="card p-5 bg-bg-secondary/30 border-white/5 space-y-4">
                     <h3 className="font-bold text-text-primary flex items-center gap-2">
                         <BellIcon size={16} className="text-accent-yellow" />
-                        {language === 'th' ? 'การแจ้งเตือน' : 'Notifications'}
+                        {language === 'th' ? 'การแจ้งเตือน & ข้อมูล' : 'Notifications & Data'}
                     </h3>
 
                     <SettingToggle
@@ -176,45 +242,44 @@ export default function SystemSettingsTab() {
                         disabled={saving}
                     />
 
+                    <div className="pt-2 border-t border-white/5 space-y-2">
+                        <label className="text-sm font-medium text-text-primary block">
+                            {language === 'th' ? 'เก็บข้อมูลย้อนหลัง (วัน)' : 'Data Retention (Days)'}
+                        </label>
+                        <div className="flex gap-2">
+                            <input
+                                type="number"
+                                value={retentionDays}
+                                onChange={(e) => setRetentionDays(parseInt(e.target.value) || 0)}
+                                className="flex-1 bg-bg-tertiary border border-white/10 rounded-lg px-3 py-2 text-sm text-text-primary focus:outline-none focus:border-primary"
+                            />
+                            <button
+                                onClick={handleSaveRetention}
+                                disabled={saving || retentionDays === settings?.dataRetentionDays}
+                                className="px-3 py-2 bg-primary/20 text-primary rounded-lg text-xs font-bold hover:bg-primary/30 disabled:opacity-50"
+                            >
+                                {language === 'th' ? 'บันทึก' : 'Save'}
+                            </button>
+                        </div>
+                    </div>
+
                     <div className="pt-2 border-t border-white/5">
                         <p className="text-xs text-text-muted">
-                            {language === 'th' ? 'เก็บข้อมูลย้อนหลัง:' : 'Data Retention:'}
-                            <span className="font-bold text-text-primary ml-2">
-                                {settings?.dataRetentionDays || 365} {language === 'th' ? 'วัน' : 'days'}
-                            </span>
-                        </p>
-                    </div>
-                </div>
-            </div>
-
-            {/* Data Backup Section */}
-            <div className="card p-5 bg-bg-secondary/30 border-white/5">
-                <h3 className="font-bold text-text-primary flex items-center gap-2 mb-4">
-                    <BoxIcon size={16} className="text-accent-green" />
-                    {language === 'th' ? 'สำรองข้อมูล' : 'Data Backup'}
-                </h3>
-
-                <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
-                    <div>
-                        <p className="text-sm text-text-muted">
-                            {language === 'th'
-                                ? 'Export ข้อมูลทั้งหมดเป็นไฟล์ JSON สำหรับการสำรองข้อมูล'
-                                : 'Export all data as JSON file for backup purposes'}
-                        </p>
-                        {settings?.lastBackupDate && (
-                            <p className="text-xs text-text-muted mt-1">
-                                {language === 'th' ? 'สำรองล่าสุด:' : 'Last backup:'}
+                            {language === 'th' ? 'สำรองข้อมูลล่าสุด:' : 'Last Backup:'}
+                            {settings?.lastBackupDate ? (
                                 <span className="text-text-primary ml-1">
                                     {new Date(settings.lastBackupDate).toLocaleDateString()}
                                 </span>
-                            </p>
-                        )}
+                            ) : (
+                                <span className="text-text-muted ml-1">-</span>
+                            )}
+                        </p>
                     </div>
 
                     <button
                         onClick={handleExportData}
                         disabled={exporting}
-                        className="px-4 py-2 rounded-lg bg-accent-green text-white text-sm font-bold hover:bg-accent-green/80 transition-all flex items-center gap-2 active:scale-95 disabled:opacity-50"
+                        className="w-full px-4 py-2 rounded-lg bg-accent-green text-white text-sm font-bold hover:bg-accent-green/80 transition-all flex items-center justify-center gap-2 active:scale-95 disabled:opacity-50"
                     >
                         {exporting ? (
                             <>
@@ -228,6 +293,77 @@ export default function SystemSettingsTab() {
                             </>
                         )}
                     </button>
+                </div>
+
+                {/* Announcement Settings */}
+                <div className="card p-5 bg-bg-secondary/30 border-white/5 space-y-4 md:col-span-2">
+                    <h3 className="font-bold text-text-primary flex items-center gap-2">
+                        <InfoIcon size={16} className="text-accent-blue" />
+                        {language === 'th' ? 'ประกาศระบบ (Announcement)' : 'System Announcement'}
+                    </h3>
+
+                    <SettingToggle
+                        label={language === 'th' ? 'เปิดใช้งานประกาศ' : 'Enable Announcement'}
+                        description={language === 'th' ? 'แสดงแถบข้อความประกาศที่ด้านบนของทุกหน้า' : 'Show announcement banner on top of all pages'}
+                        checked={settings?.announcement?.enabled || false}
+                        onChange={handleAnnouncementToggle}
+                        disabled={saving}
+                    />
+
+                    {settings?.announcement?.enabled && (
+                        <div className="space-y-3 pl-4 border-l-2 border-white/10 ml-1">
+                            <div>
+                                <label className="text-xs text-text-muted block mb-1">
+                                    {language === 'th' ? 'ข้อความประกาศ' : 'Message'}
+                                </label>
+                                <div className="flex gap-2">
+                                    <input
+                                        type="text"
+                                        value={announcementMsg}
+                                        onChange={(e) => setAnnouncementMsg(e.target.value)}
+                                        placeholder={language === 'th' ? 'ใส่ข้อความประกาศที่นี่...' : 'Enter announcement message...'}
+                                        className="flex-1 bg-bg-tertiary border border-white/10 rounded-lg px-3 py-2 text-sm text-text-primary focus:outline-none focus:border-primary"
+                                    />
+                                    <button
+                                        onClick={handleSaveAnnouncement}
+                                        disabled={saving || announcementMsg === settings?.announcement?.message}
+                                        className="px-4 py-2 bg-primary text-white rounded-lg text-xs font-bold hover:bg-primary/80 disabled:opacity-50"
+                                    >
+                                        {language === 'th' ? 'บันทึกข้อความ' : 'Save Message'}
+                                    </button>
+                                </div>
+                            </div>
+                            
+                            <div>
+                                <label className="text-xs text-text-muted block mb-1">
+                                    {language === 'th' ? 'ระดับความสำคัญ' : 'Level'}
+                                </label>
+                                <div className="flex gap-2">
+                                    {(['info', 'warning', 'urgent'] as const).map((level) => (
+                                        <button
+                                            key={level}
+                                            onClick={async () => {
+                                                if (!settings) return;
+                                                const newAnnouncement = { ...settings.announcement, enabled: true, message: announcementMsg, level };
+                                                // @ts-ignore
+                                                await updateSystemSettings({ announcement: newAnnouncement });
+                                                setSettings(prev => prev ? { ...prev, announcement: newAnnouncement } : prev);
+                                            }}
+                                            className={`px-3 py-1.5 rounded-md text-xs font-medium border transition-all ${
+                                                settings?.announcement?.level === level 
+                                                    ? level === 'urgent' ? 'bg-red-500/20 border-red-500 text-red-500' 
+                                                    : level === 'warning' ? 'bg-yellow-500/20 border-yellow-500 text-yellow-500'
+                                                    : 'bg-blue-500/20 border-blue-500 text-blue-500'
+                                                    : 'bg-transparent border-white/10 text-text-muted hover:bg-white/5'
+                                            }`}
+                                        >
+                                            {level.charAt(0).toUpperCase() + level.slice(1)}
+                                        </button>
+                                    ))}
+                                </div>
+                            </div>
+                        </div>
+                    )}
                 </div>
             </div>
         </div>

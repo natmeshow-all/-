@@ -4,6 +4,7 @@ import React, { useState, useEffect } from "react";
 import { useAuth } from "../contexts/AuthContext";
 import { getSystemSettings } from "../lib/firebaseService";
 import MaintenanceModePage from "./MaintenanceModePage";
+import { SystemSettings } from "../types";
 
 interface MaintenanceWrapperProps {
     children: React.ReactNode;
@@ -11,6 +12,7 @@ interface MaintenanceWrapperProps {
 
 export default function MaintenanceWrapper({ children }: MaintenanceWrapperProps) {
     const { isAdmin, loading: authLoading } = useAuth();
+    const [settings, setSettings] = useState<SystemSettings | null>(null);
     const [maintenanceMode, setMaintenanceMode] = useState(false);
     const [loading, setLoading] = useState(true);
     const [showReset, setShowReset] = useState(false);
@@ -24,10 +26,11 @@ export default function MaintenanceWrapper({ children }: MaintenanceWrapperProps
                     setTimeout(() => resolve(null), 5000)
                 );
                 
-                const settings = await Promise.race([settingsPromise, timeoutPromise]);
+                const fetchedSettings = await Promise.race([settingsPromise, timeoutPromise]);
                 
-                if (settings) {
-                    setMaintenanceMode(settings.maintenanceMode || false);
+                if (fetchedSettings) {
+                    setSettings(fetchedSettings);
+                    setMaintenanceMode(fetchedSettings.maintenanceMode || false);
                 } else {
                     // Fallback if settings fail to load or timeout
                     console.warn("Could not load system settings or timed out");
@@ -115,5 +118,18 @@ export default function MaintenanceWrapper({ children }: MaintenanceWrapperProps
     }
 
     // Otherwise, show normal content
-    return <>{children}</>;
+    return (
+        <>
+            {settings?.announcement?.enabled && (
+                <div className={`w-full px-4 py-2 text-center text-sm font-bold z-50 relative ${
+                    settings.announcement.level === 'urgent' ? 'bg-red-500 text-white animate-pulse' :
+                    settings.announcement.level === 'warning' ? 'bg-yellow-500 text-black' :
+                    'bg-blue-600 text-white'
+                }`}>
+                    {settings.announcement.message}
+                </div>
+            )}
+            {children}
+        </>
+    );
 }

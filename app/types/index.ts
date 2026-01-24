@@ -444,4 +444,9 @@ export interface SystemSettings {
     dataRetentionDays: number;
     notificationsEnabled: boolean;
     lastBackupDate?: string;
+    announcement?: {
+        enabled: boolean;
+        message: string;
+        level: 'info' | 'warning' | 'urgent';
+    };
 }
