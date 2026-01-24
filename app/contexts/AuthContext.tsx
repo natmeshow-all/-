@@ -84,11 +84,13 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
             if (firebaseUser) {
                 setUser(firebaseUser);
 
-                // Create a promise that rejects after 15 seconds to prevent infinite loading
-                // Increased from 8s to 15s to handle slow connections
-                const timeoutPromise = new Promise((_, reject) => 
-                    setTimeout(() => reject(new Error("Auth profile fetch timeout")), 15000)
-                );
+                let timeoutId: NodeJS.Timeout;
+
+                const timeoutPromise = new Promise((_, reject) => {
+                    timeoutId = setTimeout(() => {
+                        reject(new Error("Auth profile fetch timeout"));
+                    }, 15000);
+                });
 
                 try {
                     // Wrap the profile fetching logic in a race with the timeout
@@ -168,7 +170,7 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
                     ]);
                 } catch (error: any) {
                     console.error("Error handling auth state:", error);
-                    
+
                     // If we get a permission denied error while trying to fetch user profile,
                     // it likely means the user has been deleted or disabled in the database,
                     // but the auth token is still valid. We should sign them out to fix the state.
@@ -185,7 +187,11 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
                         // Allow the user to remain "logged in" but with potentially missing profile
                         // The UI should handle null userProfile gracefully (e.g. showing "Loading..." or restricted view)
                     }
+                } finally {
+                    // Ensure timeout is cleared to prevent unhandled rejection errors
+                    if (timeoutId!) clearTimeout(timeoutId);
                 }
+
             } else {
                 setUser(null);
                 setUserProfile(null);
@@ -194,7 +200,21 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
             setLoading(false);
         });
 
-        return () => unsubscribe();
+        // Safety timeout in case Firebase doesn't respond
+        const authInitTimeout = setTimeout(() => {
+            setLoading((currentLoading) => {
+                if (currentLoading) {
+                    console.warn("Auth initialization timed out. Forcing loading to false.");
+                    return false;
+                }
+                return currentLoading;
+            });
+        }, 5000);
+
+        return () => {
+            unsubscribe();
+            clearTimeout(authInitTimeout);
+        };
     }, []);
 
     const signInWithGoogle = async () => {

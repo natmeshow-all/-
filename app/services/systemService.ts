@@ -8,7 +8,8 @@ import {
     orderByChild,
     startAt,
     endAt,
-    limitToLast
+    limitToLast,
+    update
 } from "firebase/database";
 import { database } from "../lib/firebase";
 import { AuditLog, AuditActionType, SystemSettings, UserRole, SystemErrorLog } from "../types";
@@ -236,7 +237,7 @@ export async function getSystemSettings(): Promise<SystemSettings | null> {
 export async function updateSystemSettings(settings: Partial<SystemSettings>): Promise<void> {
     try {
         const settingsRef = ref(database, SYSTEM_SETTINGS_PATH);
-        await set(settingsRef, settings);
+        await update(settingsRef, settings);
     } catch (error) {
         console.error("Error updating system settings:", error);
         throw error;
