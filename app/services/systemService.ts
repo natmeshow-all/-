@@ -9,7 +9,9 @@ import {
     startAt,
     endAt,
     limitToLast,
-    update
+    update,
+    onValue,
+    off
 } from "firebase/database";
 import { database } from "../lib/firebase";
 import { AuditLog, AuditActionType, SystemSettings, UserRole, SystemErrorLog } from "../types";
@@ -203,6 +205,32 @@ export async function clearSystemErrors(): Promise<void> {
         console.error("Error clearing system errors:", error);
         throw error;
     }
+}
+
+/**
+ * Subscribes to system settings updates
+ */
+export function subscribeToSystemSettings(callback: (settings: SystemSettings | null) => void): () => void {
+    const settingsRef = ref(database, SYSTEM_SETTINGS_PATH);
+    
+    const unsubscribe = onValue(settingsRef, (snapshot) => {
+        if (snapshot.exists()) {
+            callback(snapshot.val() as SystemSettings);
+        } else {
+            callback({
+                maintenanceMode: false,
+                allowNewRegistrations: true,
+                requireApproval: true,
+                dataRetentionDays: 365,
+                notificationsEnabled: true
+            });
+        }
+    }, (error) => {
+        console.error("Error subscribing to system settings:", error);
+        callback(null);
+    });
+
+    return () => off(settingsRef, 'value', unsubscribe);
 }
 
 /**

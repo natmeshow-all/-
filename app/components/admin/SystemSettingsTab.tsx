@@ -27,6 +27,7 @@ export default function SystemSettingsTab() {
 
     // Local state for text inputs to avoid too many writes
     const [announcementMsg, setAnnouncementMsg] = useState("");
+    const [announcementMsgEn, setAnnouncementMsgEn] = useState("");
     const [retentionDays, setRetentionDays] = useState(365);
 
     useEffect(() => {
@@ -36,6 +37,7 @@ export default function SystemSettingsTab() {
     useEffect(() => {
         if (settings) {
             setAnnouncementMsg(settings.announcement?.message || "");
+            setAnnouncementMsgEn(settings.announcement?.messageEn || "");
             setRetentionDays(settings.dataRetentionDays || 365);
         }
     }, [settings]);
@@ -122,9 +124,11 @@ export default function SystemSettingsTab() {
         if (!settings) return;
         try {
             setSaving(true);
+
             const newAnnouncement = {
                 enabled: settings.announcement?.enabled || false,
                 message: announcementMsg,
+                messageEn: announcementMsgEn, // Use manual input only
                 level: settings.announcement?.level || 'info'
             };
             
@@ -314,7 +318,7 @@ export default function SystemSettingsTab() {
                         <div className="space-y-3 pl-4 border-l-2 border-white/10 ml-1">
                             <div>
                                 <label className="text-xs text-text-muted block mb-1">
-                                    {language === 'th' ? 'ข้อความประกาศ' : 'Message'}
+                                    {language === 'th' ? 'ข้อความประกาศ (TH)' : 'Message (TH)'}
                                 </label>
                                 <div className="flex gap-2">
                                     <input
@@ -324,10 +328,25 @@ export default function SystemSettingsTab() {
                                         placeholder={language === 'th' ? 'ใส่ข้อความประกาศที่นี่...' : 'Enter announcement message...'}
                                         className="flex-1 bg-bg-tertiary border border-white/10 rounded-lg px-3 py-2 text-sm text-text-primary focus:outline-none focus:border-primary"
                                     />
+                                </div>
+                            </div>
+
+                            <div>
+                                <label className="text-xs text-text-muted block mb-1">
+                                    {language === 'th' ? 'ข้อความประกาศ (EN)' : 'Message (EN)'}
+                                </label>
+                                <div className="flex gap-2">
+                                    <input
+                                        type="text"
+                                        value={announcementMsgEn}
+                                        onChange={(e) => setAnnouncementMsgEn(e.target.value)}
+                                        placeholder={language === 'th' ? 'คำแปลภาษาอังกฤษ (เว้นว่างเพื่อแปลอัตโนมัติ)' : 'English translation (leave empty to auto-translate)'}
+                                        className="flex-1 bg-bg-tertiary border border-white/10 rounded-lg px-3 py-2 text-sm text-text-primary focus:outline-none focus:border-primary"
+                                    />
                                     <button
                                         onClick={handleSaveAnnouncement}
-                                        disabled={saving || announcementMsg === settings?.announcement?.message}
-                                        className="px-4 py-2 bg-primary text-white rounded-lg text-xs font-bold hover:bg-primary/80 disabled:opacity-50"
+                                        disabled={saving || (announcementMsg === settings?.announcement?.message && announcementMsgEn === settings?.announcement?.messageEn)}
+                                        className="px-4 py-2 bg-primary text-white rounded-lg text-xs font-bold hover:bg-primary/80 disabled:opacity-50 whitespace-nowrap"
                                     >
                                         {language === 'th' ? 'บันทึกข้อความ' : 'Save Message'}
                                     </button>

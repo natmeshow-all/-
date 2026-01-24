@@ -47,6 +47,27 @@ export interface TranslationKeys {
     predBearingFailure: string;
     predBeltTension: string;
     predOverheating: string;
+    predOverduePM: string;
+    predRecentFailures: string;
+    predMTBFWarning: string;
+    predChronicIssue: string;
+    predRoutineCheck: string;
+    predImmediate: string;
+    predWithinWeeks: string;
+
+    // Impact & Action
+    impactOverdue: string;
+    actionOverdue: string;
+    impactChronic: string;
+    actionChronic: string;
+    impactCritical: string;
+    actionCritical: string;
+    impactMTBF: string;
+    actionMTBF: string;
+    impactWarning: string;
+    actionWarning: string;
+    labelPotentialImpact: string;
+    labelRecommendedAction: string;
 
     statusHighRisk: string;
     statusMonitoring: string;
@@ -341,6 +362,10 @@ export interface TranslationKeys {
     msgTimeout: string;
     msgTimeoutDetail: string;
     msgError: string;
+    msgNoRisksFound: string;
+    msgSystemHealthy: string;
+    msgDataNotReady: string;
+    msgConnectSensors: string;
     validateInput: string;
     validateSelectMachine: string;
     validateSelectPart: string;
@@ -780,6 +805,27 @@ const th: TranslationKeys = {
     predBearingFailure: "ลูกปืนมีโอกาสเสียหาย",
     predBeltTension: "แรงตึงสายพานลดลง",
     predOverheating: "มอเตอร์ร้อนเกินไป",
+    predOverduePM: "เกินกำหนดซ่อมบำรุง (Overdue PM)",
+    predRecentFailures: "มีการซ่อมฉุกเฉินบ่อยครั้ง",
+    predMTBFWarning: "ใกล้ครบอายุการใช้งานเฉลี่ย (MTBF)",
+    predChronicIssue: "ปัญหาเรื้อรัง (เสียจุดเดิมซ้ำๆ)",
+    predRoutineCheck: "ตรวจเช็คตามรอบปกติ",
+    predImmediate: "ทันที",
+    predWithinWeeks: "ภายในสัปดาห์",
+
+    // Impact & Action
+    impactOverdue: "เครื่องจักรอาจเสียหายหนัก, หมดประกัน",
+    actionOverdue: "ดำเนินการตามแผน PM โดยด่วน",
+    impactChronic: "เสี่ยงต่อการหยุดผลิตซ้ำซ้อน",
+    actionChronic: "วิเคราะห์หาสาเหตุที่แท้จริง (Root Cause)",
+    impactCritical: "อาจเกิดความเสียหายรุนแรง",
+    actionCritical: "หยุดเครื่องและตรวจสอบทันที",
+    impactMTBF: "อาจเกิดการเสียหายกะทันหัน",
+    actionMTBF: "เตรียมอะไหล่สำรองและตรวจสอบสภาพ",
+    impactWarning: "ประสิทธิภาพลดลง",
+    actionWarning: "เฝ้าระวังอย่างใกล้ชิด",
+    labelPotentialImpact: "ผลกระทบที่อาจเกิดขึ้น",
+    labelRecommendedAction: "ข้อแนะนำ",
 
     statusHighRisk: "ความเสี่ยงสูง",
     statusMonitoring: "กำลังตรวจสอบ",
@@ -1087,6 +1133,10 @@ const th: TranslationKeys = {
     msgTimeout: "หมดเวลาเชื่อมต่อ",
     msgTimeoutDetail: "ตรวจสอบการเชื่อมต่ออินเทอร์เน็ตและ Firebase config",
     msgError: "เกิดข้อผิดพลาด",
+    msgNoRisksFound: "ไม่พบความเสี่ยงสูง",
+    msgSystemHealthy: "ระบบทั้งหมดทำงานปกติ",
+    msgDataNotReady: "ข้อมูลไม่พร้อมใช้งาน",
+    msgConnectSensors: "ข้อมูลเซนเซอร์ Real-time ไม่พร้อมใช้งาน โปรดเชื่อมต่ออุปกรณ์ IoT หรือโมดูลเสริม",
     validateInput: "กรุณากรอกข้อมูล",
     validateSelectMachine: "กรุณาระบุชื่อเครื่องจักร",
     validateSelectPart: "กรุณาเลือกชื่ออะไหล่",
@@ -1510,6 +1560,27 @@ const en: TranslationKeys = {
     predBearingFailure: "Bearing Failure Likely",
     predBeltTension: "Belt Tension Degradation",
     predOverheating: "Motor Overheating",
+    predOverduePM: "Maintenance Overdue",
+    predRecentFailures: "Frequent Breakdowns Detected",
+    predMTBFWarning: "Approaching Mean Time Between Failures (MTBF)",
+    predChronicIssue: "Chronic Issue Detected",
+    predRoutineCheck: "Routine Check",
+    predImmediate: "Immediate",
+    predWithinWeeks: "Within weeks",
+
+    // Impact & Action
+    impactOverdue: "Machine performance degradation, Warranty risk",
+    actionOverdue: "Schedule PM immediately",
+    impactChronic: "High risk of recurring breakdown",
+    actionChronic: "Root cause analysis required",
+    impactCritical: "Critical failure imminent",
+    actionCritical: "Stop and inspect immediately",
+    impactMTBF: "Unexpected breakdown likely",
+    actionMTBF: "Inspect part condition, Prepare spares",
+    impactWarning: "Reduced efficiency",
+    actionWarning: "Monitor closely",
+    labelPotentialImpact: "Potential Impact",
+    labelRecommendedAction: "Recommended Action",
 
     statusHighRisk: "High Risk",
     statusMonitoring: "Monitoring",
@@ -1817,6 +1888,10 @@ const en: TranslationKeys = {
     msgTimeout: "Connection timed out",
     msgTimeoutDetail: "Check internet connection and Firebase config",
     msgError: "An error occurred",
+    msgNoRisksFound: "No high risk machines found.",
+    msgSystemHealthy: "All systems are operating normally.",
+    msgDataNotReady: "Data Not Available",
+    msgConnectSensors: "Real-time sensor data is not available. Please connect IoT sensors or integration modules.",
     validateInput: "Please fill in the information",
     validateSelectMachine: "Please specify machine name",
     validateSelectPart: "Please select part name",

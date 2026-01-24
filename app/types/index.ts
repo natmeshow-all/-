@@ -447,6 +447,7 @@ export interface SystemSettings {
     announcement?: {
         enabled: boolean;
         message: string;
+        messageEn?: string;
         level: 'info' | 'warning' | 'urgent';
     };
 }
