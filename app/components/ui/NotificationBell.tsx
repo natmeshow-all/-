@@ -32,7 +32,8 @@ export default function NotificationBell() {
 
             const newNotifications: NotificationItem[] = [];
 
-            // 1. Check Low Stock
+            // 1. Check Low Stock (DISABLED as per user request)
+            /*
             try {
                 const parts = await getSpareParts();
                 const lowStockParts = parts.filter(p => p.quantity <= p.minStockThreshold);
@@ -52,6 +53,7 @@ export default function NotificationBell() {
             } catch (error) {
                 console.error("Error checking stock for notifications:", error);
             }
+            */
 
             // 2. Check Upcoming PM
             try {
