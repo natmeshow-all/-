@@ -253,6 +253,21 @@ export async function addMaintenanceRecord(record: Omit<MaintenanceRecord, "id" 
         if (record.changeReason) syncTranslation(record.changeReason);
         if (record.partCondition) syncTranslation(record.partCondition);
 
+        // Update stats
+        incrementDashboardStat("maintenanceRecords", 1);
+        
+        if (record.type === "preventive" || record.type === "oilChange" || record.type === "inspection") {
+            incrementDashboardStat("totalPM", 1);
+        }
+        
+        if (record.type === "partReplacement" || (record as any).isOverhaul) {
+            incrementDashboardStat("totalOverhaul", 1);
+        }
+        
+        if (record.status !== "completed") {
+            incrementDashboardStat("pendingMaintenance", 1);
+        }
+
         // Update machine operating hours if reported
         if (record.machineHours && record.machineHours > 0) {
             try {
@@ -580,6 +595,21 @@ export const completePMTask = async (
             updatedAt: now.toISOString(),
         };
         await set(recordRef, recordData);
+
+        // Update stats
+        incrementDashboardStat("maintenanceRecords", 1);
+        
+        if (record.type === "preventive" || record.type === "oilChange" || record.type === "inspection") {
+            incrementDashboardStat("totalPM", 1);
+        }
+        
+        if (record.type === "partReplacement" || (record as any).isOverhaul) {
+            incrementDashboardStat("totalOverhaul", 1);
+        }
+        
+        if (record.status !== "completed") {
+            incrementDashboardStat("pendingMaintenance", 1);
+        }
 
         // Auto-translate relevant fields
         if (record.description) syncTranslation(record.description);

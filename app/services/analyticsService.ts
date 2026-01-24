@@ -39,85 +39,105 @@ export async function getDashboardStats(): Promise<DashboardStats> {
         // 1. Try to get cached stats
         const statsRef = ref(database, COLLECTIONS.SYSTEM_STATS);
         const statsSnapshot = await get(statsRef);
-        const CACHE_DURATION = 5 * 60 * 1000; // 5 minutes
+        // Increase cache duration to 24 hours to prevent heavy re-fetching
+        // We rely on incrementDashboardStat for real-time updates
+        const CACHE_DURATION = 24 * 60 * 60 * 1000; 
 
         if (statsSnapshot.exists()) {
             const cachedStats = statsSnapshot.val() as DashboardStats;
             const now = Date.now();
+            
+            // Return cached stats immediately if they exist, 
+            // only force recalculate if they are extremely old or missing
             if (cachedStats.lastUpdated && (now - cachedStats.lastUpdated < CACHE_DURATION)) {
                 return cachedStats;
             }
+            
+            // If cache exists but is old, we can still return it if recalculation fails.
+            // But let's try to recalculate first.
         }
 
         // 2. Calculate if cache missing or expired
-        const [parts, machines, records, spareParts] = await Promise.all([
-            getParts(),
-            getMachines(),
-            getMaintenanceRecords(),
-            getSpareParts(),
-        ]);
+        try {
+            const [parts, machines, records, spareParts] = await Promise.all([
+                getParts(),
+                getMachines(),
+                getMaintenanceRecords(),
+                getSpareParts(),
+            ]);
 
-        const uniqueLocations = new Set(parts.map((p) => p.Location).filter(l => l && l.trim() !== '')).size;
-        const pendingRecords = records.filter((r) => r.status !== "completed").length;
+            const uniqueLocations = new Set(parts.map((p) => p.Location).filter(l => l && l.trim() !== '')).size;
+            const pendingRecords = records.filter((r) => r.status !== "completed").length;
 
-        // Separate PM and Overhaul counts
-        const totalPM = records.filter(r =>
-            r.type === 'preventive' ||
-            r.type === 'oilChange' ||
-            r.type === 'inspection'
-        ).length;
+            // Separate PM and Overhaul counts
+            const totalPM = records.filter(r =>
+                r.type === 'preventive' ||
+                r.type === 'oilChange' ||
+                r.type === 'inspection'
+            ).length;
 
-        const totalOverhaul = records.filter(r =>
-            r.type === 'partReplacement' ||
-            r.isOverhaul === true
-        ).length;
+            const totalOverhaul = records.filter(r =>
+                r.type === 'partReplacement' ||
+                r.isOverhaul === true
+            ).length;
 
-        // Calculate Location Counts
-        const locationCounts = {
-            ALL: parts.length,
-            FZ: 0,
-            RTE: 0,
-            UT: 0
-        };
+            // Calculate Location Counts
+            const locationCounts = {
+                ALL: parts.length,
+                FZ: 0,
+                RTE: 0,
+                UT: 0
+            };
 
-        parts.forEach(p => {
-            let loc = p.location?.toUpperCase() || p.Location?.toUpperCase();
-            
-            // If part location is missing or generic, check machine location
-            if (!loc || loc === 'UNDEFINED') {
-                const machine = machines.find(m => m.name === p.machineName || m.id === p.machineId);
-                if (machine && machine.location) {
-                    loc = machine.location.toUpperCase();
+            parts.forEach(p => {
+                let loc = p.location?.toUpperCase() || p.Location?.toUpperCase();
+                
+                // If part location is missing or generic, check machine location
+                if (!loc || loc === 'UNDEFINED') {
+                    const machine = machines.find(m => m.name === p.machineName || m.id === p.machineId);
+                    if (machine && machine.location) {
+                        loc = machine.location.toUpperCase();
+                    }
                 }
+
+                if (loc === 'FZ') locationCounts.FZ++;
+                else if (loc === 'RTE') locationCounts.RTE++;
+                else if (loc === 'UT' || loc === 'UTILITY') locationCounts.UT++;
+            });
+
+            const newStats: DashboardStats = {
+                totalParts: parts.length,
+                totalMachines: machines.length,
+                totalLocations: uniqueLocations,
+                maintenanceRecords: records.length,
+                totalPM,
+                totalOverhaul,
+                pendingMaintenance: pendingRecords,
+                upcomingSchedule: 0,
+                totalSpareParts: spareParts.length,
+                lastUpdated: Date.now(),
+                locationCounts
+            };
+
+            // 3. Update cache (Best effort - ignore if permission denied)
+            try {
+                await set(statsRef, newStats);
+            } catch (cacheError) {
+                console.warn("Could not update dashboard cache (likely permission issue):", cacheError);
             }
 
-            if (loc === 'FZ') locationCounts.FZ++;
-            else if (loc === 'RTE') locationCounts.RTE++;
-            else if (loc === 'UT' || loc === 'UTILITY') locationCounts.UT++;
-        });
-
-        const newStats: DashboardStats = {
-            totalParts: parts.length,
-            totalMachines: machines.length,
-            totalLocations: uniqueLocations,
-            maintenanceRecords: records.length,
-            totalPM,
-            totalOverhaul,
-            pendingMaintenance: pendingRecords,
-            upcomingSchedule: 0,
-            totalSpareParts: spareParts.length,
-            lastUpdated: Date.now(),
-            locationCounts
-        };
-
-        // 3. Update cache (Best effort - ignore if permission denied)
-        try {
-            await set(statsRef, newStats);
-        } catch (cacheError) {
-            console.warn("Could not update dashboard cache (likely permission issue):", cacheError);
+            return newStats;
+        } catch (recalcError) {
+            console.error("Error recalculating dashboard stats:", recalcError);
+            
+            // Fallback: If recalculation failed but we have stale cache, return it!
+            if (statsSnapshot.exists()) {
+                console.warn("Returning stale dashboard stats due to recalculation error.");
+                return statsSnapshot.val() as DashboardStats;
+            }
+            
+            throw recalcError;
         }
-
-        return newStats;
     } catch (error) {
         console.error("Error getting dashboard stats:", error);
         throw error;

@@ -10,7 +10,8 @@ import {
     CalendarIcon,
     SearchIcon,
     DownloadIcon,
-    FilterIcon
+    FilterIcon,
+    AlertTriangleIcon
 } from "../ui/Icons";
 
 // Action type to Thai label mapping
@@ -42,6 +43,7 @@ export default function AuditLogTab() {
     const { language } = useLanguage();
     const [logs, setLogs] = useState<AuditLog[]>([]);
     const [loading, setLoading] = useState(true);
+    const [error, setError] = useState<string | null>(null);
     const [searchTerm, setSearchTerm] = useState("");
     const [filterAction, setFilterAction] = useState<AuditActionType | "all">("all");
     const [startDate, setStartDate] = useState<string>("");
@@ -54,6 +56,7 @@ export default function AuditLogTab() {
     const fetchLogs = async () => {
         try {
             setLoading(true);
+            setError(null);
             const start = startDate ? new Date(startDate) : undefined;
             const end = endDate ? new Date(endDate) : undefined;
             // If date range is set, fetch more logs (e.g. 1000), otherwise 200 recent
@@ -61,8 +64,9 @@ export default function AuditLogTab() {
             
             const data = await getAuditLogs(limit, start, end);
             setLogs(data);
-        } catch (error) {
+        } catch (error: any) {
             console.error("Error fetching audit logs:", error);
+            setError(error.message || "Failed to fetch logs");
         } finally {
             setLoading(false);
         }
@@ -206,7 +210,19 @@ export default function AuditLogTab() {
 
             {/* Log List */}
             <div className="space-y-2 max-h-[60vh] overflow-y-auto custom-scrollbar pr-1">
-                {filteredLogs.length === 0 ? (
+                {error ? (
+                    <div className="text-center py-12 text-accent-red bg-accent-red/10 rounded-lg border border-accent-red/20">
+                        <AlertTriangleIcon size={40} className="mx-auto mb-3 opacity-80" />
+                        <p className="font-bold">{language === 'th' ? 'เกิดข้อผิดพลาดในการโหลดข้อมูล' : 'Error loading audit logs'}</p>
+                        <p className="text-sm mt-1 opacity-80">{error}</p>
+                        <button 
+                            onClick={() => { setError(null); fetchLogs(); }}
+                            className="mt-4 px-4 py-2 bg-accent-red text-white rounded-lg text-sm font-bold hover:bg-accent-red/80 transition-colors"
+                        >
+                            {language === 'th' ? 'ลองใหม่' : 'Retry'}
+                        </button>
+                    </div>
+                ) : filteredLogs.length === 0 ? (
                     <div className="text-center py-12 text-text-muted">
                         <ActivityIcon size={40} className="mx-auto mb-3 opacity-30" />
                         <p>{language === 'th' ? 'ไม่พบบันทึกกิจกรรม' : 'No audit logs found'}</p>

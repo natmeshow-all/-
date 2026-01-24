@@ -56,7 +56,11 @@ export default function Dashboard() {
   // Filter Expanded State
   const [isFilterExpanded, setIsFilterExpanded] = useState(false); // Default to collapsed
   const tableSectionRef = React.useRef<HTMLDivElement>(null);
-  const [loading, setLoading] = useState(true);
+  
+  // Split loading states to prevent blocking UI
+  const [statsLoading, setStatsLoading] = useState(true);
+  const [partsLoading, setPartsLoading] = useState(true);
+  
   const [cursor, setCursor] = useState<{updatedAt: string, id: string} | null>(null);
   const [hasMore, setHasMore] = useState(true);
 
@@ -153,7 +157,8 @@ export default function Dashboard() {
       });
       setParts([]);
       setAllMachines([]);
-      setLoading(false);
+      setStatsLoading(false);
+      setPartsLoading(false);
       return;
     }
 
@@ -161,7 +166,7 @@ export default function Dashboard() {
     const hasShownNotification = typeof window !== 'undefined' && sessionStorage.getItem('db_notification_shown');
 
     try {
-      setLoading(true);
+      setStatsLoading(true);
       const [statsData, machinesData] = await Promise.all([
         getDashboardStats(),
         getMachines()
@@ -189,7 +194,7 @@ export default function Dashboard() {
         sessionStorage.setItem('db_notification_shown', 'true');
       }
     } finally {
-      setLoading(false);
+      setStatsLoading(false);
     }
   };
 
@@ -203,7 +208,7 @@ export default function Dashboard() {
   useEffect(() => {
     const loadFilteredParts = async () => {
         if (!user) return;
-        setLoading(true);
+        setPartsLoading(true);
         try {
             if (filters.machineId) {
                 // filters.machineId holds the Name
@@ -229,7 +234,7 @@ export default function Dashboard() {
             console.error("Error loading parts:", error);
             setParts([]); // Fallback to empty
         } finally {
-            setLoading(false);
+            setPartsLoading(false);
         }
     };
 
@@ -242,8 +247,8 @@ export default function Dashboard() {
   }, [filters.machineId, filters.Location, user]);
 
   const handleLoadMore = async () => {
-    if (!hasMore || loading || !cursor) return;
-    setLoading(true);
+    if (!hasMore || partsLoading || !cursor) return;
+    setPartsLoading(true);
     try {
         const res = await getPartsPaginated(50, cursor.updatedAt, cursor.id);
         setParts(prev => [...prev, ...res.parts]);
@@ -252,7 +257,7 @@ export default function Dashboard() {
     } catch (error) {
         console.error("Error loading more parts:", error);
     } finally {
-        setLoading(false);
+        setPartsLoading(false);
     }
   };
 
@@ -576,7 +581,7 @@ export default function Dashboard() {
                     {t("filterShowResults")}{" "}
                     <span className="text-primary-light font-semibold">{filteredParts.length}</span>
                     {" "}{t("filterOf")}{" "}
-                    <span className="text-text-primary font-semibold">{loading ? "..." : parts.length}</span>
+                    <span className="text-text-primary font-semibold">{partsLoading ? "..." : parts.length}</span>
                     {" "}{t("filterRecords")}
                   </p>
                   <button
@@ -636,7 +641,7 @@ export default function Dashboard() {
                     </tr>
                   </thead>
                   <tbody className="divide-y divide-border-light">
-                    {!loading && filteredParts.map((part, index) => (
+                    {!partsLoading && filteredParts.map((part, index) => (
                       <tr
                         key={part.id}
                         className="animate-fade-in hover:bg-bg-tertiary/30 transition-colors"
@@ -722,10 +727,10 @@ export default function Dashboard() {
                   <div className="flex justify-center p-4 border-t border-border-light">
                     <button 
                       onClick={handleLoadMore} 
-                      disabled={loading} 
+                      disabled={partsLoading} 
                       className="btn btn-sm btn-ghost text-primary hover:bg-primary/10"
                     >
-                        {loading ? "..." : t("actionLoadMore") || "Load More"}
+                        {partsLoading ? "..." : t("actionLoadMore") || "Load More"}
                     </button>
                   </div>
                 )}
@@ -735,7 +740,7 @@ export default function Dashboard() {
             {/* Fullscreen Mobile View Content - Inside specialized container when fullscreen */}
             {isTableFullscreen && (
               <div className="md:hidden flex-1 overflow-auto bg-bg-primary p-4 space-y-4 min-h-0" style={{ WebkitOverflowScrolling: 'touch' }}>
-                {loading ? (
+                {partsLoading ? (
                   <div className="flex justify-center py-12">
                     <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary"></div>
                   </div>
@@ -882,7 +887,7 @@ export default function Dashboard() {
           {/* Normal Mobile List View (Not Fullscreen) - Standalone Cards */}
           {!isTableFullscreen && (
             <div className="md:hidden space-y-4">
-              {loading ? (
+              {partsLoading ? (
                 <div className="flex justify-center py-12">
                   <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary"></div>
                 </div>

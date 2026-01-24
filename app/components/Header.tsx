@@ -77,6 +77,7 @@ export default function Header({ className = "" }: HeaderProps) {
                                         <img
                                             src={user.photoURL || "https://ui-avatars.com/api/?name=" + displayName}
                                             alt={displayName}
+                                            referrerPolicy="no-referrer"
                                             className="w-9 h-9 sm:w-10 sm:h-10 rounded-full transition-transform group-hover:scale-95 cursor-pointer"
                                         />
                                     </div>

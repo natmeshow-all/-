@@ -112,11 +112,24 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
                             // 2. Check if user exists in users collection
                             const profile = await getUserProfile(firebaseUser.uid);
 
+                            // DEBUG: Log profile fetch result
+                            console.log("[AuthContext] User profile fetched:", {
+                                uid: firebaseUser.uid,
+                                email: firebaseUser.email,
+                                profile: profile ? {
+                                    role: profile.role,
+                                    isApproved: profile.isApproved,
+                                    isActive: profile.isActive
+                                } : null
+                            });
+
                             if (profile && profile.isApproved && profile.isActive) {
                                 setUserProfile(profile);
                                 setIsPending(false);
                                 logAppAccess();
+                                console.log("[AuthContext] ✅ User profile SET successfully");
                             } else {
+                                console.log("[AuthContext] ⚠️ Profile not approved/active or missing");
                                 // Profile missing or inactive
                                 setUserProfile(null);
 
@@ -169,23 +182,24 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
                         timeoutPromise
                     ]);
                 } catch (error: any) {
-                    console.error("Error handling auth state:", error);
-
-                    // If we get a permission denied error while trying to fetch user profile,
-                    // it likely means the user has been deleted or disabled in the database,
-                    // but the auth token is still valid. We should sign them out to fix the state.
-                    if (error.code === 'PERMISSION_DENIED' || error.message?.includes('permission_denied')) {
-                        console.warn("Permission denied for authenticated user. Signing out...");
-                        await firebaseSignOut(auth);
-                        setUser(null);
-                        setUserProfile(null);
-                        setIsPending(false);
-                    }
-                    // If timeout, do NOT sign out automatically. Just warn.
+                    // If timeout, do NOT log as error. Just log as info to avoid triggering error overlays.
                     if (error.message === "Auth profile fetch timeout") {
-                        console.warn("Auth profile fetch timed out. Connection might be slow.");
+                        console.log("Auth profile fetch timed out. Connection might be slow.");
                         // Allow the user to remain "logged in" but with potentially missing profile
                         // The UI should handle null userProfile gracefully (e.g. showing "Loading..." or restricted view)
+                    } else {
+                        console.error("Error handling auth state:", error);
+
+                        // If we get a permission denied error while trying to fetch user profile,
+                        // it likely means the user has been deleted or disabled in the database,
+                        // but the auth token is still valid. We should sign them out to fix the state.
+                        if (error.code === 'PERMISSION_DENIED' || error.message?.includes('permission_denied')) {
+                            console.warn("Permission denied for authenticated user. Signing out...");
+                            await firebaseSignOut(auth);
+                            setUser(null);
+                            setUserProfile(null);
+                            setIsPending(false);
+                        }
                     }
                 } finally {
                     // Ensure timeout is cleared to prevent unhandled rejection errors
