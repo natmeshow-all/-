@@ -17,13 +17,41 @@ export default function StockHistoryModal({ isOpen, onClose, part }: StockHistor
 
     useEffect(() => {
         if (isOpen && part) {
-            setLoading(true);
-            getStockTransactions(part.id)
-                .then(data => setTransactions(data))
-                .catch(err => console.error("Error fetching transactions:", err))
-                .finally(() => setLoading(false));
+            loadHistory();
         }
     }, [isOpen, part]);
+
+    const loadHistory = async () => {
+        if (!part) return;
+        setLoading(true);
+        try {
+            const history = await getStockTransactions(part.id);
+            
+            // DEMO DATA INJECTION
+            // If history is empty, show the requested demo data for visualization
+            if (history.length === 0) {
+                 const demoTxn: any = {
+                    id: "demo-txn-01",
+                    type: "withdraw",
+                    quantity: 2,
+                    machineName: "FAF-6 (FAF-132/133/134/135)",
+                    componentName: "Motor Siemens 1LE0102-0EA4",
+                    Location: "Drive End / Non-Drive End",
+                    performedBy: "Demo Technician",
+                    performedAt: new Date("2026-01-20T10:30:00"),
+                    notes: "Changed as per PM schedule",
+                    partName: part.name || "Bearing 6205 2RS"
+                 };
+                 setTransactions([demoTxn]);
+            } else {
+                 setTransactions(history);
+            }
+        } catch (error) {
+            console.error("Error loading history:", error);
+        } finally {
+            setLoading(false);
+        }
+    };
 
     if (!isOpen || !part) return null;
 
@@ -112,10 +140,15 @@ export default function StockHistoryModal({ isOpen, onClose, part }: StockHistor
                                                     <>
                                                         <MapPinIcon size={14} className="mt-1 text-text-muted" />
                                                         <div className="min-w-0">
-                                                            <p className="text-text-secondary truncate">{txn.machineName || "N/A"}</p>
+                                                            <p className="text-text-secondary truncate font-medium">{txn.machineName || "N/A"}</p>
+                                                            {txn.componentName && (
+                                                                <p className="text-xs text-text-primary/80 truncate">
+                                                                    <span className="opacity-70">{t("stockComponent") || "On"}:</span> {txn.componentName}
+                                                                </p>
+                                                            )}
                                                             {(txn.Location || (txn as any).zone) && (
                                                                 <p className="text-[10px] text-text-muted tracking-tight">
-                                                                    {t("stockLocation")}: {txn.Location || (txn as any).zone}
+                                                                    {t("stockLocationDetail") || "Loc"}: {txn.Location || (txn as any).zone}
                                                                 </p>
                                                             )}
                                                         </div>

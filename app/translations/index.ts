@@ -428,6 +428,10 @@ export interface TranslationKeys {
     stockQuantity: string;
     stockMachine: string;
     stockLocation: string;
+    stockLocationDetail: string; // New
+    stockComponent: string; // New
+    placeholderComponent: string; // New
+    date: string; // New
     stockNotes: string;
     stockEvidence: string;
     stockEvidenceHint: string;
@@ -1199,6 +1203,10 @@ const th: TranslationKeys = {
     stockQuantity: "จำนวน",
     stockMachine: "ใช้กับเครื่องจักร",
     stockLocation: "ระบุตำแหน่ง (Location)",
+    stockLocationDetail: "จุดที่เปลี่ยน (Location Detail)",
+    stockComponent: "อะไหล่หลัก / Component",
+    placeholderComponent: "ระบุอะไหล่หลัก (เช่น Motor Siemens...)",
+    date: "วันที่",
     stockNotes: "หมายเหตุ (Notes)",
     stockEvidence: "รูปหลังเปลี่ยน (Proof of Change)",
     stockEvidenceHint: "ถ่ายรูปงานที่เปลี่ยนเสร็จแล้วเพื่อเป็นหลักฐาน",
@@ -1954,6 +1962,10 @@ const en: TranslationKeys = {
     stockQuantity: "Quantity",
     stockMachine: "Select Machine",
     stockLocation: "Specify Location",
+    stockLocationDetail: "Location Detail",
+    stockComponent: "Main Component",
+    placeholderComponent: "Specify component (e.g. Motor Siemens...)",
+    date: "Date",
     stockNotes: "Notes",
     stockEvidence: "Proof of Change Image",
     stockEvidenceHint: "Upload a photo of the completed change for evidence",

@@ -343,6 +343,7 @@ export interface StockTransaction {
     quantity: number;
     machineId?: string; // For withdrawal: which machine used it
     machineName?: string;
+    componentName?: string; // Main Part (e.g., Motor Siemens) for granular tracking
     performedBy: string; // User display name
     performedByEmail?: string;
     userId: string; // Firebase uid

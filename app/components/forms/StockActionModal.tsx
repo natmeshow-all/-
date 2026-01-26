@@ -1,5 +1,5 @@
 import React, { useState, useRef, useEffect } from "react";
-import { BoxIcon, XIcon, UploadIcon, SaveIcon, ArrowUpIcon, ArrowDownIcon } from "../ui/Icons";
+import { BoxIcon, XIcon, UploadIcon, SaveIcon, ArrowUpIcon, ArrowDownIcon, CalendarIcon } from "../ui/Icons";
 import { useLanguage } from "../../contexts/LanguageContext";
 import { adjustStock, getMachines } from "../../lib/firebaseService";
 import { Machine, Part, TransactionType } from "../../types";
@@ -25,7 +25,9 @@ export default function StockActionModal({ isOpen, onClose, onSuccess, actionTyp
     const [formData, setFormData] = useState({
         quantity: 1,
         machineId: "",
-        Location: "",
+        Location: "", // Acts as "Location Detail"
+        componentName: "", // New field: Main Part / Parent Component
+        performedAt: new Date().toISOString().split('T')[0], // New field: Date (YYYY-MM-DD)
         notes: "",
         supplier: "", // For restock
         pricePerUnit: "", // For restock
@@ -96,11 +98,12 @@ export default function StockActionModal({ isOpen, onClose, onSuccess, actionTyp
                 performedBy: user.displayName || user.email || "Unknown User",
                 performedByEmail: user.email || undefined,
                 userId: user.uid,
-                performedAt: new Date(),
+                performedAt: new Date(formData.performedAt),
                 notes: formData.notes,
                 supplier: actionType === "restock" ? formData.supplier : undefined,
                 pricePerUnit: (actionType === "restock" && formData.pricePerUnit) ? Number(formData.pricePerUnit) : undefined,
                 refDocument: (actionType === "restock" && formData.refDocument) ? formData.refDocument : undefined,
+                componentName: actionType === "withdraw" ? formData.componentName : undefined,
             }, evidenceFile || undefined);
 
             onSuccess();
@@ -114,6 +117,8 @@ export default function StockActionModal({ isOpen, onClose, onSuccess, actionTyp
                 quantity: 1,
                 machineId: "",
                 Location: "",
+                componentName: "",
+                performedAt: new Date().toISOString().split('T')[0],
                 notes: "",
                 supplier: "",
                 pricePerUnit: "",
@@ -185,6 +190,24 @@ export default function StockActionModal({ isOpen, onClose, onSuccess, actionTyp
                     {/* WITHDRAW SPECIFIC */}
                     {isWithdraw && (
                         <>
+                            {/* Date Selection */}
+                            <div>
+                                <label className="block text-sm font-medium text-text-secondary mb-1.5">
+                                    {t("date") || "Date"}
+                                </label>
+                                <div className="relative">
+                                    <CalendarIcon size={18} className="absolute left-3 top-1/2 -translate-y-1/2 text-text-muted" />
+                                    <input
+                                        type="date"
+                                        required
+                                        name="performedAt"
+                                        value={formData.performedAt}
+                                        onChange={handleChange}
+                                        className="input w-full pl-10 bg-bg-tertiary border-white/10 focus:border-primary/50"
+                                    />
+                                </div>
+                            </div>
+
                             <div>
                                 <label className="block text-sm font-medium text-text-secondary mb-1.5">
                                     {t("stockMachine")} <span className="text-red-400">*</span>
@@ -206,13 +229,26 @@ export default function StockActionModal({ isOpen, onClose, onSuccess, actionTyp
 
                             <div>
                                 <label className="block text-sm font-medium text-text-secondary mb-1.5">
-                                    {t("stockLocation")}
+                                    {t("stockComponent") || "Main Part / Component"}
+                                </label>
+                                <input
+                                    name="componentName"
+                                    value={formData.componentName}
+                                    onChange={handleChange}
+                                    placeholder={t("placeholderComponent") || "e.g. Motor Siemens 1LE..."}
+                                    className="input w-full bg-bg-tertiary border-white/10 focus:border-primary/50"
+                                />
+                            </div>
+
+                            <div>
+                                <label className="block text-sm font-medium text-text-secondary mb-1.5">
+                                    {t("stockLocationDetail") || "Location Detail (e.g. Drive End)"}
                                 </label>
                                 <input
                                     name="Location"
                                     value={formData.Location}
                                     onChange={handleChange}
-                                    placeholder={t("placeholderLocationLong")}
+                                    placeholder={t("placeholderLocationLong") || "e.g. Drive End / Non-Drive End"}
                                     className="input w-full bg-bg-tertiary border-white/10 focus:border-primary/50"
                                 />
                             </div>

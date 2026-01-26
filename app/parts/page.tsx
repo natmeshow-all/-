@@ -497,6 +497,7 @@ export default function PartsPage() {
                 onEdit={handleEditPart}
                 onDelete={handleDeleteClick}
                 onRepair={handleRepairPart}
+                onViewHistory={openHistoryModal}
                 subParts={viewPart ? subPartsMap[viewPart.id] : []}
                 onSelectPart={(p) => setViewPart(p)}
             />

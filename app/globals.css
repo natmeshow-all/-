@@ -530,6 +530,16 @@ body {
   transform: translateY(-1px);
 }
 
+.btn-warning {
+  background: linear-gradient(135deg, #F59E0B 0%, #FBBF24 100%);
+  color: white;
+}
+
+.btn-warning:hover:not(:disabled) {
+  box-shadow: 0 0 20px rgba(245, 158, 11, 0.4);
+  transform: translateY(-1px);
+}
+
 .btn-outline {
   background: transparent;
   border: 1px solid var(--color-border);

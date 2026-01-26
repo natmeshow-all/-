@@ -5,7 +5,7 @@ import Modal from "../ui/Modal";
 import { Part } from "../../types";
 import { useLanguage } from "../../contexts/LanguageContext";
 import { useAuth } from "../../contexts/AuthContext";
-import { EditIcon, TrashIcon, BoxIcon, WrenchIcon, XIcon, LayersIcon, ChevronRightIcon } from "../ui/Icons";
+import { EditIcon, TrashIcon, BoxIcon, WrenchIcon, XIcon, LayersIcon, ChevronRightIcon, HistoryIcon } from "../ui/Icons";
 
 interface PartDetailsModalProps {
     isOpen: boolean;
@@ -14,8 +14,9 @@ interface PartDetailsModalProps {
     onEdit: (part: Part) => void;
     onDelete: (part: Part) => void;
     onRepair: (part: Part) => void;
+    onViewHistory?: (part: Part) => void; // New prop
     subParts?: Part[];
-    onSelectPart?: (part: Part) => void; // To navigate to sub-part details
+    onSelectPart?: (part: Part) => void;
 }
 
 export default function PartDetailsModal({
@@ -25,6 +26,7 @@ export default function PartDetailsModal({
     onEdit,
     onDelete,
     onRepair,
+    onViewHistory,
     subParts = [],
     onSelectPart
 }: PartDetailsModalProps) {
@@ -196,10 +198,20 @@ export default function PartDetailsModal({
                     )}
 
                     {/* Action Buttons */}
-                    <div className="grid grid-cols-3 gap-3 pt-2">
+                    <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 pt-2">
+                         <button
+                            onClick={() => { if (onViewHistory) onViewHistory(part); }}
+                            className="btn bg-bg-tertiary hover:bg-bg-tertiary/80 text-text-primary border-white/10 flex items-center justify-center gap-2 h-12 text-sm rounded-xl font-medium transition-all"
+                        >
+                            <div className="p-1 rounded-full bg-primary/10 text-primary">
+                                <HistoryIcon size={16} />
+                            </div>
+                            {t("historyTitle") || "History"}
+                        </button>
+
                         <button
                             onClick={() => { if (checkAuth()) onEdit(part); }}
-                            className="btn btn-secondary flex items-center justify-center gap-2 h-12 text-sm"
+                            className="btn btn-warning flex items-center justify-center gap-2 h-12 text-sm text-white font-bold shadow-lg shadow-yellow-500/20"
                         >
                             <EditIcon size={18} />
                             {t("actionEdit")}
@@ -214,7 +226,7 @@ export default function PartDetailsModal({
                         {isAdmin && (
                             <button
                                 onClick={() => { if (checkAuth()) onDelete(part); }}
-                                className="btn bg-error/10 text-error hover:bg-error/20 border-error/20 flex items-center justify-center gap-2 h-12 text-sm rounded-xl font-medium transition-all"
+                                className="btn btn-danger flex items-center justify-center gap-2 h-12 text-sm rounded-xl font-medium transition-all shadow-lg shadow-error/20"
                             >
                                 <TrashIcon size={18} />
                                 {t("actionDelete")}
