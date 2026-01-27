@@ -208,11 +208,25 @@ export default function AIAssistant() {
                 const d = proposal.data as CopyPMData;
                 const result = await copyPMPlans(d.sourceMachineId, d.targetMachineIds);
 
-                setMessages(prev => [...prev, {
-                    role: "assistant",
-                    content: `✅ คัดลอกแผนสำเร็จ (${result.success} รายการ)`,
-                    timestamp: new Date()
-                }]);
+                if (result.success === 0 && result.failed === 0) {
+                    setMessages(prev => [...prev, {
+                        role: "assistant",
+                        content: `⚠️ ไม่พบแผน PM ในเครื่องจักรต้นทาง "${d.sourceMachineName}" ที่สามารถคัดลอกได้ (0 รายการ)`,
+                        timestamp: new Date()
+                    }]);
+                } else if (result.failed > 0) {
+                    setMessages(prev => [...prev, {
+                        role: "assistant",
+                        content: `⚠️ คัดลอกเสร็จสิ้นบางส่วน: สำเร็จ ${result.success} รายการ, ล้มเหลว ${result.failed} รายการ`,
+                        timestamp: new Date()
+                    }]);
+                } else {
+                    setMessages(prev => [...prev, {
+                        role: "assistant",
+                        content: `✅ คัดลอกแผนสำเร็จทั้งหมด (${result.success} รายการ) ไปยัง ${d.targetMachineNames.length} เครื่องจักรปลายทาง`,
+                        timestamp: new Date()
+                    }]);
+                }
             }
         } catch (error) {
             console.error("Action Failed:", error);
@@ -314,6 +328,8 @@ export default function AIAssistant() {
         }
         return "Unrecognized Action";
     };
+
+    if (!shouldRender) return null;
 
     return (
         <>
