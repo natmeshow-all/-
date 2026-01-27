@@ -98,7 +98,7 @@ export default function MobileNav() {
                                     <Icon className={`mobile-nav-icon transition-colors duration-300 ${isActive ? "text-primary" : "text-text-muted"}`} size={20} />
                                     {isActive && <div className="absolute inset-0 bg-primary/20 blur-md rounded-full -z-10" />}
                                 </div>
-                                <span className={`text-[10px] mt-1 font-bold transition-colors duration-300 ${isActive ? "text-white" : "text-text-muted"}`}>
+                                <span className={`text-[11px] mt-0.5 font-bold transition-colors duration-300 leading-none ${isActive ? "text-white" : "text-text-muted"}`}>
                                     {t(item.labelKey as any)}
                                 </span>
                             </Link>

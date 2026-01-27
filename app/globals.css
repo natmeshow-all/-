@@ -878,24 +878,24 @@ body {
   bottom: 1.5rem;
   left: 50%;
   transform: translateX(-50%);
-  /* More transparent background */
-  background: rgba(15, 23, 42, 0.4); 
+  /* Increased intensity by making background more solid (0.8 opacity) */
+  background: rgba(15, 23, 42, 0.82);
   /* Subtle border gradient */
-  border: 1px solid rgba(255, 255, 255, 0.1);
+  border: 1px solid rgba(255, 255, 255, 0.15);
   padding: 0.5rem 0.5rem;
   display: flex;
   justify-content: center;
   gap: 0.25rem;
   z-index: 50;
   /* Strong blur for glass effect */
-  backdrop-filter: blur(20px);
-  -webkit-backdrop-filter: blur(20px);
+  backdrop-filter: blur(22px);
+  -webkit-backdrop-filter: blur(22px);
   border-radius: 2rem;
   /* Glowing shadow */
   box-shadow:
-    0 10px 40px rgba(0, 0, 0, 0.5),
-    0 0 0 1px rgba(255, 255, 255, 0.05) inset,
-    0 0 20px rgba(59, 130, 246, 0.1);
+    0 10px 40px rgba(0, 0, 0, 0.6),
+    0 0 0 1px rgba(255, 255, 255, 0.1) inset,
+    0 0 25px rgba(59, 130, 246, 0.15);
   width: calc(100% - 2rem);
   max-width: 26rem;
   /* Animated border shimmer */
@@ -910,19 +910,22 @@ body {
   left: -100%;
   width: 200%;
   height: 100%;
-  background: linear-gradient(
-    90deg,
-    transparent,
-    rgba(255, 255, 255, 0.05),
-    transparent
-  );
+  background: linear-gradient(90deg,
+      transparent,
+      rgba(255, 255, 255, 0.08),
+      transparent);
   animation: nav-shimmer 8s linear infinite;
   pointer-events: none;
 }
 
 @keyframes nav-shimmer {
-  0% { transform: translateX(0); }
-  100% { transform: translateX(50%); }
+  0% {
+    transform: translateX(0);
+  }
+
+  100% {
+    transform: translateX(50%);
+  }
 }
 
 .mobile-nav-item {
@@ -931,14 +934,14 @@ body {
   flex-direction: column;
   align-items: center;
   justify-content: center;
-  gap: 0.2rem;
-  padding: 0.5rem 0.25rem;
+  gap: 0.15rem;
+  padding: 0.5rem 0.2rem;
   min-width: 0;
   flex: 1;
   /* Brighter inactive color */
-  color: rgba(255, 255, 255, 0.6);
+  color: rgba(255, 255, 255, 0.65);
   text-decoration: none;
-  font-size: 0.6rem;
+  font-size: 0.65rem;
   font-weight: 500;
   border-radius: 1.25rem;
   transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
@@ -977,7 +980,7 @@ body {
 .mobile-nav-item.active span {
   opacity: 1;
   font-weight: 700;
-  text-shadow: 0 2px 4px rgba(0,0,0,0.3);
+  text-shadow: 0 2px 4px rgba(0, 0, 0, 0.3);
 }
 
 /* Gooey dot pulse animation */
