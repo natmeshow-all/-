@@ -13,7 +13,9 @@
         "machines": {
             ".read": "auth != null",
             ".write": "auth != null && (root.child('users').child(auth.uid).child('role').val() == 'admin' || root.child('users').child(auth.uid).child('role').val() == 'supervisor')",
-            ".indexOn": ["name"],
+            ".indexOn": [
+                "name"
+            ],
             "$machineId": {
                 ".validate": "newData.hasChildren(['name']) && newData.child('name').isString()"
             }
@@ -136,7 +138,11 @@
             ".read": "auth != null && root.child('users').child(auth.uid).child('role').val() == 'admin'",
             // Allow all approved users to write audit logs (for their own actions)
             ".write": "auth != null && root.child('users').child(auth.uid).child('isApproved').val() == true",
-            ".indexOn": ["action", "userId", "timestamp"],
+            ".indexOn": [
+                "action",
+                "userId",
+                "timestamp"
+            ],
             "$logId": {
                 ".validate": "newData.hasChildren(['action', 'userId', 'timestamp'])"
             }
@@ -146,7 +152,10 @@
             ".read": "auth != null && (root.child('users').child(auth.uid).child('role').val() == 'admin' || root.child('users').child(auth.uid).child('role').val() == 'supervisor')",
             // Allow any user to log an error
             ".write": "auth != null",
-            ".indexOn": ["timestamp", "severity"],
+            ".indexOn": [
+                "timestamp",
+                "severity"
+            ],
             "$errorId": {
                 ".validate": "newData.hasChildren(['message', 'timestamp'])"
             }
@@ -162,7 +171,12 @@
                 ".read": "auth != null && (auth.uid == $uid || root.child('users').child(auth.uid).child('role').val() == 'admin' || root.child('users').child(auth.uid).child('role').val() == 'supervisor' || root.child('users').child(auth.uid).child('role').val() == 'technician')",
                 // Allow write if Admin OR (Self AND NOT changing sensitive fields)
                 ".write": "auth != null && (root.child('users').child(auth.uid).child('role').val() == 'admin' || (auth.uid == $uid && (!newData.hasChild('role') || newData.child('role').val() === data.child('role').val()) && (!newData.hasChild('isApproved') || newData.child('isApproved').val() === data.child('isApproved').val()) && (!newData.hasChild('isActive') || newData.child('isActive').val() === data.child('isActive').val())))",
-                ".validate": "newData.hasChildren(['email', 'displayName', 'role'])"
+                ".validate": "newData.hasChildren(['email', 'displayName', 'role'])",
+                "chat_history": {
+                    ".indexOn": [
+                        "timestamp"
+                    ]
+                }
             },
             ".read": "auth != null && (root.child('users').child(auth.uid).child('role').val() == 'admin' || root.child('users').child(auth.uid).child('role').val() == 'supervisor' || root.child('users').child(auth.uid).child('role').val() == 'technician')"
         }

@@ -3,7 +3,16 @@
 import React, { useState, useRef, useEffect } from "react";
 import { useLanguage } from "../../contexts/LanguageContext";
 import { useAuth } from "../../contexts/AuthContext";
-import { askAI, fetchAIContext, AIMessage, AIContext } from "../../services/aiService";
+import {
+    askAI,
+    fetchAIContext,
+    AIMessage,
+    AIContext,
+    AIActionProposal,
+    CreatePMData,
+    CopyPMData
+} from "../../services/aiService";
+import { addPMPlan, copyPMPlans } from "../../services/maintenanceService"; // Ensure this is exported from firebaseService barrel if preferred, or direct
 import { usePathname } from "next/navigation";
 
 // Sparkle icon for AI button
@@ -27,6 +36,93 @@ const CloseIcon = ({ size = 24 }: { size?: number }) => (
         <path d="M18 6L6 18M6 6L18 18" />
     </svg>
 );
+
+// --- Action Cards Components ---
+
+const CreatePMProposalCard = ({ data, onConfirm, onCancel }: { data: CreatePMData, onConfirm: () => void, onCancel: () => void }) => {
+    return (
+        <div className="bg-bg-secondary p-4 rounded-lg border border-accent-blue/30 mt-2">
+            <div className="flex items-center gap-2 mb-3 text-accent-blue">
+                <SparkleIcon size={18} />
+                <span className="font-semibold text-sm">ข้อเสนอสร้างแผน PM</span>
+            </div>
+
+            <div className="space-y-2 text-sm text-text-secondary mb-4">
+                <div className="flex justify-between">
+                    <span className="text-text-muted">เครื่องจักร:</span>
+                    <span className="font-medium text-text-primary">{data.machineName}</span>
+                </div>
+                <div className="flex justify-between">
+                    <span className="text-text-muted">ชื่องาน:</span>
+                    <span className="font-medium text-text-primary">{data.taskName}</span>
+                </div>
+                <div className="flex justify-between">
+                    <span className="text-text-muted">ความถี่:</span>
+                    <span className="font-medium text-text-primary uppercase">{data.scheduleType}</span>
+                </div>
+                {data.description && (
+                    <div className="text-xs italic bg-bg-tertiary p-2 rounded">{data.description}</div>
+                )}
+                <div className="mt-2">
+                    <span className="text-text-muted block mb-1">Checklist:</span>
+                    <ul className="list-disc pl-4 space-y-0.5">
+                        {data.checklistItems.map((item, i) => (
+                            <li key={i}>{item}</li>
+                        ))}
+                    </ul>
+                </div>
+            </div>
+
+            <div className="flex gap-2">
+                <button onClick={onCancel} className="flex-1 py-1.5 px-3 rounded bg-bg-tertiary hover:bg-bg-primary text-text-secondary text-xs transition-colors">
+                    ยกเลิก
+                </button>
+                <button onClick={onConfirm} className="flex-1 py-1.5 px-3 rounded bg-accent-blue hover:bg-accent-blue/80 text-white text-xs font-medium transition-colors shadow-lg shadow-accent-blue/20">
+                    อนุมัติแผนงาน
+                </button>
+            </div>
+        </div>
+    );
+};
+
+const CopyPMProposalCard = ({ data, onConfirm, onCancel }: { data: CopyPMData, onConfirm: () => void, onCancel: () => void }) => {
+    return (
+        <div className="bg-bg-secondary p-4 rounded-lg border border-accent-purple/30 mt-2">
+            <div className="flex items-center gap-2 mb-3 text-accent-purple">
+                <SparkleIcon size={18} />
+                <span className="font-semibold text-sm">ข้อเสนอคัดลอกแผน PM</span>
+            </div>
+
+            <div className="space-y-2 text-sm text-text-secondary mb-4">
+                <div className="p-2 bg-bg-tertiary rounded flex flex-col gap-1">
+                    <span className="text-xs text-text-muted">ต้นทาง:</span>
+                    <span className="font-medium text-text-primary">{data.sourceMachineName}</span>
+                </div>
+
+                <div className="flex justify-center text-text-muted">⬇️ คัดลอกไปยัง ⬇️</div>
+
+                <div className="p-2 bg-bg-tertiary rounded flex flex-col gap-1">
+                    <span className="text-xs text-text-muted">ปลายทาง ({data.targetMachineNames.length} เครื่อง):</span>
+                    <ul className="list-disc pl-4">
+                        {data.targetMachineNames.map((name, i) => (
+                            <li key={i} className="text-text-primary">{name}</li>
+                        ))}
+                    </ul>
+                </div>
+            </div>
+
+            <div className="flex gap-2">
+                <button onClick={onCancel} className="flex-1 py-1.5 px-3 rounded bg-bg-tertiary hover:bg-bg-primary text-text-secondary text-xs transition-colors">
+                    ยกเลิก
+                </button>
+                <button onClick={onConfirm} className="flex-1 py-1.5 px-3 rounded bg-accent-purple hover:bg-accent-purple/80 text-white text-xs font-medium transition-colors shadow-lg shadow-accent-purple/20">
+                    ยืนยันการคัดลอก
+                </button>
+            </div>
+        </div>
+    );
+};
+
 
 export default function AIAssistant() {
     const { t, language } = useLanguage();
@@ -78,10 +174,55 @@ export default function AIAssistant() {
         }
     };
 
-    // Temporarily disabled for debugging - always show the button
-    // if (!shouldRender) {
-    //     return null;
-    // }
+    const handleConfirmAction = async (proposal: AIActionProposal) => {
+        // Optimistic update: show processing message
+        const processingMsg: AIMessage = {
+            role: "assistant",
+            content: "🔄 กำลังดำเนินการ...",
+            timestamp: new Date()
+        };
+        setMessages(prev => [...prev, processingMsg]);
+
+        try {
+            if (proposal.action === "CREATE_PM_PLAN") {
+                const d = proposal.data as CreatePMData;
+                await addPMPlan({
+                    machineId: d.machineId,
+                    machineName: d.machineName,
+                    taskName: d.taskName,
+                    notes: d.description,
+                    checklistItems: d.checklistItems,
+                    scheduleType: d.scheduleType,
+                    cycleMonths: d.months || 1, // Default fallback
+                    // TODO: Calculate real start/next due dates logic properly
+                    startDate: new Date(),
+                    nextDueDate: new Date(),
+                    status: "active",
+                });
+                setMessages(prev => [...prev, {
+                    role: "assistant",
+                    content: "✅ สร้างแผน PM เรียบร้อยแล้วครับ!",
+                    timestamp: new Date()
+                }]);
+            } else if (proposal.action === "COPY_PM_PLAN") {
+                const d = proposal.data as CopyPMData;
+                const result = await copyPMPlans(d.sourceMachineId, d.targetMachineIds);
+
+                setMessages(prev => [...prev, {
+                    role: "assistant",
+                    content: `✅ คัดลอกแผนสำเร็จ (${result.success} รายการ)`,
+                    timestamp: new Date()
+                }]);
+            }
+        } catch (error) {
+            console.error("Action Failed:", error);
+            setMessages(prev => [...prev, {
+                role: "assistant",
+                content: "❌ เกิดข้อผิดพลาดในการบันทึกข้อมูล",
+                timestamp: new Date()
+            }]);
+        }
+    };
 
     const handleSend = async () => {
         if (!input.trim() || isLoading) return;
@@ -104,7 +245,14 @@ export default function AIAssistant() {
                 setContext(currentContext);
             }
 
-            const response = await askAI(userMessage.content, currentContext, messages, user?.uid);
+            // Pass userRole to AI
+            const response = await askAI(
+                userMessage.content as string,
+                currentContext,
+                messages,
+                user?.uid,
+                userProfile?.role
+            );
 
             const aiMessage: AIMessage = {
                 role: "assistant",
@@ -138,12 +286,41 @@ export default function AIAssistant() {
         setMessages([]);
     };
 
+    const renderMessageContent = (content: string | AIActionProposal) => {
+        if (typeof content === 'string') {
+            return content;
+        }
+
+        // It's an Action Proposal
+        if (content.type === "ACTION_PROPOSAL") {
+            if (content.action === "CREATE_PM_PLAN") {
+                return (
+                    <CreatePMProposalCard
+                        data={content.data as CreatePMData}
+                        onConfirm={() => handleConfirmAction(content)}
+                        onCancel={() => setMessages(prev => [...prev, { role: "assistant", content: "ยกเลิกคำสั่งแล้วครับ", timestamp: new Date() }])}
+                    />
+                );
+            }
+            if (content.action === "COPY_PM_PLAN") {
+                return (
+                    <CopyPMProposalCard
+                        data={content.data as CopyPMData}
+                        onConfirm={() => handleConfirmAction(content)}
+                        onCancel={() => setMessages(prev => [...prev, { role: "assistant", content: "ยกเลิกคำสั่งแล้วครับ", timestamp: new Date() }])}
+                    />
+                );
+            }
+        }
+        return "Unrecognized Action";
+    };
+
     return (
         <>
             {/* Floating AI Button */}
             <button
                 onClick={() => setIsOpen(true)}
-                className="ai-floating-button-v2"
+                className={userProfile?.role === 'admin' ? "ai-floating-button-admin" : "ai-floating-button-v2"}
                 aria-label="Open PM Team AOB Assistant"
             >
                 <SparkleIcon size={24} />
@@ -154,15 +331,15 @@ export default function AIAssistant() {
             {isOpen && (
                 <div className="ai-modal-overlay" onClick={() => setIsOpen(false)}>
                     <div
-                        className="ai-modal-container"
+                        className={userProfile?.role === 'admin' ? "ai-modal-container border-amber-500/30" : "ai-modal-container"}
                         onClick={(e) => e.stopPropagation()}
                     >
                         {/* Header */}
                         <div className="ai-modal-header">
                             <div className="flex items-center gap-2">
-                                <SparkleIcon size={20} className="text-accent-purple" />
-                                <h3 className="font-semibold text-text-primary">
-                                    Pm Team AOB
+                                <SparkleIcon size={20} className={userProfile?.role === 'admin' ? "text-amber-400" : "text-accent-purple"} />
+                                <h3 className={userProfile?.role === 'admin' ? "font-bold text-transparent bg-clip-text bg-gradient-to-r from-amber-300 via-yellow-500 to-amber-300" : "font-semibold text-text-primary"}>
+                                    {userProfile?.role === 'admin' ? "Admin Co-Pilot" : "Pm Team AOB"}
                                 </h3>
                                 {isLoadingContext && (
                                     <span className="text-[10px] text-text-muted animate-pulse">
@@ -190,27 +367,69 @@ export default function AIAssistant() {
                         <div className="ai-messages-container">
                             {messages.length === 0 ? (
                                 <div className="ai-welcome-message">
-                                    <SparkleIcon size={40} className="text-accent-purple/50 mb-3" />
-                                    <p className="text-text-secondary text-sm mb-2">
-                                        {language === "th"
-                                            ? "สวัสดีครับ! ผมคือ AI ผู้ช่วยของระบบ"
-                                            : "Hello! I'm the system's AI assistant"}
-                                    </p>
-                                    <p className="text-text-muted text-xs">
-                                        {language === "th"
-                                            ? "ผมพร้อมช่วยวิเคราะห์ปัญหา แนะนำวิธีซ่อม และตรวจสอบข้อมูลในระบบซ่อมบำรุงทั้งหมดครับ"
-                                            : "I can help analyze problems, suggest repairs, and check all maintenance system data."}
-                                    </p>
+                                    <SparkleIcon size={40} className={userProfile?.role === 'admin' ? "text-amber-400 mb-3" : "text-accent-purple/50 mb-3"} />
+
+                                    {userProfile?.role === 'admin' ? (
+                                        <>
+                                            <h3 className="font-bold text-transparent bg-clip-text bg-gradient-to-r from-amber-300 via-yellow-500 to-amber-300 mb-2">
+                                                Admin Co-Pilot Mode
+                                            </h3>
+                                            <p className="text-text-secondary text-xs mb-3 text-center">
+                                                {language === "th"
+                                                    ? "พร้อมช่วยจัดการแผน PM และวิเคราะห์เชิงลึกครับ"
+                                                    : "Ready to manage PM plans and provide deep insights."}
+                                            </p>
+                                        </>
+                                    ) : (
+                                        <>
+                                            <p className="text-text-secondary text-sm mb-2">
+                                                {language === "th"
+                                                    ? "สวัสดีครับ! ผมคือ AI ผู้ช่วยของระบบ"
+                                                    : "Hello! I'm the system's AI assistant"}
+                                            </p>
+                                            <p className="text-text-muted text-xs">
+                                                {language === "th"
+                                                    ? "ผมพร้อมช่วยวิเคราะห์ปัญหา แนะนำวิธีซ่อม และตรวจสอบข้อมูลในระบบซ่อมบำรุงทั้งหมดครับ"
+                                                    : "I can help analyze problems, suggest repairs, and check all maintenance system data."}
+                                            </p>
+                                        </>
+                                    )}
+
                                     <div className="ai-suggestions">
-                                        <button onClick={() => setInput(language === "th" ? "ช่วยวิเคราะห์อาการผิดปกติของเครื่องจักรจากประวัติซ่อม" : "Analyze machine abnormalities from maintenance history")}>
-                                            {language === "th" ? "🔍 วิเคราะห์อาการเสีย" : "🔍 Analyze Issues"}
-                                        </button>
-                                        <button onClick={() => setInput(language === "th" ? "ตรวจสอบอะไหล่ที่ใกล้หมดและต้องสั่งซื้อ" : "Check for low stock parts")}>
-                                            {language === "th" ? "📦 เช็คสต็อกอะไหล่" : "📦 Check Stock"}
-                                        </button>
-                                        <button onClick={() => setInput(language === "th" ? "ขอคำแนะนำการแก้ปัญหาเบื้องต้นสำหรับเครื่องจักร" : "Get basic troubleshooting advice")}>
-                                            {language === "th" ? "🛠️ วิธีแก้ไขเบื้องต้น" : "🛠️ Troubleshooting"}
-                                        </button>
+                                        {userProfile?.role === 'admin' ? (
+                                            <>
+                                                <button
+                                                    className="border-amber-500/30 hover:bg-amber-500/10 hover:border-amber-500 text-amber-500"
+                                                    onClick={() => setInput(language === "th" ? "ช่วยวิเคราะห์รายการอะไหล่ที่เป็น Dead Stock (มีของแต่ไม่ได้ใช้นานๆ)" : "Analyze inventory for dead stock")}
+                                                >
+                                                    {language === "th" ? "📊 วิเคราะห์ Dead Stock" : "📊 Dead Stock Analysis"}
+                                                </button>
+                                                <button
+                                                    className="border-amber-500/30 hover:bg-amber-500/10 hover:border-amber-500 text-amber-500"
+                                                    onClick={() => setInput(language === "th" ? "ช่วยวิเคราะห์ประวัติซ่อมบำรุงเพื่อหาแนวโน้มเครื่องจักรที่เสียบ่อย (Predictive)" : "Analyze maintenance history for recurring issues")}
+                                                >
+                                                    {language === "th" ? "🔮 วิเคราะห์ความเสี่ยง (Predictive)" : "🔮 Predictive Analysis"}
+                                                </button>
+                                                <button
+                                                    className="border-amber-500/30 hover:bg-amber-500/10 hover:border-amber-500 text-amber-500"
+                                                    onClick={() => setInput(language === "th" ? "สรุปภาพรวมแผน PM และงานที่ค้างอยู่" : "Summarize PM plans and pending tasks")}
+                                                >
+                                                    {language === "th" ? "📋 สรุปสถานะแผน PM" : "📋 PM Status Summary"}
+                                                </button>
+                                            </>
+                                        ) : (
+                                            <>
+                                                <button onClick={() => setInput(language === "th" ? "ช่วยวิเคราะห์อาการผิดปกติของเครื่องจักรจากประวัติซ่อม" : "Analyze machine abnormalities from maintenance history")}>
+                                                    {language === "th" ? "🔍 วิเคราะห์อาการเสีย" : "🔍 Analyze Issues"}
+                                                </button>
+                                                <button onClick={() => setInput(language === "th" ? "ตรวจสอบอะไหล่ที่ใกล้หมดและต้องสั่งซื้อ" : "Check for low stock parts")}>
+                                                    {language === "th" ? "📦 เช็คสต็อกอะไหล่" : "📦 Check Stock"}
+                                                </button>
+                                                <button onClick={() => setInput(language === "th" ? "ขอคำแนะนำการแก้ปัญหาเบื้องต้นสำหรับเครื่องจักร" : "Get basic troubleshooting advice")}>
+                                                    {language === "th" ? "🛠️ วิธีแก้ไขเบื้องต้น" : "🛠️ Troubleshooting"}
+                                                </button>
+                                            </>
+                                        )}
                                     </div>
                                 </div>
                             ) : (
@@ -220,7 +439,7 @@ export default function AIAssistant() {
                                         className={`ai-message ${msg.role === "user" ? "ai-message-user" : "ai-message-assistant"}`}
                                     >
                                         <div className="ai-message-content">
-                                            {msg.content}
+                                            {renderMessageContent(msg.content)}
                                         </div>
                                     </div>
                                 ))

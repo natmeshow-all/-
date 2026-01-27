@@ -20,7 +20,7 @@ const CLEANUP_INTERVAL_MS = 24 * 60 * 60 * 1000; // 24 hours
 
 // IndexedDB databases to clear on version change
 const INDEXED_DB_TO_CLEAR = [
-    "firebaseLocalStorageDb",
+    // "firebaseLocalStorageDb", // KEEP AUTH SESSION!
     "firebase-heartbeat-database",
     "firebase-installations-database",
 ];

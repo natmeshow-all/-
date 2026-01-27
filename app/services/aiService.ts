@@ -21,13 +21,38 @@ import {
     saveChatLog
 } from "../lib/firebaseService";
 
-// Blocked topics for security
+// Blocked topics for security (Non-Admin only)
 const BLOCKED_TOPICS = [
     "user", "users", "admin", "password", "รหัสผ่าน", "ผู้ใช้", "ผู้ดูแล",
     "api key", "apikey", "secret", "token", "firebase", "database rule",
     "permission", "security", "authentication", "login", "credentials",
     "pending_users", "system_settings", "audit", "role", "สิทธิ์"
 ];
+
+export interface CreatePMData {
+    machineId: string;
+    machineName: string;
+    taskName: string;
+    description?: string;
+    scheduleType: "monthly" | "weekly" | "yearly";
+    weeks?: number; // for weekly
+    months?: number; // for monthly
+    checklistItems: string[];
+}
+
+export interface CopyPMData {
+    sourceMachineId: string;
+    sourceMachineName: string;
+    targetMachineIds: string[];
+    targetMachineNames: string[];
+}
+
+export interface AIActionProposal {
+    type: "ACTION_PROPOSAL";
+    action: "CREATE_PM_PLAN" | "COPY_PM_PLAN";
+    data: CreatePMData | CopyPMData;
+    summary: string; // Human readable summary of what will happen
+}
 
 // System prompt for the AI
 const SYSTEM_PROMPT = `คุณเป็น AI ผู้เชี่ยวชาญด้านการวิเคราะห์และซ่อมบำรุงประจำระบบ "AOB Maintenance Dashboard"
@@ -38,19 +63,56 @@ const SYSTEM_PROMPT = `คุณเป็น AI ผู้เชี่ยวช�
 - ห้ามตอบคำถามที่ไม่เกี่ยวข้องกับระบบนี้ เช่น ข่าวสารบ้านเมือง, การเขียนโค้ดทั่วไป, หรือเรื่องบันเทิง
 
 รูปแบบการทำงานและวิเคราะห์ปัญหา:
-1. **วิเคราะห์ปัญหา:** เมื่อผู้ใช้แจ้งอาการเสีย ให้วิเคราะห์สาเหตุที่เป็นไปได้ โดยอ้างอิงจาก "ประวัติการซ่อมบำรุง" ของเครื่องนั้นๆ ว่าเคยเสียด้วยอาการนี้ไหม หรือเพิ่งซ่อมงานอะไรไป
+1. **วิเคราะห์ปัญหา:** เมื่อผู้ใช้แจ้งอาการเสีย ให้วิเคราะห์สาเหตุที่เป็นไปได้ โดยอ้างอิงจาก "ประวัติการซ่อมบำรุง" ของเครื่องนั้นๆ
 2. **วิธีแก้ไข Step-by-Step:** ให้คำแนะนำเป็นขั้นตอน 1, 2, 3 ที่ชัดเจน เข้าใจง่าย
-3. **ตรวจสอบอะไหล่:** ก่อนแนะนำให้เปลี่ยนอะไหล่ ให้ตรวจสอบในข้อมูล "Parts" หรือ "Spare Parts" ก่อนว่ามีของในสต็อกไหม หรือใกล้หมดหรือเปล่า
+3. **ตรวจสอบอะไหล่:** ก่อนแนะนำให้เปลี่ยนอะไหล่ ให้ตรวจสอบในข้อมูล "Parts" หรือ "Spare Parts" ก่อนว่ามีของในสต็อกไหม
 4. **แจ้งเตือนความปลอดภัย:** หากเป็นงานที่อันตราย ให้เตือนเรื่อง Safety First เสมอ
+
+**สำหรับ Admin Only (AI Co-Pilot Mode):**
+หากผู้ใช้เป็น **Admin** และต้องการ **สร้าง** หรือ **คัดลอก** แผน PM (PM Plan) ให้คุณตอบกลับเป็น **JSON Format** เท่านั้น ดังนี้:
+
+**กรณีสร้างแผน PM (Create PM):**
+\`\`\`json
+{
+  "type": "ACTION_PROPOSAL",
+  "action": "CREATE_PM_PLAN",
+  "summary": "สร้างแผน PM เปลี่ยนถ่ายน้ำมันเครื่องสำหรับ Mixer 1",
+  "data": {
+    "machineId": "MACHINE_ID",
+    "machineName": "Machine Name",
+    "taskName": "ชื่องาน PM",
+    "description": "รายละเอียดงาน",
+    "scheduleType": "monthly", // monthly, weekly, yearly
+    "months": 1, // ความถี่เดือน
+    "checklistItems": ["เช็คระดับน้ำมัน", "เปลี่ยนกรอง", "ทำความสะอาด"]
+  }
+}
+\`\`\`
+
+**กรณีคัดลอกแผน PM (Copy PM):**
+\`\`\`json
+{
+  "type": "ACTION_PROPOSAL",
+  "action": "COPY_PM_PLAN",
+  "summary": "คัดลอกแผน PM ทั้งหมดจาก Mixer 1 ไปยัง Mixer 2 และ 3",
+  "data": {
+    "sourceMachineId": "SOURCE_ID",
+    "sourceMachineName": "Source Name",
+    "targetMachineIds": ["TARGET_ID_1", "TARGET_ID_2"],
+    "targetMachineNames": ["Target 1", "Target 2"]
+  }
+}
+\`\`\`
 
 กฎการตอบ:
 - ตอบ "ภาษาไทย" เป็นหลัก (ยกเว้นศัพท์เทคนิคทับศัพท์ได้)
 - ถ้าข้อมูลใน Context ไม่เพียงพอ ให้บอกว่า "ไม่มีข้อมูลในระบบ" อย่ามั่วข้อมูลขึ้นมาเอง
-- ห้ามตอบเรื่อง User/Admin/Password/Security เด็ดขาด ให้ตอบเลี่ยงว่า "ไม่สามารถเข้าถึงข้อมูลส่วนบุคคลได้"`;
+- ห้ามตอบเรื่อง User/Admin/Password/Security เด็ดขาด
+- หากต้องตอบเป็น JSON ห้ามมีข้อความอื่นนำหน้าหรือต่อท้าย ให้มีแค่ JSON Block เท่านั้น`;
 
 export interface AIMessage {
     role: "user" | "assistant";
-    content: string;
+    content: string | AIActionProposal;
     timestamp: Date;
 }
 
@@ -159,10 +221,13 @@ export async function askAI(
     question: string,
     context: AIContext,
     conversationHistory: AIMessage[] = [],
-    userId?: string
-): Promise<string> {
-    // Check for blocked topics locally first
-    if (isBlockedQuestion(question)) {
+    userId?: string,
+    userRole: string = "viewer" // Add user role
+): Promise<string | AIActionProposal> {
+    const isAdmin = userRole === "admin" || userRole === "supervisor";
+
+    // Check for blocked topics locally first (SKIP if Admin)
+    if (!isAdmin && isBlockedQuestion(question)) {
         return "🔒 ขออภัย ฉันไม่สามารถตอบคำถามเกี่ยวกับข้อมูลผู้ใช้หรือความปลอดภัยของระบบได้ครับ\n\nSorry, I cannot answer questions about user data or system security.";
     }
 
@@ -187,12 +252,18 @@ export async function askAI(
         const contextText = formatContextForAI(context);
 
         // Build conversation history for context (Session based)
-        const historyText = conversationHistory.slice(-6).map(msg =>
-            `${msg.role === "user" ? "User" : "AI"}: ${msg.content}`
-        ).join("\n");
+        const historyText = conversationHistory.slice(-6).map(msg => {
+            const contentStr = typeof msg.content === 'string'
+                ? msg.content
+                : `[Action Proposal: ${msg.content.summary}]`;
+            return `${msg.role === "user" ? "User" : "AI"}: ${contentStr}`;
+        }).join("\n");
 
         // Build the full prompt
         const fullPrompt = `${SYSTEM_PROMPT}
+
+=== ข้อมูลผู้ใช้ ===
+User Role: ${userRole} ${isAdmin ? "(Can execute Admin Actions)" : "(Standard User)"}
 
 === ข้อมูลระบบปัจจุบัน ===
 ${contextText}
@@ -225,13 +296,31 @@ AI:`;
         }
 
         const data = await response.json();
+        let aiResponse = data.response;
+
+        // Try to parse JSON if it looks like a proposal
+        if (aiResponse.includes("ACTION_PROPOSAL")) {
+            try {
+                // Remove markdown code blocks if present
+                const cleanJson = aiResponse.replace(/```json/g, "").replace(/```/g, "").trim();
+                const proposal = JSON.parse(cleanJson);
+
+                // If it's a valid proposal, return the object (don't save to history primarily, or save summary)
+                if (proposal.type === "ACTION_PROPOSAL") {
+                    return proposal as AIActionProposal;
+                }
+            } catch (e) {
+                console.warn("Failed to parse AI JSON action:", e);
+                // Fallback to text
+            }
+        }
 
         // Save AI response to history
         if (userId) {
-            saveChatLog(userId, "assistant", data.response);
+            saveChatLog(userId, "assistant", aiResponse);
         }
 
-        return data.response;
+        return aiResponse;
 
     } catch (error: any) {
         console.error("[AIService] Error:", error);

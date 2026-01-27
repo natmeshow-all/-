@@ -11,7 +11,10 @@ try {
   console.warn("Could not get git commit hash", e);
 }
 
-const appVersion = `${packageJson.version}-${commitHash}-${buildTime}`;
+const isDev = process.env.NODE_ENV === "development";
+const appVersion = isDev
+  ? `${packageJson.version}-dev`
+  : `${packageJson.version}-${commitHash}-${buildTime}`;
 
 const nextConfig: NextConfig = {
   env: {

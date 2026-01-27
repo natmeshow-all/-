@@ -63,16 +63,16 @@ export async function getMaintenanceRecordsPaginated(
             // Fetch next page: items older than (or equal to) the cursor
             // We request pageSize + 1 to include the cursor itself (which we'll drop)
             recordsQuery = query(
-                recordsRef, 
-                orderByChild("date"), 
-                endAt(lastDate, lastKey), 
+                recordsRef,
+                orderByChild("date"),
+                endAt(lastDate, lastKey),
                 limitToLast(pageSize + 1)
             );
         } else {
             // First page: Get the newest items
             recordsQuery = query(
-                recordsRef, 
-                orderByChild("date"), 
+                recordsRef,
+                orderByChild("date"),
                 limitToLast(pageSize)
             );
         }
@@ -255,15 +255,15 @@ export async function addMaintenanceRecord(record: Omit<MaintenanceRecord, "id" 
 
         // Update stats
         incrementDashboardStat("maintenanceRecords", 1);
-        
+
         if (record.type === "preventive" || record.type === "oilChange" || record.type === "inspection") {
             incrementDashboardStat("totalPM", 1);
         }
-        
+
         if (record.type === "partReplacement" || (record as any).isOverhaul) {
             incrementDashboardStat("totalOverhaul", 1);
         }
-        
+
         if (record.status !== "completed") {
             incrementDashboardStat("pendingMaintenance", 1);
         }
@@ -327,7 +327,7 @@ export async function updateMaintenanceRecord(
 ): Promise<void> {
     try {
         if (!id) throw new Error("Maintenance Record ID is required for update");
-        
+
         const recordRef = ref(database, `${COLLECTIONS.MAINTENANCE_RECORDS}/${id}`);
 
         const updateData: any = {
@@ -355,28 +355,28 @@ export async function updateMaintenanceRecord(
 export async function deleteMaintenanceRecord(id: string): Promise<void> {
     try {
         const recordRef = ref(database, `${COLLECTIONS.MAINTENANCE_RECORDS}/${id}`);
-        
+
         // Get record details before deleting to update stats
         const snapshot = await get(recordRef);
         if (snapshot.exists()) {
             const record = snapshot.val();
-            
+
             // Update stats
             incrementDashboardStat("maintenanceRecords", -1);
-            
+
             if (record.type === "preventive" || record.type === "oilChange" || record.type === "inspection") {
                 incrementDashboardStat("totalPM", -1);
             }
-            
+
             if (record.type === "partReplacement" || record.isOverhaul) {
                 incrementDashboardStat("totalOverhaul", -1);
             }
-            
+
             if (record.status !== "completed") {
                 incrementDashboardStat("pendingMaintenance", -1);
             }
         }
-        
+
         await remove(recordRef);
     } catch (error) {
         console.error(`Error deleting maintenance record ${id}:`, error);
@@ -598,15 +598,15 @@ export const completePMTask = async (
 
         // Update stats
         incrementDashboardStat("maintenanceRecords", 1);
-        
+
         if (record.type === "preventive" || record.type === "oilChange" || record.type === "inspection") {
             incrementDashboardStat("totalPM", 1);
         }
-        
+
         if (record.type === "partReplacement" || (record as any).isOverhaul) {
             incrementDashboardStat("totalOverhaul", 1);
         }
-        
+
         if (record.status !== "completed") {
             incrementDashboardStat("pendingMaintenance", 1);
         }
@@ -656,3 +656,87 @@ export const completePMTask = async (
         throw error;
     }
 };
+export async function copyPMPlans(
+    sourceMachineId: string,
+    targetMachineIds: string[]
+): Promise<{ success: number; failed: number }> {
+    try {
+        const plansRef = ref(database, COLLECTIONS.PM_PLANS);
+        // 1. Get all plans for source machine
+        const q = query(plansRef, orderByChild("machineId"), equalTo(sourceMachineId));
+        const snapshot = await get(q);
+
+        if (!snapshot.exists()) {
+            return { success: 0, failed: 0 };
+        }
+
+        const sourcePlans: PMPlan[] = [];
+        snapshot.forEach((child) => {
+            const val = child.val();
+            if (val.status !== 'deleted') { // optional check
+                sourcePlans.push(val);
+            }
+        });
+
+        if (sourcePlans.length === 0) return { success: 0, failed: 0 };
+
+        // 2. Get target machine details (to get names for the new plans)
+        // We need machine names for the denormalized machineName field
+        const machines = await getMachines(); // This might be heavy if many machines. 
+        // Optimization: We could pass names from frontend, but verifying here is safer.
+
+        let successCount = 0;
+        let failCount = 0;
+
+        // 3. Loop targets and copy
+        const now = new Date();
+        const updates: any = {};
+
+        for (const targetId of targetMachineIds) {
+            const targetMachine = machines.find(m => m.id === targetId);
+            if (!targetMachine) {
+                console.warn(`Target machine ${targetId} not found`);
+                failCount += sourcePlans.length;
+                continue;
+            }
+
+            for (const srcPlan of sourcePlans) {
+                const newPlanRef = push(plansRef); // Generate new ID
+                const newPlanId = newPlanRef.key!;
+
+                // Prepare new plan data
+                const newPlanData = {
+                    ...srcPlan,
+                    id: newPlanId,
+                    machineId: targetId,
+                    machineName: targetMachine.name,
+                    locationType: srcPlan.locationType || "machine_Location", // Default
+                    // Reset execution history
+                    lastCompletedDate: null,
+                    completedCount: 0,
+                    // Reset dates to clean slate
+                    startDate: now.toISOString(),
+                    nextDueDate: now.toISOString(), // Due immediately or logic to calc? Let's say now.
+                    createdAt: now.toISOString(),
+                    updatedAt: now.toISOString(),
+                    status: "active"
+                };
+
+                // Clean undefined/nulls just in case
+                const cleanData = cleanObject(newPlanData);
+
+                updates[`/${COLLECTIONS.PM_PLANS}/${newPlanId}`] = cleanData;
+                successCount++;
+            }
+        }
+
+        // Batch update
+        await update(ref(database), updates);
+
+        return { success: successCount, failed: failCount };
+
+    } catch (error) {
+        console.error("Error copyPMPlans:", error);
+        throw error;
+    }
+}

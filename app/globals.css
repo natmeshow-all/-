@@ -1169,6 +1169,55 @@ body {
     ai-gradient-move 3s ease infinite;
 }
 
+/* Admin Gold Theme Button */
+.ai-floating-button-admin {
+  position: fixed;
+  bottom: 6.5rem;
+  right: 1.25rem;
+  width: 4rem;
+  height: 4rem;
+  border-radius: 50%;
+  /* Luxury Gold Gradient */
+  background: linear-gradient(135deg, #FFD700 0%, #B8860B 25%, #FFD700 50%, #DAA520 75%, #FDB931 100%);
+  background-size: 200% 200%;
+  color: #1a0b00;
+  /* Dark brown text for contrast */
+  border: 2px solid rgba(255, 215, 0, 0.4);
+  cursor: pointer;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 0.1rem;
+  /* Golden Glow */
+  box-shadow:
+    0 0 20px rgba(255, 215, 0, 0.5),
+    0 0 40px rgba(184, 134, 11, 0.3),
+    inset 0 0 15px rgba(255, 255, 255, 0.6);
+  z-index: 45;
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  animation:
+    ai-button-pulse 2s ease-in-out infinite,
+    ai-gradient-move 4s ease infinite;
+}
+
+.ai-floating-button-admin:hover {
+  transform: scale(1.1);
+  box-shadow:
+    0 0 30px rgba(255, 215, 0, 0.8),
+    0 0 60px rgba(184, 134, 11, 0.5),
+    inset 0 0 20px rgba(255, 255, 255, 0.8);
+}
+
+.ai-floating-button-admin .ai-button-label {
+  font-size: 0.7rem;
+  font-weight: 800;
+  letter-spacing: 0.5px;
+  text-transform: uppercase;
+  opacity: 0.9;
+  text-shadow: 0 1px 2px rgba(255, 255, 255, 0.4);
+}
+
 .ai-floating-button-v2:hover {
   transform: scale(1.15) rotate(-5deg);
   box-shadow:
