@@ -1,6 +1,9 @@
 import type { NextConfig } from "next";
 import { execSync } from "child_process";
 
+import packageJson from "./package.json";
+
+const buildTime = new Date().toISOString();
 let commitHash = "dev";
 try {
   commitHash = execSync("git rev-parse --short HEAD").toString().trim();
@@ -8,9 +11,11 @@ try {
   console.warn("Could not get git commit hash", e);
 }
 
+const appVersion = `${packageJson.version}-${commitHash}-${buildTime}`;
+
 const nextConfig: NextConfig = {
   env: {
-    NEXT_PUBLIC_APP_VERSION: commitHash,
+    NEXT_PUBLIC_APP_VERSION: appVersion,
   },
   images: {
     remotePatterns: [

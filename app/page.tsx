@@ -56,12 +56,12 @@ export default function Dashboard() {
   // Filter Expanded State
   const [isFilterExpanded, setIsFilterExpanded] = useState(false); // Default to collapsed
   const tableSectionRef = React.useRef<HTMLDivElement>(null);
-  
+
   // Split loading states to prevent blocking UI
   const [statsLoading, setStatsLoading] = useState(true);
   const [partsLoading, setPartsLoading] = useState(true);
-  
-  const [cursor, setCursor] = useState<{updatedAt: string, id: string} | null>(null);
+
+  const [cursor, setCursor] = useState<{ updatedAt: string, id: string } | null>(null);
   const [hasMore, setHasMore] = useState(true);
 
   // Handlers for action buttons
@@ -179,9 +179,9 @@ export default function Dashboard() {
       const isShownNow = typeof window !== 'undefined' && sessionStorage.getItem('db_notification_shown');
       if (!hasShownNotification && !isShownNow) {
         if (user) {
-             success(t("msgWelcomeBack") || "Welcome back", `${user.displayName || 'User'}`);
+          success(t("msgWelcomeBack") || "Welcome back", `${user.displayName || 'User'}`);
         } else {
-             success(t("msgDbConnected"), t("msgDbReady"));
+          success(t("msgDbConnected"), t("msgDbReady"));
         }
         sessionStorage.setItem('db_notification_shown', 'true');
       }
@@ -207,40 +207,60 @@ export default function Dashboard() {
   // Load parts when filters change (Server-side filtering for scalability)
   useEffect(() => {
     const loadFilteredParts = async () => {
-        if (!user) return;
-        setPartsLoading(true);
-        try {
-            if (filters.machineId) {
-                // filters.machineId holds the Name
-                const res = await getPartsByMachineName(filters.machineId);
-                setParts(res || []); // Ensure array
-                setHasMore(false);
-            } else if (filters.Location) {
-                const res = await getPartsByLocation(filters.Location);
-                setParts(res || []); // Ensure array
-                setHasMore(false);
-            } else {
-                // Default: Pagination (Recent Items)
-                const res = await getPartsPaginated(50);
-                if (res) {
-                    setParts(res.parts || []);
-                    setCursor(res.lastItem);
-                    setHasMore(!!res.lastItem);
-                } else {
-                    setParts([]);
-                }
-            }
-        } catch (error) {
-            console.error("Error loading parts:", error);
-            setParts([]); // Fallback to empty
-        } finally {
-            setPartsLoading(false);
+      if (!user) return;
+      setPartsLoading(true);
+
+      // Helper to add timeout to any promise
+      async function withTimeout<T>(promise: Promise<T>, ms: number = 10000): Promise<T> {
+        const timeout = new Promise<T>((_, reject) =>
+          setTimeout(() => reject(new Error("Request timed out")), ms)
+        );
+        return Promise.race([promise, timeout]);
+      }
+
+      try {
+        if (filters.machineId) {
+          // filters.machineId holds the Name
+          // Use fallback empty array if timeout/error
+          const res = await withTimeout(getPartsByMachineName(filters.machineId)).catch(e => {
+            console.error("Timeout fetching machine parts:", e);
+            return [];
+          });
+          setParts(res || []); // Ensure array
+          setHasMore(false);
+        } else if (filters.Location) {
+          const res = await withTimeout(getPartsByLocation(filters.Location)).catch(e => {
+            console.error("Timeout fetching location parts:", e);
+            return [];
+          });
+          setParts(res || []); // Ensure array
+          setHasMore(false);
+        } else {
+          // Default: Pagination (Recent Items)
+          const res = await withTimeout(getPartsPaginated(50)).catch(e => {
+            console.error("Timeout fetching paginated parts:", e);
+            return null;
+          });
+
+          if (res) {
+            setParts(res.parts || []);
+            setCursor(res.lastItem);
+            setHasMore(!!res.lastItem);
+          } else {
+            setParts([]);
+          }
         }
+      } catch (error) {
+        console.error("Error loading parts:", error);
+        setParts([]); // Fallback to empty
+      } finally {
+        setPartsLoading(false);
+      }
     };
 
     // Debounce to prevent rapid firing
     const timer = setTimeout(() => {
-        loadFilteredParts();
+      loadFilteredParts();
     }, 300);
 
     return () => clearTimeout(timer);
@@ -250,14 +270,14 @@ export default function Dashboard() {
     if (!hasMore || partsLoading || !cursor) return;
     setPartsLoading(true);
     try {
-        const res = await getPartsPaginated(50, cursor.updatedAt, cursor.id);
-        setParts(prev => [...prev, ...res.parts]);
-        setCursor(res.lastItem);
-        setHasMore(!!res.lastItem);
+      const res = await getPartsPaginated(50, cursor.updatedAt, cursor.id);
+      setParts(prev => [...prev, ...res.parts]);
+      setCursor(res.lastItem);
+      setHasMore(!!res.lastItem);
     } catch (error) {
-        console.error("Error loading more parts:", error);
+      console.error("Error loading more parts:", error);
     } finally {
-        setPartsLoading(false);
+      setPartsLoading(false);
     }
   };
 
@@ -725,12 +745,12 @@ export default function Dashboard() {
                 </table>
                 {hasMore && !filters.machineId && !filters.Location && (
                   <div className="flex justify-center p-4 border-t border-border-light">
-                    <button 
-                      onClick={handleLoadMore} 
-                      disabled={partsLoading} 
+                    <button
+                      onClick={handleLoadMore}
+                      disabled={partsLoading}
                       className="btn btn-sm btn-ghost text-primary hover:bg-primary/10"
                     >
-                        {partsLoading ? "..." : t("actionLoadMore") || "Load More"}
+                      {partsLoading ? "..." : t("actionLoadMore") || "Load More"}
                     </button>
                   </div>
                 )}

@@ -11,7 +11,7 @@
  */
 
 // App version - MUST be synced with package.json
-export const APP_VERSION = "0.2.0";
+export const APP_VERSION = process.env.NEXT_PUBLIC_APP_VERSION || "0.2.1-dev";
 
 // Storage keys
 const VERSION_KEY = "app_version";

@@ -16,10 +16,10 @@
  */
 
 // Re-export translation services
-export { 
-    translateToEnglish, 
-    syncTranslation, 
-    getDynamicTranslations 
+export {
+    translateToEnglish,
+    syncTranslation,
+    getDynamicTranslations
 } from "../services/translationService";
 
 // Re-export all sub-services
@@ -29,3 +29,4 @@ export * from "../services/maintenanceService";
 export * from "../services/userService";
 export * from "../services/analyticsService";
 export * from "../services/systemService";
+export * from "../services/chatHistoryService";
