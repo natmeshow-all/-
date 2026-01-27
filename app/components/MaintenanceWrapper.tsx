@@ -4,6 +4,7 @@ import React, { useState, useEffect } from "react";
 import { useAuth } from "../contexts/AuthContext";
 import { useLanguage } from "../contexts/LanguageContext";
 import { getSystemSettings } from "../lib/firebaseService";
+import { checkAndClearOldCache, isMemoryCritical, emergencyCleanup, APP_VERSION } from "../lib/cacheManager";
 import MaintenanceModePage from "./MaintenanceModePage";
 import { SystemSettings } from "../types";
 
@@ -18,6 +19,30 @@ export default function MaintenanceWrapper({ children }: MaintenanceWrapperProps
     const [maintenanceMode, setMaintenanceMode] = useState(false);
     const [loading, setLoading] = useState(true);
     const [showReset, setShowReset] = useState(false);
+    const [memoryWarning, setMemoryWarning] = useState(false);
+
+    // Check cache version and clear if needed on mount
+    useEffect(() => {
+        const cacheCleared = checkAndClearOldCache();
+        if (cacheCleared) {
+            console.log(`[MaintenanceWrapper] Cache cleared for version ${APP_VERSION}`);
+        }
+
+        // Memory monitoring (every 30 seconds)
+        const memoryCheck = setInterval(() => {
+            if (isMemoryCritical(80)) {
+                setMemoryWarning(true);
+                // Try emergency cleanup if memory is very critical
+                if (isMemoryCritical(90)) {
+                    emergencyCleanup();
+                }
+            } else {
+                setMemoryWarning(false);
+            }
+        }, 30000);
+
+        return () => clearInterval(memoryCheck);
+    }, []);
 
     useEffect(() => {
         // Subscribe to real-time updates for system settings using onValue from firebase/database directly in component
@@ -29,12 +54,12 @@ export default function MaintenanceWrapper({ children }: MaintenanceWrapperProps
             try {
                 // Add a timeout to prevent infinite loading
                 const settingsPromise = getSystemSettings();
-                const timeoutPromise = new Promise<null>((resolve) => 
+                const timeoutPromise = new Promise<null>((resolve) =>
                     setTimeout(() => resolve(null), 5000)
                 );
-                
+
                 const fetchedSettings = await Promise.race([settingsPromise, timeoutPromise]);
-                
+
                 if (fetchedSettings) {
                     setSettings(fetchedSettings);
                     setMaintenanceMode(fetchedSettings.maintenanceMode || false);
@@ -75,14 +100,14 @@ export default function MaintenanceWrapper({ children }: MaintenanceWrapperProps
                 // Clear local storage
                 localStorage.clear();
                 sessionStorage.clear();
-                
+
                 // Attempt to clear Firebase Auth persistence
                 if (window.indexedDB) {
                     const deleteRequest = window.indexedDB.deleteDatabase('firebaseLocalStorageDb');
                     deleteRequest.onsuccess = () => console.log("Auth DB deleted");
                     deleteRequest.onerror = () => console.log("Auth DB delete failed");
                 }
-                
+
                 // Clear service workers if any
                 if ('serviceWorker' in navigator) {
                     const registrations = await navigator.serviceWorker.getRegistrations();
@@ -103,11 +128,11 @@ export default function MaintenanceWrapper({ children }: MaintenanceWrapperProps
             <div className="min-h-screen bg-bg-primary flex flex-col items-center justify-center gap-4">
                 <div className="w-8 h-8 border-2 border-primary border-t-transparent rounded-full animate-spin" />
                 <p className="text-text-secondary animate-pulse">Loading system...</p>
-                
+
                 {showReset && (
                     <div className="mt-4 flex flex-col items-center gap-2 animate-in fade-in slide-in-from-bottom-4">
                         <p className="text-red-400 text-sm">Taking longer than expected?</p>
-                        <button 
+                        <button
                             onClick={handleReset}
                             className="px-4 py-2 bg-red-500/10 hover:bg-red-500/20 text-red-500 border border-red-500/50 rounded-lg text-sm transition-colors"
                         >
@@ -125,15 +150,28 @@ export default function MaintenanceWrapper({ children }: MaintenanceWrapperProps
     }
 
     // Otherwise, show normal content
-    const announcementText = language === 'th' 
-        ? settings?.announcement?.message 
+    const announcementText = language === 'th'
+        ? settings?.announcement?.message
         : (settings?.announcement?.messageEn || settings?.announcement?.message);
 
     return (
         <>
+            {/* Memory Warning Banner */}
+            {memoryWarning && (
+                <div className="w-full py-2 px-4 bg-orange-500 text-white text-sm font-medium flex items-center justify-between z-50">
+                    <span>⚠️ หน่วยความจำใกล้เต็ม กรุณารีเฟรชหน้าเว็บ</span>
+                    <button
+                        onClick={handleReset}
+                        className="px-3 py-1 bg-white/20 hover:bg-white/30 rounded text-xs transition-colors"
+                    >
+                        รีเซ็ต
+                    </button>
+                </div>
+            )}
             {settings?.announcement?.enabled && announcementText && (
                 <>
-                    <style dangerouslySetInnerHTML={{__html: `
+                    <style dangerouslySetInnerHTML={{
+                        __html: `
                         @keyframes marquee {
                             0% { transform: translateX(100%); }
                             100% { transform: translateX(-100%); }
@@ -148,11 +186,10 @@ export default function MaintenanceWrapper({ children }: MaintenanceWrapperProps
                             animation-play-state: paused;
                         }
                     `}} />
-                    <div className={`w-full py-2 text-sm font-bold z-50 relative overflow-hidden ${
-                        settings.announcement.level === 'urgent' ? 'bg-red-500 text-white' :
+                    <div className={`w-full py-2 text-sm font-bold z-50 relative overflow-hidden ${settings.announcement.level === 'urgent' ? 'bg-red-500 text-white' :
                         settings.announcement.level === 'warning' ? 'bg-yellow-500 text-black' :
-                        'bg-blue-600 text-white'
-                    }`}>
+                            'bg-blue-600 text-white'
+                        }`}>
                         <div className="animate-marquee-custom">
                             <span>{announcementText}</span>
                         </div>
