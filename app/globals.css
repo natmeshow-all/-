@@ -887,15 +887,20 @@ body {
   justify-content: center;
   gap: 0.25rem;
   z-index: 50;
-  /* Strong blur for glass effect */
-  backdrop-filter: blur(22px);
-  -webkit-backdrop-filter: blur(22px);
+  /* Strong blur for glass effect (Increased from 33px to 55px) */
+  backdrop-filter: blur(55px);
+  -webkit-backdrop-filter: blur(55px);
   border-radius: 2rem;
-  /* Glowing shadow */
+  /* Enhanced Glowing shadow (Layered for depth) */
   box-shadow:
-    0 10px 40px rgba(0, 0, 0, 0.6),
-    0 0 0 1px rgba(255, 255, 255, 0.1) inset,
-    0 0 25px rgba(59, 130, 246, 0.15);
+    0 15px 50px -5px rgba(0, 0, 0, 0.8),
+    /* Main shadow */
+    0 0 0 1px rgba(255, 255, 255, 0.2) inset,
+    /* Inner border */
+    0 0 25px rgba(59, 130, 246, 0.4),
+    /* Primary blue glow */
+    0 0 60px rgba(59, 130, 246, 0.15);
+  /* Large outer glow spread */
   width: calc(100% - 2rem);
   max-width: 26rem;
   /* Animated border shimmer */
