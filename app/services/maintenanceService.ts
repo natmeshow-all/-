@@ -30,10 +30,14 @@ import { incrementDashboardStat } from "./analyticsService";
 
 // ==================== HELPERS ====================
 
-// Helper to remove undefined keys which Firebase doesn't like
+// Helper to remove undefined and null keys which Firebase doesn't like
 const cleanObject = (obj: any) => {
     const newObj = { ...obj };
-    Object.keys(newObj).forEach(key => newObj[key] === undefined && delete newObj[key]);
+    Object.keys(newObj).forEach(key => {
+        if (newObj[key] === undefined || newObj[key] === null) {
+            delete newObj[key];
+        }
+    });
     return newObj;
 };
 
@@ -722,8 +726,8 @@ export async function copyPMPlans(
                 const newPlanData = {
                     ...srcPlan,
                     id: newPlanId,
-                    machineId: targetId,
-                    machineName: targetMachine.name,
+                    machineId: targetMachine.id, // Use resolved ID, not the raw input
+                    machineName: targetMachine.name, // Use resolved name
                     locationType: srcPlan.locationType || "machine_Location", // Default
                     // Reset execution history
                     lastCompletedDate: null,
