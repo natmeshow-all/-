@@ -89,7 +89,7 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
                 const timeoutPromise = new Promise((_, reject) => {
                     timeoutId = setTimeout(() => {
                         reject(new Error("Auth profile fetch timeout"));
-                    }, 15000);
+                    }, 20000);
                 });
 
                 try {

@@ -15,6 +15,7 @@ import MachineDetailsModal from "./components/machines/MachineDetailsModal"; // 
 import GlobalMaintenanceHistoryModal from "./components/pm/GlobalMaintenanceHistoryModal";
 import Lightbox from "./components/ui/Lightbox"; // Import Lightbox
 import PriorityPMAlert from "./components/ui/PriorityPMAlert"; // Import PriorityPMAlert
+import PageLoadingOverlay from "./components/ui/PageLoadingOverlay"; // Import PageLoadingOverlay
 import {
   BoxIcon,
   SettingsIcon,
@@ -165,11 +166,20 @@ export default function Dashboard() {
     // Check session storage to see if we've already shown the startup notification
     const hasShownNotification = typeof window !== 'undefined' && sessionStorage.getItem('db_notification_shown');
 
+    // Helper to add timeout to any promise
+    async function withTimeout<T>(promise: Promise<T>, ms: number = 45000): Promise<T> {
+      const timeout = new Promise<T>((_, reject) =>
+        setTimeout(() => reject(new Error("Request timed out")), ms)
+      );
+      return Promise.race([promise, timeout]);
+    }
+
     try {
       setStatsLoading(true);
+      // Use safe timeout for stats to prevent hanging
       const [statsData, machinesData] = await Promise.all([
-        getDashboardStats(),
-        getMachines()
+        withTimeout(getDashboardStats()),
+        withTimeout(getMachines())
       ]);
       setStats(statsData);
       setAllMachines(machinesData);
@@ -211,7 +221,7 @@ export default function Dashboard() {
       setPartsLoading(true);
 
       // Helper to add timeout to any promise
-      async function withTimeout<T>(promise: Promise<T>, ms: number = 10000): Promise<T> {
+      async function withTimeout<T>(promise: Promise<T>, ms: number = 30000): Promise<T> {
         const timeout = new Promise<T>((_, reject) =>
           setTimeout(() => reject(new Error("Request timed out")), ms)
         );
@@ -409,6 +419,12 @@ export default function Dashboard() {
       <MobileNav />
 
       <main className="main-container px-4 py-6 sm:px-6">
+        {/* Full-screen Data Loading Overlay */}
+        <PageLoadingOverlay
+          isLoading={statsLoading && partsLoading}
+          message={t("msgLoading") || "กำลังโหลดข้อมูล..."}
+        />
+
         {/* Priority Alert Section */}
         <PriorityPMAlert />
 
@@ -424,12 +440,22 @@ export default function Dashboard() {
               delay={0}
             />
             <StatCard
+              icon={<BoxIcon size={12} />}
+              value={stats.totalParts}
+              label={t("statTotalParts")}
+              iconBgColor="bg-primary/20"
+              iconTextColor="text-primary-light"
+              delay={0}
+              loading={statsLoading}
+            />
+            <StatCard
               icon={<SettingsIcon size={12} />}
               value={stats.totalMachines}
               label={t("statMachines")}
               iconBgColor="bg-accent-yellow/20"
               iconTextColor="text-accent-yellow"
               delay={50}
+              loading={statsLoading}
             />
             <StatCard
               icon={<MapPinIcon size={12} />}
@@ -438,6 +464,7 @@ export default function Dashboard() {
               iconBgColor="bg-accent-cyan/20"
               iconTextColor="text-accent-cyan"
               delay={100}
+              loading={statsLoading}
             />
             <StatCard
               icon={<RefreshIcon size={12} />}
@@ -446,6 +473,7 @@ export default function Dashboard() {
               iconBgColor="bg-accent-green/20"
               iconTextColor="text-accent-green"
               delay={150}
+              loading={statsLoading}
             />
             <StatCard
               icon={<AlertTriangleIcon size={12} />}
@@ -454,6 +482,7 @@ export default function Dashboard() {
               iconBgColor="bg-accent-red/20"
               iconTextColor="text-accent-red"
               delay={200}
+              loading={statsLoading}
             />
           </div>
         </section>

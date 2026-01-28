@@ -6,6 +6,7 @@ import { useLanguage } from "../contexts/LanguageContext";
 import { getSystemSettings } from "../lib/firebaseService";
 import { checkAndClearOldCache, isMemoryCritical, emergencyCleanup, APP_VERSION } from "../lib/cacheManager";
 import MaintenanceModePage from "./MaintenanceModePage";
+import GlobalLoadingSpinner from "./ui/GlobalLoadingSpinner";
 import AIAssistant from "./ai/AIAssistant";
 import { SystemSettings } from "../types";
 
@@ -126,12 +127,14 @@ export default function MaintenanceWrapper({ children }: MaintenanceWrapperProps
     // Show loading state briefly
     if (loading || authLoading) {
         return (
-            <div className="min-h-screen bg-bg-primary flex flex-col items-center justify-center gap-4">
-                <div className="w-8 h-8 border-2 border-primary border-t-transparent rounded-full animate-spin" />
-                <p className="text-text-secondary animate-pulse">Loading system...</p>
-
+            <>
+                <GlobalLoadingSpinner
+                    status={language === 'th' ? 'กำลังเตรียมระบบ...' : 'Initializing System...'}
+                    subStatus={authLoading ? (language === 'th' ? 'ตรวจสอบสถานะผู้ใช้' : 'Checking user session') : (language === 'th' ? 'กำลังโหลดการตั้งค่า' : 'Loading settings')}
+                    variant={authLoading ? 'auth' : 'default'}
+                />
                 {showReset && (
-                    <div className="mt-4 flex flex-col items-center gap-2 animate-in fade-in slide-in-from-bottom-4">
+                    <div className="fixed bottom-8 left-1/2 -translate-x-1/2 z-[10000] flex flex-col items-center gap-2 animate-in fade-in slide-in-from-bottom-4">
                         <p className="text-red-400 text-sm">Taking longer than expected?</p>
                         <button
                             onClick={handleReset}
@@ -141,7 +144,7 @@ export default function MaintenanceWrapper({ children }: MaintenanceWrapperProps
                         </button>
                     </div>
                 )}
-            </div>
+            </>
         );
     }
 
