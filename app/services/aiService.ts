@@ -299,18 +299,40 @@ AI:`;
         let aiResponse = data.response;
 
         // Try to parse JSON if it looks like a proposal
-        if (aiResponse.includes("ACTION_PROPOSAL")) {
+        if (aiResponse.includes("ACTION_PROPOSAL") || aiResponse.includes('"type"')) {
             try {
-                // Remove markdown code blocks if present
-                const cleanJson = aiResponse.replace(/```json/g, "").replace(/```/g, "").trim();
+                // Try multiple extraction methods
+                let cleanJson = aiResponse;
+
+                // Method 1: Extract from markdown code blocks
+                const codeBlockMatch = aiResponse.match(/```(?:json)?\s*([\s\S]*?)```/);
+                if (codeBlockMatch) {
+                    cleanJson = codeBlockMatch[1].trim();
+                }
+
+                // Method 2: If no code block, try to find JSON object directly
+                if (!codeBlockMatch) {
+                    const jsonMatch = aiResponse.match(/\{[\s\S]*"type"\s*:\s*"ACTION_PROPOSAL"[\s\S]*\}/);
+                    if (jsonMatch) {
+                        cleanJson = jsonMatch[0];
+                    }
+                }
+
+                // Method 3: Fallback - strip common prefixes/suffixes
+                cleanJson = cleanJson
+                    .replace(/^[^{]*/, '')  // Remove anything before first {
+                    .replace(/}[^}]*$/, '}') // Remove anything after last }
+                    .trim();
+
                 const proposal = JSON.parse(cleanJson);
 
-                // If it's a valid proposal, return the object (don't save to history primarily, or save summary)
+                // If it's a valid proposal, return the object
                 if (proposal.type === "ACTION_PROPOSAL") {
+                    console.log("[AIService] Parsed ACTION_PROPOSAL successfully:", proposal.action);
                     return proposal as AIActionProposal;
                 }
             } catch (e) {
-                console.warn("Failed to parse AI JSON action:", e);
+                console.warn("[AIService] Failed to parse AI JSON action:", e, "Raw:", aiResponse.substring(0, 200));
                 // Fallback to text
             }
         }
