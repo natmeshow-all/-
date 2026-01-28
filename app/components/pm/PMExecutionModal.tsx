@@ -323,26 +323,26 @@ export default function PMExecutionModal({ isOpen, onClose, plan, onSuccess }: P
                                         <div className="flex items-start gap-3">
                                             <button
                                                 type="button"
-                                                onClick={() => handleChecklistChange(index, !checklistResults[index].completed)}
-                                                className={`mt-0.5 flex-shrink-0 w-5 h-5 rounded border flex items-center justify-center transition-colors ${checklistResults[index].completed
+                                                onClick={() => handleChecklistChange(index, !checklistResults[index]?.completed)}
+                                                className={`mt-0.5 flex-shrink-0 w-5 h-5 rounded border flex items-center justify-center transition-colors ${checklistResults[index]?.completed
                                                     ? 'bg-accent-blue border-accent-blue text-white'
                                                     : 'border-white/20 hover:border-accent-blue/50'
                                                     }`}
                                             >
-                                                {checklistResults[index].completed && <CheckCircleIcon size={12} />}
+                                                {checklistResults[index]?.completed && <CheckCircleIcon size={12} />}
                                             </button>
-                                            <span className={`text-sm cursor-pointer ${checklistResults[index].completed ? 'text-text-muted transition-colors' : 'text-white'}`}
-                                                onClick={() => handleChecklistChange(index, !checklistResults[index].completed)}>
+                                            <span className={`text-sm cursor-pointer ${checklistResults[index]?.completed ? 'text-text-muted transition-colors' : 'text-white'}`}
+                                                onClick={() => handleChecklistChange(index, !checklistResults[index]?.completed)}>
                                                 {item}
                                             </span>
                                         </div>
 
-                                        {checklistResults[index].completed && (
+                                        {checklistResults[index]?.completed && (
                                             <div className="pl-8 animate-in fade-in slide-in-from-top-1 duration-200">
                                                 <input
                                                     type="text"
                                                     placeholder={t("placeholderChecklistValue")}
-                                                    value={checklistResults[index].value}
+                                                    value={checklistResults[index]?.value || ""}
                                                     onChange={(e) => handleChecklistChange(index, true, e.target.value)}
                                                     className="input-field text-xs w-full bg-black/20"
                                                 />
