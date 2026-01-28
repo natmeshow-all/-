@@ -662,11 +662,21 @@ export async function copyPMPlans(
 ): Promise<{ success: number; failed: number }> {
     try {
         const plansRef = ref(database, COLLECTIONS.PM_PLANS);
+
         // 1. Get all plans for source machine
-        const q = query(plansRef, orderByChild("machineId"), equalTo(sourceMachineId));
-        const snapshot = await get(q);
+        // First try by machineId
+        let q = query(plansRef, orderByChild("machineId"), equalTo(sourceMachineId));
+        let snapshot = await get(q);
+
+        // If no results, try by machineName (AI often provides name instead of ID)
+        if (!snapshot.exists()) {
+            console.log(`[copyPMPlans] No plans found by machineId "${sourceMachineId}", trying by machineName...`);
+            q = query(plansRef, orderByChild("machineName"), equalTo(sourceMachineId));
+            snapshot = await get(q);
+        }
 
         if (!snapshot.exists()) {
+            console.log(`[copyPMPlans] No plans found for "${sourceMachineId}" by either machineId or machineName`);
             return { success: 0, failed: 0 };
         }
 
@@ -693,9 +703,13 @@ export async function copyPMPlans(
         const updates: any = {};
 
         for (const targetId of targetMachineIds) {
-            const targetMachine = machines.find(m => m.id === targetId);
+            // Try to find target machine by ID first, then by name (AI often provides names)
+            let targetMachine = machines.find(m => m.id === targetId);
             if (!targetMachine) {
-                console.warn(`Target machine ${targetId} not found`);
+                targetMachine = machines.find(m => m.name === targetId);
+            }
+            if (!targetMachine) {
+                console.warn(`Target machine "${targetId}" not found by ID or name`);
                 failCount += sourcePlans.length;
                 continue;
             }
