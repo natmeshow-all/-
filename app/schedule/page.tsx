@@ -443,7 +443,7 @@ export default function SchedulePage() {
                                                         {t("actionCloseWork")}
                                                     </>
                                                 ) : (
-                                                    t("actionRecordMaintenance")
+                                                    t("actionRecordPMResult")
                                                 )}
                                             </button>
 

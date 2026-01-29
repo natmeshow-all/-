@@ -112,6 +112,7 @@ export interface TranslationKeys {
     actionAddPart: string;
     actionAddMachine: string;
     actionRecordMaintenance: string;
+    actionRecordPMResult: string;
     actionMaintenanceHistory: string;
     maintenancePageTitle: string;
     actionExport: string;
@@ -876,6 +877,7 @@ const th: TranslationKeys = {
     actionAddPart: "เพิ่มอะไหล่",
     actionAddMachine: "เพิ่มเครื่องจักร",
     actionRecordMaintenance: "เปลี่ยนอะไหล่/Overhaul",
+    actionRecordPMResult: "บันทึกการบำรุงรักษา",
     actionMaintenanceHistory: "ประวัติอะไหล่/Overhaul",
     maintenancePageTitle: "ประวัติงานซ่อมบำรุง",
     actionExport: "ส่งออก",
@@ -1637,6 +1639,7 @@ const en: TranslationKeys = {
     actionAddPart: "Add Part",
     actionAddMachine: "Add Machine",
     actionRecordMaintenance: "Part Change/Overhaul",
+    actionRecordPMResult: "Record PM Result",
     actionMaintenanceHistory: "Overhaul History",
     maintenancePageTitle: "Maintenance History",
     actionExport: "Export",
