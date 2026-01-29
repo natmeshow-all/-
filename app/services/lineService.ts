@@ -198,42 +198,131 @@ export const lineService = {
                         color: "#00ff88",
                         margin: "lg"
                     },
-                    {
-                        type: "text",
-                        text: checklistText,
-                        size: "sm",
-                        color: "#cccccc",
-                        margin: "md",
-                        wrap: true
-                    }
+                    // Dynamic Checklist Items
+                    ...(record.checklist && record.checklist.length > 0
+                        ? record.checklist.map((item) => {
+                            // Determine value color based on content
+                            let valueColor = "#ffcc00"; // Default Yellow for values
+                            const val = (item.value || "").toLowerCase();
+
+                            if (val.includes("ปกติ") || val.includes("normal") || val.includes("ok") || val.includes("pass")) {
+                                valueColor = "#00ff88"; // Green for good
+                            } else if (val.includes("ผิดปกติ") || val.includes("abnormal") || val.includes("fail") || val === "-") {
+                                valueColor = "#ff4444"; // Red for bad
+                            } else if (!isNaN(Number(val)) || val.match(/[\d.]+ [a-zA-Z%]+/)) {
+                                valueColor = "#00d4ff"; // Blue for numbers/measurements
+                            }
+
+                            return {
+                                type: "box",
+                                layout: "horizontal",
+                                margin: "sm",
+                                contents: [
+                                    {
+                                        type: "text",
+                                        text: item.completed ? "✓" : "○",
+                                        size: "xs",
+                                        color: item.completed ? "#00ff88" : "#666666",
+                                        flex: 1,
+                                        align: "start"
+                                    },
+                                    {
+                                        type: "text",
+                                        text: item.item,
+                                        size: "xs",
+                                        color: "#cccccc",
+                                        flex: 7,
+                                        wrap: true
+                                    },
+                                    {
+                                        type: "text",
+                                        text: item.value || "-",
+                                        size: "xs",
+                                        color: valueColor,
+                                        flex: 4,
+                                        align: "end",
+                                        weight: item.value ? "bold" : "regular",
+                                        wrap: true
+                                    }
+                                ]
+                            };
+                        })
+                        : [{
+                            type: "text",
+                            text: "ไม่มีรายการตรวจสอบ",
+                            size: "sm",
+                            color: "#666666",
+                            margin: "md",
+                            style: "italic"
+                        }]
+                    )
                 ]
             }
         };
 
-        // Add footer with image if evidence image exists
+        // Collect all images
+        const evidenceImages: { url: string; label: string }[] = [];
+
+        // Primary image
         if (record.evidenceImageUrl) {
+            evidenceImages.push({
+                url: record.evidenceImageUrl,
+                label: "รูปภาพหลักฐาน"
+            });
+        }
+
+        // Additional images
+        if (record.additionalEvidence && record.additionalEvidence.length > 0) {
+            record.additionalEvidence.forEach(img => {
+                evidenceImages.push({
+                    url: img.url,
+                    label: img.label || "รูปภาพเพิ่มเติม"
+                });
+            });
+        }
+
+        // Add footer with images if any exist
+        if (evidenceImages.length > 0) {
+            const footerContents: any[] = [
+                {
+                    type: "text",
+                    text: "📷 รูปภาพตรวจสอบ",
+                    weight: "bold",
+                    size: "sm",
+                    color: "#00d4ff"
+                }
+            ];
+
+            // Add each image with its label
+            evidenceImages.forEach((img) => {
+                footerContents.push({
+                    type: "text",
+                    text: img.label,
+                    size: "xs",
+                    color: "#bbbbbb",
+                    margin: "md"
+                });
+
+                footerContents.push({
+                    type: "image",
+                    url: img.url,
+                    size: "full",
+                    aspectRatio: "4:3",
+                    aspectMode: "cover",
+                    margin: "sm",
+                    action: {
+                        type: "uri",
+                        uri: img.url
+                    }
+                });
+            });
+
             bubble.footer = {
                 type: "box",
                 layout: "vertical",
                 backgroundColor: "#1e2433",
                 paddingAll: "10px",
-                contents: [
-                    {
-                        type: "text",
-                        text: "📷 รูปภาพหลักฐาน",
-                        weight: "bold",
-                        size: "sm",
-                        color: "#00d4ff"
-                    },
-                    {
-                        type: "image",
-                        url: record.evidenceImageUrl,
-                        size: "full",
-                        aspectRatio: "16:9",
-                        aspectMode: "cover",
-                        margin: "md"
-                    }
-                ]
+                contents: footerContents
             };
         }
 
