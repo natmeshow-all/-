@@ -89,26 +89,111 @@ export default function SchedulePage() {
         const diffTime = due.getTime() - now.getTime();
         const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
 
-        // Overdue -> Yellow/Orange (Warning)
+        // 1. Overdue (< 0) -> Red
         if (diffDays < 0) return {
             label: t("statusOverdueLabel"),
-            color: "text-accent-yellow",
-            bg: "bg-accent-yellow/20",
-            border: "border-accent-yellow/30",
-            days: diffDays
-        };
-
-        // Today -> Red + Blink (Urgent)
-        if (diffDays === 0) return {
-            label: t("statusTodayLabel"),
             color: "text-accent-red",
             bg: "bg-accent-red/20",
             border: "border-accent-red/30",
             days: diffDays
         };
 
-        if (diffDays <= 7) return { label: t("statusUpcomingLabel"), color: "text-accent-blue", bg: "bg-accent-blue/20", border: "border-accent-blue/30", days: diffDays };
-        return { label: t("statusOnTrackLabel"), color: "text-accent-green", bg: "bg-accent-green/20", border: "border-accent-green/30", days: diffDays };
+        // 2. Due Today or within 3 days (0 to 3) -> Yellow
+        if (diffDays <= 3) return {
+            label: diffDays === 0 ? t("statusTodayLabel") : t("statusUpcomingLabel"),
+            color: "text-accent-yellow",
+            bg: "bg-accent-yellow/20",
+            border: "border-accent-yellow/30",
+            days: diffDays
+        };
+
+        // 3. Far (> 3) -> Green
+        return {
+            label: t("statusOnTrackLabel"),
+            color: "text-accent-green",
+            bg: "bg-accent-green/20",
+            border: "border-accent-green/30",
+            days: diffDays
+        };
+    };
+
+    const getCycleInfo = (plan: PMPlan) => {
+        const prefix = language === 'th' ? 'รอบ ' : '';
+
+        if (plan.scheduleType === 'weekly') {
+            return {
+                label: `${prefix}${t("labelWeekly") || "Weekly"}`,
+                color: "text-accent-blue",
+                bg: "bg-accent-blue/15",
+                border: "border-accent-blue/30"
+            };
+        }
+
+        if (plan.scheduleType === 'yearly') {
+            return {
+                label: `${prefix}${t("labelYearly") || "Yearly"}`,
+                color: "text-accent-orange",
+                bg: "bg-accent-orange/15",
+                border: "border-accent-orange/30"
+            };
+        }
+
+        const months = plan.cycleMonths || 1;
+        if (months === 1) {
+            return {
+                label: `${prefix}1 ${t("unitMonth") || "Month"}`,
+                color: "text-accent-cyan",
+                bg: "bg-accent-cyan/15",
+                border: "border-accent-cyan/30"
+            };
+        }
+
+        if (months === 2) {
+            return {
+                label: `${prefix}2 ${t("unitMonth") || "Months"}`,
+                color: "text-accent-purple",
+                bg: "bg-accent-purple/15",
+                border: "border-accent-purple/30"
+            };
+        }
+
+        return {
+            label: `${prefix}${months} ${t("unitMonth") || "Months"}`,
+            color: "text-accent-orange",
+            bg: "bg-accent-orange/15",
+            border: "border-accent-orange/30"
+        };
+    };
+
+    const formatOverdueDuration = (diffDays: number) => {
+        if (diffDays >= 0) return null;
+
+        const absoluteDays = Math.abs(diffDays);
+        const years = Math.floor(absoluteDays / 365);
+        const months = Math.floor((absoluteDays % 365) / 30);
+        const days = absoluteDays % 30;
+
+        const resultParts = [];
+        if (years > 0) resultParts.push({ value: years, unit: t("unitYear"), color: "text-accent-red" });
+        if (months > 0) resultParts.push({ value: months, unit: t("unitMonth"), color: "text-accent-yellow" });
+        if (days > 0 || (years === 0 && months === 0)) resultParts.push({ value: days, unit: t("unitDay"), color: "text-accent-orange" });
+
+        return (
+            <div className="flex items-center gap-1.5 flex-wrap">
+                <span className="text-[10px] text-text-muted italic">{t("labelOverdueBy")}:</span>
+                <div className="flex items-center gap-1">
+                    {resultParts.map((part, idx) => (
+                        <React.Fragment key={idx}>
+                            <div className="flex items-center gap-0.5">
+                                <span className={`${part.color} font-black text-xs sm:text-sm`}>{part.value}</span>
+                                <span className="text-[10px] text-text-muted font-medium">{part.unit}</span>
+                            </div>
+                            {idx < resultParts.length - 1 && <span className="text-[10px] text-white/20">/</span>}
+                        </React.Fragment>
+                    ))}
+                </div>
+            </div>
+        );
     };
 
     const handleExecuteClick = (plan: PMPlan) => {
@@ -263,69 +348,113 @@ export default function SchedulePage() {
                             return (
                                 <div
                                     key={item.id}
-                                    className={`card p-3 hover-lift animate-fade-in-up border-l-4 ${isOverdue ? "border-l-accent-yellow animate-warning-pulse" :
-                                        isToday ? "border-l-accent-red animate-urgent-pulse" :
-                                            status.days <= 7 ? "border-l-accent-blue" :
-                                                "border-l-accent-green"
+                                    className={`card p-3 hover-lift animate-fade-in-up border-l-4 relative ${isOverdue ? "border-l-accent-red animate-warning-pulse" :
+                                        status.days <= 3 ? "border-l-accent-yellow" :
+                                            "border-l-accent-green"
                                         } ${priorityColor} transition-all duration-300`}
                                     style={{ animationDelay: `${index * 50}ms` }}
                                 >
-                                    <div className="flex items-center gap-3">
+                                    <div className="flex items-stretch gap-3">
                                         {/* Icon */}
-                                        <div className={`shrink-0 w-10 h-10 rounded-lg flex items-center justify-center ${status.bg} relative`}>
-                                            <SettingsIcon size={20} className={status.color} />
-                                            {item.completedCount && item.completedCount > 0 && (
-                                                <span className="absolute -top-1 -right-1 w-4 h-4 bg-accent-blue text-white text-[9px] font-bold rounded-full flex items-center justify-center shadow-sm border border-bg-primary">
-                                                    {item.completedCount}
-                                                </span>
-                                            )}
-                                        </div>
-
-                                        {/* Content */}
-                                        <div className="flex-1 min-w-0">
-                                            <div className="flex items-center justify-between gap-2">
-                                                <div className="flex items-center gap-2 min-w-0">
-                                                    <h3 className="font-bold text-sm sm:text-base text-text-primary truncate">{item.machineName}</h3>
-                                                    {priorityBadge && (
-                                                        <span className={`text-[9px] px-1.5 py-0.5 rounded-full uppercase font-bold tracking-wider ${priorityBadge.color} shrink-0`}>
-                                                            {priorityBadge.label}
-                                                        </span>
-                                                    )}
-                                                </div>
-                                                <span className={`badge ${status.bg} ${status.color} border ${status.border} shadow-sm px-2 py-0.5 text-[10px] font-bold uppercase shrink-0`}>
-                                                    {status.label}
-                                                </span>
-                                            </div>
-
-                                            <div className="flex flex-wrap items-center gap-x-2 gap-y-1 mt-0.5 text-xs text-text-muted">
-                                                <span className="truncate max-w-[200px]">{item.taskName}</span>
-                                                <span className="w-1 h-1 rounded-full bg-white/20 shrink-0"></span>
-                                                <div className="flex items-center gap-1">
-                                                    <CalendarIcon size={10} />
-                                                    <span className={status.days === 0 ? "text-accent-red font-bold" : status.days < 0 ? "text-accent-yellow font-bold" : ""}>
-                                                        {item.nextDueDate.toLocaleDateString(language === 'th' ? 'th-TH' : 'en-US', { day: 'numeric', month: 'short', year: 'numeric' })}
+                                        <div className="flex flex-col">
+                                            <div className={`shrink-0 w-10 h-10 rounded-lg flex items-center justify-center ${status.bg} relative`}>
+                                                <SettingsIcon size={20} className={status.color} />
+                                                {item.completedCount && item.completedCount > 0 && (
+                                                    <span className="absolute -top-1 -right-1 w-4 h-4 bg-accent-blue text-white text-[9px] font-bold rounded-full flex items-center justify-center shadow-sm border border-bg-primary">
+                                                        {item.completedCount}
                                                     </span>
-                                                </div>
-                                                {item.checklistItems && item.checklistItems.length > 0 && (
-                                                    <>
-                                                        <span className="w-1 h-1 rounded-full bg-white/20 shrink-0"></span>
-                                                        <span className="text-[10px] bg-bg-tertiary px-1.5 rounded border border-white/5">
-                                                            {item.checklistItems.length} items
-                                                        </span>
-                                                    </>
                                                 )}
                                             </div>
                                         </div>
 
-                                        {/* Actions */}
-                                        <div className="flex items-center gap-2 shrink-0 pl-2 border-l border-white/5">
+                                        {/* Content */}
+                                        <div className="flex-1 min-w-0 flex flex-col justify-between">
+                                            <div>
+                                                {/* Badges Row */}
+                                                <div className="flex flex-wrap items-center gap-1.5 mb-2">
+                                                    <span className={`badge ${status.bg} ${status.color} border ${status.border} shadow-sm px-2 py-0.5 text-[9px] font-bold uppercase`}>
+                                                        {status.label}
+                                                    </span>
+                                                    {priorityBadge && (
+                                                        <span className={`text-[9px] px-1.5 py-0.5 rounded-full uppercase font-bold tracking-wider ${priorityBadge.color}`}>
+                                                            {priorityBadge.label}
+                                                        </span>
+                                                    )}
+                                                </div>
+
+                                                {/* Name & Task */}
+                                                <div className="mb-2">
+                                                    {(() => {
+                                                        const machine = allMachines.find(m => m.id === item.machineId || m.name === item.machineName);
+                                                        const machineCode = machine?.code ? `(${machine.code})` : "";
+                                                        return (
+                                                            <h3 className="font-bold text-sm sm:text-base text-text-primary leading-tight flex flex-wrap items-baseline gap-1.5 pr-16">
+                                                                <span>{item.machineName}</span>
+                                                                <span className="text-text-muted font-normal text-xs">{machineCode}</span>
+                                                            </h3>
+                                                        );
+                                                    })()}
+                                                    <p className="text-xs text-text-muted leading-relaxed mt-0.5 pr-10">{item.taskName}</p>
+                                                </div>
+                                            </div>
+
+                                            {/* Metadata */}
+                                            <div className="flex flex-wrap items-center gap-x-3 gap-y-1 mt-auto pt-2 text-xs text-text-muted">
+                                                <div className="flex items-center gap-1.5">
+                                                    <CalendarIcon size={12} className="opacity-70" />
+                                                    <span className={isToday ? "text-accent-red font-bold" : isOverdue ? "text-accent-yellow font-bold" : "font-medium"}>
+                                                        {item.nextDueDate.toLocaleDateString(language === 'th' ? 'th-TH' : 'en-US', { day: 'numeric', month: 'short', year: 'numeric' })}
+                                                    </span>
+                                                </div>
+                                                {isOverdue && (
+                                                    <div className="flex items-center gap-1.5 pl-2 border-l border-white/10 ml-1">
+                                                        {formatOverdueDuration(status.days)}
+                                                    </div>
+                                                )}
+                                                {item.checklistItems && item.checklistItems.length > 0 && (
+                                                    <div className="flex items-center gap-1.5">
+                                                        <div className="w-1 h-1 rounded-full bg-white/20"></div>
+                                                        <span className="text-[10px] bg-bg-tertiary px-1.5 py-0.5 rounded border border-white/5 font-medium">
+                                                            {item.checklistItems.length} {t("labelItems") || "items"}
+                                                        </span>
+                                                    </div>
+                                                )}
+                                            </div>
+                                        </div>
+
+                                        {/* Row Actions Right */}
+                                        <div className="flex flex-col items-end justify-between shrink-0 pl-2 border-l border-white/5 ml-auto self-stretch py-0.5">
+                                            {/* Cycle Badge at Top Right */}
+                                            <span className={`badge ${getCycleInfo(item).bg} ${getCycleInfo(item).color} border ${getCycleInfo(item).border} shadow-sm px-2 py-0.5 text-[9px] font-bold uppercase`}>
+                                                {getCycleInfo(item).label}
+                                            </span>
+
+                                            {/* Main Action (Execute) - Centered in the right side */}
+                                            <button
+                                                onClick={() => handleExecuteClick(item)}
+                                                className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-bold transition-all shadow-md active:scale-95 whitespace-nowrap ${status.days <= 0
+                                                    ? "bg-accent-blue text-white hover:bg-accent-blue/90"
+                                                    : "bg-bg-tertiary text-text-primary hover:bg-white/10"
+                                                    }`}
+                                            >
+                                                {status.days <= 0 ? (
+                                                    <>
+                                                        <CheckCircleIcon size={14} />
+                                                        {t("actionCloseWork")}
+                                                    </>
+                                                ) : (
+                                                    t("actionRecordMaintenance")
+                                                )}
+                                            </button>
+
+                                            {/* Edit/Delete Buttons - Bottom row of the right side */}
                                             <div className="flex items-center gap-1">
                                                 <button
                                                     onClick={(e) => {
                                                         e.stopPropagation();
                                                         handleEditClick(item);
                                                     }}
-                                                    className="p-1.5 rounded-lg text-text-muted hover:text-accent-blue hover:bg-accent-blue/10 transition-all"
+                                                    className="p-1.5 rounded-lg text-text-muted hover:text-accent-blue hover:bg-white/5 transition-all"
                                                     title="แก้ไขแผนงาน"
                                                 >
                                                     <EditIcon size={14} />
@@ -336,25 +465,13 @@ export default function SchedulePage() {
                                                             e.stopPropagation();
                                                             handleDeleteClick(item);
                                                         }}
-                                                        className="p-1.5 rounded-lg text-text-muted hover:text-accent-red hover:bg-accent-red/10 transition-all"
+                                                        className="p-1.5 rounded-lg text-text-muted hover:text-accent-red hover:bg-white/5 transition-all"
                                                         title="ลบแผนงาน"
                                                     >
                                                         <TrashIcon size={14} />
                                                     </button>
                                                 )}
                                             </div>
-
-                                            <button
-                                                onClick={() => handleExecuteClick(item)}
-                                                className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-bold transition-all shadow-md active:scale-95 ${status.days <= 0
-                                                    ? "bg-accent-blue text-white hover:bg-accent-blue/90"
-                                                    : "bg-bg-tertiary text-text-primary hover:bg-white/10"
-                                                    }`}
-                                            >
-                                                <CheckCircleIcon size={14} />
-                                                <span className="hidden sm:inline">{t("actionCloseWork")}</span>
-                                                <span className="sm:hidden">{t("actionClose")}</span>
-                                            </button>
                                         </div>
                                     </div>
                                 </div>

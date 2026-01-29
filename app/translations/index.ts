@@ -171,6 +171,7 @@ export interface TranslationKeys {
     statusTodayLabel: string;
     statusUpcomingLabel: string;
     statusOnTrackLabel: string;
+    labelItems: string;
 
     // Table Headers
     tableImage: string;
@@ -924,7 +925,7 @@ const th: TranslationKeys = {
     msgLoadingPlans: "กำลังโหลดแผนงาน...",
     labelDue: "กำหนด: {date}",
     labelEveryDay: "ทุกวัน{day}",
-    labelOverdueBy: "เกินมา {days} วัน",
+    labelOverdueBy: "เกินมา",
     labelToday: "วันนี้",
     labelInDays: "อีก {days} วัน",
     actionCloseWork: "ปิดงาน",
@@ -1396,9 +1397,9 @@ const th: TranslationKeys = {
     placeholderAddSubItem: "เพิ่มรายการย่อย...",
     msgNoItems: "- ยังไม่มีรายการ -",
     labelTimeFormat: "รูปแบบเวลา",
-    labelMonthly: "รายเดือน",
-    labelWeekly: "รายสัปดาห์",
-    labelYearly: "รายปี",
+    labelMonthly: "เดือน",
+    labelWeekly: "สัปดาห์",
+    labelYearly: "ปี",
     labelEveryMonthly: "รอบทุกๆ (เดือน)",
     labelEveryWeekly: "ทำทุกวัน",
     labelEveryYearly: "ทำทุกปี",
@@ -1409,6 +1410,7 @@ const th: TranslationKeys = {
     actionSavePlan: "บันทึกแผนงาน",
     pmExecutionTitle: "บันทึกผลการซ่อมบำรุง (PM)",
     labelItemsCompleted: "รายการเสร็จ",
+    labelItems: "รายการ",
     labelTechnician: "ผู้ปฏิบัติงาน",
     placeholderSpecifyTechnician: "ระบุชื่อผู้ทำ",
     placeholderChecklistValue: "ใส่ค่า/รายละเอียด (เช่น 2.5A, ปกติ, เปลี่ยนแล้ว)",
@@ -1689,7 +1691,7 @@ const en: TranslationKeys = {
     msgLoadingPlans: "Loading plans...",
     labelDue: "Due: {date}",
     labelEveryDay: "Every {day}",
-    labelOverdueBy: "Overdue by {days} days",
+    labelOverdueBy: "Overdue by",
     labelToday: "Today",
     labelInDays: "In {days} days",
     actionCloseWork: "Close Work",
@@ -2241,6 +2243,7 @@ const en: TranslationKeys = {
     analyticsPreventiveRate: "Preventive Rate",
     analyticsTotalDowntime: "Total Downtime",
     analyticsCompletionRate: "Completion Rate",
+    labelItems: "items",
     analyticsPartsTracked: "Parts Tracked",
     labelHoursShort: "hrs",
     placeholderDepartment: "e.g. Maintenance",

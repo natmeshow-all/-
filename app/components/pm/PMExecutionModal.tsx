@@ -116,7 +116,14 @@ export default function PMExecutionModal({ isOpen, onClose, plan, onSuccess }: P
 
     // Build details string from checklist results
     const buildDetailsString = (): string => {
-        const cycleInfo = plan.scheduleType === 'weekly' ? `[${t("labelWeekly")}]` : `[${t("labelEveryMonthly")} ${plan.cycleMonths || 1} ${t("labelMonths")}]`;
+        let cycleInfo = "";
+        if (plan.scheduleType === 'weekly') {
+            cycleInfo = `[${t("labelWeekly")}]`;
+        } else if (plan.scheduleType === 'yearly') {
+            cycleInfo = `[${t("labelYearly")}]`;
+        } else {
+            cycleInfo = `[${t("labelEveryMonthly")} ${plan.cycleMonths || 1} ${t("labelMonths")}]`;
+        }
 
         if (!plan?.checklistItems || plan.checklistItems.length === 0) {
             return `${cycleInfo}\n${additionalNotes}`;
@@ -241,7 +248,11 @@ export default function PMExecutionModal({ isOpen, onClose, plan, onSuccess }: P
                     <div className="flex items-center gap-4 text-xs pt-2 border-t border-white/5">
                         <div className="flex items-center gap-1.5 text-text-muted">
                             <ClockIcon size={12} />
-                            <span>{t("textEveryMonths", { count: plan.cycleMonths || 1 })}</span>
+                            <span>
+                                {plan.scheduleType === 'weekly' ? t("labelWeekly") :
+                                    plan.scheduleType === 'yearly' ? t("labelYearly") :
+                                        t("textEveryMonths", { count: plan.cycleMonths || 1 })}
+                            </span>
                         </div>
                     </div>
                 </div>
