@@ -96,18 +96,18 @@ export default function MaintenancePage() {
                 getMaintenanceRecordsPaginated(PAGE_SIZE),
                 getMachines()
             ]);
-            
+
             const { records: newRecords, nextCursor } = paginatedData;
-            
+
             setAllFetchedRecords(newRecords);
             setAllRecordsForStats(newRecords);
-            
+
             // Only show preventive maintenance records as the primary list on this page
             // Note: This filters from the currently fetched batch. 
             // Users may need to "Load More" to see older preventive records if the recent batch is full of other types.
             const preventiveData = newRecords.filter(r => r.type === 'preventive');
             setRecords(preventiveData);
-            
+
             setCursor(nextCursor);
             setHasMore(!!nextCursor);
             setAllMachines(machinesData);
@@ -120,17 +120,17 @@ export default function MaintenancePage() {
 
     const handleLoadMore = async () => {
         if (!cursor || loadingMore) return;
-        
+
         setLoadingMore(true);
         try {
             const { records: newRecords, nextCursor } = await getMaintenanceRecordsPaginated(PAGE_SIZE, cursor.date, cursor.key);
-            
+
             setAllFetchedRecords(prev => [...prev, ...newRecords]);
             setAllRecordsForStats(prev => [...prev, ...newRecords]);
-            
+
             const newPreventiveData = newRecords.filter(r => r.type === 'preventive');
             setRecords(prev => [...prev, ...newPreventiveData]);
-            
+
             setCursor(nextCursor);
             setHasMore(!!nextCursor);
         } catch (error) {
@@ -562,28 +562,28 @@ export default function MaintenancePage() {
                                                     )}
                                                 </div>
 
-                                                {/* Chevron */}
-                                                <div className={`transition-transform duration-300 ${isExpanded ? 'rotate-180 text-primary' : 'text-text-muted'}`}>
-                                                    <ChevronDownIcon size={16} />
+                                                {/* Right side: Admin Delete + Chevron */}
+                                                <div className="flex items-center gap-2">
+                                                    {isAdmin && (
+                                                        <button
+                                                            onClick={(e) => {
+                                                                e.stopPropagation();
+                                                                handleDeleteClick(record);
+                                                            }}
+                                                            className="p-1.5 rounded-lg bg-accent-red/10 text-accent-red hover:bg-accent-red hover:text-white transition-all"
+                                                            title={t("actionDelete") || "ลบ"}
+                                                        >
+                                                            <TrashIcon size={12} />
+                                                        </button>
+                                                    )}
+                                                    {/* Chevron */}
+                                                    <div className={`transition-transform duration-300 ${isExpanded ? 'rotate-180 text-primary' : 'text-text-muted'}`}>
+                                                        <ChevronDownIcon size={16} />
+                                                    </div>
                                                 </div>
                                             </div>
                                         </div>
 
-                                        {/* Admin Delete Action (Absolute) */}
-                                        {isAdmin && (
-                                            <div className="absolute -top-1 -right-1">
-                                                <button
-                                                    onClick={(e) => {
-                                                        e.stopPropagation();
-                                                        handleDeleteClick(record);
-                                                    }}
-                                                    className="p-1.5 rounded-bl-xl bg-bg-primary/80 text-text-muted hover:text-accent-red hover:bg-bg-tertiary transition-all opacity-0 group-hover:opacity-100"
-                                                    title={t("actionDelete")}
-                                                >
-                                                    <TrashIcon size={12} />
-                                                </button>
-                                            </div>
-                                        )}
                                     </div>
 
                                     {/* Expandable Details */}
