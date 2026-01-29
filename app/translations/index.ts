@@ -21,6 +21,7 @@ export interface TranslationKeys {
     navAnalytics: string;
     navPredictive: string;
     navAudit: string;
+    navProfile: string;
 
     // Predictive Page
     predictiveSubtitle: string;
@@ -557,7 +558,7 @@ export interface TranslationKeys {
     adminInsightPeak: string;
     adminInsightMobile: string;
     adminInsightStable: string;
-    
+
     // Translation Management
     adminTabTranslations: string;
     adminTranslationTitle: string;
@@ -783,6 +784,7 @@ const th: TranslationKeys = {
     navAnalytics: "วิเคราะห์",
     navPredictive: "พยากรณ์",
     navAudit: "Audit",
+    navProfile: "คุณ",
 
     // Predictive Page
     predictiveSubtitle: "การพยากรณ์การซ่อมบำรุงด้วย AI",
@@ -1542,6 +1544,7 @@ const en: TranslationKeys = {
     navAnalytics: "Analytics",
     navPredictive: "Forecasting",
     navAudit: "Audit",
+    navProfile: "You",
 
     // Predictive Page
     predictiveSubtitle: "AI-Powered Maintenance Forecasting",

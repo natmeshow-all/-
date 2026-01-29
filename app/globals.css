@@ -873,65 +873,44 @@ body {
 }
 
 /* Mobile Navigation - Glassmorphism & Animations */
+/* Hide mobile navigation when a modal is open */
+body.modal-open .mobile-nav {
+  transform: translateY(100%) !important;
+  opacity: 0 !important;
+  pointer-events: none !important;
+}
+
 .mobile-nav {
   position: fixed;
-  bottom: 1.5rem;
-  left: 50%;
-  transform: translateX(-50%);
-  /* Increased intensity by making background more solid (0.8 opacity) */
-  background: rgba(15, 23, 42, 0.82);
-  /* Subtle border gradient */
-  border: 1px solid rgba(255, 255, 255, 0.15);
-  padding: 0.5rem 0.5rem;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  width: 100%;
+  background: var(--color-bg-secondary);
+  border-top: 1px solid var(--color-border-light);
+  padding: 0;
   display: flex;
-  justify-content: center;
-  gap: 0.25rem;
+  flex-direction: column;
   z-index: 50;
-  /* Strong blur for glass effect (Increased from 33px to 55px) */
-  backdrop-filter: blur(55px);
-  -webkit-backdrop-filter: blur(55px);
-  border-radius: 2rem;
-  /* Enhanced Glowing shadow (Layered for depth) */
-  box-shadow:
-    0 15px 50px -5px rgba(0, 0, 0, 0.8),
-    /* Main shadow */
-    0 0 0 1px rgba(255, 255, 255, 0.2) inset,
-    /* Inner border */
-    0 0 25px rgba(36, 113, 237, 0.656),
-    /* Primary blue glow */
-    0 0 60px rgba(59, 130, 246, 0.15);
-  /* Large outer glow spread */
-  width: calc(100% - 2rem);
-  max-width: 26rem;
-  /* Animated border shimmer */
-  overflow: hidden;
+  padding-bottom: env(safe-area-inset-bottom);
+  box-shadow: 0 -2px 10px rgba(0, 0, 0, 0.3);
+  transition: transform 0.3s ease, opacity 0.3s ease;
 }
 
-/* Background shimmer animation */
-.mobile-nav::before {
-  content: '';
-  position: absolute;
-  top: 0;
-  left: -100%;
-  width: 200%;
-  height: 100%;
-  background: linear-gradient(90deg,
-      transparent,
-      rgba(255, 255, 255, 0.08),
-      transparent);
-  animation: nav-shimmer 8s linear infinite;
-  pointer-events: none;
+.no-scrollbar::-webkit-scrollbar {
+  display: none;
 }
 
-@keyframes nav-shimmer {
-  0% {
-    transform: translateX(0);
-  }
-
-  100% {
-    transform: translateX(50%);
-  }
+.no-scrollbar {
+  -ms-overflow-style: none;
+  scrollbar-width: none;
 }
+
+.mobile-nav-container {
+  -webkit-overflow-scrolling: touch;
+}
+
+
 
 .mobile-nav-item {
   position: relative;

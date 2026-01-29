@@ -27,6 +27,8 @@ import { compressImage } from "../lib/imageCompression";
 import { COLLECTIONS } from "./constants";
 import { getMachines } from "./machineService";
 import { incrementDashboardStat } from "./analyticsService";
+import { lineService } from "./lineService";
+
 
 // ==================== HELPERS ====================
 
@@ -589,7 +591,7 @@ export const completePMTask = async (
         // Add Maintenance Record
         const recordRef = push(ref(database, COLLECTIONS.MAINTENANCE_RECORDS));
         const now = new Date();
-        const recordData = {
+        const recordData = cleanObject({
             ...record,
             id: recordRef.key,
             pmPlanId: planId,
@@ -597,8 +599,9 @@ export const completePMTask = async (
             additionalEvidence: additionalEvidence.length > 0 ? additionalEvidence : undefined,
             createdAt: now.toISOString(),
             updatedAt: now.toISOString(),
-        };
+        });
         await set(recordRef, recordData);
+
 
         // Update stats
         incrementDashboardStat("maintenanceRecords", 1);
@@ -654,12 +657,28 @@ export const completePMTask = async (
                 completedCount,
                 updatedAt: now.toISOString(),
             });
+
+            // Trigger Line Notification
+            try {
+                // Fetch full record data for notification
+                const finalRecord: MaintenanceRecord = {
+                    ...recordData,
+                    date: new Date(recordData.date),
+                    createdAt: new Date(recordData.createdAt),
+                    updatedAt: new Date(recordData.updatedAt),
+                } as MaintenanceRecord;
+
+                await lineService.sendPMCompletionNotification(finalRecord);
+            } catch (notifyError) {
+                console.error("Failed to send Line notification, but record was saved:", notifyError);
+            }
         }
     } catch (error) {
         console.error("Error completing PM task:", error);
         throw error;
     }
 };
+
 export async function copyPMPlans(
     sourceMachineId: string,
     targetMachineIds: string[]

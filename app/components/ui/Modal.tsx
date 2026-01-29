@@ -53,10 +53,12 @@ export default function Modal({
                 setIsVisible(true);
             });
             document.body.style.overflow = "hidden";
+            document.body.classList.add("modal-open");
 
             // Cleanup function ensuring overflow is reset if unmounted while open
             return () => {
                 document.body.style.overflow = "";
+                document.body.classList.remove("modal-open");
             };
         } else {
             setIsVisible(false);
@@ -66,6 +68,7 @@ export default function Modal({
                 setShouldRender(false);
                 setIsExiting(false);
                 document.body.style.overflow = "";
+                document.body.classList.remove("modal-open");
             }, 300); // Match transition duration
             return () => clearTimeout(timer);
         }

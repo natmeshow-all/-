@@ -26,19 +26,42 @@ export function LanguageProvider({ children }: { children: ReactNode }) {
             setLanguageState(savedLang);
         }
 
-        // Listen for dynamic translations from Firebase
-        const translationsRef = ref(database, "data_translations");
-        const unsubscribe = onValue(translationsRef, (snapshot) => {
-            if (snapshot.exists()) {
-                setDynamicTranslations(snapshot.val());
+        // Delay translation listener until auth is ready to avoid permission errors
+        const { auth } = require("../lib/firebase");
+        const { onAuthStateChanged } = require("firebase/auth");
+
+        let unsubscribeOnValue: (() => void) | null = null;
+
+        const unsubscribeAuth = onAuthStateChanged(auth, (user: any) => {
+            if (user) {
+                // User is authenticated, safe to listen to translations
+                const translationsRef = ref(database, "data_translations");
+                unsubscribeOnValue = onValue(translationsRef, (snapshot) => {
+                    if (snapshot.exists()) {
+                        setDynamicTranslations(snapshot.val());
+                    }
+                }, (error) => {
+                    // Suppress permission errors in log if they still occur during transition
+                    if (!error.message.includes("PERMISSION_DENIED")) {
+                        console.error("Error fetching translations:", error);
+                    }
+                });
+            } else {
+                // User signed out, stop listener
+                if (unsubscribeOnValue) {
+                    unsubscribeOnValue();
+                    unsubscribeOnValue = null;
+                }
+                setDynamicTranslations({});
             }
-        }, (error) => {
-            console.error("Error fetching translations:", error);
-            // Don't crash the app, just ignore dynamic translations
         });
 
-        return () => unsubscribe();
+        return () => {
+            unsubscribeAuth();
+            if (unsubscribeOnValue) unsubscribeOnValue();
+        };
     }, []);
+
 
     const setLanguage = (lang: Language) => {
         setLanguageState(lang);
