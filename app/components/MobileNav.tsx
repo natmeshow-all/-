@@ -60,7 +60,7 @@ export default function MobileNav() {
         <nav
             className={`mobile-nav transition-all duration-300 ${isVisible ? "translate-y-0" : "translate-y-full"}`}
         >
-            <div className="mobile-nav-container flex items-center overflow-x-auto no-scrollbar w-full h-[64px]">
+            <div className="mobile-nav-container flex items-center overflow-x-auto no-scrollbar w-full h-[56px]">
                 <div className="flex items-center justify-between min-w-full px-2">
                     {navItems
                         .filter(item => !item.roles || hasRole(item.roles))
@@ -98,8 +98,6 @@ export default function MobileNav() {
                     </Link>
                 </div>
             </div>
-            {/* Safe Area Spacer */}
-            <div className="h-[env(safe-area-inset-bottom)] bg-transparent" />
         </nav>
     );
 }
