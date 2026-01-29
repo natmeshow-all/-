@@ -5,7 +5,7 @@ import Modal from "../ui/Modal";
 import { useLanguage } from "../../contexts/LanguageContext";
 import { useAuth } from "../../contexts/AuthContext";
 import { PMPlan } from "../../types";
-import { CameraIcon, CheckCircleIcon, XIcon, ActivityIcon, PlusIcon, UserIcon, FileTextIcon, ClockIcon } from "../ui/Icons";
+import { CameraIcon, CheckCircleIcon, XIcon, ActivityIcon, PlusIcon, UserIcon, FileTextIcon, ClockIcon, UploadIcon } from "../ui/Icons";
 import { completePMTask } from "../../lib/firebaseService";
 import Image from "next/image";
 import { useToast } from "../../contexts/ToastContext";
@@ -287,14 +287,27 @@ export default function PMExecutionModal({ isOpen, onClose, plan, onSuccess }: P
                                     )}
 
                                     {!previews[key] ? (
-                                        <button
-                                            type="button"
-                                            onClick={() => document.getElementById(`file-${key}`)?.click()}
-                                            className="w-full h-28 border-2 border-dashed border-white/10 rounded-xl flex flex-col items-center justify-center gap-2 text-text-muted hover:border-accent-blue/50 hover:text-accent-blue transition-all bg-white/5"
-                                        >
-                                            <PlusIcon size={20} />
-                                            <span className="text-[10px] text-center px-2">{t("actionTakePhoto")}</span>
-                                        </button>
+                                        <div className="grid grid-cols-2 gap-2">
+                                            {/* Camera Button */}
+                                            <button
+                                                type="button"
+                                                onClick={() => document.getElementById(`file-cam-${key}`)?.click()}
+                                                className="h-28 border-2 border-dashed border-white/10 rounded-xl flex flex-col items-center justify-center gap-2 text-text-muted hover:border-accent-blue/50 hover:text-accent-blue transition-all bg-white/5"
+                                            >
+                                                <CameraIcon size={24} />
+                                                <span className="text-[10px] text-center px-1">ถ่ายภาพ</span>
+                                            </button>
+
+                                            {/* Upload Button */}
+                                            <button
+                                                type="button"
+                                                onClick={() => document.getElementById(`file-up-${key}`)?.click()}
+                                                className="h-28 border-2 border-dashed border-white/10 rounded-xl flex flex-col items-center justify-center gap-2 text-text-muted hover:border-accent-blue/50 hover:text-accent-blue transition-all bg-white/5"
+                                            >
+                                                <UploadIcon size={24} />
+                                                <span className="text-[10px] text-center px-1">อัปโหลด</span>
+                                            </button>
+                                        </div>
                                     ) : (
                                         <div className="relative w-full h-28 rounded-xl overflow-hidden border border-white/10 shadow-lg group">
                                             <Image
@@ -312,11 +325,20 @@ export default function PMExecutionModal({ isOpen, onClose, plan, onSuccess }: P
                                             </button>
                                         </div>
                                     )}
+
+                                    {/* Hidden Inputs for different sources */}
                                     <input
-                                        id={`file-${key}`}
+                                        id={`file-cam-${key}`}
                                         type="file"
                                         accept="image/*"
                                         capture="environment"
+                                        className="hidden"
+                                        onChange={(e) => handleMultiImageChange(key, e)}
+                                    />
+                                    <input
+                                        id={`file-up-${key}`}
+                                        type="file"
+                                        accept="image/*"
                                         className="hidden"
                                         onChange={(e) => handleMultiImageChange(key, e)}
                                     />

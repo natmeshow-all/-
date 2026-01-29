@@ -1,7 +1,9 @@
 import React from "react";
 import {
     ImageIcon,
-    TrashIcon
+    TrashIcon,
+    CameraIcon,
+    UploadIcon
 } from "../../ui/Icons";
 import { TranslationKeys } from "../../../translations";
 
@@ -48,18 +50,36 @@ const EvidenceImageSection: React.FC<EvidenceImageSectionProps> = ({
 
                 {/* File Input */}
                 {!imagePreview && (
-                    <label className="flex flex-col items-center justify-center w-full h-32 rounded-lg border-2 border-dashed border-border-light hover:border-primary/50 bg-bg-tertiary/30 hover:bg-bg-tertiary/50 cursor-pointer transition-all group">
-                        <div className="flex flex-col items-center justify-center pt-5 pb-6">
-                            <ImageIcon size={32} className="text-text-muted group-hover:text-primary transition-colors mb-2" />
-                            <p className="text-sm text-text-muted group-hover:text-text-primary">{t("placeholderChooseImage")}</p>
-                        </div>
-                        <input
-                            type="file"
-                            accept="image/*"
-                            className="hidden"
-                            onChange={onImageChange}
-                        />
-                    </label>
+                    <div className="grid grid-cols-2 gap-3">
+                        {/* Option 1: Take Photo (Camera) */}
+                        <label className="flex flex-col items-center justify-center w-full h-32 rounded-lg border-2 border-dashed border-border-light hover:border-primary/50 bg-bg-tertiary/30 hover:bg-bg-tertiary/50 cursor-pointer transition-all group">
+                            <div className="flex flex-col items-center justify-center pt-5 pb-6">
+                                <CameraIcon size={32} className="text-text-muted group-hover:text-primary transition-colors mb-2" />
+                                <p className="text-sm text-text-muted group-hover:text-text-primary">ถ่ายภาพ</p>
+                            </div>
+                            <input
+                                type="file"
+                                accept="image/*"
+                                capture="environment"
+                                className="hidden"
+                                onChange={onImageChange}
+                            />
+                        </label>
+
+                        {/* Option 2: Upload Photo (Gallery) */}
+                        <label className="flex flex-col items-center justify-center w-full h-32 rounded-lg border-2 border-dashed border-border-light hover:border-primary/50 bg-bg-tertiary/30 hover:bg-bg-tertiary/50 cursor-pointer transition-all group">
+                            <div className="flex flex-col items-center justify-center pt-5 pb-6">
+                                <UploadIcon size={32} className="text-text-muted group-hover:text-primary transition-colors mb-2" />
+                                <p className="text-sm text-text-muted group-hover:text-text-primary">อัปโหลดรูป</p>
+                            </div>
+                            <input
+                                type="file"
+                                accept="image/*"
+                                className="hidden"
+                                onChange={onImageChange}
+                            />
+                        </label>
+                    </div>
                 )}
 
                 {uploadingImage && (
