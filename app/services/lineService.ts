@@ -199,7 +199,7 @@ export const lineService = {
                             action: {
                                 type: "uri",
                                 label: "ดูประวัติทั้งหมด",
-                                uri: "https://maintenance-team-aob.vercel.app/history"
+                                uri: "https://my-aob.vercel.app/"
                             }
                         }
                     ],
