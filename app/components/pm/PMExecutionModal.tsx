@@ -8,6 +8,7 @@ import { PMPlan } from "../../types";
 import { CameraIcon, CheckCircleIcon, XIcon, ActivityIcon, PlusIcon, UserIcon, FileTextIcon, ClockIcon } from "../ui/Icons";
 import { completePMTask } from "../../lib/firebaseService";
 import Image from "next/image";
+import { useToast } from "../../contexts/ToastContext";
 
 interface PMExecutionModalProps {
     isOpen: boolean;
@@ -24,6 +25,7 @@ interface ChecklistItemResult {
 export default function PMExecutionModal({ isOpen, onClose, plan, onSuccess }: PMExecutionModalProps) {
     const { t } = useLanguage();
     const { userProfile } = useAuth();
+    const { success, error: showError } = useToast();
 
     // Auto-fill technician from userProfile
     const defaultTechnician = userProfile?.nickname || userProfile?.displayName || "";
@@ -177,10 +179,12 @@ export default function PMExecutionModal({ isOpen, onClose, plan, onSuccess }: P
                 filteredAdditional
             );
 
+            success(t("msgSaveSuccess") || "บันทึกข้อมูลสำเร็จ", plan.taskName);
             onSuccess?.();
             onClose();
-        } catch (error) {
-            console.error("Error completing PM task:", error);
+        } catch (err: any) {
+            console.error("Error completing PM task:", err);
+            showError(t("msgSaveError") || "เกิดข้อผิดพลาดในการบันทึก", err.message);
         } finally {
             setLoading(false);
         }

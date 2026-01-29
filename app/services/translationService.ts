@@ -23,7 +23,7 @@ export async function translateToEnglish(text: string): Promise<string> {
         );
 
         if (!response.ok) {
-            throw new Error(`Translation API error: ${response.statusText}`);
+            return text;
         }
 
         const data = await response.json();
@@ -32,7 +32,6 @@ export async function translateToEnglish(text: string): Promise<string> {
             let translated = data.responseData.translatedText;
 
             // Clean up common artifacts from free APIs if any
-            // (e.g., HTML entities, unexpected prefixes)
             translated = translated.replace(/&quot;/g, '"')
                 .replace(/&#39;/g, "'")
                 .replace(/&amp;/g, "&");
@@ -40,10 +39,10 @@ export async function translateToEnglish(text: string): Promise<string> {
             return translated;
         }
 
-        return text; // Fallback to original text
+        return text;
     } catch (error) {
-        console.error("Translation error:", error);
-        return text; // Fallback to original text
+        // Silently return original text if translation service is unreachable
+        return text;
     }
 }
 

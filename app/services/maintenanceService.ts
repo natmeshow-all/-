@@ -597,6 +597,7 @@ export const completePMTask = async (
             pmPlanId: planId,
             evidenceImageUrl: imageUrl,
             additionalEvidence: additionalEvidence.length > 0 ? additionalEvidence : undefined,
+            date: record.date instanceof Date ? record.date.toISOString() : record.date,
             createdAt: now.toISOString(),
             updatedAt: now.toISOString(),
         });
@@ -630,7 +631,12 @@ export const completePMTask = async (
 
         if (plan) {
             const lastCompleted = new Date();
-            const nextDue = new Date(plan.nextDueDate);
+            const nextDue = plan.nextDueDate ? new Date(plan.nextDueDate) : new Date();
+
+            // If the date is invalid, fallback to current date
+            if (isNaN(nextDue.getTime())) {
+                nextDue.setTime(lastCompleted.getTime());
+            }
 
             // Calculate next due date
             if (plan.scheduleType === 'weekly') {

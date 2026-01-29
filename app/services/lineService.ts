@@ -22,8 +22,12 @@ export const lineService = {
             });
 
             if (!response.ok) {
-                const error = await response.json();
-                console.error('Failed to send Line notification:', error);
+                const errorData = await response.json();
+                if (response.status === 500 && errorData.error === 'Messaging API setup incomplete') {
+                    console.warn('Line OA setup incomplete: Please add LINE_CHANNEL_ACCESS_TOKEN and LINE_USER_ID to your .env.local file.');
+                } else {
+                    console.error('Failed to send Line notification:', errorData);
+                }
             }
         } catch (error) {
             console.error('Error in sendPMCompletionNotification:', error);
