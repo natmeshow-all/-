@@ -9,7 +9,8 @@ import StockHistoryModal from "../components/forms/StockHistoryModal";
 import PartDetailsModal from "../components/parts/PartDetailsModal";
 import ConfirmModal from "../components/ui/ConfirmModal";
 import { useLanguage } from "../contexts/LanguageContext";
-import { getPartsPaginated, searchSpareParts, deleteSparePart } from "../lib/firebaseService";
+import { getPartsPaginated, searchSpareParts, deleteSparePart, getStockTransactionsPaginated } from "../lib/firebaseService";
+import { getMaintenanceRecordsPaginated } from "../services/maintenanceService";
 import { Part } from "../types";
 import { useAuth } from "../contexts/AuthContext";
 import { useToast } from "../contexts/ToastContext";
@@ -35,16 +36,16 @@ export default function PartsPage() {
     const [parts, setParts] = useState<Part[]>([]);
     const [loading, setLoading] = useState(true);
     const [expandedParts, setExpandedParts] = useState<Record<string, boolean>>({});
-    
+
     // Pagination State
-    const [lastCursor, setLastCursor] = useState<{updatedAt: string, id: string} | null>(null);
+    const [lastCursor, setLastCursor] = useState<{ updatedAt: string, id: string } | null>(null);
     const [hasMore, setHasMore] = useState(true);
     const [isSearching, setIsSearching] = useState(false);
     const [loadingMore, setLoadingMore] = useState(false);
 
     const loadParts = async (isLoadMore = false, force = false) => {
         if ((loading && !force) || loadingMore) return;
-        
+
         try {
             if (isLoadMore) {
                 if (!hasMore || isSearching) return;
@@ -191,6 +192,96 @@ export default function PartsPage() {
     // Identify Low Stock Items - No longer used for banner but may be used elsewhere if needed
     // const lowStockItems = parts.filter(p => p.quantity <= p.minStockThreshold);
 
+
+    // Tab State
+    const [activeTab, setActiveTab] = useState<'inventory' | 'history'>('inventory');
+
+    // History State
+    const [historyItems, setHistoryItems] = useState<any[]>([]);
+    const [historyLoading, setHistoryLoading] = useState(false);
+
+    // We'll simplisticly reload history on tab switch for now to ensure freshness and simpler pagination merging
+    // A proper merged pagination is complex, so we'll fetch latest 50 of each and merge for "Recent Activity" 
+    // effectively disabling infinite scroll for history in this iteration for simplicity/robustness, 
+    // or we implement a "Load More" that blindly fetches next page of both and re-sorts.
+    // Let's go with "Load More" strategy fetching both.
+
+    const [historyCursor, setHistoryCursor] = useState<{
+        maintenance?: { date: string, key: string },
+        stock?: { date: string, id: string }
+    }>({});
+
+    // Import these dynamically or assumes they are imported
+    // We need to add imports for getMaintenanceRecordsPaginated, getStockTransactionsPaginated
+
+    const loadHistory = async (isLoadMore = false) => {
+        if (historyLoading) return;
+        setHistoryLoading(true);
+
+        try {
+            const limit = 20;
+            // Fetch Maintenance Records (for Part Usage)
+            const maintenancePromise = getMaintenanceRecordsPaginated(
+                limit,
+                isLoadMore ? historyCursor.maintenance?.date : undefined,
+                isLoadMore ? historyCursor.maintenance?.key : undefined
+            );
+
+            // Fetch Stock Transactions (for Restock/Withdraw)
+            const stockPromise = getStockTransactionsPaginated(
+                limit,
+                isLoadMore ? historyCursor.stock?.date : undefined,
+                isLoadMore ? historyCursor.stock?.id : undefined
+            );
+
+            const [reqMaintenance, reqStock] = await Promise.all([maintenancePromise, stockPromise]);
+
+            // Filter Maintenance for Part replacements only
+            const validMaintenance = reqMaintenance.records.filter(r =>
+                (r.type === 'partReplacement' || r.partId || r.isOverhaul) && r.status === 'completed'
+            ).map(r => ({
+                type: 'maintenance',
+                date: new Date(r.date), // Ensure Date object
+                data: r,
+                id: r.id
+            }));
+
+            // Map Stock Transactions
+            const validStock = reqStock.transactions.map(t => ({
+                type: 'stock',
+                date: new Date(t.performedAt), // Ensure Date object
+                data: t,
+                id: t.id
+            }));
+
+            // Merge and Sort
+            const merged = [...validMaintenance, ...validStock].sort((a, b) => b.date.getTime() - a.date.getTime());
+
+            if (isLoadMore) {
+                setHistoryItems(prev => [...prev, ...merged]);
+            } else {
+                setHistoryItems(merged);
+            }
+
+            setHistoryCursor({
+                maintenance: reqMaintenance.nextCursor,
+                stock: reqStock.lastItem || undefined
+            });
+
+        } catch (err) {
+            console.error("Error loading history:", err);
+            error("Failed to load history");
+        } finally {
+            setHistoryLoading(false);
+        }
+    };
+
+    useEffect(() => {
+        if (activeTab === 'history' && historyItems.length === 0) {
+            loadHistory();
+        }
+    }, [activeTab]);
+
     return (
         <div className="min-h-screen bg-bg-primary">
             <Header />
@@ -213,16 +304,18 @@ export default function PartsPage() {
                     </div>
 
                     <div className="flex items-center gap-3 w-full sm:w-auto">
-                        <div className="relative flex-1 sm:w-64">
-                            <SearchIcon size={18} className="absolute left-3 top-1/2 -translate-y-1/2 text-text-muted" />
-                            <input
-                                type="text"
-                                value={searchQuery}
-                                onChange={(e) => setSearchQuery(e.target.value)}
-                                placeholder={t("actionSearch")}
-                                className="input pl-10 h-11 w-full bg-bg-secondary/50 focus:bg-bg-secondary transition-all"
-                            />
-                        </div>
+                        {activeTab === 'inventory' && (
+                            <div className="relative flex-1 sm:w-64">
+                                <SearchIcon size={18} className="absolute left-3 top-1/2 -translate-y-1/2 text-text-muted" />
+                                <input
+                                    type="text"
+                                    value={searchQuery}
+                                    onChange={(e) => setSearchQuery(e.target.value)}
+                                    placeholder={t("actionSearch")}
+                                    className="input pl-10 h-11 w-full bg-bg-secondary/50 focus:bg-bg-secondary transition-all"
+                                />
+                            </div>
+                        )}
 
                         {/* Add Button - Only for Logged In Users */}
                         <button
@@ -235,231 +328,358 @@ export default function PartsPage() {
                     </div>
                 </div>
 
-
-                {/* Loading State */}
-                {loading && (
-                    <div className="flex justify-center py-20">
-                        <div className="w-12 h-12 rounded-full border-4 border-bg-tertiary border-t-primary animate-spin"></div>
+                {/* Tab Switcher */}
+                <div className="flex justify-center mb-8">
+                    <div className="bg-bg-secondary p-1 rounded-xl flex gap-1 shadow-inner">
+                        <button
+                            onClick={() => setActiveTab('inventory')}
+                            className={`px-6 py-2 rounded-lg text-sm font-bold transition-all ${activeTab === 'inventory'
+                                ? 'bg-bg-tertiary text-primary shadow-sm'
+                                : 'text-text-muted hover:text-text-primary'
+                                }`}
+                        >
+                            <BoxIcon size={16} className="inline mr-2 mb-0.5" />
+                            {t("tabInventory") || "Inventory"}
+                        </button>
+                        <button
+                            onClick={() => setActiveTab('history')}
+                            className={`px-6 py-2 rounded-lg text-sm font-bold transition-all ${activeTab === 'history'
+                                ? 'bg-bg-tertiary text-accent-blue shadow-sm'
+                                : 'text-text-muted hover:text-text-primary'
+                                }`}
+                        >
+                            <HistoryIcon size={16} className="inline mr-2 mb-0.5" />
+                            {t("tabHistory") || "History"}
+                        </button>
                     </div>
-                )}
+                </div>
 
-                {/* Content */}
-                {!loading && (
-                    <div className="space-y-10">
-                        {Object.entries(groupedParts).map(([category, items], idx) => (
-                            <div key={category} className="animate-fade-in-up" style={{ animationDelay: `${idx * 100}ms` }}>
-                                {/* Category Header */}
-                                <div className="flex items-center gap-4 mb-5">
-                                    <div className="h-px flex-1 bg-gradient-to-r from-border-light to-transparent"></div>
-                                    <h2 className="text-lg font-bold text-text-primary flex items-center gap-2 px-4 py-1.5 rounded-full bg-bg-secondary/50 border border-white/5 capitalize">
-                                        {category}
-                                        <span className="ml-2 px-2 py-0.5 text-xs font-medium bg-bg-tertiary text-text-muted rounded-md">
-                                            {items.length}
-                                        </span>
-                                    </h2>
-                                    <div className="h-px flex-1 bg-gradient-to-l from-border-light to-transparent"></div>
-                                </div>
+                {/* INVENTORY TAB */}
+                {activeTab === 'inventory' && (
+                    <>
+                        {/* Loading State */}
+                        {loading && (
+                            <div className="flex justify-center py-20">
+                                <div className="w-12 h-12 rounded-full border-4 border-bg-tertiary border-t-primary animate-spin"></div>
+                            </div>
+                        )}
 
-                                {/* Grid */}
-                                <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
-                                    {items.map(part => (
-                                        <div
-                                            key={part.id}
-                                            className="relative w-full h-[300px] rounded-2xl overflow-hidden shadow-xl border border-white/5 group active:scale-[0.99] transition-all duration-300 animate-fade-in"
-                                        >
-                                            {/* Background Image */}
-                                            <div
-                                                className="absolute inset-0 bg-bg-tertiary cursor-pointer"
-                                                onClick={() => openDetailsModal(part)}
-                                            >
-                                                {part.imageUrl ? (
-                                                    <img
-                                                        src={part.imageUrl}
-                                                        alt={part.name}
-                                                        className="object-cover w-full h-full group-hover:scale-105 transition-transform duration-700"
-                                                    />
-                                                ) : (
-                                                    <div className="w-full h-full flex flex-col items-center justify-center text-text-muted bg-bg-secondary">
-                                                        <BoxIcon size={48} className="opacity-10 mb-2" />
-                                                        <span className="text-[10px] opacity-40 font-medium tracking-wider">{t("labelNoImage") || "No Image"}</span>
-                                                    </div>
-                                                )}
+                        {/* Content */}
+                        {!loading && (
+                            <div className="space-y-10">
+                                {Object.entries(groupedParts).map(([category, items], idx) => (
+                                    <div key={category} className="animate-fade-in-up" style={{ animationDelay: `${idx * 100}ms` }}>
+                                        {/* Category Header */}
+                                        <div className="flex items-center gap-4 mb-5">
+                                            <div className="h-px flex-1 bg-gradient-to-r from-border-light to-transparent"></div>
+                                            <h2 className="text-lg font-bold text-text-primary flex items-center gap-2 px-4 py-1.5 rounded-full bg-bg-secondary/50 border border-white/5 capitalize">
+                                                {category}
+                                                <span className="ml-2 px-2 py-0.5 text-xs font-medium bg-bg-tertiary text-text-muted rounded-md">
+                                                    {items.length}
+                                                </span>
+                                            </h2>
+                                            <div className="h-px flex-1 bg-gradient-to-l from-border-light to-transparent"></div>
+                                        </div>
 
-                                                {/* Gradient Overlays */}
-                                                <div className="absolute inset-0 bg-gradient-to-t from-bg-primary via-bg-primary/20 to-transparent opacity-90" />
-                                                <div className="absolute inset-0 bg-gradient-to-r from-bg-primary/80 via-transparent to-transparent" />
-                                            </div>
+                                        {/* Grid */}
+                                        <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
+                                            {items.map(part => (
+                                                <div
+                                                    key={part.id}
+                                                    className="relative w-full h-[300px] rounded-2xl overflow-hidden shadow-xl border border-white/5 group active:scale-[0.99] transition-all duration-300 animate-fade-in"
+                                                >
+                                                    {/* Background Image */}
+                                                    <div
+                                                        className="absolute inset-0 bg-bg-tertiary cursor-pointer"
+                                                        onClick={() => openDetailsModal(part)}
+                                                    >
+                                                        {part.imageUrl ? (
+                                                            <img
+                                                                src={part.imageUrl}
+                                                                alt={part.name}
+                                                                className="object-cover w-full h-full group-hover:scale-105 transition-transform duration-700"
+                                                            />
+                                                        ) : (
+                                                            <div className="w-full h-full flex flex-col items-center justify-center text-text-muted bg-bg-secondary">
+                                                                <BoxIcon size={48} className="opacity-10 mb-2" />
+                                                                <span className="text-[10px] opacity-40 font-medium tracking-wider">{t("labelNoImage") || "No Image"}</span>
+                                                            </div>
+                                                        )}
 
-                                            {/* Content Overlay */}
-                                            <div className="absolute inset-0 p-4 flex flex-col pointer-events-none">
-                                                {/* Header Row */}
-                                                <div className="flex justify-between items-start pointer-events-auto">
-                                                    <div className="flex-1 min-w-0 pr-4">
-                                                        <h3
-                                                            className="text-xl font-bold text-white drop-shadow-lg leading-tight cursor-pointer hover:text-primary-light transition-colors line-clamp-1"
-                                                            onClick={() => openDetailsModal(part)}
-                                                        >
-                                                            {part.name}
-                                                        </h3>
-                                                        <span className="text-[10px] font-bold text-primary-light uppercase tracking-wider block mt-0.5 opacity-80">
-                                                            {part.category}
-                                                        </span>
+                                                        {/* Gradient Overlays */}
+                                                        <div className="absolute inset-0 bg-gradient-to-t from-bg-primary via-bg-primary/20 to-transparent opacity-90" />
+                                                        <div className="absolute inset-0 bg-gradient-to-r from-bg-primary/80 via-transparent to-transparent" />
                                                     </div>
 
-                                                    <div className="flex flex-col items-end gap-2 shrink-0">
-                                                        <div className="flex flex-col items-end">
-                                                            <span className={`text-2xl font-black ${part.quantity <= part.minStockThreshold ? 'text-error' : 'text-primary'} drop-shadow-lg`}>
-                                                                x{part.quantity}
-                                                            </span>
-                                                            <span className="text-[9px] font-bold text-white/50 uppercase tracking-widest -mt-1">{part.unit || "pcs"}</span>
-                                                        </div>
-
-                                                        <div className="flex gap-1.5">
-                                                            {/* Sub-parts Trigger */}
-                                                            {subPartsMap[part.id] && (
-                                                                <button
-                                                                    onClick={(e) => { e.stopPropagation(); toggleExpand(part.id); }}
-                                                                    className={`w-8 h-8 rounded-lg border flex items-center justify-center transition-all shadow-lg ${expandedParts[part.id] ? 'bg-primary border-primary text-white' : 'bg-white/5 border-white/10 text-white hover:bg-white/10 backdrop-blur-xl'}`}
+                                                    {/* Content Overlay */}
+                                                    <div className="absolute inset-0 p-4 flex flex-col pointer-events-none">
+                                                        {/* Header Row */}
+                                                        <div className="flex justify-between items-start pointer-events-auto">
+                                                            <div className="flex-1 min-w-0 pr-4">
+                                                                <h3
+                                                                    className="text-xl font-bold text-white drop-shadow-lg leading-tight cursor-pointer hover:text-primary-light transition-colors line-clamp-1"
+                                                                    onClick={() => openDetailsModal(part)}
                                                                 >
-                                                                    {expandedParts[part.id] ? <ChevronUpIcon size={16} /> : <LayersIcon size={16} />}
-                                                                </button>
-                                                            )}
+                                                                    {part.name}
+                                                                </h3>
+                                                                <span className="text-[10px] font-bold text-primary-light uppercase tracking-wider block mt-0.5 opacity-80">
+                                                                    {part.category}
+                                                                </span>
+                                                            </div>
 
-                                                            {/* Admin Delete */}
-                                                            {isAdmin && (
-                                                                <button
-                                                                    onClick={(e) => {
-                                                                        e.stopPropagation();
-                                                                        handleDeleteClick(part);
-                                                                    }}
-                                                                    className="w-8 h-8 rounded-lg bg-error/10 hover:bg-error border border-error/20 text-error hover:text-white flex items-center justify-center transition-all shadow-lg opacity-0 group-hover:opacity-100"
-                                                                    title={t("actionDelete")}
-                                                                >
-                                                                    <TrashIcon size={16} />
-                                                                </button>
-                                                            )}
-                                                        </div>
-                                                    </div>
-                                                </div>
-
-                                                {/* Details Grid - Compact Version */}
-                                                <div className="mt-auto grid grid-cols-2 gap-x-4 gap-y-2 pointer-events-auto bg-black/40 backdrop-blur-md rounded-xl p-3 border border-white/5">
-                                                    <div className="flex flex-col">
-                                                        <span className="text-[8px] text-white/40 font-bold uppercase tracking-wider">{t("tableModelSpec") || "Model"}</span>
-                                                        <span className="text-[11px] text-white font-medium truncate" title={part.model || part.description}>
-                                                            {part.model || part.description || "-"}
-                                                        </span>
-                                                    </div>
-                                                    <div className="flex flex-col">
-                                                        <span className="text-[8px] text-white/40 font-bold uppercase tracking-wider">{t("tableBrand") || "Brand"}</span>
-                                                        <span className="text-[11px] text-white font-medium truncate">
-                                                            {part.brand || "-"}
-                                                        </span>
-                                                    </div>
-                                                    <div className="flex flex-col">
-                                                        <span className="text-[8px] text-white/40 font-bold uppercase tracking-wider">{t("tableLocation") || "Location"}</span>
-                                                        <span className="text-[11px] text-white font-medium truncate">
-                                                            {part.location || "-"}
-                                                        </span>
-                                                    </div>
-                                                    <div className="flex flex-col">
-                                                        <span className="text-[8px] text-white/40 font-bold uppercase tracking-wider">{t("tablePrice") || "Price"}</span>
-                                                        <span className="text-[11px] text-accent-orange font-bold">
-                                                            {part.pricePerUnit ? `฿${Number(part.pricePerUnit).toLocaleString()}` : "-"}
-                                                        </span>
-                                                    </div>
-                                                </div>
-                                            </div>
-
-                                            {/* Sub-Parts List (Expandable Overlay) */}
-                                            {subPartsMap[part.id] && expandedParts[part.id] && (
-                                                <div className="absolute inset-0 z-20 bg-bg-primary/95 backdrop-blur-lg flex flex-col p-4 animate-fade-in">
-                                                    <div className="flex items-center justify-between mb-4">
-                                                        <div className="flex items-center gap-2 text-xs font-bold text-text-muted uppercase tracking-widest">
-                                                            <LayersIcon size={14} className="text-primary" />
-                                                            {t("labelSubParts")} ({subPartsMap[part.id].length})
-                                                        </div>
-                                                        <button
-                                                            onClick={() => toggleExpand(part.id)}
-                                                            className="p-1 rounded-full bg-white/5 text-text-muted hover:text-white"
-                                                        >
-                                                            <ChevronDownIcon size={18} />
-                                                        </button>
-                                                    </div>
-                                                    <div className="flex-1 overflow-auto space-y-2 custom-scrollbar pr-1">
-                                                        {subPartsMap[part.id].map(sub => (
-                                                            <div
-                                                                key={sub.id}
-                                                                className="flex items-center justify-between p-2 rounded-lg bg-white/5 border border-white/5 hover:border-primary/30 transition-colors cursor-pointer group/sub"
-                                                                onClick={() => openDetailsModal(sub)}
-                                                            >
-                                                                <div className="flex items-center gap-3 overflow-hidden">
-                                                                    <div className="w-10 h-10 rounded-lg bg-bg-secondary shrink-0 overflow-hidden border border-white/5">
-                                                                        {sub.imageUrl ? (
-                                                                            <img src={sub.imageUrl} alt={sub.name} className="w-full h-full object-cover" />
-                                                                        ) : (
-                                                                            <div className="w-full h-full flex items-center justify-center text-text-muted/30">
-                                                                                <BoxIcon size={16} />
-                                                                            </div>
-                                                                        )}
-                                                                    </div>
-                                                                    <div className="min-w-0">
-                                                                        <div className="text-xs font-bold text-text-primary truncate">{sub.name}</div>
-                                                                        <div className="text-[10px] text-text-muted truncate">{sub.description || sub.brand || "-"}</div>
-                                                                    </div>
+                                                            <div className="flex flex-col items-end gap-2 shrink-0">
+                                                                <div className="flex flex-col items-end">
+                                                                    <span className={`text-2xl font-black ${part.quantity <= part.minStockThreshold ? 'text-error' : 'text-primary'} drop-shadow-lg`}>
+                                                                        x{part.quantity}
+                                                                    </span>
+                                                                    <span className="text-[9px] font-bold text-white/50 uppercase tracking-widest -mt-1">{part.unit || "pcs"}</span>
                                                                 </div>
-                                                                <div className="text-right shrink-0 ml-2">
-                                                                    <div className={`text-xs font-bold ${sub.quantity <= sub.minStockThreshold ? 'text-error' : 'text-primary'}`}>
-                                                                        x{sub.quantity} <span className="text-[9px] font-normal text-text-muted">{sub.unit}</span>
-                                                                    </div>
+
+                                                                <div className="flex gap-1.5">
+                                                                    {/* Sub-parts Trigger */}
+                                                                    {subPartsMap[part.id] && (
+                                                                        <button
+                                                                            onClick={(e) => { e.stopPropagation(); toggleExpand(part.id); }}
+                                                                            className={`w-8 h-8 rounded-lg border flex items-center justify-center transition-all shadow-lg ${expandedParts[part.id] ? 'bg-primary border-primary text-white' : 'bg-white/5 border-white/10 text-white hover:bg-white/10 backdrop-blur-xl'}`}
+                                                                        >
+                                                                            {expandedParts[part.id] ? <ChevronUpIcon size={16} /> : <LayersIcon size={16} />}
+                                                                        </button>
+                                                                    )}
+
+                                                                    {/* Admin Delete */}
+                                                                    {isAdmin && (
+                                                                        <button
+                                                                            onClick={(e) => {
+                                                                                e.stopPropagation();
+                                                                                handleDeleteClick(part);
+                                                                            }}
+                                                                            className="w-8 h-8 rounded-lg bg-error/10 hover:bg-error border border-error/20 text-error hover:text-white flex items-center justify-center transition-all shadow-lg opacity-0 group-hover:opacity-100"
+                                                                            title={t("actionDelete")}
+                                                                        >
+                                                                            <TrashIcon size={16} />
+                                                                        </button>
+                                                                    )}
                                                                 </div>
                                                             </div>
-                                                        ))}
-                                                    </div>
-                                                </div>
-                                            )}
-                                        </div>
-                                    ))}
-                                </div>
-                            </div>
-                        ))}
+                                                        </div>
 
-                        {/* Load More Button */}
-                        {!isSearching && hasMore && (
-                            <div className="flex justify-center mt-8">
+                                                        {/* Details Grid - Compact Version */}
+                                                        <div className="mt-auto grid grid-cols-2 gap-x-4 gap-y-2 pointer-events-auto bg-black/40 backdrop-blur-md rounded-xl p-3 border border-white/5">
+                                                            <div className="flex flex-col">
+                                                                <span className="text-[8px] text-white/40 font-bold uppercase tracking-wider">{t("tableModelSpec") || "Model"}</span>
+                                                                <span className="text-[11px] text-white font-medium truncate" title={part.model || part.description}>
+                                                                    {part.model || part.description || "-"}
+                                                                </span>
+                                                            </div>
+                                                            <div className="flex flex-col">
+                                                                <span className="text-[8px] text-white/40 font-bold uppercase tracking-wider">{t("tableBrand") || "Brand"}</span>
+                                                                <span className="text-[11px] text-white font-medium truncate">
+                                                                    {part.brand || "-"}
+                                                                </span>
+                                                            </div>
+                                                            <div className="flex flex-col">
+                                                                <span className="text-[8px] text-white/40 font-bold uppercase tracking-wider">{t("tableLocation") || "Location"}</span>
+                                                                <span className="text-[11px] text-white font-medium truncate">
+                                                                    {part.location || "-"}
+                                                                </span>
+                                                            </div>
+                                                            <div className="flex flex-col">
+                                                                <span className="text-[8px] text-white/40 font-bold uppercase tracking-wider">{t("tablePrice") || "Price"}</span>
+                                                                <span className="text-[11px] text-accent-orange font-bold">
+                                                                    {part.pricePerUnit ? `฿${Number(part.pricePerUnit).toLocaleString()}` : "-"}
+                                                                </span>
+                                                            </div>
+                                                        </div>
+                                                    </div>
+
+                                                    {/* Sub-Parts List (Expandable Overlay) */}
+                                                    {subPartsMap[part.id] && expandedParts[part.id] && (
+                                                        <div className="absolute inset-0 z-20 bg-bg-primary/95 backdrop-blur-lg flex flex-col p-4 animate-fade-in">
+                                                            <div className="flex items-center justify-between mb-4">
+                                                                <div className="flex items-center gap-2 text-xs font-bold text-text-muted uppercase tracking-widest">
+                                                                    <LayersIcon size={14} className="text-primary" />
+                                                                    {t("labelSubParts")} ({subPartsMap[part.id].length})
+                                                                </div>
+                                                                <button
+                                                                    onClick={() => toggleExpand(part.id)}
+                                                                    className="p-1 rounded-full bg-white/5 text-text-muted hover:text-white"
+                                                                >
+                                                                    <ChevronDownIcon size={18} />
+                                                                </button>
+                                                            </div>
+                                                            <div className="flex-1 overflow-auto space-y-2 custom-scrollbar pr-1">
+                                                                {subPartsMap[part.id].map(sub => (
+                                                                    <div
+                                                                        key={sub.id}
+                                                                        className="flex items-center justify-between p-2 rounded-lg bg-white/5 border border-white/5 hover:border-primary/30 transition-colors cursor-pointer group/sub"
+                                                                        onClick={() => openDetailsModal(sub)}
+                                                                    >
+                                                                        <div className="flex items-center gap-3 overflow-hidden">
+                                                                            <div className="w-10 h-10 rounded-lg bg-bg-secondary shrink-0 overflow-hidden border border-white/5">
+                                                                                {sub.imageUrl ? (
+                                                                                    <img src={sub.imageUrl} alt={sub.name} className="w-full h-full object-cover" />
+                                                                                ) : (
+                                                                                    <div className="w-full h-full flex items-center justify-center text-text-muted/30">
+                                                                                        <BoxIcon size={16} />
+                                                                                    </div>
+                                                                                )}
+                                                                            </div>
+                                                                            <div className="min-w-0">
+                                                                                <div className="text-xs font-bold text-text-primary truncate">{sub.name}</div>
+                                                                                <div className="text-[10px] text-text-muted truncate">{sub.description || sub.brand || "-"}</div>
+                                                                            </div>
+                                                                        </div>
+                                                                        <div className="text-right shrink-0 ml-2">
+                                                                            <div className={`text-xs font-bold ${sub.quantity <= sub.minStockThreshold ? 'text-error' : 'text-primary'}`}>
+                                                                                x{sub.quantity} <span className="text-[9px] font-normal text-text-muted">{sub.unit}</span>
+                                                                            </div>
+                                                                        </div>
+                                                                    </div>
+                                                                ))}
+                                                            </div>
+                                                        </div>
+                                                    )}
+                                                </div>
+                                            ))}
+                                        </div>
+                                    </div>
+                                ))}
+
+                                {/* Load More Button */}
+                                {!isSearching && hasMore && (
+                                    <div className="flex justify-center mt-8">
+                                        <button
+                                            onClick={() => loadParts(true)}
+                                            disabled={loadingMore}
+                                            className="btn btn-secondary px-8"
+                                        >
+                                            {loadingMore ? (
+                                                <span className="flex items-center gap-2">
+                                                    <div className="w-4 h-4 rounded-full border-2 border-current border-t-transparent animate-spin" />
+                                                    {t("loading") || "Loading..."}
+                                                </span>
+                                            ) : (
+                                                t("actionLoadMore") || "Load More"
+                                            )}
+                                        </button>
+                                    </div>
+                                )}
+                            </div>
+                        )}
+
+                        {!loading && parts.length === 0 && (
+                            <div className="empty-state py-20">
+                                <BoxIcon size={48} className="text-text-muted mb-4 opacity-50" />
+                                <h3 className="text-lg font-bold text-text-primary mb-2">{t("partsNoParts")}</h3>
+                                <p className="text-text-muted text-sm max-w-md mx-auto mb-6">
+                                    {t("partsNoPartsDesc")}
+                                </p>
                                 <button
-                                    onClick={() => loadParts(true)}
-                                    disabled={loadingMore}
-                                    className="btn btn-secondary px-8"
+                                    onClick={() => { if (checkAuth()) setAddModalOpen(true); }}
+                                    className="btn btn-primary shadow-lg shadow-primary/20"
                                 >
-                                    {loadingMore ? (
-                                        <span className="flex items-center gap-2">
-                                            <div className="w-4 h-4 rounded-full border-2 border-current border-t-transparent animate-spin" />
-                                            {t("loading") || "Loading..."}
-                                        </span>
-                                    ) : (
-                                        t("actionLoadMore") || "Load More"
-                                    )}
+                                    <PlusIcon size={20} />
+                                    {t("partsAddFirst")}
                                 </button>
                             </div>
                         )}
-                    </div>
+                    </>
                 )}
 
-                {!loading && parts.length === 0 && (
-                    <div className="empty-state py-20">
-                        <BoxIcon size={48} className="text-text-muted mb-4 opacity-50" />
-                        <h3 className="text-lg font-bold text-text-primary mb-2">{t("partsNoParts")}</h3>
-                        <p className="text-text-muted text-sm max-w-md mx-auto mb-6">
-                            {t("partsNoPartsDesc")}
-                        </p>
-                        <button
-                            onClick={() => { if (checkAuth()) setAddModalOpen(true); }}
-                            className="btn btn-primary shadow-lg shadow-primary/20"
-                        >
-                            <PlusIcon size={20} />
-                            {t("partsAddFirst")}
-                        </button>
+                {/* HISTORY TAB */}
+                {activeTab === 'history' && (
+                    <div className="space-y-4 max-w-3xl mx-auto">
+                        {historyLoading && historyItems.length === 0 ? (
+                            <div className="flex justify-center py-20">
+                                <div className="w-12 h-12 rounded-full border-4 border-bg-tertiary border-t-primary animate-spin"></div>
+                            </div>
+                        ) : (
+                            <>
+                                {historyItems.map((item) => {
+                                    // Render Logic for merged items
+                                    if (item.type === 'maintenance') {
+                                        const r = item.data;
+                                        return (
+                                            <div key={item.id} className="bg-bg-secondary/50 rounded-xl p-4 border border-white/5 hover:border-accent-blue/30 transition-all flex gap-4">
+                                                <div className="w-12 h-12 rounded-full bg-accent-blue/10 flex items-center justify-center shrink-0 border border-accent-blue/20">
+                                                    <BoxIcon size={20} className="text-accent-blue" />
+                                                </div>
+                                                <div className="flex-1 min-w-0">
+                                                    <div className="flex justify-between items-start">
+                                                        <div>
+                                                            <h4 className="font-bold text-text-primary">{r.partName || "Part Replacement"}</h4>
+                                                            <div className="text-sm text-accent-blue font-medium mt-0.5">{r.machineName}</div>
+                                                        </div>
+                                                        <span className="text-xs text-text-muted whitespace-nowrap">
+                                                            {new Date(r.date).toLocaleDateString('th-TH', { day: 'numeric', month: 'short', year: '2-digit' })}
+                                                        </span>
+                                                    </div>
+                                                    <div className="mt-2 text-xs text-text-muted flex items-center gap-2">
+                                                        <span>👤 {r.technician}</span>
+                                                        <span className="w-1 h-1 rounded-full bg-white/20"></span>
+                                                        <span>{t("labelPartReplacement") || "เปลี่ยนอะไหล่"}</span>
+                                                    </div>
+                                                </div>
+                                            </div>
+                                        );
+                                    } else {
+                                        const t = item.data;
+                                        const isRestock = t.type === 'restock';
+                                        return (
+                                            <div key={item.id} className="bg-bg-secondary/50 rounded-xl p-4 border border-white/5 hover:border-primary/30 transition-all flex gap-4">
+                                                <div className={`w-12 h-12 rounded-full flex items-center justify-center shrink-0 border ${isRestock ? 'bg-primary/10 border-primary/20' : 'bg-accent-orange/10 border-accent-orange/20'}`}>
+                                                    {isRestock ? <ArrowUpIcon size={20} className="text-primary" /> : <ArrowDownIcon size={20} className="text-accent-orange" />}
+                                                </div>
+                                                <div className="flex-1 min-w-0">
+                                                    <div className="flex justify-between items-start">
+                                                        <div>
+                                                            <h4 className="font-bold text-text-primary">{t.partName}</h4>
+                                                            <div className={`text-sm font-bold mt-0.5 ${isRestock ? 'text-primary' : 'text-accent-orange'}`}>
+                                                                {isRestock ? '+' : '-'}{t.quantity} {t.unit || ""}
+                                                            </div>
+                                                        </div>
+                                                        <span className="text-xs text-text-muted whitespace-nowrap">
+                                                            {new Date(t.performedAt).toLocaleDateString('th-TH', { day: 'numeric', month: 'short', year: '2-digit' })}
+                                                        </span>
+                                                    </div>
+                                                    <div className="mt-2 text-xs text-text-muted flex items-center gap-2">
+                                                        <span>👤 {t.performedBy}</span>
+                                                        <span className="w-1 h-1 rounded-full bg-white/20"></span>
+                                                        <span>{isRestock ? (t("actionRestock") || "เติมสต็อก") : (t("actionWithdraw") || "เบิกจ่าย")}</span>
+                                                        {t.machineName && (
+                                                            <>
+                                                                <span className="w-1 h-1 rounded-full bg-white/20"></span>
+                                                                <span className="text-text-primary/70">{t.machineName}</span>
+                                                            </>
+                                                        )}
+                                                    </div>
+                                                </div>
+                                            </div>
+                                        );
+                                    }
+                                })}
+
+                                {historyItems.length > 0 && (
+                                    <div className="flex justify-center pt-4">
+                                        <button
+                                            onClick={() => loadHistory(true)}
+                                            disabled={historyLoading}
+                                            className="text-sm text-text-muted hover:text-text-primary underline"
+                                        >
+                                            {historyLoading ? "Loading..." : (t("actionLoadMore") || "โหลดเพิ่มเติม")}
+                                        </button>
+                                    </div>
+                                )}
+
+                                {!historyLoading && historyItems.length === 0 && (
+                                    <div className="text-center py-20 text-text-muted">
+                                        <div className="text-center py-20 text-text-muted">
+                                            {t("msgNoHistory") || "No history found"}
+                                        </div>
+                                    </div>
+                                )}
+                            </>
+                        )}
                     </div>
                 )}
             </main>

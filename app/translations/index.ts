@@ -151,6 +151,8 @@ export interface TranslationKeys {
     labelClass: string;
     historyItem: string;
     msgNoHistory: string;
+    actionRestock: string;
+    actionWithdraw: string;
     scheduleDescription: string;
     actionManagePM: string;
     msgOverdueAlert: string;
@@ -420,6 +422,8 @@ export interface TranslationKeys {
     partsWithdraw: string;
     partsReceive: string;
     partsHistory: string;
+    tabInventory: string;
+    tabHistory: string;
     partsNoParts: string;
     partsNoPartsDesc: string;
     partsAddFirst: string;
@@ -1196,8 +1200,10 @@ const th: TranslationKeys = {
     partsInStock: "คงเหลือ",
     partsWithdraw: "เบิกของออก",
     partsReceive: "รับของเข้า",
-    partsHistory: "ประวัติรายการ",
-    partsNoParts: "ไม่พบรายการอะไหล่",
+    partsHistory: "ประวัติ",
+    tabInventory: "คลังอะไหล่",
+    tabHistory: "ประวัติการใช้งาน",
+    partsNoParts: "ไม่พบอะไหล่",
     partsNoPartsDesc: "เริ่มเพิ่มอะไหล่ที่ใช้บ่อย เช่น ลูกปืน น้ำมัน หรือสายพาน เพื่อติดตามสต็อก",
     partsAddFirst: "เพิ่มชิ้นแรก",
     partsLoginToManage: "เข้าสู่ระบบเพื่อจัดการ",
@@ -1437,6 +1443,8 @@ const th: TranslationKeys = {
     msgLoadingHistory: "กำลังโหลดประวัติ...",
     msgNoMatchingHistory: "ไม่พบข้อมูลประวัติที่ตรงกับเงื่อนไข",
     pmHistoryModalTitle: "ประวัติการซ่อมบำรุงเชิงป้องกัน (PM)",
+    actionRestock: "เติมสต็อก",
+    actionWithdraw: "เบิกจ่าย",
     statPMCount: "จำนวนงานซ่อมบำรุง (PM)",
     statOverhaulCount: "เปลี่ยนอะไหล่/Overhaul",
     msgNoHistoryForItem: "ยังไม่มีประวัติการซ่อมบำรุงสำหรับรายการนี้",
@@ -1687,6 +1695,8 @@ const en: TranslationKeys = {
     labelClass: "Class",
     historyItem: "Item History",
     msgNoHistory: "No maintenance history yet",
+    actionRestock: "Restock",
+    actionWithdraw: "Withdraw",
     scheduleDescription: "Preventive Maintenance (PM) Schedule",
     actionManagePM: "Manage PM Plans",
     msgOverdueAlert: "Items are due or overdue for maintenance!",
@@ -1959,6 +1969,8 @@ const en: TranslationKeys = {
     partsWithdraw: "Withdraw",
     partsReceive: "Receive",
     partsHistory: "History",
+    tabInventory: "Inventory",
+    tabHistory: "History",
     partsNoParts: "No Parts Found",
     partsNoPartsDesc: "Start adding consumables like Bearings, Oil, or Filters to track your inventory.",
     partsAddFirst: "Add First Item",

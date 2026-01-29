@@ -285,20 +285,20 @@ export async function getPartsPaginated(
         let partsQuery;
 
         if (lastDate && lastId) {
-             // Fetch next page (older items)
-             partsQuery = query(
+            // Fetch next page (older items)
+            partsQuery = query(
                 partsRef,
                 orderByChild("updatedAt"),
                 endAt(lastDate, lastId),
                 limitToLast(limit + 1)
-             );
+            );
         } else {
-             // First page (newest items)
-             partsQuery = query(
+            // First page (newest items)
+            partsQuery = query(
                 partsRef,
                 orderByChild("updatedAt"),
                 limitToLast(limit)
-             );
+            );
         }
 
         const snapshot = await get(partsQuery);
@@ -306,7 +306,7 @@ export async function getPartsPaginated(
 
         const parts: Part[] = [];
         snapshot.forEach((childSnapshot) => {
-             parts.push(mapPartData(childSnapshot.key!, childSnapshot.val()));
+            parts.push(mapPartData(childSnapshot.key!, childSnapshot.val()));
         });
 
         // Firebase returns ascending (oldest -> newest)
@@ -315,10 +315,10 @@ export async function getPartsPaginated(
 
         // Handle cursor overlap
         if (lastDate && lastId) {
-             const cursorIndex = parts.findIndex(p => p.id === lastId);
-             if (cursorIndex !== -1) {
-                 parts.splice(cursorIndex, 1);
-             }
+            const cursorIndex = parts.findIndex(p => p.id === lastId);
+            if (cursorIndex !== -1) {
+                parts.splice(cursorIndex, 1);
+            }
         }
 
         let newLastItem = null;
@@ -372,7 +372,7 @@ export async function getPartsByMachine(machineId: string): Promise<Part[]> {
 export async function getPartsByMachineName(machineName: string): Promise<Part[]> {
     try {
         const partsRef = ref(database, COLLECTIONS.PARTS);
-        
+
         // Attempt server-side filtering using the new index
         try {
             const partsQuery = query(partsRef, orderByChild("machineName"), equalTo(machineName));
@@ -385,23 +385,23 @@ export async function getPartsByMachineName(machineName: string): Promise<Part[]
                 });
                 return parts.sort((a, b) => b.updatedAt.getTime() - a.updatedAt.getTime());
             }
-            
+
             // If no exact match on machineName, check legacy field 'machine' or fallback to client-side
             // But strict machineName match is preferred.
             // If snapshot is empty, it might mean no parts found OR index missing (if rules not deployed).
             // But with index, it just returns empty.
-            
+
             // To be safe against "index not built yet" or mixed data, we might want to fallback if 0 results?
             // No, if query works, it returns results or empty.
-            
+
             // However, we also need to check the legacy 'machine' field.
             // Since we can only query one field, let's try 'machine' field query if machineName returned nothing?
             // Or just rely on client-side fallback if we really suspect legacy data.
-            
+
             if (snapshot.exists()) return []; // Found nothing with machineName
-            
+
         } catch (queryError) {
-             console.warn("Server-side query failed (likely index missing), falling back to client-side:", queryError);
+            console.warn("Server-side query failed (likely index missing), falling back to client-side:", queryError);
         }
 
         // Fallback to client-side filtering (Legacy behavior)
@@ -538,7 +538,7 @@ export async function deletePart(id: string): Promise<void> {
     try {
         const partRef = ref(database, `${COLLECTIONS.PARTS}/${id}`);
         await remove(partRef);
-        
+
         // Update stats
         incrementDashboardStat("totalParts", -1);
         incrementDashboardStat("totalSpareParts", -1);
@@ -552,7 +552,7 @@ export const deleteSparePart = deletePart;
 
 // ==================== SPARE PARTS (CONSUMABLES) ====================
 
-export async function getSparePartsPaginated(limit: number = 20, lastName?: string, lastId?: string): Promise<{ parts: SparePart[], lastItem: {name: string, id: string} | null }> {
+export async function getSparePartsPaginated(limit: number = 20, lastName?: string, lastId?: string): Promise<{ parts: SparePart[], lastItem: { name: string, id: string } | null }> {
     try {
         const partsRef = ref(database, COLLECTIONS.PARTS);
         let partsQuery;
@@ -585,7 +585,7 @@ export async function getSparePartsPaginated(limit: number = 20, lastName?: stri
 export async function searchSpareParts(queryText: string): Promise<Part[]> {
     try {
         if (!queryText) return [];
-        
+
         const partsRef = ref(database, COLLECTIONS.PARTS);
         const partsQuery = query(partsRef, orderByChild("name"), startAt(queryText), endAt(queryText + "\uf8ff"));
         const snapshot = await get(partsQuery);
@@ -596,7 +596,7 @@ export async function searchSpareParts(queryText: string): Promise<Part[]> {
         snapshot.forEach((childSnapshot) => {
             parts.push(mapPartData(childSnapshot.key!, childSnapshot.val()));
         });
-        
+
         return parts;
     } catch (error) {
         console.error("Error searching parts:", error);
@@ -629,7 +629,7 @@ export async function addSparePart(
 ): Promise<string> {
     try {
         if (!part.name) throw new Error("Spare part name is required");
-        
+
         let imageUrl = "";
         if (imageFile) {
             imageUrl = await uploadPartImage(imageFile); // Reuse part image upload for now
@@ -789,6 +789,70 @@ export async function getStockTransactions(partId?: string): Promise<StockTransa
         return txns.sort((a, b) => b.performedAt.getTime() - a.performedAt.getTime());
     } catch (error) {
         console.error("Error fetching stock transactions:", error);
+        throw error;
+    }
+}
+
+export async function getStockTransactionsPaginated(
+    limit: number = 20,
+    lastDate?: string,
+    lastId?: string
+): Promise<{ transactions: StockTransaction[], lastItem: { date: string, id: string } | null }> {
+    try {
+        const txnRef = ref(database, "stock_transactions");
+        let q;
+
+        if (lastDate && lastId) {
+            q = query(
+                txnRef,
+                orderByChild("performedAt"),
+                endAt(lastDate, lastId),
+                limitToLast(limit + 1)
+            );
+        } else {
+            q = query(
+                txnRef,
+                orderByChild("performedAt"),
+                limitToLast(limit)
+            );
+        }
+
+        const snapshot = await get(q);
+        if (!snapshot.exists()) return { transactions: [], lastItem: null };
+
+        const transactions: StockTransaction[] = [];
+        snapshot.forEach((childSnapshot) => {
+            const data = childSnapshot.val();
+            transactions.push({
+                id: childSnapshot.key!,
+                ...data,
+                performedAt: new Date(data.performedAt),
+            });
+        });
+
+        // Sort descending (Newest first) as Firebase returns ascending
+        transactions.sort((a, b) => b.performedAt.getTime() - a.performedAt.getTime());
+
+        // Handle cursor overlap
+        if (lastDate && lastId) {
+            const cursorIndex = transactions.findIndex(t => t.id === lastId);
+            if (cursorIndex !== -1) {
+                transactions.splice(cursorIndex, 1);
+            }
+        }
+
+        let newLastItem = null;
+        if (transactions.length > 0) {
+            const lastTxn = transactions[transactions.length - 1];
+            newLastItem = {
+                date: lastTxn.performedAt.toISOString(),
+                id: lastTxn.id
+            };
+        }
+
+        return { transactions, lastItem: newLastItem };
+    } catch (error) {
+        console.error("Error fetching paginated stock transactions:", error);
         throw error;
     }
 }
