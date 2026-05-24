@@ -1,7 +1,7 @@
 import { NextResponse } from 'next/server';
 import type { NextRequest } from 'next/server';
 
-export function middleware(request: NextRequest) {
+export function proxy(request: NextRequest) {
     // Generate a nonce for strict CSP if needed in the future, 
     // currently using unsafe-inline/eval for broad compatibility with Next.js/Firebase.
     const nonce = Buffer.from(crypto.randomUUID()).toString('base64');
