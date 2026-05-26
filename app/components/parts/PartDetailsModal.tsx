@@ -90,17 +90,56 @@ export default function PartDetailsModal({
                                 </div>
                             </>
                         ) : (
-                            <div className="w-full h-full flex flex-col items-center justify-center bg-gradient-to-br from-bg-secondary via-bg-tertiary to-bg-primary p-6 relative overflow-hidden select-none">
-                                <div className="absolute -top-10 -left-10 w-24 h-24 rounded-full bg-primary/5 blur-2xl"></div>
-                                <div className="absolute -bottom-10 -right-10 w-24 h-24 rounded-full bg-accent-orange/5 blur-2xl"></div>
+                            (() => {
+                                const getPartTheme = (category: string) => {
+                                    const cat = category?.toLowerCase() || "";
+                                    if (cat.includes("mech")) return { glow: "bg-blue-500/10", borderLine: "from-transparent via-blue-500 to-transparent", textGradient: "from-blue-400 to-indigo-400" };
+                                    if (cat.includes("elect") || cat.includes("wire")) return { glow: "bg-accent-yellow/10", borderLine: "from-transparent via-accent-yellow to-transparent", textGradient: "from-accent-yellow to-amber-500" };
+                                    if (cat.includes("hyd")) return { glow: "bg-accent-red/10", borderLine: "from-transparent via-accent-red to-transparent", textGradient: "from-accent-red to-pink-500" };
+                                    if (cat.includes("pneu")) return { glow: "bg-accent-cyan/10", borderLine: "from-transparent via-accent-cyan to-transparent", textGradient: "from-accent-cyan to-teal-400" };
+                                    if (cat.includes("con") || cat.includes("oil") || cat.includes("grease") || cat.includes("spare")) return { glow: "bg-green-500/10", borderLine: "from-transparent via-green-500 to-transparent", textGradient: "from-green-400 to-emerald-400" };
+                                    return { glow: "bg-primary/10", borderLine: "from-transparent via-primary-light to-transparent", textGradient: "from-primary-light to-indigo-400" };
+                                };
+                                const theme = getPartTheme(part.category || "");
+                                return (
+                                    <div className="w-full h-full flex flex-col items-center justify-center bg-gradient-to-br from-bg-secondary via-bg-tertiary to-bg-primary p-6 relative overflow-hidden select-none">
+                                        {/* Tech blueprint grid pattern */}
+                                        <div className="absolute inset-0 bg-[linear-gradient(to_right,rgba(255,255,255,0.015)_1px,transparent_1px),linear-gradient(to_bottom,rgba(255,255,255,0.015)_1px,transparent_1px)] bg-[size:12px_20px]"></div>
 
-                                <div className="w-20 h-20 rounded-xl bg-white/5 border border-white/10 flex items-center justify-center mb-2 shadow-inner shadow-black/40">
-                                    <span className="text-2xl font-black text-white/30 tracking-widest">
-                                        {part.name ? part.name.substring(0, 2).toUpperCase() : "PT"}
-                                    </span>
-                                </div>
-                                <span className="text-[10px] text-text-muted/40 font-bold tracking-widest uppercase">{part.category || "PART"}</span>
-                            </div>
+                                        {/* Technical ambient glow */}
+                                        <div className={`absolute -top-12 -left-12 w-36 h-36 rounded-full ${theme.glow} blur-3xl opacity-60`}></div>
+                                        <div className="absolute -bottom-12 -right-12 w-36 h-36 rounded-full bg-blue-500/5 blur-3xl opacity-40"></div>
+
+                                        {/* squircle neon shield */}
+                                        <div className="
+                                            relative w-24 h-24 rounded-[22px] 
+                                            bg-gradient-to-b from-white/10 to-white/5 
+                                            border border-white/15 
+                                            flex flex-col items-center justify-center 
+                                            shadow-[inset_0_2px_4px_rgba(255,255,255,0.05),0_8px_20px_rgba(0,0,0,0.5)] 
+                                        ">
+                                            {/* Glowing border line */}
+                                            <div className={`absolute inset-x-3 top-0 h-px bg-gradient-to-r ${theme.borderLine} opacity-70`}></div>
+
+                                            {/* initials */}
+                                            <span className={`text-2xl font-black text-transparent bg-clip-text bg-gradient-to-r ${theme.textGradient} drop-shadow-[0_2px_6px_rgba(255,255,255,0.1)]`}>
+                                                {part.name ? part.name.substring(0, 2).toUpperCase() : "PT"}
+                                            </span>
+
+                                            {/* sub-badge category */}
+                                            <span className="absolute -bottom-2 px-1.5 py-0.5 rounded bg-black/85 border border-white/10 text-[7px] font-black text-text-muted tracking-widest uppercase">
+                                                {part.category || "PART"}
+                                            </span>
+                                        </div>
+
+                                        {/* Technical corner decors */}
+                                        <div className="absolute top-3 left-3 w-1.5 h-1.5 border-t border-l border-white/10"></div>
+                                        <div className="absolute top-3 right-3 w-1.5 h-1.5 border-t border-r border-white/10"></div>
+                                        <div className="absolute bottom-3 left-3 w-1.5 h-1.5 border-b border-l border-white/10"></div>
+                                        <div className="absolute bottom-3 right-3 w-1.5 h-1.5 border-b border-r border-white/10"></div>
+                                    </div>
+                                );
+                            })()
                         )}
 
                         {/* Status Badge Overlay */}

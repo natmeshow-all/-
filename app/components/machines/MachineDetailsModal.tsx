@@ -288,17 +288,56 @@ export default function MachineDetailsModal({
                                                             className="absolute inset-0 w-full h-full object-cover transition-transform group-hover:scale-105"
                                                         />
                                                     ) : (
-                                                        <div className="absolute inset-0 w-full h-full flex flex-col items-center justify-center bg-gradient-to-br from-[#1E293B] via-bg-tertiary to-[#0F172A] p-4 relative overflow-hidden select-none">
-                                                            <div className="absolute -top-6 -left-6 w-16 h-16 rounded-full bg-primary/5 blur-xl"></div>
-                                                            <div className="absolute -bottom-6 -right-6 w-16 h-16 rounded-full bg-accent-orange/5 blur-xl"></div>
+                                                        (() => {
+                                                            const getPartTheme = (category: string) => {
+                                                                const cat = category?.toLowerCase() || "";
+                                                                if (cat.includes("mech")) return { glow: "bg-blue-500/10", borderLine: "from-transparent via-blue-500 to-transparent", textGradient: "from-blue-400 to-indigo-400" };
+                                                                if (cat.includes("elect") || cat.includes("wire")) return { glow: "bg-accent-yellow/10", borderLine: "from-transparent via-accent-yellow to-transparent", textGradient: "from-accent-yellow to-amber-500" };
+                                                                if (cat.includes("hyd")) return { glow: "bg-accent-red/10", borderLine: "from-transparent via-accent-red to-transparent", textGradient: "from-accent-red to-pink-500" };
+                                                                if (cat.includes("pneu")) return { glow: "bg-accent-cyan/10", borderLine: "from-transparent via-accent-cyan to-transparent", textGradient: "from-accent-cyan to-teal-400" };
+                                                                if (cat.includes("con") || cat.includes("oil") || cat.includes("grease") || cat.includes("spare")) return { glow: "bg-green-500/10", borderLine: "from-transparent via-green-500 to-transparent", textGradient: "from-green-400 to-emerald-400" };
+                                                                return { glow: "bg-primary/10", borderLine: "from-transparent via-primary-light to-transparent", textGradient: "from-primary-light to-indigo-400" };
+                                                            };
+                                                            const theme = getPartTheme(part.category || "");
+                                                            return (
+                                                                <div className="absolute inset-0 w-full h-full flex flex-col items-center justify-center bg-gradient-to-br from-[#1E293B] via-bg-tertiary to-[#0F172A] p-4 relative overflow-hidden select-none">
+                                                                    {/* Tech blueprint grid pattern */}
+                                                                    <div className="absolute inset-0 bg-[linear-gradient(to_right,rgba(255,255,255,0.015)_1px,transparent_1px),linear-gradient(to_bottom,rgba(255,255,255,0.015)_1px,transparent_1px)] bg-[size:10px_16px]"></div>
 
-                                                            <div className="w-12 h-12 rounded-lg bg-white/5 border border-white/10 flex items-center justify-center mb-1 shadow-inner shadow-black/40">
-                                                                <span className="text-sm font-black text-white/30">
-                                                                    {part.partName ? part.partName.substring(0, 2).toUpperCase() : "PT"}
-                                                                </span>
-                                                            </div>
-                                                            <span className="text-[8px] text-text-muted/40 font-bold uppercase tracking-widest">{part.category || "PART"}</span>
-                                                        </div>
+                                                                    {/* Ambient glow */}
+                                                                    <div className={`absolute -top-10 -left-10 w-28 h-28 rounded-full ${theme.glow} blur-2xl opacity-60`}></div>
+                                                                    <div className="absolute -bottom-10 -right-10 w-28 h-28 rounded-full bg-blue-500/5 blur-2xl opacity-40"></div>
+
+                                                                    {/* squircle neon shield */}
+                                                                    <div className="
+                                                                        relative w-20 h-20 rounded-2xl 
+                                                                        bg-gradient-to-b from-white/10 to-white/5 
+                                                                        border border-white/15 
+                                                                        flex flex-col items-center justify-center 
+                                                                        shadow-[inset_0_2px_4px_rgba(255,255,255,0.05),0_8px_15px_rgba(0,0,0,0.5)] 
+                                                                    ">
+                                                                        {/* Glowing border line */}
+                                                                        <div className={`absolute inset-x-2 top-0 h-px bg-gradient-to-r ${theme.borderLine} opacity-70`}></div>
+
+                                                                        {/* initials */}
+                                                                        <span className={`text-xl font-black text-transparent bg-clip-text bg-gradient-to-r ${theme.textGradient} drop-shadow-[0_2px_5px_rgba(255,255,255,0.1)]`}>
+                                                                            {part.partName ? part.partName.substring(0, 2).toUpperCase() : "PT"}
+                                                                        </span>
+
+                                                                        {/* sub-badge category */}
+                                                                        <span className="absolute -bottom-2 px-1.5 py-0.5 rounded bg-black/85 border border-white/10 text-[6px] font-black text-text-muted tracking-widest uppercase">
+                                                                            {part.category || "PART"}
+                                                                        </span>
+                                                                    </div>
+
+                                                                    {/* Technical corner decors */}
+                                                                    <div className="absolute top-3 left-3 w-1.5 h-1.5 border-t border-l border-white/10"></div>
+                                                                    <div className="absolute top-3 right-3 w-1.5 h-1.5 border-t border-r border-white/10"></div>
+                                                                    <div className="absolute bottom-3 left-3 w-1.5 h-1.5 border-b border-l border-white/10"></div>
+                                                                    <div className="absolute bottom-3 right-3 w-1.5 h-1.5 border-b border-r border-white/10"></div>
+                                                                </div>
+                                                            );
+                                                        })()
                                                     )}
                                                     <div className="absolute top-3 right-3 flex flex-col items-end gap-2">
                                                         {isLowStock && (

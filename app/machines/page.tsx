@@ -279,18 +279,45 @@ function MachineCard({ machine, index, onRefresh, onOpenSettings, onOpenDelete, 
     const getStyles = () => {
         switch (locationKey) {
             case 'FZ':
-                return { border: 'border-accent-cyan/30', shadow: 'hover:shadow-accent-cyan/20', code: 'text-accent-cyan' };
+                return { 
+                    border: 'border-accent-cyan/30', 
+                    shadow: 'hover:shadow-accent-cyan/20', 
+                    code: 'text-accent-cyan',
+                    glow: 'bg-accent-cyan/10',
+                    borderLine: 'from-transparent via-accent-cyan to-transparent',
+                    textGradient: 'group-hover:from-accent-cyan group-hover:to-blue-400'
+                };
             case 'RTE':
-                return { border: 'border-green-500/30', shadow: 'hover:shadow-green-500/20', code: 'text-green-400' };
+                return { 
+                    border: 'border-green-500/30', 
+                    shadow: 'hover:shadow-green-500/20', 
+                    code: 'text-green-400',
+                    glow: 'bg-green-500/10',
+                    borderLine: 'from-transparent via-green-400 to-transparent',
+                    textGradient: 'group-hover:from-green-400 group-hover:to-emerald-400'
+                };
             case 'UTILITY':
             case 'UT':
-                return { border: 'border-accent-yellow/30', shadow: 'hover:shadow-accent-yellow/20', code: 'text-accent-yellow' };
+                return { 
+                    border: 'border-accent-yellow/30', 
+                    shadow: 'hover:shadow-accent-yellow/20', 
+                    code: 'text-accent-yellow',
+                    glow: 'bg-accent-yellow/10',
+                    borderLine: 'from-transparent via-accent-yellow to-transparent',
+                    textGradient: 'group-hover:from-accent-yellow group-hover:to-amber-500'
+                };
             default:
-                return { border: 'border-white/10', shadow: 'hover:shadow-primary/10', code: 'text-primary-light' };
+                return { 
+                    border: 'border-white/10', 
+                    shadow: 'hover:shadow-primary/10', 
+                    code: 'text-primary-light',
+                    glow: 'bg-primary/10',
+                    borderLine: 'from-transparent via-primary-light to-transparent',
+                    textGradient: 'group-hover:from-primary-light group-hover:to-indigo-400'
+                };
         }
     };
     const styles = getStyles();
-    const [imageError2, setImageError2] = React.useState(false); // separate error tracker to avoid naming collision if needed, but imageError is perfect
 
     return (
         <div
@@ -309,15 +336,56 @@ function MachineCard({ machine, index, onRefresh, onOpenSettings, onOpenDelete, 
                     />
                 ) : (
                     <div className="w-full h-full flex flex-col items-center justify-center bg-gradient-to-br from-bg-secondary via-bg-tertiary to-bg-primary p-6 relative overflow-hidden select-none">
-                        <div className="absolute -top-10 -left-10 w-32 h-32 rounded-full bg-accent-yellow/5 blur-2xl group-hover:bg-accent-yellow/10 transition-colors duration-500"></div>
-                        <div className="absolute -bottom-10 -right-10 w-32 h-32 rounded-full bg-primary/5 blur-2xl group-hover:bg-primary/10 transition-colors duration-500"></div>
+                        {/* CAD Technical blueprint grid pattern */}
+                        <div className="absolute inset-0 bg-[linear-gradient(to_right,rgba(255,255,255,0.02)_1px,transparent_1px),linear-gradient(to_bottom,rgba(255,255,255,0.02)_1px,transparent_1px)] bg-[size:14px_24px]"></div>
                         
-                        <div className="w-20 h-20 rounded-2xl bg-white/5 border border-white/10 flex items-center justify-center mb-3 shadow-inner shadow-black/40 group-hover:border-white/20 group-hover:scale-105 transition-all duration-500">
-                            <span className="text-3xl font-black text-white/40 group-hover:text-white/60 tracking-wider">
+                        {/* Glowing ambient lights */}
+                        <div className={`absolute -top-12 -left-12 w-44 h-44 rounded-full ${styles.glow} blur-3xl opacity-60 group-hover:opacity-100 transition-opacity duration-700`}></div>
+                        <div className="absolute -bottom-12 -right-12 w-44 h-44 rounded-full bg-blue-500/5 blur-3xl opacity-50"></div>
+
+                        {/* Squircle Neon-Shield Badge */}
+                        <div className="
+                            relative w-28 h-28 rounded-3xl 
+                            bg-gradient-to-b from-white/10 to-white/5 
+                            border border-white/15 
+                            flex flex-col items-center justify-center 
+                            shadow-[inset_0_2px_4px_rgba(255,255,255,0.05),0_10px_25px_rgba(0,0,0,0.5)] 
+                            group-hover:border-white/30 group-hover:scale-105 group-hover:-translate-y-1
+                            transition-all duration-500
+                        ">
+                            {/* Dynamic Glowing border line based on style */}
+                            <div className={`absolute inset-x-4 top-0 h-px bg-gradient-to-r ${styles.borderLine} opacity-70`}></div>
+
+                            {/* Industrial Cog/Gear Watermark Icon */}
+                            <div className="absolute inset-0 flex items-center justify-center opacity-[0.03] group-hover:opacity-[0.07] transition-opacity group-hover:rotate-45 duration-1000">
+                                <svg xmlns="http://www.w3.org/2000/svg" width="64" height="64" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="text-white">
+                                    <circle cx="12" cy="12" r="3"></circle>
+                                    <path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 1 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 1 1-2.83-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 1 1 2.83-2.83l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 1 1 2.83 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"></path>
+                                </svg>
+                            </div>
+
+                            {/* High-Contrast Neon-Glowing Letters */}
+                            <span className={`
+                                text-3xl font-black tracking-widest text-white/80
+                                drop-shadow-[0_2px_8px_rgba(255,255,255,0.1)]
+                                group-hover:text-transparent group-hover:bg-clip-text
+                                group-hover:bg-gradient-to-r ${styles.textGradient}
+                                transition-all duration-300
+                            `}>
                                 {machine.code ? machine.code.substring(0, 3).toUpperCase() : machine.name.substring(0, 2).toUpperCase()}
                             </span>
+
+                            {/* Subtle sub-badge overlay */}
+                            <span className="absolute -bottom-2.5 px-2 py-0.5 rounded bg-black/85 border border-white/10 text-[8px] font-black text-text-muted tracking-widest uppercase">
+                                {machine.location || "MACHINE"}
+                            </span>
                         </div>
-                        <span className="text-[10px] text-text-muted/40 font-bold uppercase tracking-widest">{machine.location || "MACHINE"}</span>
+
+                        {/* Technical Crosshairs Decors */}
+                        <div className="absolute top-4 left-4 w-2 h-2 border-t border-l border-white/10"></div>
+                        <div className="absolute top-4 right-4 w-2 h-2 border-t border-r border-white/10"></div>
+                        <div className="absolute bottom-4 left-4 w-2 h-2 border-b border-l border-white/10"></div>
+                        <div className="absolute bottom-4 right-4 w-2 h-2 border-b border-r border-white/10"></div>
                     </div>
                 )}
                 {/* Gradient Overlay */}
