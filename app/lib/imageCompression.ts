@@ -51,3 +51,25 @@ export const compressImage = async (file: File, quality = 0.6, maxWidth = 1920):
         reader.onerror = (error) => reject(error);
     });
 };
+
+export const fileToBase64 = (file: File): Promise<string> => {
+    return new Promise((resolve, reject) => {
+        const reader = new FileReader();
+        reader.readAsDataURL(file);
+        reader.onload = () => resolve(reader.result as string);
+        reader.onerror = (error) => reject(error);
+    });
+};
+
+export const compressToBase64 = async (file: File, quality = 0.5, maxWidth = 250): Promise<string> => {
+    if (!file.type.startsWith('image/')) {
+        return fileToBase64(file);
+    }
+    try {
+        const compressed = await compressImage(file, quality, maxWidth);
+        return await fileToBase64(compressed);
+    } catch (e) {
+        console.error("Compression failed, using raw base64 fallback:", e);
+        return fileToBase64(file);
+    }
+};

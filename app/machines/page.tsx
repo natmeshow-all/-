@@ -247,6 +247,7 @@ function MachineCard({ machine, index, onRefresh, onOpenSettings, onOpenDelete, 
     const { checkAuth } = useAuth();
     const { success, error: showError } = useToast();
     const [uploading, setUploading] = React.useState(false);
+    const [imageError, setImageError] = React.useState(false);
 
     const handleFileChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
         if (!checkAuth()) {
@@ -289,6 +290,7 @@ function MachineCard({ machine, index, onRefresh, onOpenSettings, onOpenDelete, 
         }
     };
     const styles = getStyles();
+    const [imageError2, setImageError2] = React.useState(false); // separate error tracker to avoid naming collision if needed, but imageError is perfect
 
     return (
         <div
@@ -298,15 +300,24 @@ function MachineCard({ machine, index, onRefresh, onOpenSettings, onOpenDelete, 
         >
             {/* Full Background Image */}
             <div className="absolute inset-0 bg-bg-tertiary">
-                {machine.imageUrl ? (
+                {machine.imageUrl && !imageError ? (
                     <img
                         src={machine.imageUrl}
                         alt={machine.name}
+                        onError={() => setImageError(true)}
                         className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-110"
                     />
                 ) : (
-                    <div className="w-full h-full flex items-center justify-center bg-gradient-to-br from-bg-secondary to-bg-tertiary">
-                        <SettingsIcon size={48} className="text-text-muted/20" />
+                    <div className="w-full h-full flex flex-col items-center justify-center bg-gradient-to-br from-bg-secondary via-bg-tertiary to-bg-primary p-6 relative overflow-hidden select-none">
+                        <div className="absolute -top-10 -left-10 w-32 h-32 rounded-full bg-accent-yellow/5 blur-2xl group-hover:bg-accent-yellow/10 transition-colors duration-500"></div>
+                        <div className="absolute -bottom-10 -right-10 w-32 h-32 rounded-full bg-primary/5 blur-2xl group-hover:bg-primary/10 transition-colors duration-500"></div>
+                        
+                        <div className="w-20 h-20 rounded-2xl bg-white/5 border border-white/10 flex items-center justify-center mb-3 shadow-inner shadow-black/40 group-hover:border-white/20 group-hover:scale-105 transition-all duration-500">
+                            <span className="text-3xl font-black text-white/40 group-hover:text-white/60 tracking-wider">
+                                {machine.code ? machine.code.substring(0, 3).toUpperCase() : machine.name.substring(0, 2).toUpperCase()}
+                            </span>
+                        </div>
+                        <span className="text-[10px] text-text-muted/40 font-bold uppercase tracking-widest">{machine.location || "MACHINE"}</span>
                     </div>
                 )}
                 {/* Gradient Overlay */}

@@ -14,16 +14,10 @@ import {
     startAfter,
     limitToFirst
 } from "firebase/database";
-import {
-    ref as storageRef,
-    uploadBytes,
-    getDownloadURL,
-    deleteObject,
-} from "firebase/storage";
-import { database, storage } from "../lib/firebase";
+import { database } from "../lib/firebase";
 import { MaintenanceRecord, MaintenanceSchedule, PMPlan, MaintenanceType } from "../types";
 import { syncTranslation } from "./translationService";
-import { compressImage } from "../lib/imageCompression";
+import { compressToBase64 } from "../lib/imageCompression";
 import { COLLECTIONS } from "./constants";
 import { getMachines } from "./machineService";
 import { incrementDashboardStat } from "./analyticsService";
@@ -216,16 +210,7 @@ export async function getMaintenanceRecordsByPMPlan(planId: string): Promise<Mai
  */
 export async function uploadMaintenanceEvidence(file: File): Promise<string> {
     try {
-        // Compress image
-        const compressedFile = await compressImage(file, 0.6, 1280);
-
-        // Upload to Storage
-        const fileName = `maintenance_evidence/${Date.now()}_${compressedFile.name}`;
-        const sRef = storageRef(storage, fileName);
-        await uploadBytes(sRef, compressedFile);
-        const downloadUrl = await getDownloadURL(sRef);
-
-        return downloadUrl;
+        return await compressToBase64(file);
     } catch (error) {
         console.error("Error uploading maintenance evidence:", error);
         throw error;
@@ -552,11 +537,7 @@ export async function deletePMPlan(id: string): Promise<void> {
 
 export async function uploadEvidenceImage(file: File): Promise<string> {
     try {
-        const compressedFile = await compressImage(file);
-        const fileName = `evidence/pm_${Date.now()}_${compressedFile.name}`;
-        const sRef = storageRef(storage, fileName);
-        await uploadBytes(sRef, compressedFile);
-        return await getDownloadURL(sRef);
+        return await compressToBase64(file);
     } catch (error) {
         console.error("Error uploading evidence image:", error);
         throw error;

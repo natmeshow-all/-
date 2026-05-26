@@ -33,6 +33,7 @@ export default function PartDetailsModal({
     const { t } = useLanguage();
     const { checkAuth, isAdmin } = useAuth();
     const [lightboxOpen, setLightboxOpen] = useState(false);
+    const [imageError, setImageError] = useState(false);
 
     if (!part) return null;
 
@@ -73,11 +74,12 @@ export default function PartDetailsModal({
                 <div className="flex flex-col gap-6">
                     {/* Image Section */}
                     <div className="w-full h-64 sm:h-80 rounded-xl bg-bg-tertiary overflow-hidden border border-white/5 relative group">
-                        {part.imageUrl ? (
+                        {part.imageUrl && !imageError ? (
                             <>
                                 <img
                                     src={part.imageUrl}
                                     alt={part.partName || part.name}
+                                    onError={() => setImageError(true)}
                                     className="w-full h-full object-cover cursor-pointer hover:scale-105 transition-transform duration-500"
                                     onClick={() => setLightboxOpen(true)}
                                 />
@@ -88,8 +90,16 @@ export default function PartDetailsModal({
                                 </div>
                             </>
                         ) : (
-                            <div className="w-full h-full flex items-center justify-center text-text-muted/30">
-                                <BoxIcon size={64} />
+                            <div className="w-full h-full flex flex-col items-center justify-center bg-gradient-to-br from-bg-secondary via-bg-tertiary to-bg-primary p-6 relative overflow-hidden select-none">
+                                <div className="absolute -top-10 -left-10 w-24 h-24 rounded-full bg-primary/5 blur-2xl"></div>
+                                <div className="absolute -bottom-10 -right-10 w-24 h-24 rounded-full bg-accent-orange/5 blur-2xl"></div>
+
+                                <div className="w-20 h-20 rounded-xl bg-white/5 border border-white/10 flex items-center justify-center mb-2 shadow-inner shadow-black/40">
+                                    <span className="text-2xl font-black text-white/30 tracking-widest">
+                                        {part.name ? part.name.substring(0, 2).toUpperCase() : "PT"}
+                                    </span>
+                                </div>
+                                <span className="text-[10px] text-text-muted/40 font-bold tracking-widest uppercase">{part.category || "PART"}</span>
                             </div>
                         )}
 

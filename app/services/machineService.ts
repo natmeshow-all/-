@@ -11,15 +11,10 @@ import {
     startAfter,
     limitToFirst
 } from "firebase/database";
-import {
-    ref as storageRef,
-    uploadBytes,
-    getDownloadURL
-} from "firebase/storage";
-import { database, storage } from "../lib/firebase";
+import { database } from "../lib/firebase";
 import { Machine } from "../types";
 import { syncTranslation } from "./translationService";
-import { compressImage } from "../lib/imageCompression";
+import { compressToBase64 } from "../lib/imageCompression";
 import { COLLECTIONS } from "./constants";
 import { incrementDashboardStat } from "./analyticsService";
 
@@ -132,14 +127,8 @@ export async function getMachinesPaginated(
  */
 export async function updateMachineImage(machineName: string, file: File, machineId?: string): Promise<string> {
     try {
-        // 1. Compress Image
-        const compressedFile = await compressImage(file);
-
-        // 2. Upload new image
-        const fileName = `machines/${Date.now()}_${compressedFile.name}`;
-        const sRef = storageRef(storage, fileName);
-        await uploadBytes(sRef, compressedFile);
-        const downloadUrl = await getDownloadURL(sRef);
+        // 1. Compress & Convert to Base64
+        const downloadUrl = await compressToBase64(file);
 
         // 2. Save/Update machine record in Realtime Database
         const machinesRef = ref(database, COLLECTIONS.MACHINES);

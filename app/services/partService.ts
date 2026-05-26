@@ -14,16 +14,10 @@ import {
     startAfter,
     endAt
 } from "firebase/database";
-import {
-    ref as storageRef,
-    uploadBytes,
-    getDownloadURL,
-    deleteObject,
-} from "firebase/storage";
-import { database, storage } from "../lib/firebase";
+import { database } from "../lib/firebase";
 import { Part, SparePart, StockTransaction } from "../types";
 import { syncTranslation } from "./translationService";
-import { compressImage } from "../lib/imageCompression";
+import { compressToBase64 } from "../lib/imageCompression";
 import { COLLECTIONS } from "./constants";
 import { incrementDashboardStat } from "./analyticsService";
 
@@ -170,33 +164,7 @@ async function incrementImageUsage(key: string, currentCount: number) {
 
 export async function uploadPartImage(file: File): Promise<string> {
     try {
-        // 0. Compress Image First
-        const compressedFile = await compressImage(file);
-
-        // 1. Calculate Hash (of compressed file)
-        const hash = await calculateFileHash(compressedFile);
-
-        // 2. Check for Duplicate
-        const existingRecord = await findImageByHash(hash);
-
-        if (existingRecord) {
-            console.log("Duplicate image found. Reusing URL:", existingRecord.url);
-            // Increment usage count
-            await incrementImageUsage(existingRecord.key, existingRecord.usageCount || 1);
-            return existingRecord.url;
-        }
-
-        // 3. Upload New Image
-        const fileName = `parts/${Date.now()}_${compressedFile.name}`;
-        const sRef = storageRef(storage, fileName);
-
-        await uploadBytes(sRef, compressedFile);
-        const downloadUrl = await getDownloadURL(sRef);
-
-        // 4. Save Hash Record
-        await saveImageHashRecord(compressedFile, hash, downloadUrl);
-
-        return downloadUrl;
+        return await compressToBase64(file);
     } catch (error) {
         console.error("Error handling image upload:", error);
         throw error;
@@ -204,42 +172,7 @@ export async function uploadPartImage(file: File): Promise<string> {
 }
 
 export async function deletePartImage(imageUrl: string): Promise<void> {
-    try {
-        // Note: With deduplication, we should ideally check usageCount before deleting.
-        // For now, we'll keep it simple and NOT delete the actual file if it might be shared,
-        // OR we just assume manual cleanup for now to avoid breaking other parts.
-        // Implementing proper ref-counting deletion is complex (need to checking if hash usageCount <= 1).
-
-        // Find if this URL is tracked in image_hashes
-        const hashesRef = ref(database, "image_hashes");
-        const q = query(hashesRef, orderByChild("url"), equalTo(imageUrl));
-        const snapshot = await get(q);
-
-        if (snapshot.exists()) {
-            const key = Object.keys(snapshot.val())[0];
-            const record = snapshot.val()[key];
-
-            if (record.usageCount > 1) {
-                // Decrement usage count
-                const hashRef = ref(database, `image_hashes/${key}`);
-                await update(hashRef, {
-                    usageCount: record.usageCount - 1,
-                    updatedAt: new Date().toISOString(),
-                });
-                return; // Do not delete file from storage
-            } else {
-                // Remove hash record
-                const hashRef = ref(database, `image_hashes/${key}`);
-                await remove(hashRef);
-            }
-        }
-
-        // If usageCount is 1 (or record not found/legacy), delete from storage
-        const sRef = storageRef(storage, imageUrl);
-        await deleteObject(sRef);
-    } catch (error) {
-        console.error("Error deleting image:", error);
-    }
+    // Base64 images are stored inline and deleted automatically with the part record.
 }
 
 // ==================== PARTS ====================
@@ -713,14 +646,10 @@ export async function adjustStock(
         if (!transaction.type) throw new Error("Transaction type is required");
         if (transaction.quantity === undefined || transaction.quantity === null) throw new Error("Quantity is required");
 
-        // 1. Upload Evidence Image if provided
+        // 1. Upload Evidence Image if provided (Base64)
         let evidenceImageUrl = "";
         if (evidenceImageFile) {
-            const compressedFile = await compressImage(evidenceImageFile);
-            const fileName = `evidence/${Date.now()}_${compressedFile.name}`;
-            const sRef = storageRef(storage, fileName);
-            await uploadBytes(sRef, compressedFile);
-            evidenceImageUrl = await getDownloadURL(sRef);
+            evidenceImageUrl = await compressToBase64(evidenceImageFile);
         }
 
         // 2. Record Transaction

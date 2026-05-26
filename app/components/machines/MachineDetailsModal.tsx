@@ -39,6 +39,7 @@ export default function MachineDetailsModal({
     const [lightboxOpen, setLightboxOpen] = useState(false);
     const [selectedLocation, setSelectedLocation] = useState<string>("All");
     const [pmConfigOpen, setPmConfigOpen] = useState(false);
+    const [partImageErrors, setPartImageErrors] = useState<Record<string, boolean>>({});
 
     // Fetch data when modal opens
     useEffect(() => {
@@ -279,16 +280,24 @@ export default function MachineDetailsModal({
                                         return (
                                             <div key={part.id} className="bg-[#1E293B]/50 rounded-2xl md:rounded-[2rem] border border-white/5 overflow-hidden flex flex-col shadow-xl group transition-all hover:border-blue-500/30">
                                                 <div className="relative aspect-[16/9] overflow-hidden bg-black/20">
-                                                    {part.imageUrl ? (
-                                                        <Image
+                                                    {part.imageUrl && !partImageErrors[part.id] ? (
+                                                        <img
                                                             src={part.imageUrl}
                                                             alt={part.partName}
-                                                            fill
-                                                            className="object-cover transition-transform group-hover:scale-105"
+                                                            onError={() => setPartImageErrors(prev => ({ ...prev, [part.id]: true }))}
+                                                            className="absolute inset-0 w-full h-full object-cover transition-transform group-hover:scale-105"
                                                         />
                                                     ) : (
-                                                        <div className="w-full h-full flex items-center justify-center text-white/10">
-                                                            <BoxIcon size={48} />
+                                                        <div className="absolute inset-0 w-full h-full flex flex-col items-center justify-center bg-gradient-to-br from-[#1E293B] via-bg-tertiary to-[#0F172A] p-4 relative overflow-hidden select-none">
+                                                            <div className="absolute -top-6 -left-6 w-16 h-16 rounded-full bg-primary/5 blur-xl"></div>
+                                                            <div className="absolute -bottom-6 -right-6 w-16 h-16 rounded-full bg-accent-orange/5 blur-xl"></div>
+
+                                                            <div className="w-12 h-12 rounded-lg bg-white/5 border border-white/10 flex items-center justify-center mb-1 shadow-inner shadow-black/40">
+                                                                <span className="text-sm font-black text-white/30">
+                                                                    {part.partName ? part.partName.substring(0, 2).toUpperCase() : "PT"}
+                                                                </span>
+                                                            </div>
+                                                            <span className="text-[8px] text-text-muted/40 font-bold uppercase tracking-widest">{part.category || "PART"}</span>
                                                         </div>
                                                     )}
                                                     <div className="absolute top-3 right-3 flex flex-col items-end gap-2">

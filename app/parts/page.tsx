@@ -36,6 +36,7 @@ export default function PartsPage() {
     const [parts, setParts] = useState<Part[]>([]);
     const [loading, setLoading] = useState(true);
     const [expandedParts, setExpandedParts] = useState<Record<string, boolean>>({});
+    const [imageErrors, setImageErrors] = useState<Record<string, boolean>>({});
 
     // Pagination State
     const [lastCursor, setLastCursor] = useState<{ updatedAt: string, id: string } | null>(null);
@@ -393,16 +394,24 @@ export default function PartsPage() {
                                                         className="absolute inset-0 bg-bg-tertiary cursor-pointer"
                                                         onClick={() => openDetailsModal(part)}
                                                     >
-                                                        {part.imageUrl ? (
+                                                        {part.imageUrl && !imageErrors[part.id] ? (
                                                             <img
                                                                 src={part.imageUrl}
                                                                 alt={part.name}
+                                                                onError={() => setImageErrors(prev => ({ ...prev, [part.id]: true }))}
                                                                 className="object-cover w-full h-full group-hover:scale-105 transition-transform duration-700"
                                                             />
                                                         ) : (
-                                                            <div className="w-full h-full flex flex-col items-center justify-center text-text-muted bg-bg-secondary">
-                                                                <BoxIcon size={48} className="opacity-10 mb-2" />
-                                                                <span className="text-[10px] opacity-40 font-medium tracking-wider">{t("labelNoImage") || "No Image"}</span>
+                                                            <div className="w-full h-full flex flex-col items-center justify-center bg-gradient-to-br from-bg-secondary via-bg-tertiary to-bg-primary p-6 relative overflow-hidden select-none">
+                                                                <div className="absolute -top-10 -left-10 w-24 h-24 rounded-full bg-primary/5 blur-2xl group-hover:bg-primary/10 transition-colors"></div>
+                                                                <div className="absolute -bottom-10 -right-10 w-24 h-24 rounded-full bg-accent-orange/5 blur-2xl group-hover:bg-accent-orange/10 transition-colors"></div>
+
+                                                                <div className="w-16 h-16 rounded-xl bg-white/5 border border-white/10 flex items-center justify-center mb-2 shadow-inner shadow-black/40 group-hover:border-white/20 transition-all duration-500">
+                                                                    <span className="text-xl font-black text-white/30 group-hover:text-white/50 tracking-widest">
+                                                                        {part.name ? part.name.substring(0, 2).toUpperCase() : "PT"}
+                                                                    </span>
+                                                                </div>
+                                                                <span className="text-[9px] text-text-muted/40 font-bold tracking-widest uppercase">{part.category || "PART"}</span>
                                                             </div>
                                                         )}
 
