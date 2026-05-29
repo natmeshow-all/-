@@ -397,164 +397,149 @@ export default function PartsPage() {
                                             {items.map(part => (
                                                 <div
                                                     key={part.id}
-                                                    className="relative w-full h-[300px] rounded-2xl overflow-hidden shadow-xl border border-white/5 group active:scale-[0.99] transition-all duration-300 animate-fade-in"
+                                                    className="relative w-full rounded-2xl overflow-hidden shadow-xl border border-white/5 group active:scale-[0.99] transition-all duration-300 animate-fade-in flex flex-col bg-bg-tertiary"
                                                 >
-                                                    {/* Background Image */}
-                                                    <div
-                                                        className="absolute inset-0 bg-bg-tertiary cursor-pointer"
-                                                        onClick={() => openDetailsModal(part)}
-                                                    >
-                                                        {part.imageUrl && !imageErrors[part.id] ? (
-                                                            <img
-                                                                src={part.imageUrl}
-                                                                alt={part.name}
-                                                                onError={() => setImageErrors(prev => ({ ...prev, [part.id]: true }))}
-                                                                className="object-cover w-full h-full group-hover:scale-105 transition-transform duration-700"
-                                                            />
-                                                        ) : (
-                                                            (() => {
-                                                                const theme = getPartTheme(part.category || "");
-                                                                return (
-                                                                    <div className="w-full h-full flex flex-col items-center justify-center bg-gradient-to-br from-bg-secondary via-bg-tertiary to-bg-primary p-6 relative overflow-hidden select-none">
-                                                                        {/* Tech blueprint grid pattern */}
-                                                                        <div className="absolute inset-0 bg-[linear-gradient(to_right,rgba(255,255,255,0.015)_1px,transparent_1px),linear-gradient(to_bottom,rgba(255,255,255,0.015)_1px,transparent_1px)] bg-[size:12px_20px]"></div>
+                                                    {(() => {
+                                                        const theme = getPartTheme(part.category || "");
+                                                        const stockPercent = part.minStockThreshold && part.minStockThreshold > 0 
+                                                            ? Math.min(100, Math.max(0, (part.quantity / part.minStockThreshold) * 100)) 
+                                                            : 100;
+                                                        const isLowStock = part.quantity <= part.minStockThreshold;
+                                                        const stockColor = isLowStock ? 'bg-error' : 'bg-primary';
+                                                        
+                                                        return (
+                                                            <>
+                                                                {/* Top Section - Visual Tech Identity */}
+                                                                <div 
+                                                                    className="relative h-24 flex items-center justify-between px-5 overflow-hidden border-b border-white/5 bg-gradient-to-br from-bg-secondary to-bg-tertiary cursor-pointer"
+                                                                    onClick={() => openDetailsModal(part)}
+                                                                >
+                                                                    {/* CAD Technical blueprint grid pattern */}
+                                                                    <div className="absolute inset-0 bg-[linear-gradient(to_right,rgba(255,255,255,0.015)_1px,transparent_1px),linear-gradient(to_bottom,rgba(255,255,255,0.015)_1px,transparent_1px)] bg-[size:12px_20px]"></div>
+                                                                    
+                                                                    {/* Glowing ambient lights */}
+                                                                    <div className={`absolute -top-12 -left-12 w-32 h-32 rounded-full ${theme.glow} blur-3xl opacity-60 group-hover:opacity-100 transition-opacity duration-700`}></div>
+                                                                    
+                                                                    {isLowStock && (
+                                                                        <div className="absolute inset-0 bg-error/5 animate-pulse z-0 pointer-events-none"></div>
+                                                                    )}
 
-                                                                        {/* Technical ambient glow */}
-                                                                        <div className={`absolute -top-12 -left-12 w-36 h-36 rounded-full ${theme.glow} blur-3xl opacity-60 group-hover:opacity-100 transition-opacity duration-700`}></div>
-                                                                        <div className="absolute -bottom-12 -right-12 w-36 h-36 rounded-full bg-blue-500/5 blur-3xl opacity-40"></div>
-
-                                                                        {/* squircle neon shield */}
-                                                                        <div className="
-                                                                            relative w-24 h-24 rounded-[22px] 
-                                                                            bg-gradient-to-b from-white/10 to-white/5 
-                                                                            border border-white/15 
-                                                                            flex flex-col items-center justify-center 
-                                                                            shadow-[inset_0_2px_4px_rgba(255,255,255,0.05),0_8px_20px_rgba(0,0,0,0.5)] 
-                                                                            group-hover:border-white/30 group-hover:scale-105 group-hover:-translate-y-0.5
-                                                                            transition-all duration-500
-                                                                        ">
-                                                                            {/* Glowing border line */}
-                                                                            <div className={`absolute inset-x-3 top-0 h-px bg-gradient-to-r ${theme.borderLine} opacity-70`}></div>
-
-                                                                            {/* Technical blueprint box watermark */}
-                                                                            <div className="absolute inset-0 flex items-center justify-center opacity-[0.03] group-hover:opacity-[0.06] transition-opacity">
-                                                                                <svg xmlns="http://www.w3.org/2000/svg" width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="text-white">
-                                                                                    <path d="M21 16V8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16z"></path>
-                                                                                    <polyline points="3.27 6.96 12 12.01 20.73 6.96"></polyline>
-                                                                                    <line x1="12" y1="22.08" x2="12" y2="12"></line>
-                                                                                </svg>
-                                                                            </div>
-
-                                                                            {/* initials */}
-                                                                            <span className={`text-2xl font-black text-white/80 drop-shadow-[0_2px_6px_rgba(255,255,255,0.1)] group-hover:text-transparent group-hover:bg-clip-text group-hover:bg-gradient-to-r ${theme.textGradient} transition-all duration-300`}>
+                                                                    <div className="relative z-10 flex items-center gap-4">
+                                                                        <div className="w-12 h-12 rounded-xl bg-gradient-to-b from-white/10 to-white/5 border border-white/15 flex items-center justify-center shadow-lg shadow-black/50 group-hover:scale-110 transition-transform">
+                                                                            <span className={`text-xl font-black text-transparent bg-clip-text bg-gradient-to-r ${theme.textGradient}`}>
                                                                                 {part.name ? part.name.substring(0, 2).toUpperCase() : "PT"}
                                                                             </span>
-
-                                                                            {/* sub-badge category */}
-                                                                            <span className="absolute -bottom-2 px-1.5 py-0.5 rounded bg-black/85 border border-white/10 text-[7px] font-black text-text-muted tracking-widest uppercase">
+                                                                        </div>
+                                                                        <div>
+                                                                            <h3 className="text-lg font-bold text-white drop-shadow-md leading-tight group-hover:text-primary-light transition-colors line-clamp-1">
+                                                                                {part.name}
+                                                                            </h3>
+                                                                            <span className="text-[10px] font-bold text-primary-light uppercase tracking-wider mt-0.5 opacity-80 block">
                                                                                 {part.category || "PART"}
                                                                             </span>
                                                                         </div>
-
-                                                                        {/* Technical corner decors */}
-                                                                        <div className="absolute top-3 left-3 w-1.5 h-1.5 border-t border-l border-white/10"></div>
-                                                                        <div className="absolute top-3 right-3 w-1.5 h-1.5 border-t border-r border-white/10"></div>
-                                                                        <div className="absolute bottom-3 left-3 w-1.5 h-1.5 border-b border-l border-white/10"></div>
-                                                                        <div className="absolute bottom-3 right-3 w-1.5 h-1.5 border-b border-r border-white/10"></div>
                                                                     </div>
-                                                                );
-                                                            })()
-                                                        )}
 
-                                                        {/* Gradient Overlays */}
-                                                        <div className="absolute inset-0 bg-gradient-to-t from-bg-primary via-bg-primary/20 to-transparent opacity-90" />
-                                                        <div className="absolute inset-0 bg-gradient-to-r from-bg-primary/80 via-transparent to-transparent" />
-                                                    </div>
-
-                                                    {/* Content Overlay */}
-                                                    <div className="absolute inset-0 p-4 flex flex-col pointer-events-none">
-                                                        {/* Header Row */}
-                                                        <div className="flex justify-between items-start pointer-events-auto">
-                                                            <div className="flex-1 min-w-0 pr-4">
-                                                                <h3
-                                                                    className="text-xl font-bold text-white drop-shadow-lg leading-tight cursor-pointer hover:text-primary-light transition-colors line-clamp-1"
-                                                                    onClick={() => openDetailsModal(part)}
-                                                                >
-                                                                    {part.name}
-                                                                </h3>
-                                                                <span className="text-[10px] font-bold text-primary-light uppercase tracking-wider block mt-0.5 opacity-80">
-                                                                    {part.category}
-                                                                </span>
-                                                            </div>
-
-                                                            <div className="flex flex-col items-end gap-2 shrink-0">
-                                                                <div className="flex flex-col items-end">
-                                                                    <span className={`text-2xl font-black ${part.quantity <= part.minStockThreshold ? 'text-error' : 'text-primary'} drop-shadow-lg`}>
-                                                                        x{part.quantity}
-                                                                    </span>
-                                                                    <span className="text-[9px] font-bold text-white/50 uppercase tracking-widest -mt-1">{part.unit || "pcs"}</span>
+                                                                    <div className="relative z-10 flex flex-col items-end">
+                                                                        <span className={`text-2xl font-black ${isLowStock ? 'text-error' : 'text-primary'} drop-shadow-lg`}>
+                                                                            x{part.quantity}
+                                                                        </span>
+                                                                        <span className="text-[9px] font-bold text-white/50 uppercase tracking-widest -mt-1">{part.unit || "pcs"}</span>
+                                                                    </div>
                                                                 </div>
 
-                                                                <div className="flex gap-1.5">
-                                                                    {/* Sub-parts Trigger */}
-                                                                    {subPartsMap[part.id] && (
-                                                                        <button
-                                                                            onClick={(e) => { e.stopPropagation(); toggleExpand(part.id); }}
-                                                                            className={`w-8 h-8 rounded-lg border flex items-center justify-center transition-all shadow-lg ${expandedParts[part.id] ? 'bg-primary border-primary text-white' : 'bg-white/5 border-white/10 text-white hover:bg-white/10 backdrop-blur-xl'}`}
-                                                                        >
-                                                                            {expandedParts[part.id] ? <ChevronUpIcon size={16} /> : <LayersIcon size={16} />}
-                                                                        </button>
-                                                                    )}
+                                                                {/* Bottom Section - Data & Specs */}
+                                                                <div className="relative p-5 flex flex-col gap-4 bg-gradient-to-br from-bg-secondary via-bg-tertiary to-bg-primary z-10">
+                                                                    {/* Stock Level Warning Bar */}
+                                                                    <div>
+                                                                        <div className="flex justify-between items-end mb-1.5">
+                                                                            <span className="text-[10px] font-bold text-text-muted uppercase tracking-wider flex items-center gap-1.5">
+                                                                                Stock Level 
+                                                                                {isLowStock && <span className="text-error font-black animate-pulse">(LOW)</span>}
+                                                                            </span>
+                                                                            <span className="text-[11px] font-bold text-white/90 font-mono">
+                                                                                {part.quantity} / {part.minStockThreshold} Min
+                                                                            </span>
+                                                                        </div>
+                                                                        <div className="h-1.5 w-full bg-white/10 rounded-full overflow-hidden shadow-inner relative">
+                                                                            <div 
+                                                                                className={`h-full ${stockColor} rounded-full transition-all duration-1000 ease-out relative`}
+                                                                                style={{ width: `${Math.min(100, stockPercent)}%` }}
+                                                                            >
+                                                                                {isLowStock && (
+                                                                                    <div className="absolute inset-0 bg-white/30 animate-pulse"></div>
+                                                                                )}
+                                                                            </div>
+                                                                        </div>
+                                                                    </div>
 
-                                                                    {/* Admin Delete */}
-                                                                    {isAdmin && (
-                                                                        <button
-                                                                            onClick={(e) => {
-                                                                                e.stopPropagation();
-                                                                                handleDeleteClick(part);
-                                                                            }}
-                                                                            className="w-8 h-8 rounded-lg bg-error/10 hover:bg-error border border-error/20 text-error hover:text-white flex items-center justify-center transition-all shadow-lg opacity-0 group-hover:opacity-100"
-                                                                            title={t("actionDelete")}
-                                                                        >
-                                                                            <TrashIcon size={16} />
-                                                                        </button>
-                                                                    )}
+                                                                    {/* Details Grid */}
+                                                                    <div className="grid grid-cols-2 gap-x-4 gap-y-3 bg-black/20 backdrop-blur-md rounded-xl p-3 border border-white/5">
+                                                                        <div className="flex flex-col">
+                                                                            <span className="text-[9px] text-white/40 font-bold uppercase tracking-wider">{t("tableModelSpec") || "Model"}</span>
+                                                                            <span className="text-xs text-white/90 font-medium truncate" title={part.model || part.description}>
+                                                                                {part.model || part.description || "-"}
+                                                                            </span>
+                                                                        </div>
+                                                                        <div className="flex flex-col">
+                                                                            <span className="text-[9px] text-white/40 font-bold uppercase tracking-wider">{t("tableBrand") || "Brand"}</span>
+                                                                            <span className="text-xs text-white/90 font-medium truncate">
+                                                                                {part.brand || "-"}
+                                                                            </span>
+                                                                        </div>
+                                                                        <div className="flex flex-col">
+                                                                            <span className="text-[9px] text-white/40 font-bold uppercase tracking-wider">{t("tableLocation") || "Location"}</span>
+                                                                            <span className="text-xs text-white/90 font-medium truncate">
+                                                                                {part.location || "-"}
+                                                                            </span>
+                                                                        </div>
+                                                                        <div className="flex flex-col">
+                                                                            <span className="text-[9px] text-white/40 font-bold uppercase tracking-wider">{t("tablePrice") || "Price"}</span>
+                                                                            <span className="text-xs text-accent-orange font-bold">
+                                                                                {part.pricePerUnit ? `฿${Number(part.pricePerUnit).toLocaleString()}` : "-"}
+                                                                            </span>
+                                                                        </div>
+                                                                    </div>
+                                                                    
+                                                                    {/* Action Buttons */}
+                                                                    <div className="flex justify-between items-center mt-1">
+                                                                        <div className="flex gap-2">
+                                                                            {/* Sub-parts Trigger */}
+                                                                            {subPartsMap[part.id] && (
+                                                                                <button
+                                                                                    onClick={(e) => { e.stopPropagation(); toggleExpand(part.id); }}
+                                                                                    className={`px-3 py-1.5 rounded-lg border flex items-center gap-2 text-xs font-bold transition-all shadow-md ${expandedParts[part.id] ? 'bg-primary border-primary text-white' : 'bg-white/5 border-white/10 text-white/80 hover:bg-white/10 hover:text-white'}`}
+                                                                                >
+                                                                                    <LayersIcon size={14} />
+                                                                                    {subPartsMap[part.id].length} Subs
+                                                                                    {expandedParts[part.id] ? <ChevronUpIcon size={14} /> : <ChevronDownIcon size={14} />}
+                                                                                </button>
+                                                                            )}
+                                                                        </div>
+                                                                        <div className="flex gap-2">
+                                                                            {/* Admin Delete */}
+                                                                            {isAdmin && (
+                                                                                <button
+                                                                                    onClick={(e) => {
+                                                                                        e.stopPropagation();
+                                                                                        handleDeleteClick(part);
+                                                                                    }}
+                                                                                    className="w-8 h-8 rounded-lg bg-white/5 hover:bg-error/20 border border-white/10 hover:border-error/30 text-white/50 hover:text-error flex items-center justify-center transition-all shadow-sm"
+                                                                                    title={t("actionDelete")}
+                                                                                >
+                                                                                    <TrashIcon size={14} />
+                                                                                </button>
+                                                                            )}
+                                                                        </div>
+                                                                    </div>
                                                                 </div>
-                                                            </div>
-                                                        </div>
-
-                                                        {/* Details Grid - Compact Version */}
-                                                        <div className="mt-auto grid grid-cols-2 gap-x-4 gap-y-2 pointer-events-auto bg-black/40 backdrop-blur-md rounded-xl p-3 border border-white/5">
-                                                            <div className="flex flex-col">
-                                                                <span className="text-[8px] text-white/40 font-bold uppercase tracking-wider">{t("tableModelSpec") || "Model"}</span>
-                                                                <span className="text-[11px] text-white font-medium truncate" title={part.model || part.description}>
-                                                                    {part.model || part.description || "-"}
-                                                                </span>
-                                                            </div>
-                                                            <div className="flex flex-col">
-                                                                <span className="text-[8px] text-white/40 font-bold uppercase tracking-wider">{t("tableBrand") || "Brand"}</span>
-                                                                <span className="text-[11px] text-white font-medium truncate">
-                                                                    {part.brand || "-"}
-                                                                </span>
-                                                            </div>
-                                                            <div className="flex flex-col">
-                                                                <span className="text-[8px] text-white/40 font-bold uppercase tracking-wider">{t("tableLocation") || "Location"}</span>
-                                                                <span className="text-[11px] text-white font-medium truncate">
-                                                                    {part.location || "-"}
-                                                                </span>
-                                                            </div>
-                                                            <div className="flex flex-col">
-                                                                <span className="text-[8px] text-white/40 font-bold uppercase tracking-wider">{t("tablePrice") || "Price"}</span>
-                                                                <span className="text-[11px] text-accent-orange font-bold">
-                                                                    {part.pricePerUnit ? `฿${Number(part.pricePerUnit).toLocaleString()}` : "-"}
-                                                                </span>
-                                                            </div>
-                                                        </div>
-                                                    </div>
+                                                            </>
+                                                        );
+                                                    })()}
 
                                                     {/* Sub-Parts List (Expandable Overlay) */}
                                                     {subPartsMap[part.id] && expandedParts[part.id] && (
-                                                        <div className="absolute inset-0 z-20 bg-bg-primary/95 backdrop-blur-lg flex flex-col p-4 animate-fade-in">
+                                                        <div className="absolute inset-x-0 bottom-0 top-24 z-20 bg-bg-primary/95 backdrop-blur-lg flex flex-col p-4 animate-fade-in border-t border-white/10">
                                                             <div className="flex items-center justify-between mb-4">
                                                                 <div className="flex items-center gap-2 text-xs font-bold text-text-muted uppercase tracking-widest">
                                                                     <LayersIcon size={14} className="text-primary" />
@@ -575,14 +560,8 @@ export default function PartsPage() {
                                                                         onClick={() => openDetailsModal(sub)}
                                                                     >
                                                                         <div className="flex items-center gap-3 overflow-hidden">
-                                                                            <div className="w-10 h-10 rounded-lg bg-bg-secondary shrink-0 overflow-hidden border border-white/5">
-                                                                                {sub.imageUrl ? (
-                                                                                    <img src={sub.imageUrl} alt={sub.name} className="w-full h-full object-cover" />
-                                                                                ) : (
-                                                                                    <div className="w-full h-full flex items-center justify-center text-text-muted/30">
-                                                                                        <BoxIcon size={16} />
-                                                                                    </div>
-                                                                                )}
+                                                                            <div className="w-10 h-10 rounded-lg bg-bg-secondary shrink-0 flex items-center justify-center border border-white/5">
+                                                                                <BoxIcon size={16} className="text-text-muted/50" />
                                                                             </div>
                                                                             <div className="min-w-0">
                                                                                 <div className="text-xs font-bold text-text-primary truncate">{sub.name}</div>

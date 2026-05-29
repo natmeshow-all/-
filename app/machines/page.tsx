@@ -244,32 +244,6 @@ export default function MachinesPage() {
 // Sub-component for Machine Card
 function MachineCard({ machine, index, onRefresh, onOpenSettings, onOpenDelete, onOpenDetails }: { machine: any, index: number, onRefresh: () => void, onOpenSettings: () => void, onOpenDelete: () => void, onOpenDetails: () => void }) {
     const { t } = useLanguage();
-    const { checkAuth } = useAuth();
-    const { success, error: showError } = useToast();
-    const [uploading, setUploading] = React.useState(false);
-    const [imageError, setImageError] = React.useState(false);
-
-    const handleFileChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
-        if (!checkAuth()) {
-            e.target.value = ""; // Reset input
-            return;
-        }
-        if (!e.target.files || e.target.files.length === 0) return;
-
-        const file = e.target.files[0];
-        setUploading(true);
-        try {
-            const { updateMachineImage } = await import("../lib/firebaseService");
-            await updateMachineImage(machine.name, file, machine.id);
-            success(t("msgSaveSuccess"), t("msgSaveSuccess"));
-            onRefresh();
-        } catch (error: any) {
-            console.error("Upload failed", error);
-            showError(t("msgError"), error.message || t("msgError"));
-        } finally {
-            setUploading(false);
-        }
-    };
 
     const handleDelete = () => {
         onOpenDelete();
@@ -285,7 +259,7 @@ function MachineCard({ machine, index, onRefresh, onOpenSettings, onOpenDelete, 
                     code: 'text-accent-cyan',
                     glow: 'bg-accent-cyan/10',
                     borderLine: 'from-transparent via-accent-cyan to-transparent',
-                    textGradient: 'group-hover:from-accent-cyan group-hover:to-blue-400'
+                    textGradient: 'group-hover:from-accent-cyan group-hover:to-blue-400',
                 };
             case 'RTE':
                 return { 
@@ -294,7 +268,7 @@ function MachineCard({ machine, index, onRefresh, onOpenSettings, onOpenDelete, 
                     code: 'text-green-400',
                     glow: 'bg-green-500/10',
                     borderLine: 'from-transparent via-green-400 to-transparent',
-                    textGradient: 'group-hover:from-green-400 group-hover:to-emerald-400'
+                    textGradient: 'group-hover:from-green-400 group-hover:to-emerald-400',
                 };
             case 'UTILITY':
             case 'UT':
@@ -304,7 +278,7 @@ function MachineCard({ machine, index, onRefresh, onOpenSettings, onOpenDelete, 
                     code: 'text-accent-yellow',
                     glow: 'bg-accent-yellow/10',
                     borderLine: 'from-transparent via-accent-yellow to-transparent',
-                    textGradient: 'group-hover:from-accent-yellow group-hover:to-amber-500'
+                    textGradient: 'group-hover:from-accent-yellow group-hover:to-amber-500',
                 };
             default:
                 return { 
@@ -313,196 +287,160 @@ function MachineCard({ machine, index, onRefresh, onOpenSettings, onOpenDelete, 
                     code: 'text-primary-light',
                     glow: 'bg-primary/10',
                     borderLine: 'from-transparent via-primary-light to-transparent',
-                    textGradient: 'group-hover:from-primary-light group-hover:to-indigo-400'
+                    textGradient: 'group-hover:from-primary-light group-hover:to-indigo-400',
                 };
         }
     };
     const styles = getStyles();
 
+    // Mock operating hours and calculate health percentage (simulating real machine data)
+    // Using machine ID to generate a consistent mock value for demo purposes
+    const idHash = machine.id ? machine.id.charCodeAt(0) + machine.id.charCodeAt(machine.id.length - 1) : 150;
+    const operatingHours = machine.operatingHours || (idHash * 13) % 1800 + 200; 
+    const maxHours = machine.maintenanceInterval || 2000;
+    const healthPercentage = Math.min(100, Math.max(0, 100 - (operatingHours / maxHours) * 100));
+    
+    // Determine status color based on health
+    const healthColor = healthPercentage > 50 ? 'bg-green-500' : healthPercentage > 20 ? 'bg-accent-yellow' : 'bg-accent-red';
+
     return (
         <div
             onClick={onOpenDetails}
-            className={`group relative h-80 rounded-2xl overflow-hidden shadow-lg hover:shadow-2xl ${styles.shadow} transition-all duration-500 animate-fade-in-up border ${styles.border} cursor-pointer`}
+            className={`group relative h-80 rounded-2xl overflow-hidden shadow-lg hover:shadow-2xl ${styles.shadow} transition-all duration-500 animate-fade-in-up border ${styles.border} cursor-pointer flex flex-col bg-bg-tertiary`}
             style={{ animationDelay: `${index * 50}ms` }}
         >
-            {/* Full Background Image */}
-            <div className="absolute inset-0 bg-bg-tertiary">
-                {machine.imageUrl && !imageError ? (
-                    <img
-                        src={machine.imageUrl}
-                        alt={machine.name}
-                        onError={() => setImageError(true)}
-                        className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-110"
-                    />
-                ) : (
-                    <div className="w-full h-full flex flex-col items-center justify-center bg-gradient-to-br from-bg-secondary via-bg-tertiary to-bg-primary p-6 relative overflow-hidden select-none">
-                        {/* CAD Technical blueprint grid pattern */}
-                        <div className="absolute inset-0 bg-[linear-gradient(to_right,rgba(255,255,255,0.02)_1px,transparent_1px),linear-gradient(to_bottom,rgba(255,255,255,0.02)_1px,transparent_1px)] bg-[size:14px_24px]"></div>
-                        
-                        {/* Glowing ambient lights */}
-                        <div className={`absolute -top-12 -left-12 w-44 h-44 rounded-full ${styles.glow} blur-3xl opacity-60 group-hover:opacity-100 transition-opacity duration-700`}></div>
-                        <div className="absolute -bottom-12 -right-12 w-44 h-44 rounded-full bg-blue-500/5 blur-3xl opacity-50"></div>
+            {/* Top Section - Visual Tech Identity */}
+            <div className="relative h-32 flex items-center justify-center overflow-hidden border-b border-white/5 bg-gradient-to-br from-bg-secondary to-bg-tertiary">
+                {/* CAD Technical blueprint grid pattern */}
+                <div className="absolute inset-0 bg-[linear-gradient(to_right,rgba(255,255,255,0.02)_1px,transparent_1px),linear-gradient(to_bottom,rgba(255,255,255,0.02)_1px,transparent_1px)] bg-[size:14px_24px]"></div>
+                
+                {/* Glowing ambient lights */}
+                <div className={`absolute -top-12 -left-12 w-32 h-32 rounded-full ${styles.glow} blur-3xl opacity-60 group-hover:opacity-100 transition-opacity duration-700`}></div>
+                
+                {/* Technical Crosshairs */}
+                <div className="absolute top-3 left-3 w-1.5 h-1.5 border-t border-l border-white/20"></div>
+                <div className="absolute top-3 right-3 w-1.5 h-1.5 border-t border-r border-white/20"></div>
+                <div className="absolute bottom-3 left-3 w-1.5 h-1.5 border-b border-l border-white/20"></div>
+                <div className="absolute bottom-3 right-3 w-1.5 h-1.5 border-b border-r border-white/20"></div>
 
-                        {/* Squircle Neon-Shield Badge */}
-                        <div className="
-                            relative w-28 h-28 rounded-3xl 
-                            bg-gradient-to-b from-white/10 to-white/5 
-                            border border-white/15 
-                            flex flex-col items-center justify-center 
-                            shadow-[inset_0_2px_4px_rgba(255,255,255,0.05),0_10px_25px_rgba(0,0,0,0.5)] 
-                            group-hover:border-white/30 group-hover:scale-105 group-hover:-translate-y-1
-                            transition-all duration-500
-                        ">
-                            {/* Dynamic Glowing border line based on style */}
-                            <div className={`absolute inset-x-4 top-0 h-px bg-gradient-to-r ${styles.borderLine} opacity-70`}></div>
-
-                            {/* Industrial Cog/Gear Watermark Icon */}
-                            <div className="absolute inset-0 flex items-center justify-center opacity-[0.03] group-hover:opacity-[0.07] transition-opacity group-hover:rotate-45 duration-1000">
-                                <svg xmlns="http://www.w3.org/2000/svg" width="64" height="64" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="text-white">
-                                    <circle cx="12" cy="12" r="3"></circle>
-                                    <path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 1 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 1 1-2.83-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 1 1 2.83-2.83l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 1 1 2.83 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"></path>
-                                </svg>
-                            </div>
-
-                            {/* High-Contrast Neon-Glowing Letters */}
-                            <span className={`
-                                text-3xl font-black tracking-widest text-white/80
-                                drop-shadow-[0_2px_8px_rgba(255,255,255,0.1)]
-                                group-hover:text-transparent group-hover:bg-clip-text
-                                group-hover:bg-gradient-to-r ${styles.textGradient}
-                                transition-all duration-300
-                            `}>
-                                {machine.code ? machine.code.substring(0, 3).toUpperCase() : machine.name.substring(0, 2).toUpperCase()}
-                            </span>
-
-                            {/* Subtle sub-badge overlay */}
-                            <span className="absolute -bottom-2.5 px-2 py-0.5 rounded bg-black/85 border border-white/10 text-[8px] font-black text-text-muted tracking-widest uppercase">
-                                {machine.location || "MACHINE"}
-                            </span>
-                        </div>
-
-                        {/* Technical Crosshairs Decors */}
-                        <div className="absolute top-4 left-4 w-2 h-2 border-t border-l border-white/10"></div>
-                        <div className="absolute top-4 right-4 w-2 h-2 border-t border-r border-white/10"></div>
-                        <div className="absolute bottom-4 left-4 w-2 h-2 border-b border-l border-white/10"></div>
-                        <div className="absolute bottom-4 right-4 w-2 h-2 border-b border-r border-white/10"></div>
-                    </div>
-                )}
-                {/* Gradient Overlay */}
-                <div className="absolute inset-0 bg-gradient-to-t from-bg-primary via-bg-primary/50 to-transparent opacity-80 group-hover:opacity-90 transition-opacity"></div>
-            </div>
-
-            {/* Content Content - Positioned at bottom */}
-            <div className="absolute inset-x-0 bottom-0 p-5 translate-y-2 group-hover:translate-y-0 transition-transform duration-300">
-                <div className="flex items-start justify-between mb-2">
-                    <div className="flex flex-col">
-                        {machine.code && (
-                            <span className={`text-[10px] font-bold ${styles.code} uppercase tracking-wider mb-0.5`}>
-                                {machine.code}
-                            </span>
-                        )}
-                        <h3 className="text-xl font-bold text-white tracking-tight drop-shadow-md">{machine.name}</h3>
-                    </div>
-                    <span className="badge badge-success shadow-lg backdrop-blur-md bg-green-500/20 border-green-500/30 text-green-400">
-                        {machine.status === 'active' ? t("statusActive") : machine.status}
+                {/* Machine Code Badge (replaces image) */}
+                <div className="
+                    relative px-8 py-3 rounded-2xl 
+                    bg-gradient-to-b from-white/10 to-white/5 
+                    border border-white/15 
+                    flex items-center justify-center 
+                    shadow-[inset_0_2px_4px_rgba(255,255,255,0.05),0_10px_25px_rgba(0,0,0,0.5)] 
+                    group-hover:border-white/30 group-hover:scale-105
+                    transition-all duration-500
+                ">
+                    <div className={`absolute inset-x-2 top-0 h-px bg-gradient-to-r ${styles.borderLine} opacity-70`}></div>
+                    <span className={`
+                        text-3xl font-black tracking-widest text-white/90
+                        drop-shadow-[0_2px_8px_rgba(255,255,255,0.1)]
+                        group-hover:text-transparent group-hover:bg-clip-text
+                        group-hover:bg-gradient-to-r ${styles.textGradient}
+                        transition-all duration-300
+                    `}>
+                        {machine.code ? machine.code.toUpperCase() : machine.name.substring(0, 3).toUpperCase()}
+                    </span>
+                    <span className="absolute -bottom-2.5 px-3 py-0.5 rounded bg-bg-secondary border border-white/10 text-[9px] font-black text-text-muted tracking-widest uppercase shadow-sm">
+                        {machine.location || "SYS"}
                     </span>
                 </div>
+            </div>
 
-                <div className="flex flex-wrap items-center gap-2 mb-3">
-                    {/* Brand & Model Prioritized */}
-                    {(machine.brand || machine.model) ? (
-                        <p className="text-xs text-white/80 font-medium">
-                            {machine.brand} {machine.model}
-                        </p>
-                    ) : machine.brandModel && (
-                        <p className="text-xs text-white/70 font-medium">{machine.brandModel}</p>
-                    )}
+            {/* Bottom Section - Data & Specs */}
+            <div className="relative flex-1 p-5 flex flex-col justify-between bg-gradient-to-br from-bg-secondary via-bg-tertiary to-bg-primary z-10">
+                {/* Header: Name and Status */}
+                <div>
+                    <div className="flex justify-between items-start mb-1">
+                        <h3 className="text-lg font-bold text-white tracking-tight drop-shadow-md truncate pr-2">
+                            {machine.name}
+                        </h3>
+                        <span className={`text-[10px] font-bold px-2 py-0.5 rounded uppercase tracking-wider backdrop-blur-sm border flex-shrink-0 ${machine.status === 'active' ? 'bg-green-500/20 border-green-500/30 text-green-400' : 'bg-white/10 border-white/20 text-text-muted'}`}>
+                            {machine.status === 'active' ? t("statusActive") : machine.status}
+                        </span>
+                    </div>
+                    
+                    {/* Brand & Model */}
+                    <div className="text-xs text-white/60 font-medium truncate mb-3">
+                        {(machine.brand || machine.model) ? (
+                            `${machine.brand || ''} ${machine.model || ''}`.trim()
+                        ) : machine.brandModel ? (
+                            machine.brandModel
+                        ) : "N/A"}
+                    </div>
                 </div>
 
-                <div className="flex flex-wrap items-center gap-2">
-                    {machine.location && (
-                        <span className="px-2.5 py-1 rounded-lg bg-white/10 backdrop-blur-md border border-white/10 text-[10px] font-medium text-white/90">
-                            {machine.location}
+                {/* Operating Hours Progress Bar */}
+                <div className="mb-4">
+                    <div className="flex justify-between items-end mb-1.5">
+                        <span className="text-[10px] font-bold text-text-muted uppercase tracking-wider">Health / Cycle</span>
+                        <span className="text-[11px] font-bold text-white/90 font-mono">
+                            {healthPercentage.toFixed(0)}%
                         </span>
-                    )}
+                    </div>
+                    <div className="h-1.5 w-full bg-white/10 rounded-full overflow-hidden shadow-inner">
+                        <div 
+                            className={`h-full ${healthColor} rounded-full transition-all duration-1000 ease-out`}
+                            style={{ width: `${healthPercentage}%` }}
+                        />
+                    </div>
+                    <div className="flex justify-between mt-1.5">
+                        <span className="text-[9px] text-text-muted font-mono">{operatingHours} hrs</span>
+                        <span className="text-[9px] text-text-muted font-mono">{maxHours} hrs max</span>
+                    </div>
+                </div>
+
+                {/* Badges Grid */}
+                <div className="flex flex-wrap items-center gap-1.5">
                     {machine.Location && machine.Location !== "No Zone" && (
-                        <span className="px-2.5 py-1 rounded-lg bg-accent-cyan/20 backdrop-blur-md border border-accent-cyan/30 text-[10px] font-medium text-accent-cyan">
-                            {machine.Location}
-                        </span>
-                    )}
-                    {machine.remark && (
-                        <span className="px-2.5 py-1 rounded-lg bg-accent-yellow/20 backdrop-blur-md border border-accent-yellow/30 text-[10px] font-bold text-accent-yellow">
-                            {t("labelClass")} {machine.remark}
+                        <span className="px-2 py-1 rounded-md bg-white/5 border border-white/10 text-[10px] font-medium text-white/80 backdrop-blur-sm">
+                            Zone: {machine.Location}
                         </span>
                     )}
                     {machine.performance && (
-                        <span className="px-2.5 py-1 rounded-lg bg-primary/20 backdrop-blur-md border border-primary/30 text-[10px] font-medium text-primary-light">
+                        <span className="px-2 py-1 rounded-md bg-primary/10 border border-primary/20 text-[10px] font-medium text-primary-light backdrop-blur-sm">
                             {machine.performance} kW
                         </span>
                     )}
                     {machine.serialNumber && machine.serialNumber !== "-" && (
-                        <span className="px-2.5 py-1 rounded-lg bg-accent-purple/20 backdrop-blur-md border border-accent-purple/30 text-[10px] font-medium text-accent-purple">
+                        <span className="px-2 py-1 rounded-md bg-accent-purple/10 border border-accent-purple/20 text-[10px] font-medium text-accent-purple backdrop-blur-sm">
                             SN: {machine.serialNumber}
+                        </span>
+                    )}
+                    {machine.remark && (
+                        <span className="px-2 py-1 rounded-md bg-accent-yellow/10 border border-accent-yellow/20 text-[10px] font-bold text-accent-yellow backdrop-blur-sm">
+                            {t("labelClass")} {machine.remark}
                         </span>
                     )}
                 </div>
             </div>
 
-            {/* Action Buttons - Top Right */}
-            <div className="absolute top-4 right-4 z-10 flex flex-col gap-2">
-                {/* Settings Button */}
+            {/* Action Buttons - Absolute positioned at top right */}
+            <div className="absolute top-3 right-3 z-20 flex flex-col gap-2">
                 <button
                     onClick={(e) => {
                         e.stopPropagation();
                         onOpenSettings();
                     }}
-                    className="w-10 h-10 rounded-full bg-white/10 backdrop-blur-md border border-white/20 flex items-center justify-center text-white hover:bg-primary hover:border-primary hover:scale-105 transition-all duration-300 shadow-lg"
+                    className="w-8 h-8 rounded-full bg-black/40 backdrop-blur-md border border-white/10 flex items-center justify-center text-white/70 hover:text-white hover:bg-primary hover:border-primary hover:scale-110 transition-all duration-300 shadow-lg"
                     title={t("labelMachineSettings")}
                 >
-                    <SettingsIcon size={20} />
+                    <SettingsIcon size={16} />
                 </button>
-
-                {/* Upload Button */}
-                <label
-                    onClick={(e) => e.stopPropagation()}
-                    className={`
-                    relative cursor-pointer 
-                    w-10 h-10 rounded-full 
-                    bg-white/10 backdrop-blur-md border border-white/20 
-                    flex items-center justify-center 
-                    text-white hover:bg-primary hover:border-primary hover:scale-105 
-                    transition-all duration-300 shadow-lg
-                    ${uploading ? 'pointer-events-none opacity-70' : ''}
-                `}>
-                    <input
-                        type="file"
-                        accept="image/*"
-                        className="hidden"
-                        onChange={handleFileChange}
-                        disabled={uploading}
-                    />
-                    {uploading ? (
-                        <div className="w-4 h-4 rounded-full border-2 border-white border-t-transparent animate-spin"></div>
-                    ) : (
-                        <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                            <path d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2z"></path>
-                            <circle cx="12" cy="13" r="4"></circle>
-                        </svg>
-                    )}
-                </label>
-
-                {/* Delete Button */}
                 <button
                     onClick={(e) => {
                         e.stopPropagation();
                         handleDelete();
                     }}
-                    className="w-10 h-10 rounded-full bg-white/10 backdrop-blur-md border border-white/20 flex items-center justify-center text-white hover:bg-accent-red hover:border-accent-red hover:scale-105 transition-all duration-300 shadow-lg"
+                    className="w-8 h-8 rounded-full bg-black/40 backdrop-blur-md border border-white/10 flex items-center justify-center text-white/70 hover:text-white hover:bg-accent-red hover:border-accent-red hover:scale-110 transition-all duration-300 shadow-lg"
                     title={t("actionDelete")}
                 >
-                    <TrashIcon size={20} />
+                    <TrashIcon size={16} />
                 </button>
             </div>
         </div>
     );
 }
+

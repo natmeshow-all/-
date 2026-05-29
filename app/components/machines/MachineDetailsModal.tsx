@@ -278,127 +278,84 @@ export default function MachineDetailsModal({
                                     {displayedParts.map(part => {
                                         const isLowStock = part.quantity <= (part.minStockThreshold || 0);
                                         return (
-                                            <div key={part.id} className="bg-[#1E293B]/50 rounded-2xl md:rounded-[2rem] border border-white/5 overflow-hidden flex flex-col shadow-xl group transition-all hover:border-blue-500/30">
-                                                <div className="relative aspect-[16/9] overflow-hidden bg-black/20">
-                                                    {part.imageUrl && !partImageErrors[part.id] ? (
-                                                        <img
-                                                            src={part.imageUrl}
-                                                            alt={part.partName}
-                                                            onError={() => setPartImageErrors(prev => ({ ...prev, [part.id]: true }))}
-                                                            className="absolute inset-0 w-full h-full object-cover transition-transform group-hover:scale-105"
-                                                        />
-                                                    ) : (
-                                                        (() => {
-                                                            const getPartTheme = (category: string) => {
-                                                                const cat = category?.toLowerCase() || "";
-                                                                if (cat.includes("mech")) return { glow: "bg-blue-500/10", borderLine: "from-transparent via-blue-500 to-transparent", textGradient: "from-blue-400 to-indigo-400" };
-                                                                if (cat.includes("elect") || cat.includes("wire")) return { glow: "bg-accent-yellow/10", borderLine: "from-transparent via-accent-yellow to-transparent", textGradient: "from-accent-yellow to-amber-500" };
-                                                                if (cat.includes("hyd")) return { glow: "bg-accent-red/10", borderLine: "from-transparent via-accent-red to-transparent", textGradient: "from-accent-red to-pink-500" };
-                                                                if (cat.includes("pneu")) return { glow: "bg-accent-cyan/10", borderLine: "from-transparent via-accent-cyan to-transparent", textGradient: "from-accent-cyan to-teal-400" };
-                                                                if (cat.includes("con") || cat.includes("oil") || cat.includes("grease") || cat.includes("spare")) return { glow: "bg-green-500/10", borderLine: "from-transparent via-green-500 to-transparent", textGradient: "from-green-400 to-emerald-400" };
-                                                                return { glow: "bg-primary/10", borderLine: "from-transparent via-primary-light to-transparent", textGradient: "from-primary-light to-indigo-400" };
-                                                            };
-                                                            const theme = getPartTheme(part.category || "");
-                                                            return (
-                                                                <div className="absolute inset-0 w-full h-full flex flex-col items-center justify-center bg-gradient-to-br from-[#1E293B] via-bg-tertiary to-[#0F172A] p-4 relative overflow-hidden select-none">
-                                                                    {/* Tech blueprint grid pattern */}
-                                                                    <div className="absolute inset-0 bg-[linear-gradient(to_right,rgba(255,255,255,0.015)_1px,transparent_1px),linear-gradient(to_bottom,rgba(255,255,255,0.015)_1px,transparent_1px)] bg-[size:10px_16px]"></div>
-
-                                                                    {/* Ambient glow */}
-                                                                    <div className={`absolute -top-10 -left-10 w-28 h-28 rounded-full ${theme.glow} blur-2xl opacity-60`}></div>
-                                                                    <div className="absolute -bottom-10 -right-10 w-28 h-28 rounded-full bg-blue-500/5 blur-2xl opacity-40"></div>
-
-                                                                    {/* squircle neon shield */}
-                                                                    <div className="
-                                                                        relative w-20 h-20 rounded-2xl 
-                                                                        bg-gradient-to-b from-white/10 to-white/5 
-                                                                        border border-white/15 
-                                                                        flex flex-col items-center justify-center 
-                                                                        shadow-[inset_0_2px_4px_rgba(255,255,255,0.05),0_8px_15px_rgba(0,0,0,0.5)] 
-                                                                    ">
-                                                                        {/* Glowing border line */}
-                                                                        <div className={`absolute inset-x-2 top-0 h-px bg-gradient-to-r ${theme.borderLine} opacity-70`}></div>
-
-                                                                        {/* initials */}
-                                                                        <span className={`text-xl font-black text-transparent bg-clip-text bg-gradient-to-r ${theme.textGradient} drop-shadow-[0_2px_5px_rgba(255,255,255,0.1)]`}>
-                                                                            {part.partName ? part.partName.substring(0, 2).toUpperCase() : "PT"}
-                                                                        </span>
-
-                                                                        {/* sub-badge category */}
-                                                                        <span className="absolute -bottom-2 px-1.5 py-0.5 rounded bg-black/85 border border-white/10 text-[6px] font-black text-text-muted tracking-widest uppercase">
-                                                                            {part.category || "PART"}
-                                                                        </span>
-                                                                    </div>
-
-                                                                    {/* Technical corner decors */}
-                                                                    <div className="absolute top-3 left-3 w-1.5 h-1.5 border-t border-l border-white/10"></div>
-                                                                    <div className="absolute top-3 right-3 w-1.5 h-1.5 border-t border-r border-white/10"></div>
-                                                                    <div className="absolute bottom-3 left-3 w-1.5 h-1.5 border-b border-l border-white/10"></div>
-                                                                    <div className="absolute bottom-3 right-3 w-1.5 h-1.5 border-b border-r border-white/10"></div>
-                                                                </div>
-                                                            );
-                                                        })()
-                                                    )}
-                                                    <div className="absolute top-3 right-3 flex flex-col items-end gap-2">
-                                                        {isLowStock && (
-                                                            <div className="bg-red-500/90 text-white text-[10px] font-bold px-3 py-1 rounded-full backdrop-blur-sm shadow-lg flex items-center gap-1">
-                                                                <AlertTriangleIcon size={10} />
-                                                                {t("statusLowStock")}
-                                                            </div>
-                                                        )}
+                                            <div key={part.id} className="bg-gradient-to-br from-[#1E293B]/80 to-[#0F172A] rounded-2xl md:rounded-[2rem] border border-white/5 overflow-hidden shadow-xl group transition-all hover:border-indigo-500/30 flex flex-col md:flex-row relative">
+                                                
+                                                {/* Tech ID Sidebar */}
+                                                <div className="w-full md:w-32 bg-black/20 p-4 flex flex-col items-center justify-center border-b md:border-b-0 md:border-r border-white/5 relative overflow-hidden shrink-0">
+                                                    <div className="absolute inset-0 bg-[linear-gradient(to_right,rgba(255,255,255,0.015)_1px,transparent_1px),linear-gradient(to_bottom,rgba(255,255,255,0.015)_1px,transparent_1px)] bg-[size:10px_16px]"></div>
+                                                    
+                                                    <div className="relative z-10 w-16 h-16 rounded-2xl bg-gradient-to-b from-white/10 to-white/5 border border-white/15 flex items-center justify-center shadow-lg group-hover:scale-110 transition-transform">
+                                                        <span className="text-xl font-black text-white/80 drop-shadow-md group-hover:text-white">
+                                                            {part.partName ? part.partName.substring(0, 2).toUpperCase() : "PT"}
+                                                        </span>
                                                     </div>
+                                                    <span className="relative z-10 mt-3 px-2 py-0.5 rounded bg-black/50 border border-white/10 text-[9px] font-black text-indigo-400 tracking-widest uppercase text-center w-full truncate">
+                                                        {part.category || "PART"}
+                                                    </span>
                                                 </div>
-                                                <div className="p-4 md:p-6 space-y-4">
+
+                                                {/* Core Details */}
+                                                <div className="flex-1 p-4 md:p-5 flex flex-col justify-between space-y-4">
                                                     <div className="flex justify-between items-start gap-4">
                                                         <div>
-                                                            <h4 className="text-lg md:text-xl font-bold text-white group-hover:text-blue-400 transition-colors">{part.partName}</h4>
-                                                            <p className="text-text-muted text-xs md:text-sm font-medium mt-1">{part.brand} • {part.modelSpec}</p>
+                                                            <div className="flex items-center gap-2">
+                                                                <h4 className="text-lg md:text-xl font-bold text-white group-hover:text-indigo-400 transition-colors">{part.partName}</h4>
+                                                                {isLowStock && (
+                                                                    <span className="bg-red-500/20 text-red-400 text-[10px] font-bold px-2 py-0.5 rounded border border-red-500/20 flex items-center gap-1 animate-pulse">
+                                                                        <AlertTriangleIcon size={10} /> LOW
+                                                                    </span>
+                                                                )}
+                                                            </div>
+                                                            <p className="text-text-muted text-xs md:text-sm font-medium mt-1">{part.brand || "N/A"} • {part.modelSpec || "No Spec"}</p>
                                                         </div>
-                                                        <div className="flex flex-col items-end gap-1">
-                                                            <span className="badge bg-indigo-500/80 text-white font-bold shadow-lg backdrop-blur-md border border-white/20">
+                                                        <div className="flex flex-col items-end gap-1 shrink-0">
+                                                            <span className="badge bg-indigo-500/20 text-indigo-300 font-bold border border-indigo-500/20">
                                                                 {part.location || "-"}
                                                             </span>
-                                                            <span className="text-[10px] text-white/60 uppercase tracking-wide">{t("tableLocation")}</span>
+                                                            <span className="text-[9px] text-white/40 uppercase tracking-wide">{t("tableLocation")}</span>
                                                         </div>
                                                     </div>
 
-                                                    <div className="grid grid-cols-2 md:grid-cols-4 gap-3 bg-black/20 p-3 md:p-4 rounded-xl border border-white/5">
+                                                    {/* Spec Grid */}
+                                                    <div className="grid grid-cols-2 md:grid-cols-4 gap-3 bg-black/20 p-3 rounded-xl border border-white/5 w-full">
                                                         <div className="flex flex-col gap-0.5">
                                                             <span className="text-[10px] text-text-muted uppercase font-semibold">{t("tableLocationArea")}</span>
-                                                            <span className="text-sm font-bold text-indigo-400">{part.Location}</span>
+                                                            <span className="text-sm font-bold text-white/90">{part.Location || "-"}</span>
                                                         </div>
                                                         <div className="flex flex-col gap-0.5">
                                                             <span className="text-[10px] text-text-muted uppercase font-semibold">{t("tableQuantity")}</span>
-                                                            <span className={`text-sm font-bold ${isLowStock ? "text-red-400" : "text-green-400"}`}>{part.quantity}</span>
+                                                            <div className="flex items-end gap-1">
+                                                                <span className={`text-lg leading-none font-black ${isLowStock ? "text-red-400" : "text-green-400"}`}>{part.quantity}</span>
+                                                                <span className="text-[10px] text-text-muted mb-0.5">/ {part.minStockThreshold || 0}</span>
+                                                            </div>
                                                         </div>
                                                         <div className="flex flex-col gap-0.5 col-span-2">
                                                             <span className="text-[10px] text-text-muted uppercase font-semibold">{t("tableNotes")}</span>
-                                                            <span className="text-xs text-text-primary line-clamp-1">{part.notes || "-"}</span>
+                                                            <span className="text-xs text-text-primary line-clamp-1 italic">{part.notes || "No notes"}</span>
                                                         </div>
                                                     </div>
 
-                                                    <div className="flex items-center justify-between gap-3 pt-2">
-                                                        <div className="flex items-center gap-2">
-                                                            <button
-                                                                onClick={() => { if (checkAuth()) onEditPart?.(part); }}
-                                                                className="w-10 h-10 md:w-11 md:h-11 rounded-xl bg-blue-500/10 text-blue-400 border border-blue-500/20 flex items-center justify-center hover:bg-blue-500 hover:text-white transition-all shadow-md active:scale-90"
-                                                                title={t("actionEdit")}
-                                                            >
-                                                                <EditIcon size={18} />
-                                                            </button>
-                                                            <button
-                                                                onClick={() => { if (checkAuth()) onDeletePart?.(part); }}
-                                                                className="w-10 h-10 md:w-11 md:h-11 rounded-xl bg-red-500/10 text-red-400 border border-red-500/20 flex items-center justify-center hover:bg-red-500 hover:text-white transition-all shadow-md active:scale-90"
-                                                                title={t("actionDelete")}
-                                                            >
-                                                                <TrashIcon size={18} />
-                                                            </button>
-                                                        </div>
+                                                    {/* Actions */}
+                                                    <div className="flex items-center justify-end gap-2 pt-2 border-t border-white/5 mt-2">
+                                                        <button
+                                                            onClick={() => { if (checkAuth()) onEditPart?.(part); }}
+                                                            className="p-2 rounded-lg bg-white/5 text-white/60 hover:bg-blue-500/20 hover:text-blue-400 transition-all border border-transparent hover:border-blue-500/30"
+                                                            title={t("actionEdit")}
+                                                        >
+                                                            <EditIcon size={16} />
+                                                        </button>
+                                                        <button
+                                                            onClick={() => { if (checkAuth()) onDeletePart?.(part); }}
+                                                            className="p-2 rounded-lg bg-white/5 text-white/60 hover:bg-red-500/20 hover:text-red-400 transition-all border border-transparent hover:border-red-500/30"
+                                                            title={t("actionDelete")}
+                                                        >
+                                                            <TrashIcon size={16} />
+                                                        </button>
                                                         <button
                                                             onClick={() => { if (checkAuth()) onRepairPart?.(part); }}
-                                                            className="flex-1 md:flex-none flex items-center justify-center gap-2 px-6 py-2.5 md:py-3 bg-indigo-600 hover:bg-indigo-500 text-white rounded-xl font-bold transition-all shadow-lg shadow-indigo-600/20 active:scale-95 text-sm"
+                                                            className="flex items-center gap-2 px-4 py-1.5 bg-indigo-500/20 hover:bg-indigo-500/40 text-indigo-300 rounded-lg font-bold transition-all border border-indigo-500/30 text-xs"
                                                         >
-                                                            <WrenchIcon size={18} />
+                                                            <WrenchIcon size={14} />
                                                             {t("actionRepair")}
                                                         </button>
                                                     </div>

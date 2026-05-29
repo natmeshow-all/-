@@ -689,7 +689,7 @@ export default function Dashboard() {
                 <table className="table w-full">
                   <thead>
                     <tr className="bg-bg-tertiary">
-                      <th className={`px-4 py-4 text-left text-xs font-semibold text-text-muted uppercase tracking-wider ${isTableFullscreen ? "sticky top-0 z-20 bg-bg-tertiary shadow-sm" : ""}`}>{t("tableImage")}</th>
+                      <th className={`px-4 py-4 text-left text-xs font-semibold text-text-muted uppercase tracking-wider ${isTableFullscreen ? "sticky top-0 z-20 bg-bg-tertiary shadow-sm" : ""}`}>{language === "th" ? "หมวดหมู่" : "Category"}</th>
                       <th className={`px-4 py-4 text-left text-xs font-semibold text-text-muted uppercase tracking-wider ${isTableFullscreen ? "sticky top-0 z-20 bg-bg-tertiary shadow-sm" : ""}`}>{t("tableMachine")}</th>
                       <th className={`px-4 py-4 text-left text-xs font-semibold text-text-muted uppercase tracking-wider ${isTableFullscreen ? "sticky top-0 z-20 bg-bg-tertiary shadow-sm" : ""}`}>{t("tablePartName")}</th>
                       <th className={`px-4 py-4 text-left text-xs font-semibold text-text-muted uppercase tracking-wider ${isTableFullscreen ? "sticky top-0 z-20 bg-bg-tertiary shadow-sm" : ""}`}>{t("tableModelSpec")}</th>
@@ -709,34 +709,22 @@ export default function Dashboard() {
                         style={{ animationDelay: `${index * 30}ms` }}
                       >
                         <td className="py-3 px-4">
-                          <div
-                            className="w-12 h-12 rounded-lg bg-bg-tertiary overflow-hidden flex items-center justify-center border border-border-light relative group cursor-pointer hover:border-primary/50 transition-colors"
-                            onClick={() => openMachineDetails(part)}
-                          >
-                            {part.imageUrl && !imageErrors[part.id] ? (
-                              <img
-                                src={part.imageUrl}
-                                alt={part.partName}
-                                onError={() => setImageErrors(prev => ({ ...prev, [part.id]: true }))}
-                                className="object-cover w-full h-full transition-transform duration-500 group-hover:scale-110"
-                              />
-                            ) : (
-                              (() => {
-                                const theme = getPartTheme(part.category || "");
-                                return (
-                                  <div className="w-full h-full flex flex-col items-center justify-center bg-gradient-to-br from-bg-secondary to-bg-primary relative overflow-hidden select-none p-1">
-                                    <div className="absolute inset-0 bg-[linear-gradient(to_right,rgba(255,255,255,0.015)_1px,transparent_1px),linear-gradient(to_bottom,rgba(255,255,255,0.015)_1px,transparent_1px)] bg-[size:4px_6px]"></div>
-                                    <div className="relative w-full h-full rounded-md border border-white/10 flex flex-col items-center justify-center shadow-inner">
-                                      <div className={`absolute inset-x-1 top-0 h-px bg-gradient-to-r ${theme.borderLine} opacity-60`}></div>
-                                      <span className={`text-[10px] font-black text-white/80 group-hover:text-transparent group-hover:bg-clip-text group-hover:bg-gradient-to-r ${theme.textGradient} transition-all duration-300`}>
-                                        {part.partName ? part.partName.substring(0, 2).toUpperCase() : "PT"}
-                                      </span>
-                                    </div>
-                                  </div>
-                                );
-                              })()
-                            )}
-                          </div>
+                          {(() => {
+                            const theme = getPartTheme(part.category || "");
+                            return (
+                              <span className={`
+                                inline-flex items-center justify-center px-2.5 py-1 rounded-lg text-[10px] font-bold tracking-wider uppercase
+                                border backdrop-blur-md transition-all duration-300
+                                ${theme.glow} ${theme.borderLine.includes("via-blue") ? "border-blue-500/30 text-blue-400" :
+                                  theme.borderLine.includes("via-accent-yellow") ? "border-accent-yellow/30 text-accent-yellow" :
+                                  theme.borderLine.includes("via-accent-red") ? "border-accent-red/30 text-accent-red" :
+                                  theme.borderLine.includes("via-accent-cyan") ? "border-accent-cyan/30 text-accent-cyan" :
+                                  theme.borderLine.includes("via-green") ? "border-green-500/30 text-green-400" : "border-white/10 text-primary-light"}
+                              `}>
+                                {part.category || "PART"}
+                              </span>
+                            );
+                          })()}
                         </td>
                         <td className="py-3 px-4 font-medium text-text-primary">
                           <span
@@ -821,162 +809,123 @@ export default function Dashboard() {
                   filteredParts.map((part, index) => (
                     <div
                       key={part.id}
-                      className="relative w-full h-[320px] rounded-2xl overflow-hidden shadow-lg border border-white/10 group active:scale-[0.99] transition-transform animate-fade-in"
+                      className="relative w-full rounded-2xl bg-gradient-to-br from-bg-secondary via-bg-tertiary to-bg-primary p-5 border border-white/10 shadow-lg group active:scale-[0.99] transition-all duration-300 animate-fade-in flex flex-col justify-between overflow-hidden gap-4"
                       style={{ animationDelay: `${index * 50}ms` }}
                     >
-                      {/* Background Image */}
-                      <div
-                        className="absolute inset-0 bg-bg-tertiary"
-                        onClick={() => {
-                          if (part.imageUrl) {
-                            setLightboxImage(part.imageUrl);
-                          }
-                        }}
-                      >
-                        {part.imageUrl && !imageErrors[part.id] ? (
-                          <img
-                            src={part.imageUrl}
-                            alt={part.partName}
-                            onError={() => setImageErrors(prev => ({ ...prev, [part.id]: true }))}
-                            className="object-cover w-full h-full transition-transform duration-500 group-hover:scale-105"
-                          />
-                        ) : (
-                          (() => {
-                            const theme = getPartTheme(part.category || "");
-                            return (
-                              <div className="w-full h-full flex flex-col items-center justify-center bg-gradient-to-br from-bg-secondary via-bg-tertiary to-bg-primary p-6 relative overflow-hidden select-none">
-                                <div className="absolute inset-0 bg-[linear-gradient(to_right,rgba(255,255,255,0.015)_1px,transparent_1px),linear-gradient(to_bottom,rgba(255,255,255,0.015)_1px,transparent_1px)] bg-[size:12px_20px]"></div>
-                                <div className={`absolute -top-12 -left-12 w-36 h-36 rounded-full ${theme.glow} blur-3xl opacity-60 group-hover:opacity-100 transition-opacity duration-700`}></div>
-                                <div className="absolute -bottom-12 -right-12 w-36 h-36 rounded-full bg-blue-500/5 blur-3xl opacity-40"></div>
-                                <div className="
-                                  relative w-24 h-24 rounded-[22px] 
-                                  bg-gradient-to-b from-white/10 to-white/5 
-                                  border border-white/15 
-                                  flex flex-col items-center justify-center 
-                                  shadow-[inset_0_2px_4px_rgba(255,255,255,0.05),0_8px_20px_rgba(0,0,0,0.5)] 
-                                  group-hover:border-white/30 group-hover:scale-105 group-hover:-translate-y-0.5
-                                  transition-all duration-500
-                                ">
-                                  <div className={`absolute inset-x-3 top-0 h-px bg-gradient-to-r ${theme.borderLine} opacity-70`}></div>
-                                  <div className="absolute inset-0 flex items-center justify-center opacity-[0.03] group-hover:opacity-[0.06] transition-opacity">
-                                    <svg xmlns="http://www.w3.org/2000/svg" width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="text-white">
-                                      <path d="M21 16V8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16z"></path>
-                                      <polyline points="3.27 6.96 12 12.01 20.73 6.96"></polyline>
-                                      <line x1="12" y1="22.08" x2="12" y2="12"></line>
-                                    </svg>
-                                  </div>
-                                  <span className={`text-2xl font-black text-white/80 drop-shadow-[0_2px_6px_rgba(255,255,255,0.1)] group-hover:text-transparent group-hover:bg-clip-text group-hover:bg-gradient-to-r ${theme.textGradient} transition-all duration-300`}>
-                                    {part.partName ? part.partName.substring(0, 2).toUpperCase() : "PT"}
-                                  </span>
-                                  <span className="absolute -bottom-2 px-1.5 py-0.5 rounded bg-black/85 border border-white/10 text-[7px] font-black text-text-muted tracking-widest uppercase">
-                                    {part.category || "PART"}
-                                  </span>
-                                </div>
-                                <div className="absolute top-3 left-3 w-1.5 h-1.5 border-t border-l border-white/10"></div>
-                                <div className="absolute top-3 right-3 w-1.5 h-1.5 border-t border-r border-white/10"></div>
-                                <div className="absolute bottom-3 left-3 w-1.5 h-1.5 border-b border-l border-white/10"></div>
-                                <div className="absolute bottom-3 right-3 w-1.5 h-1.5 border-b border-r border-white/10"></div>
-                              </div>
-                            );
-                          })()
-                        )}
-
-                        {/* Gradient Overlay for text visibility */}
-                        <div className="absolute inset-x-0 bottom-0 h-3/4 bg-gradient-to-t from-bg-primary via-bg-primary/80 to-transparent pointer-events-none" />
+                      {/* Tech grid watermarks */}
+                      <div className="absolute inset-0 bg-[linear-gradient(to_right,rgba(255,255,255,0.01)_1px,transparent_1px),linear-gradient(to_bottom,rgba(255,255,255,0.01)_1px,transparent_1px)] bg-[size:10px_16px] pointer-events-none"></div>
+                      
+                      {/* Upper row: Category & Badges */}
+                      <div className="flex items-start justify-between relative z-10 pointer-events-auto">
+                        {(() => {
+                          const theme = getPartTheme(part.category || "");
+                          return (
+                            <span className={`px-2.5 py-1 rounded bg-black/60 border border-white/10 text-[9px] font-black tracking-widest uppercase text-transparent bg-clip-text bg-gradient-to-r ${theme.textGradient}`}>
+                              {part.category || "PART"}
+                            </span>
+                          );
+                        })()}
+                        
+                        <div className="flex items-center gap-2">
+                          {/* Quantity badge */}
+                          <div className="flex items-center gap-1 bg-black/40 border border-white/10 rounded px-1.5 py-0.5">
+                            <span className="text-[10px] font-bold text-white">x{part.quantity}</span>
+                          </div>
+                          {/* Location area */}
+                          {part.location && (
+                            <span className="px-1.5 py-0.5 rounded bg-accent-cyan/20 border border-accent-cyan/30 text-[9px] font-bold text-accent-cyan">
+                              {part.location}
+                            </span>
+                          )}
+                          {/* Delete action */}
+                          <button
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              handleDeleteClick(part);
+                            }}
+                            className="w-6 h-6 rounded-full bg-accent-red/10 text-accent-red border border-accent-red/20 flex items-center justify-center hover:bg-accent-red hover:text-white transition-all shadow active:scale-90"
+                            title={t("actionDelete")}
+                          >
+                            <BoxIcon size={12} className="rotate-45" />
+                          </button>
+                        </div>
                       </div>
 
-                      {/* Content Overlay - Glassmorphism */}
-                      <div className="absolute inset-x-0 bottom-0 p-4 flex flex-col justify-end h-full pointer-events-none">
-                        <div className="pointer-events-auto">
-                          {/* Badge Top Right */}
-                          <div className="absolute top-4 right-4 z-10 flex flex-col items-end gap-2">
-                            <div className="flex flex-col items-end gap-1">
-                              <span className="badge badge-primary font-bold shadow-lg backdrop-blur-md bg-primary/80 border border-white/20">
-                                x{part.quantity}
-                              </span>
-                              <span className="text-[10px] text-white/60 bg-black/40 backdrop-blur-sm px-1.5 py-0.5 rounded border border-white/5 uppercase tracking-tighter">
-                                {t("tableQuantity")}
-                              </span>
-                            </div>
+                      {/* Middle Row: Main Spec Info */}
+                      <div className="flex flex-col gap-1 relative z-10 pointer-events-auto">
+                        <h3 className="text-xl font-bold text-white tracking-tight">{tData(part.partName)}</h3>
+                        <div className="flex items-center gap-1.5 text-xs text-primary-light">
+                          <SettingsIcon size={12} />
+                          <span className="font-semibold">{part.machineName}</span>
+                        </div>
+                      </div>
 
-                            {/* Location Badge */}
-                            <div className="flex flex-col items-end gap-1">
-                              <span className="badge bg-accent-cyan/80 text-bg-primary font-bold shadow-lg backdrop-blur-md border border-white/20">
-                                {part.location || "-"}
-                              </span>
-                              <span className="text-[10px] text-white/60 bg-black/40 backdrop-blur-sm px-1.5 py-0.5 rounded border border-white/5 uppercase tracking-tighter">
-                                {t("tableLocation")}
-                              </span>
-                            </div>
+                      {/* Specs Grid */}
+                      <div className="grid grid-cols-3 gap-2 relative z-10 pointer-events-auto text-[10px]">
+                        <div className="bg-white/5 border border-white/10 rounded p-1.5 flex flex-col">
+                          <span className="text-[8px] text-white/40 uppercase font-bold">{t("tableBrand")}</span>
+                          <span className="text-white font-medium truncate">{part.brand || "-"}</span>
+                        </div>
+                        <div className="bg-white/5 border border-white/10 rounded p-1.5 flex flex-col">
+                          <span className="text-[8px] text-white/40 uppercase font-bold">{t("tableModelSpec")}</span>
+                          <span className="text-white font-medium truncate" title={part.modelSpec}>{part.modelSpec || "-"}</span>
+                        </div>
+                        <div className="bg-white/5 border border-white/10 rounded p-1.5 flex flex-col">
+                          <span className="text-[8px] text-white/40 uppercase font-bold">{t("tableLocationArea")}</span>
+                          <span className="text-white font-medium truncate">{tData(part.Location || "-")}</span>
+                        </div>
+                      </div>
 
-                            {/* small red delete button */}
-                            <button
-                              onClick={(e) => {
-                                e.stopPropagation();
-                                handleDeleteClick(part);
-                              }}
-                              className="w-8 h-8 rounded-full bg-accent-red/20 text-accent-red border border-accent-red/30 flex items-center justify-center hover:bg-accent-red hover:text-white transition-all shadow-lg active:scale-90"
-                              title={t("actionDelete")}
-                            >
-                              <BoxIcon size={14} className="rotate-45" />
-                            </button>
-                          </div>
-
-                          {/* Main Info */}
-                          <div className="mb-4">
-                            <h3 className="text-2xl font-bold text-white drop-shadow-lg leading-tight mb-1">
-                              {tData(part.partName)}
-                            </h3>
-                            <div className="flex items-center gap-2 text-sm text-primary-light drop-shadow-md">
-                              <SettingsIcon size={14} />
-                              <span className="font-semibold">{part.machineName}</span>
-                            </div>
-                          </div>
-
-                          {/* Individual Detail Tags - Frosted Glass Pills */}
-                          <div className="flex flex-wrap gap-1.5 mb-3">
-                            <div className="bg-white/10 backdrop-blur-md border border-white/20 rounded-md px-1.5 py-0.5 flex flex-col min-w-[60px]">
-                              <span className="text-[8px] text-white/50 uppercase tracking-tighter font-bold">{t("tableBrand")}</span>
-                              <span className="text-[10px] text-white font-medium truncate max-w-[80px]">{part.brand || "-"}</span>
-                            </div>
-                            <div className="bg-white/10 backdrop-blur-md border border-white/20 rounded-md px-1.5 py-0.5 flex flex-col min-w-[90px]">
-                              <span className="text-[8px] text-white/50 uppercase tracking-tighter font-bold">{t("tableModelSpec")}</span>
-                              <span className="text-[10px] text-white font-medium truncate max-w-[140px]" title={part.modelSpec}>{part.modelSpec || "-"}</span>
-                            </div>
-                            <div className="bg-white/10 backdrop-blur-md border border-white/20 rounded-md px-1.5 py-0.5 flex flex-col min-w-[40px]">
-                              <span className="text-[8px] text-white/50 uppercase tracking-tighter font-bold">{t("tableLocationArea")}</span>
-                              <span className="text-[10px] text-white font-medium">{tData(part.Location || "-")}</span>
-                            </div>
-
-                            {part.notes && (
-                              <div className="w-full bg-white/5 backdrop-blur-sm border border-white/10 rounded-lg p-1.5 flex gap-1.5 items-start mt-0.5">
-                                <AlertTriangleIcon size={10} className="text-accent-yellow shrink-0 mt-0.5" />
-                                <div className="flex flex-col">
-                                  <span className="text-[8px] text-white/40 uppercase tracking-widest font-bold">{t("tableNotes")}</span>
-                                  <span className="text-[10px] text-white/80 italic line-clamp-1">"{tData(part.notes)}"</span>
-                                </div>
+                      {/* Stock level analysis bar */}
+                      <div className="relative z-10 pointer-events-auto">
+                        {(() => {
+                          const percentage = Math.min(100, Math.max(0, (part.quantity / (part.minStockThreshold || 5)) * 100));
+                          const isLowStock = part.quantity <= part.minStockThreshold;
+                          const barColor = isLowStock ? "bg-accent-red" : "bg-accent-green";
+                          const glowColor = isLowStock ? "shadow-[0_0_8px_rgba(239,68,68,0.5)]" : "";
+                          return (
+                            <div className="w-full bg-white/5 border border-white/5 rounded-lg p-2 flex flex-col gap-1.5">
+                              <div className="flex items-center justify-between text-[9px]">
+                                <span className="text-text-muted uppercase tracking-wider font-bold">STOCK LEVEL</span>
+                                <span className={isLowStock ? "text-accent-red font-black flex items-center gap-1 animate-pulse" : "text-accent-green font-black"}>
+                                  {isLowStock ? "⚠️ LOW" : "✅ OK"}
+                                </span>
                               </div>
-                            )}
-                          </div>
+                              <div className="w-full bg-black/40 h-1.5 rounded-full overflow-hidden border border-white/5 relative">
+                                <div className={`h-full ${barColor} ${glowColor} transition-all duration-500`} style={{ width: `${percentage}%` }}></div>
+                              </div>
+                            </div>
+                          );
+                        })()}
+                      </div>
 
-                          {/* Actions */}
-                          <div className="flex gap-2">
-                            <button
-                              onClick={() => handleEditPart(part)}
-                              className="flex-1 btn bg-white/10 backdrop-blur-md border border-white/20 hover:bg-primary transition-all text-[11px] h-8 text-white rounded-lg px-2"
-                            >
-                              <EditIcon size={12} className="mr-1" />
-                              {t("actionEdit")}
-                            </button>
-                            <button
-                              onClick={() => handleMaintenancePart(part)}
-                              className="flex-1 btn bg-white/10 backdrop-blur-md border border-white/20 hover:bg-accent-yellow hover:text-black transition-all text-[11px] h-8 text-white rounded-lg px-2"
-                            >
-                              <SettingsIcon size={12} className="mr-1" />
-                              {t("actionMaintenance")}
-                            </button>
+                      {/* Notes block if exists */}
+                      {part.notes && (
+                        <div className="relative z-10 pointer-events-auto bg-white/5 border border-white/10 rounded-lg p-2 flex gap-1.5 items-start text-[10px]">
+                          <AlertTriangleIcon size={10} className="text-accent-yellow shrink-0 mt-0.5" />
+                          <div className="flex flex-col">
+                            <span className="text-[8px] text-white/40 uppercase font-bold">{t("tableNotes")}</span>
+                            <span className="text-white/80 italic line-clamp-1">"{tData(part.notes)}"</span>
                           </div>
                         </div>
+                      )}
+
+                      {/* Lower Row: Actions */}
+                      <div className="flex gap-2 relative z-10 pointer-events-auto pt-1.5 border-t border-white/5">
+                        <button
+                          onClick={() => handleEditPart(part)}
+                          className="flex-1 btn bg-white/5 border border-white/10 hover:bg-primary transition-all text-[11px] h-8 text-white rounded-lg px-2"
+                        >
+                          <EditIcon size={12} className="mr-1" />
+                          {t("actionEdit")}
+                        </button>
+                        <button
+                          onClick={() => handleMaintenancePart(part)}
+                          className="flex-1 btn bg-white/5 border border-white/10 hover:bg-accent-yellow hover:text-black transition-all text-[11px] h-8 text-white rounded-lg px-2"
+                        >
+                          <SettingsIcon size={12} className="mr-1" />
+                          {t("actionMaintenance")}
+                        </button>
                       </div>
                     </div>
                   ))
@@ -1001,166 +950,123 @@ export default function Dashboard() {
                 filteredParts.map((part, index) => (
                   <div
                     key={part.id}
-                    className="relative w-full h-[320px] rounded-2xl overflow-hidden shadow-lg border border-white/10 group active:scale-[0.99] transition-transform animate-fade-in"
+                    className="relative w-full rounded-2xl bg-gradient-to-br from-bg-secondary via-bg-tertiary to-bg-primary p-5 border border-white/10 shadow-lg group active:scale-[0.99] transition-all duration-300 animate-fade-in flex flex-col justify-between overflow-hidden gap-4"
                     style={{ animationDelay: `${index * 50}ms` }}
                   >
-                    {/* Background Image */}
-                    <div
-                      className="absolute inset-0 bg-bg-tertiary"
-                      onClick={() => {
-                        if (part.imageUrl) {
-                          setLightboxImage(part.imageUrl);
-                        }
-                      }}
-                    >
-                      {part.imageUrl && !imageErrors[part.id] ? (
-                        <img
-                          src={part.imageUrl}
-                          alt={part.partName}
-                          onError={() => setImageErrors(prev => ({ ...prev, [part.id]: true }))}
-                          className="object-cover w-full h-full transition-transform duration-500 group-hover:scale-105"
-                        />
-                      ) : (
-                        (() => {
-                          const theme = getPartTheme(part.category || "");
-                          return (
-                            <div className="w-full h-full flex flex-col items-center justify-center bg-gradient-to-br from-bg-secondary via-bg-tertiary to-bg-primary p-6 relative overflow-hidden select-none">
-                              <div className="absolute inset-0 bg-[linear-gradient(to_right,rgba(255,255,255,0.015)_1px,transparent_1px),linear-gradient(to_bottom,rgba(255,255,255,0.015)_1px,transparent_1px)] bg-[size:12px_20px]"></div>
-                              <div className={`absolute -top-12 -left-12 w-36 h-36 rounded-full ${theme.glow} blur-3xl opacity-60 group-hover:opacity-100 transition-opacity duration-700`}></div>
-                              <div className="absolute -bottom-12 -right-12 w-36 h-36 rounded-full bg-blue-500/5 blur-3xl opacity-40"></div>
-                              <div className="
-                                relative w-24 h-24 rounded-[22px] 
-                                bg-gradient-to-b from-white/10 to-white/5 
-                                border border-white/15 
-                                flex flex-col items-center justify-center 
-                                shadow-[inset_0_2px_4px_rgba(255,255,255,0.05),0_8px_20px_rgba(0,0,0,0.5)] 
-                                group-hover:border-white/30 group-hover:scale-105 group-hover:-translate-y-0.5
-                                transition-all duration-500
-                              ">
-                                <div className={`absolute inset-x-3 top-0 h-px bg-gradient-to-r ${theme.borderLine} opacity-70`}></div>
-                                <div className="absolute inset-0 flex items-center justify-center opacity-[0.03] group-hover:opacity-[0.06] transition-opacity">
-                                  <svg xmlns="http://www.w3.org/2000/svg" width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="text-white">
-                                    <path d="M21 16V8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16z"></path>
-                                    <polyline points="3.27 6.96 12 12.01 20.73 6.96"></polyline>
-                                    <line x1="12" y1="22.08" x2="12" y2="12"></line>
-                                  </svg>
-                                </div>
-                                <span className={`text-2xl font-black text-white/80 drop-shadow-[0_2px_6px_rgba(255,255,255,0.1)] group-hover:text-transparent group-hover:bg-clip-text group-hover:bg-gradient-to-r ${theme.textGradient} transition-all duration-300`}>
-                                  {part.partName ? part.partName.substring(0, 2).toUpperCase() : "PT"}
-                                </span>
-                                <span className="absolute -bottom-2 px-1.5 py-0.5 rounded bg-black/85 border border-white/10 text-[7px] font-black text-text-muted tracking-widest uppercase">
-                                  {part.category || "PART"}
-                                </span>
-                              </div>
-                              <div className="absolute top-3 left-3 w-1.5 h-1.5 border-t border-l border-white/10"></div>
-                              <div className="absolute top-3 right-3 w-1.5 h-1.5 border-t border-r border-white/10"></div>
-                              <div className="absolute bottom-3 left-3 w-1.5 h-1.5 border-b border-l border-white/10"></div>
-                              <div className="absolute bottom-3 right-3 w-1.5 h-1.5 border-b border-r border-white/10"></div>
-                            </div>
-                          );
-                        })()
-                      )}
-
-                      {/* Gradient Overlay for text visibility */}
-                      <div className="absolute inset-x-0 bottom-0 h-3/4 bg-gradient-to-t from-bg-primary via-bg-primary/80 to-transparent pointer-events-none" />
+                    {/* Tech grid watermarks */}
+                    <div className="absolute inset-0 bg-[linear-gradient(to_right,rgba(255,255,255,0.01)_1px,transparent_1px),linear-gradient(to_bottom,rgba(255,255,255,0.01)_1px,transparent_1px)] bg-[size:10px_16px] pointer-events-none"></div>
+                    
+                    {/* Upper row: Category & Badges */}
+                    <div className="flex items-start justify-between relative z-10 pointer-events-auto">
+                      {(() => {
+                        const theme = getPartTheme(part.category || "");
+                        return (
+                          <span className={`px-2.5 py-1 rounded bg-black/60 border border-white/10 text-[9px] font-black tracking-widest uppercase text-transparent bg-clip-text bg-gradient-to-r ${theme.textGradient}`}>
+                            {part.category || "PART"}
+                          </span>
+                        );
+                      })()}
+                      
+                      <div className="flex items-center gap-2">
+                        {/* Quantity badge */}
+                        <div className="flex items-center gap-1 bg-black/40 border border-white/10 rounded px-1.5 py-0.5">
+                          <span className="text-[10px] font-bold text-white">x{part.quantity}</span>
+                        </div>
+                        {/* Location area */}
+                        {part.location && (
+                          <span className="px-1.5 py-0.5 rounded bg-accent-cyan/20 border border-accent-cyan/30 text-[9px] font-bold text-accent-cyan">
+                            {part.location}
+                          </span>
+                        )}
+                        {/* Delete action */}
+                        <button
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            handleDeleteClick(part);
+                          }}
+                          className="w-6 h-6 rounded-full bg-accent-red/10 text-accent-red border border-accent-red/20 flex items-center justify-center hover:bg-accent-red hover:text-white transition-all shadow active:scale-90"
+                          title={t("actionDelete")}
+                        >
+                          <BoxIcon size={12} className="rotate-45" />
+                        </button>
+                      </div>
                     </div>
 
-                    {/* Content Overlay - Glassmorphism */}
-                    <div className="absolute inset-x-0 bottom-0 p-4 flex flex-col justify-end h-full pointer-events-none">
-                      <div className="pointer-events-auto">
-                        {/* Badge Top Right */}
-                        <div className="absolute top-4 right-4 z-10 flex flex-col items-end gap-2">
-                          <div className="flex flex-col items-end gap-1">
-                            <span className="badge badge-primary font-bold shadow-lg backdrop-blur-md bg-primary/80 border border-white/20">
-                              x{part.quantity}
-                            </span>
-                            <span className="text-[10px] text-white/60 bg-black/40 backdrop-blur-sm px-1.5 py-0.5 rounded border border-white/5 uppercase tracking-tighter">
-                              {t("tableQuantity")}
-                            </span>
-                          </div>
+                    {/* Middle Row: Main Spec Info */}
+                    <div className="flex flex-col gap-1 relative z-10 pointer-events-auto">
+                      <h3 className="text-xl font-bold text-white tracking-tight">{tData(part.partName)}</h3>
+                      <div className="flex items-center gap-1.5 text-xs text-primary-light">
+                        <SettingsIcon size={12} />
+                        <span className="font-semibold">{part.machineName}</span>
+                      </div>
+                    </div>
 
-                          {/* Location Badge */}
-                          <div className="flex flex-col items-end gap-1">
-                            <span className="badge bg-accent-cyan/80 text-bg-primary font-bold shadow-lg backdrop-blur-md border border-white/20">
-                              {part.location || "-"}
-                            </span>
-                            <span className="text-[10px] text-white/60 bg-black/40 backdrop-blur-sm px-1.5 py-0.5 rounded border border-white/5 uppercase tracking-tighter">
-                              {t("tableLocation")}
-                            </span>
-                          </div>
+                    {/* Specs Grid */}
+                    <div className="grid grid-cols-3 gap-2 relative z-10 pointer-events-auto text-[10px]">
+                      <div className="bg-white/5 border border-white/10 rounded p-1.5 flex flex-col">
+                        <span className="text-[8px] text-white/40 uppercase font-bold">{t("tableBrand")}</span>
+                        <span className="text-white font-medium truncate">{part.brand || "-"}</span>
+                      </div>
+                      <div className="bg-white/5 border border-white/10 rounded p-1.5 flex flex-col">
+                        <span className="text-[8px] text-white/40 uppercase font-bold">{t("tableModelSpec")}</span>
+                        <span className="text-white font-medium truncate" title={part.modelSpec}>{part.modelSpec || "-"}</span>
+                      </div>
+                      <div className="bg-white/5 border border-white/10 rounded p-1.5 flex flex-col">
+                        <span className="text-[8px] text-white/40 uppercase font-bold">{t("tableLocationArea")}</span>
+                        <span className="text-white font-medium truncate">{tData(part.Location || "-")}</span>
+                      </div>
+                    </div>
 
-                          {/* small red delete button */}
-                          <button
-                            onClick={(e) => {
-                              e.stopPropagation();
-                              handleDeleteClick(part);
-                            }}
-                            className="w-8 h-8 rounded-full bg-accent-red/20 text-accent-red border border-accent-red/30 flex items-center justify-center hover:bg-accent-red hover:text-white transition-all shadow-lg active:scale-90"
-                            title={t("actionDelete")}
-                          >
-                            <BoxIcon size={14} className="rotate-45" />
-                          </button>
-                        </div>
-
-                        {/* Main Info */}
-                        <div className="mb-4">
-                          <h3 className="text-2xl font-bold text-white drop-shadow-lg leading-tight mb-1">
-                            {tData(part.partName)}
-                          </h3>
-                          <div className="flex items-center gap-2 text-sm text-primary-light drop-shadow-md">
-                            <SettingsIcon size={14} />
-                            <span className="font-semibold">{part.machineName}</span>
-                          </div>
-                        </div>
-
-                        {/* Individual Detail Tags - Frosted Glass Pills */}
-                        <div className="flex flex-wrap gap-1.5 mb-3">
-                          {/* Brand */}
-                          <div className="bg-white/10 backdrop-blur-md border border-white/20 rounded-md px-1.5 py-0.5 flex flex-col min-w-[60px]">
-                            <span className="text-[8px] text-white/50 uppercase tracking-tighter font-bold">{t("tableBrand")}</span>
-                            <span className="text-[10px] text-white font-medium truncate max-w-[80px]">{part.brand || "-"}</span>
-                          </div>
-                          {/* Model */}
-                          <div className="bg-white/10 backdrop-blur-md border border-white/20 rounded-md px-1.5 py-0.5 flex flex-col min-w-[90px]">
-                            <span className="text-[8px] text-white/50 uppercase tracking-tighter font-bold">{t("tableModelSpec")}</span>
-                            <span className="text-[10px] text-white font-medium truncate max-w-[140px]" title={part.modelSpec}>{part.modelSpec || "-"}</span>
-                          </div>
-                          {/* Location Area */}
-                          <div className="bg-white/10 backdrop-blur-md border border-white/20 rounded-md px-1.5 py-0.5 flex flex-col min-w-[40px]">
-                            <span className="text-[8px] text-white/50 uppercase tracking-tighter font-bold">{t("tableLocationArea")}</span>
-                            <span className="text-[10px] text-white font-medium">{tData(part.Location || "-")}</span>
-                          </div>
-
-                          {/* Notes - Separate Refined Block */}
-                          {part.notes && (
-                            <div className="w-full bg-white/5 backdrop-blur-sm border border-white/10 rounded-lg p-1.5 flex gap-1.5 items-start mt-0.5">
-                              <AlertTriangleIcon size={10} className="text-accent-yellow shrink-0 mt-0.5" />
-                              <div className="flex flex-col">
-                                <span className="text-[8px] text-white/40 uppercase tracking-widest font-bold">{t("tableNotes")}</span>
-                                <span className="text-[10px] text-white/80 italic line-clamp-1">"{tData(part.notes)}"</span>
-                              </div>
+                    {/* Stock level analysis bar */}
+                    <div className="relative z-10 pointer-events-auto">
+                      {(() => {
+                        const percentage = Math.min(100, Math.max(0, (part.quantity / (part.minStockThreshold || 5)) * 100));
+                        const isLowStock = part.quantity <= part.minStockThreshold;
+                        const barColor = isLowStock ? "bg-accent-red" : "bg-accent-green";
+                        const glowColor = isLowStock ? "shadow-[0_0_8px_rgba(239,68,68,0.5)]" : "";
+                        return (
+                          <div className="w-full bg-white/5 border border-white/5 rounded-lg p-2 flex flex-col gap-1.5">
+                            <div className="flex items-center justify-between text-[9px]">
+                              <span className="text-text-muted uppercase tracking-wider font-bold">STOCK LEVEL</span>
+                              <span className={isLowStock ? "text-accent-red font-black flex items-center gap-1 animate-pulse" : "text-accent-green font-black"}>
+                                {isLowStock ? "⚠️ LOW" : "✅ OK"}
+                              </span>
                             </div>
-                          )}
-                        </div>
+                            <div className="w-full bg-black/40 h-1.5 rounded-full overflow-hidden border border-white/5 relative">
+                              <div className={`h-full ${barColor} ${glowColor} transition-all duration-500`} style={{ width: `${percentage}%` }}></div>
+                            </div>
+                          </div>
+                        );
+                      })()}
+                    </div>
 
-                        {/* Actions */}
-                        <div className="flex gap-2">
-                          <button
-                            onClick={() => handleEditPart(part)}
-                            className="flex-1 btn bg-white/10 backdrop-blur-md border border-white/20 hover:bg-primary transition-all text-[11px] h-8 text-white rounded-lg px-2"
-                          >
-                            <EditIcon size={12} className="mr-1" />
-                            {t("actionEdit")}
-                          </button>
-                          <button
-                            onClick={() => handleMaintenancePart(part)}
-                            className="flex-1 btn bg-white/10 backdrop-blur-md border border-white/20 hover:bg-accent-yellow hover:text-black transition-all text-[11px] h-8 text-white rounded-lg px-2"
-                          >
-                            <SettingsIcon size={12} className="mr-1" />
-                            {t("actionMaintenance")}
-                          </button>
+                    {/* Notes block if exists */}
+                    {part.notes && (
+                      <div className="relative z-10 pointer-events-auto bg-white/5 border border-white/10 rounded-lg p-2 flex gap-1.5 items-start text-[10px]">
+                        <AlertTriangleIcon size={10} className="text-accent-yellow shrink-0 mt-0.5" />
+                        <div className="flex flex-col">
+                          <span className="text-[8px] text-white/40 uppercase font-bold">{t("tableNotes")}</span>
+                          <span className="text-white/80 italic line-clamp-1">"{tData(part.notes)}"</span>
                         </div>
                       </div>
+                    )}
+
+                    {/* Lower Row: Actions */}
+                    <div className="flex gap-2 relative z-10 pointer-events-auto pt-1.5 border-t border-white/5">
+                      <button
+                        onClick={() => handleEditPart(part)}
+                        className="flex-1 btn bg-white/5 border border-white/10 hover:bg-primary transition-all text-[11px] h-8 text-white rounded-lg px-2"
+                      >
+                        <EditIcon size={12} className="mr-1" />
+                        {t("actionEdit")}
+                      </button>
+                      <button
+                        onClick={() => handleMaintenancePart(part)}
+                        className="flex-1 btn bg-white/5 border border-white/10 hover:bg-accent-yellow hover:text-black transition-all text-[11px] h-8 text-white rounded-lg px-2"
+                      >
+                        <SettingsIcon size={12} className="mr-1" />
+                        {t("actionMaintenance")}
+                      </button>
                     </div>
                   </div>
                 ))

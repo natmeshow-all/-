@@ -72,89 +72,98 @@ export default function PartDetailsModal({
                 size="lg"
             >
                 <div className="flex flex-col gap-6">
-                    {/* Image Section */}
-                    <div className="w-full h-64 sm:h-80 rounded-xl bg-bg-tertiary overflow-hidden border border-white/5 relative group">
-                        {part.imageUrl && !imageError ? (
-                            <>
-                                <img
-                                    src={part.imageUrl}
-                                    alt={part.partName || part.name}
-                                    onError={() => setImageError(true)}
-                                    className="w-full h-full object-cover cursor-pointer hover:scale-105 transition-transform duration-500"
-                                    onClick={() => setLightboxOpen(true)}
-                                />
-                                <div className="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center pointer-events-none">
-                                    <span className="px-4 py-2 rounded-full bg-black/60 text-white text-sm font-medium backdrop-blur-sm">
-                                        {t("labelViewFullscreen")}
-                                    </span>
-                                </div>
-                            </>
-                        ) : (
-                            (() => {
-                                const getPartTheme = (category: string) => {
-                                    const cat = category?.toLowerCase() || "";
-                                    if (cat.includes("mech")) return { glow: "bg-blue-500/10", borderLine: "from-transparent via-blue-500 to-transparent", textGradient: "from-blue-400 to-indigo-400" };
-                                    if (cat.includes("elect") || cat.includes("wire")) return { glow: "bg-accent-yellow/10", borderLine: "from-transparent via-accent-yellow to-transparent", textGradient: "from-accent-yellow to-amber-500" };
-                                    if (cat.includes("hyd")) return { glow: "bg-accent-red/10", borderLine: "from-transparent via-accent-red to-transparent", textGradient: "from-accent-red to-pink-500" };
-                                    if (cat.includes("pneu")) return { glow: "bg-accent-cyan/10", borderLine: "from-transparent via-accent-cyan to-transparent", textGradient: "from-accent-cyan to-teal-400" };
-                                    if (cat.includes("con") || cat.includes("oil") || cat.includes("grease") || cat.includes("spare")) return { glow: "bg-green-500/10", borderLine: "from-transparent via-green-500 to-transparent", textGradient: "from-green-400 to-emerald-400" };
-                                    return { glow: "bg-primary/10", borderLine: "from-transparent via-primary-light to-transparent", textGradient: "from-primary-light to-indigo-400" };
-                                };
-                                const theme = getPartTheme(part.category || "");
-                                return (
-                                    <div className="w-full h-full flex flex-col items-center justify-center bg-gradient-to-br from-bg-secondary via-bg-tertiary to-bg-primary p-6 relative overflow-hidden select-none">
-                                        {/* Tech blueprint grid pattern */}
-                                        <div className="absolute inset-0 bg-[linear-gradient(to_right,rgba(255,255,255,0.015)_1px,transparent_1px),linear-gradient(to_bottom,rgba(255,255,255,0.015)_1px,transparent_1px)] bg-[size:12px_20px]"></div>
+                    {/* Header Tech Banner */}
+                    {(() => {
+                        const getPartTheme = (category: string) => {
+                            const cat = category?.toLowerCase() || "";
+                            if (cat.includes("mech")) return { glow: "bg-blue-500/10", borderLine: "from-transparent via-blue-500 to-transparent", textGradient: "from-blue-400 to-indigo-400", bar: "bg-blue-500" };
+                            if (cat.includes("elect") || cat.includes("wire")) return { glow: "bg-accent-yellow/10", borderLine: "from-transparent via-accent-yellow to-transparent", textGradient: "from-accent-yellow to-amber-500", bar: "bg-accent-yellow" };
+                            if (cat.includes("hyd")) return { glow: "bg-accent-red/10", borderLine: "from-transparent via-accent-red to-transparent", textGradient: "from-accent-red to-pink-500", bar: "bg-accent-red" };
+                            if (cat.includes("pneu")) return { glow: "bg-accent-cyan/10", borderLine: "from-transparent via-accent-cyan to-transparent", textGradient: "from-accent-cyan to-teal-400", bar: "bg-accent-cyan" };
+                            if (cat.includes("con") || cat.includes("oil") || cat.includes("grease") || cat.includes("spare")) return { glow: "bg-green-500/10", borderLine: "from-transparent via-green-500 to-transparent", textGradient: "from-green-400 to-emerald-400", bar: "bg-green-500" };
+                            return { glow: "bg-primary/10", borderLine: "from-transparent via-primary-light to-transparent", textGradient: "from-primary-light to-indigo-400", bar: "bg-primary" };
+                        };
+                        const theme = getPartTheme(part.category || "");
+                        const stockPercent = part.minStockThreshold && part.minStockThreshold > 0 
+                            ? Math.min(100, Math.max(0, (part.quantity / part.minStockThreshold) * 100)) 
+                            : 100;
+                        const isLowStock = part.quantity <= part.minStockThreshold;
+                        const stockColor = isLowStock ? 'bg-error' : theme.bar;
 
-                                        {/* Technical ambient glow */}
-                                        <div className={`absolute -top-12 -left-12 w-36 h-36 rounded-full ${theme.glow} blur-3xl opacity-60`}></div>
-                                        <div className="absolute -bottom-12 -right-12 w-36 h-36 rounded-full bg-blue-500/5 blur-3xl opacity-40"></div>
+                        return (
+                            <div className="w-full rounded-xl bg-gradient-to-br from-bg-secondary via-bg-tertiary to-bg-primary overflow-hidden border border-white/5 relative p-6 shadow-xl">
+                                {/* Tech blueprint grid pattern */}
+                                <div className="absolute inset-0 bg-[linear-gradient(to_right,rgba(255,255,255,0.015)_1px,transparent_1px),linear-gradient(to_bottom,rgba(255,255,255,0.015)_1px,transparent_1px)] bg-[size:12px_20px]"></div>
 
-                                        {/* squircle neon shield */}
-                                        <div className="
-                                            relative w-24 h-24 rounded-[22px] 
-                                            bg-gradient-to-b from-white/10 to-white/5 
-                                            border border-white/15 
-                                            flex flex-col items-center justify-center 
-                                            shadow-[inset_0_2px_4px_rgba(255,255,255,0.05),0_8px_20px_rgba(0,0,0,0.5)] 
-                                        ">
-                                            {/* Glowing border line */}
-                                            <div className={`absolute inset-x-3 top-0 h-px bg-gradient-to-r ${theme.borderLine} opacity-70`}></div>
+                                {/* Technical ambient glow */}
+                                <div className={`absolute -top-12 -left-12 w-48 h-48 rounded-full ${theme.glow} blur-3xl opacity-60`}></div>
+                                <div className="absolute -bottom-12 -right-12 w-48 h-48 rounded-full bg-blue-500/5 blur-3xl opacity-40"></div>
 
-                                            {/* initials */}
-                                            <span className={`text-2xl font-black text-transparent bg-clip-text bg-gradient-to-r ${theme.textGradient} drop-shadow-[0_2px_6px_rgba(255,255,255,0.1)]`}>
-                                                {part.name ? part.name.substring(0, 2).toUpperCase() : "PT"}
-                                            </span>
+                                {isLowStock && (
+                                    <div className="absolute inset-0 bg-error/5 animate-pulse z-0 pointer-events-none"></div>
+                                )}
 
-                                            {/* sub-badge category */}
-                                            <span className="absolute -bottom-2 px-1.5 py-0.5 rounded bg-black/85 border border-white/10 text-[7px] font-black text-text-muted tracking-widest uppercase">
-                                                {part.category || "PART"}
-                                            </span>
+                                <div className="relative z-10 flex flex-col md:flex-row gap-6 items-center">
+                                    {/* Tech Badge */}
+                                    <div className="
+                                        w-28 h-28 shrink-0 rounded-[22px] 
+                                        bg-gradient-to-b from-white/10 to-white/5 
+                                        border border-white/15 
+                                        flex flex-col items-center justify-center 
+                                        shadow-[inset_0_2px_4px_rgba(255,255,255,0.05),0_8px_20px_rgba(0,0,0,0.5)] 
+                                        relative
+                                    ">
+                                        <div className={`absolute inset-x-3 top-0 h-px bg-gradient-to-r ${theme.borderLine} opacity-70`}></div>
+                                        <span className={`text-4xl font-black text-transparent bg-clip-text bg-gradient-to-r ${theme.textGradient} drop-shadow-[0_2px_6px_rgba(255,255,255,0.1)]`}>
+                                            {part.name ? part.name.substring(0, 2).toUpperCase() : "PT"}
+                                        </span>
+                                        <span className="absolute -bottom-2.5 px-2 py-0.5 rounded bg-black/85 border border-white/10 text-[9px] font-black text-text-muted tracking-widest uppercase shadow-sm">
+                                            {part.category || "PART"}
+                                        </span>
+                                    </div>
+
+                                    {/* Core Metrics */}
+                                    <div className="flex-1 w-full space-y-4">
+                                        <div className="flex justify-between items-start">
+                                            <div>
+                                                <h2 className="text-2xl font-bold text-white drop-shadow-md">{part.name}</h2>
+                                                <p className="text-sm text-primary-light font-medium uppercase tracking-wider">{part.category}</p>
+                                            </div>
+                                            <div className="flex flex-col items-end">
+                                                <span className={`text-3xl font-black ${isLowStock ? 'text-error' : 'text-primary'} drop-shadow-lg leading-none`}>
+                                                    x{part.quantity}
+                                                </span>
+                                                <span className="text-xs font-bold text-white/50 uppercase tracking-widest mt-1">{part.unit || "pcs"}</span>
+                                            </div>
                                         </div>
 
-                                        {/* Technical corner decors */}
-                                        <div className="absolute top-3 left-3 w-1.5 h-1.5 border-t border-l border-white/10"></div>
-                                        <div className="absolute top-3 right-3 w-1.5 h-1.5 border-t border-r border-white/10"></div>
-                                        <div className="absolute bottom-3 left-3 w-1.5 h-1.5 border-b border-l border-white/10"></div>
-                                        <div className="absolute bottom-3 right-3 w-1.5 h-1.5 border-b border-r border-white/10"></div>
+                                        {/* Stock Level Warning Bar */}
+                                        <div className="bg-black/20 backdrop-blur-md rounded-xl p-4 border border-white/5 w-full">
+                                            <div className="flex justify-between items-end mb-2">
+                                                <span className="text-xs font-bold text-text-muted uppercase tracking-wider flex items-center gap-1.5">
+                                                    Stock Capacity
+                                                    {isLowStock && <span className="text-error font-black animate-pulse">(CRITICAL LOW)</span>}
+                                                </span>
+                                                <span className="text-xs font-bold text-white/90 font-mono">
+                                                    {part.quantity} / {part.minStockThreshold} Min Threshold
+                                                </span>
+                                            </div>
+                                            <div className="h-2 w-full bg-white/10 rounded-full overflow-hidden shadow-inner relative">
+                                                <div 
+                                                    className={`h-full ${stockColor} rounded-full transition-all duration-1000 ease-out relative`}
+                                                    style={{ width: `${Math.min(100, stockPercent)}%` }}
+                                                >
+                                                    {isLowStock && (
+                                                        <div className="absolute inset-0 bg-white/30 animate-pulse"></div>
+                                                    )}
+                                                </div>
+                                            </div>
+                                        </div>
                                     </div>
-                                );
-                            })()
-                        )}
-
-                        {/* Status Badge Overlay */}
-                        <div className="absolute top-4 right-4">
-                            {part.quantity <= part.minStockThreshold ? (
-                                <span className="px-3 py-1 rounded-full bg-error text-white text-xs font-bold shadow-lg">
-                                    {t("statusLowStock")}
-                                </span>
-                            ) : (
-                                <span className="px-3 py-1 rounded-full bg-success text-white text-xs font-bold shadow-lg">
-                                    {t("statusInStock")}
-                                </span>
-                            )}
-                        </div>
-                    </div>
+                                </div>
+                            </div>
+                        );
+                    })()}
 
                     {/* Details Grid */}
                     <div className="grid grid-cols-1 sm:grid-cols-2 gap-6 p-4 rounded-xl bg-bg-secondary/50 border border-white/5">
@@ -217,14 +226,8 @@ export default function PartDetailsModal({
                                         onClick={() => onSelectPart?.(sub)}
                                     >
                                         <div className="flex items-center gap-3">
-                                            <div className="w-10 h-10 rounded-lg bg-bg-secondary shrink-0 overflow-hidden border border-white/5">
-                                                {sub.imageUrl ? (
-                                                    <img src={sub.imageUrl} alt={sub.name} className="w-full h-full object-cover" />
-                                                ) : (
-                                                    <div className="w-full h-full flex items-center justify-center text-text-muted/30">
-                                                        <BoxIcon size={18} />
-                                                    </div>
-                                                )}
+                                            <div className="w-10 h-10 rounded-lg bg-bg-secondary shrink-0 flex items-center justify-center border border-white/5">
+                                                <BoxIcon size={18} className="text-text-muted/50" />
                                             </div>
                                             <div>
                                                 <div className="text-sm font-bold text-text-primary group-hover:text-primary transition-colors">{sub.name}</div>
