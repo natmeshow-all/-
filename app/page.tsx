@@ -440,62 +440,111 @@ export default function Dashboard() {
         {/* Priority Alert Section */}
         <PriorityPMAlert />
 
-        {/* Stats Section */}
-        <section className="mb-6">
-          <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-5 gap-3 sm:gap-4">
-            <StatCard
-              icon={<BoxIcon size={12} />}
-              value={stats.totalParts}
-              label={t("statTotalParts")}
-              iconBgColor="bg-primary/20"
-              iconTextColor="text-primary-light"
-              delay={0}
-            />
-            <StatCard
-              icon={<BoxIcon size={12} />}
-              value={stats.totalParts}
-              label={t("statTotalParts")}
-              iconBgColor="bg-primary/20"
-              iconTextColor="text-primary-light"
-              delay={0}
-              loading={statsLoading}
-            />
-            <StatCard
-              icon={<SettingsIcon size={12} />}
-              value={stats.totalMachines}
-              label={t("statMachines")}
-              iconBgColor="bg-accent-yellow/20"
-              iconTextColor="text-accent-yellow"
-              delay={50}
-              loading={statsLoading}
-            />
-            <StatCard
-              icon={<MapPinIcon size={12} />}
-              value={stats.totalLocations}
-              label={t("statLocations")}
-              iconBgColor="bg-accent-cyan/20"
-              iconTextColor="text-accent-cyan"
-              delay={100}
-              loading={statsLoading}
-            />
-            <StatCard
-              icon={<RefreshIcon size={12} />}
-              value={stats.totalPM}
-              label={t("statPMCount")}
-              iconBgColor="bg-accent-green/20"
-              iconTextColor="text-accent-green"
-              delay={150}
-              loading={statsLoading}
-            />
-            <StatCard
-              icon={<AlertTriangleIcon size={12} />}
-              value={stats.totalOverhaul}
-              label={t("statOverhaulCount")}
-              iconBgColor="bg-accent-red/20"
-              iconTextColor="text-accent-red"
-              delay={200}
-              loading={statsLoading}
-            />
+        {/* Modern Dashboard Stats Section */}
+        <section className="mb-6 mt-2 animate-fade-in-up" style={{ animationDelay: "100ms" }}>
+          <div className="grid grid-cols-1 lg:grid-cols-3 gap-4 xl:gap-6">
+            
+            {/* Inventory Overview (Present) */}
+            <div className="glass-card overflow-hidden relative group p-0 border-white/10 hover:border-primary/50 transition-all duration-300 shadow-lg shadow-black/20">
+              <div className="absolute top-0 right-0 w-32 h-32 bg-primary/20 rounded-full blur-3xl -mr-10 -mt-10 transition-transform duration-700 group-hover:scale-150 group-hover:bg-primary/30"></div>
+              
+              <div className="p-4 border-b border-white/5 bg-gradient-to-r from-bg-tertiary/40 to-transparent flex items-center justify-between relative z-10">
+                <h3 className="font-semibold text-text-primary flex items-center gap-2 text-sm">
+                  <span className="p-1.5 rounded-lg bg-primary/20 text-primary-light backdrop-blur-sm border border-primary/20 shadow-inner shadow-primary/20">
+                    <BoxIcon size={14} />
+                  </span>
+                  {language === "th" ? "ภาพรวมสินทรัพย์" : "Inventory Overview"}
+                </h3>
+                <span className="text-[9px] uppercase tracking-wider font-bold px-2 py-0.5 bg-white/5 text-text-muted rounded-full border border-white/10 shadow-sm">Present</span>
+              </div>
+              
+              <div className="p-5 grid grid-cols-3 gap-2 relative z-10">
+                <div className="flex flex-col">
+                  <span className="text-[10px] text-text-muted mb-1 truncate font-medium" title={t("statTotalParts")}>{t("statTotalParts")}</span>
+                  <div className="flex items-end gap-2">
+                    <span className="text-2xl font-bold text-text-primary leading-none group-hover:text-primary-light transition-colors drop-shadow-sm">{statsLoading ? "..." : stats.totalParts}</span>
+                  </div>
+                </div>
+                <div className="flex flex-col border-l border-white/5 pl-3">
+                  <span className="text-[10px] text-text-muted mb-1 truncate font-medium" title={t("statMachines")}>{t("statMachines")}</span>
+                  <div className="flex items-end gap-2">
+                    <span className="text-2xl font-bold text-text-primary leading-none group-hover:text-accent-yellow transition-colors drop-shadow-sm">{statsLoading ? "..." : stats.totalMachines}</span>
+                  </div>
+                </div>
+                <div className="flex flex-col border-l border-white/5 pl-3">
+                  <span className="text-[10px] text-text-muted mb-1 truncate font-medium" title={t("statLocations")}>{t("statLocations")}</span>
+                  <div className="flex items-end gap-2">
+                    <span className="text-2xl font-bold text-text-primary leading-none group-hover:text-accent-cyan transition-colors drop-shadow-sm">{statsLoading ? "..." : stats.totalLocations}</span>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            {/* Historical Maintenance (Past) */}
+            <div className="glass-card overflow-hidden relative group p-0 border-white/10 hover:border-accent-green/50 transition-all duration-300 shadow-lg shadow-black/20">
+              <div className="absolute top-0 right-0 w-32 h-32 bg-accent-green/20 rounded-full blur-3xl -mr-10 -mt-10 transition-transform duration-700 group-hover:scale-150 group-hover:bg-accent-green/30"></div>
+              
+              <div className="p-4 border-b border-white/5 bg-gradient-to-r from-bg-tertiary/40 to-transparent flex items-center justify-between relative z-10">
+                <h3 className="font-semibold text-text-primary flex items-center gap-2 text-sm">
+                  <span className="p-1.5 rounded-lg bg-accent-green/20 text-accent-green backdrop-blur-sm border border-accent-green/20 shadow-inner shadow-accent-green/20">
+                    <HistoryIcon size={14} />
+                  </span>
+                  {language === "th" ? "ประวัติการซ่อมบำรุง" : "Maintenance History"}
+                </h3>
+                <span className="text-[9px] uppercase tracking-wider font-bold px-2 py-0.5 bg-white/5 text-text-muted rounded-full border border-white/10 shadow-sm">Past</span>
+              </div>
+              
+              <div className="p-5 grid grid-cols-2 gap-2 relative z-10">
+                <div className="flex flex-col">
+                  <span className="text-[10px] text-text-muted mb-1 truncate font-medium">{t("statPMCount") || (language === "th" ? "PM ทั้งหมด" : "Total PM")}</span>
+                  <div className="flex items-end gap-2">
+                    <span className="text-2xl font-bold text-text-primary leading-none group-hover:text-accent-green transition-colors drop-shadow-sm">{statsLoading ? "..." : stats.totalPM}</span>
+                  </div>
+                </div>
+                <div className="flex flex-col border-l border-white/5 pl-3">
+                  <span className="text-[10px] text-text-muted mb-1 truncate font-medium">{t("statOverhaulCount") || (language === "th" ? "Overhaul ทั้งหมด" : "Total Overhaul")}</span>
+                  <div className="flex items-end gap-2">
+                    <span className="text-2xl font-bold text-text-primary leading-none group-hover:text-accent-red transition-colors drop-shadow-sm">{statsLoading ? "..." : stats.totalOverhaul}</span>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            {/* Upcoming & Pending (Future) */}
+            <div className={`glass-card overflow-hidden relative group p-0 border-white/10 transition-all duration-300 shadow-lg shadow-black/20 ${!statsLoading && stats.pendingMaintenance > 0 ? "border-accent-yellow/40 hover:border-accent-yellow/70 shadow-[0_0_20px_rgba(217,119,6,0.15)]" : "hover:border-accent-yellow/50"}`}>
+              <div className={`absolute top-0 right-0 w-32 h-32 rounded-full blur-3xl -mr-10 -mt-10 transition-transform duration-700 group-hover:scale-150 ${!statsLoading && stats.pendingMaintenance > 0 ? "bg-accent-yellow/30 animate-pulse" : "bg-accent-yellow/20 group-hover:bg-accent-yellow/30"}`}></div>
+              
+              <div className="p-4 border-b border-white/5 bg-gradient-to-r from-bg-tertiary/40 to-transparent flex items-center justify-between relative z-10">
+                <h3 className="font-semibold text-text-primary flex items-center gap-2 text-sm">
+                  <span className={`p-1.5 rounded-lg backdrop-blur-sm border shadow-inner ${!statsLoading && stats.pendingMaintenance > 0 ? "bg-accent-red/20 text-accent-red border-accent-red/30 shadow-accent-red/20 animate-pulse" : "bg-accent-yellow/20 text-accent-yellow border-accent-yellow/20 shadow-accent-yellow/20"}`}>
+                    <AlertTriangleIcon size={14} />
+                  </span>
+                  {language === "th" ? "แผนงานอนาคต" : "Pending & Upcoming"}
+                </h3>
+                <span className={`text-[9px] uppercase tracking-wider font-bold px-2 py-0.5 rounded-full border shadow-sm ${!statsLoading && stats.pendingMaintenance > 0 ? "bg-accent-yellow/10 text-accent-yellow border-accent-yellow/30" : "bg-white/5 text-text-muted border-white/10"}`}>Future</span>
+              </div>
+              
+              <div className="p-5 grid grid-cols-2 gap-2 relative z-10">
+                <div className="flex flex-col">
+                  <span className="text-[10px] text-text-muted mb-1 truncate font-medium">{language === "th" ? "งานรอดำเนินการ" : "Pending Tasks"}</span>
+                  <div className="flex items-center gap-2">
+                    <span className={`text-2xl font-bold leading-none transition-colors drop-shadow-sm ${!statsLoading && stats.pendingMaintenance > 0 ? "text-accent-red" : "text-text-primary group-hover:text-accent-yellow"}`}>
+                      {statsLoading ? "..." : stats.pendingMaintenance}
+                    </span>
+                    {!statsLoading && stats.pendingMaintenance > 0 && (
+                      <span className="text-[9px] bg-accent-red/20 text-accent-red px-1.5 py-0.5 rounded font-bold animate-pulse border border-accent-red/20 shadow-sm">{language === "th" ? "ด่วน" : "Urgent"}</span>
+                    )}
+                  </div>
+                </div>
+                <div className="flex flex-col border-l border-white/5 pl-3">
+                  <span className="text-[10px] text-text-muted mb-1 truncate font-medium">{language === "th" ? "กำหนดการเร็วๆนี้" : "Upcoming Schedule"}</span>
+                  <div className="flex items-end gap-2">
+                    <span className="text-2xl font-bold text-text-primary leading-none group-hover:text-accent-blue transition-colors drop-shadow-sm">{statsLoading ? "..." : stats.upcomingSchedule}</span>
+                  </div>
+                </div>
+              </div>
+            </div>
+
           </div>
         </section>
 
