@@ -15,6 +15,7 @@ export interface UserProfile {
     photoURL?: string;
     createdAt: string;
     updatedAt: string;
+    hasSeenWelcome?: boolean;
 }
 
 export interface PendingUser {

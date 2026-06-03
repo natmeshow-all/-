@@ -16,7 +16,8 @@ import {
     createInitialAdmin,
     logAppAccess,
     getSystemSettings,
-    autoRegisterUser
+    autoRegisterUser,
+    dismissWelcomeGuide
 } from "../lib/firebaseService";
 
 interface AuthContextType {
@@ -30,6 +31,7 @@ interface AuthContextType {
     hasRole: (roles: UserRole | UserRole[]) => boolean;
     isAdmin: boolean;
     checkAuth: () => boolean;
+    dismissWelcome: () => Promise<void>;
 }
 
 const AuthContext = createContext<AuthContextType>({
@@ -43,6 +45,7 @@ const AuthContext = createContext<AuthContextType>({
     hasRole: () => false,
     isAdmin: false,
     checkAuth: () => false,
+    dismissWelcome: async () => {},
 });
 
 export const useAuth = () => useContext(AuthContext);
@@ -270,6 +273,17 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
         return true;
     };
 
+    const dismissWelcome = async () => {
+        if (user && userProfile && !userProfile.hasSeenWelcome) {
+            try {
+                await dismissWelcomeGuide(user.uid);
+                setUserProfile({ ...userProfile, hasSeenWelcome: true });
+            } catch (e) {
+                console.error("Failed to dismiss welcome guide", e);
+            }
+        }
+    };
+
     return (
         <AuthContext.Provider value={{
             user,
@@ -281,7 +295,8 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
             refreshUserProfile,
             hasRole,
             isAdmin,
-            checkAuth
+            checkAuth,
+            dismissWelcome
         }}>
             {children}
         </AuthContext.Provider>

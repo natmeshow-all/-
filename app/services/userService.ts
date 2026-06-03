@@ -325,3 +325,17 @@ export async function createInitialAdmin(
         throw error;
     }
 }
+
+// Dismiss welcome guide
+export async function dismissWelcomeGuide(uid: string): Promise<void> {
+    try {
+        const userRef = ref(database, `${USER_COLLECTIONS.USERS}/${uid}`);
+        await update(userRef, {
+            hasSeenWelcome: true,
+            updatedAt: new Date().toISOString()
+        });
+    } catch (error) {
+        console.error(`Error dismissing welcome guide for ${uid}:`, error);
+        throw error;
+    }
+}
