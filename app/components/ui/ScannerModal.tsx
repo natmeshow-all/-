@@ -133,10 +133,10 @@ export default function ScannerModal({ isOpen, onClose }: ScannerModalProps) {
                         <div className="absolute inset-0 pointer-events-none border-[40px] border-black/40">
                             <div className="w-full h-full border-2 border-primary/50 relative">
                                 {/* Corner markers */}
-                                <div className="absolute top-0 left-0 w-8 h-8 border-t-4 border-l-4 border-primary rounded-tl-lg" />
-                                <div className="absolute top-0 right-0 w-8 h-8 border-t-4 border-r-4 border-primary rounded-tr-lg" />
-                                <div className="absolute bottom-0 left-0 w-8 h-8 border-b-4 border-l-4 border-primary rounded-bl-lg" />
-                                <div className="absolute bottom-0 right-0 w-8 h-8 border-b-4 border-r-4 border-primary rounded-br-lg" />
+                                <div className="absolute top-0 left-0 w-8 h-8 border-primary rounded-tl-lg" style={{ borderTopWidth: '4px', borderLeftWidth: '4px', borderStyle: 'solid' }} />
+                                <div className="absolute top-0 right-0 w-8 h-8 border-primary rounded-tr-lg" style={{ borderTopWidth: '4px', borderRightWidth: '4px', borderStyle: 'solid' }} />
+                                <div className="absolute bottom-0 left-0 w-8 h-8 border-primary rounded-bl-lg" style={{ borderBottomWidth: '4px', borderLeftWidth: '4px', borderStyle: 'solid' }} />
+                                <div className="absolute bottom-0 right-0 w-8 h-8 border-primary rounded-br-lg" style={{ borderBottomWidth: '4px', borderRightWidth: '4px', borderStyle: 'solid' }} />
 
                                 {/* Scanning bar */}
                                 <div className="absolute left-0 right-0 top-1/2 h-0.5 bg-primary/50 shadow-[0_0_15px_rgba(59,130,246,0.8)] animate-scan-line" />

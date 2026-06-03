@@ -110,7 +110,7 @@ export default function AuditPage() {
                 {/* Audit Grid */}
                 <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 mb-8">
                     {/* PM Compliance CRITICAL */}
-                    <div className="card-glass p-5 border-l-4 border-l-accent-cyan hover:scale-[1.02] hover:shadow-xl hover:shadow-accent-cyan/10 transition-all duration-300 group cursor-default">
+                    <div className="card-glass p-5 border border-accent-cyan/20 bg-accent-cyan/5 hover:scale-[1.02] hover:shadow-xl hover:shadow-accent-cyan/10 transition-all duration-300 group cursor-default">
                         <div className="flex justify-between items-start mb-4">
                             <div>
                                 <p className="text-xs text-text-muted mb-1">{t("auditPmCompletion")}</p>
@@ -133,7 +133,7 @@ export default function AuditPage() {
                     </div>
 
                     {/* On-time Rate */}
-                    <div className="card-glass p-5 border-l-4 border-l-green-500 hover:scale-[1.02] hover:shadow-xl hover:shadow-green-500/10 transition-all duration-300 group cursor-default">
+                    <div className="card-glass p-5 border border-green-500/20 bg-green-500/5 hover:scale-[1.02] hover:shadow-xl hover:shadow-green-500/10 transition-all duration-300 group cursor-default">
                         <div className="flex justify-between items-start mb-4">
                             <div>
                                 <p className="text-xs text-text-muted mb-1">{t("auditOnTimeRate")}</p>
@@ -153,7 +153,7 @@ export default function AuditPage() {
                     </div>
 
                     {/* Machine Availability */}
-                    <div className="card-glass p-5 border-l-4 border-l-accent-purple hover:scale-[1.02] hover:shadow-xl hover:shadow-accent-purple/10 transition-all duration-300 group cursor-default">
+                    <div className="card-glass p-5 border border-accent-purple/20 bg-accent-purple/5 hover:scale-[1.02] hover:shadow-xl hover:shadow-accent-purple/10 transition-all duration-300 group cursor-default">
                         <div className="flex justify-between items-start mb-4">
                             <div>
                                 <p className="text-xs text-text-muted mb-1">{t("auditAvailability")}</p>
@@ -173,7 +173,7 @@ export default function AuditPage() {
                     </div>
 
                     {/* Active Issues */}
-                    <div className={`card-glass p-5 border-l-4 ${stats.activeIssues > 0 ? 'border-l-accent-yellow' : 'border-l-green-500'} hover:scale-[1.02] hover:shadow-xl transition-all duration-300 group cursor-default`}>
+                    <div className={`card-glass p-5 border ${stats.activeIssues > 0 ? 'border-accent-yellow/20 bg-accent-yellow/5' : 'border-green-500/20 bg-green-500/5'} hover:scale-[1.02] hover:shadow-xl transition-all duration-300 group cursor-default`}>
                         <div className="flex justify-between items-start mb-4">
                             <div>
                                 <p className="text-xs text-text-muted mb-1">{t("auditActiveIssues")}</p>

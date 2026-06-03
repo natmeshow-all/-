@@ -21,7 +21,7 @@ const MotorDataSection: React.FC<MotorDataSectionProps> = ({
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             {/* Motor Size */}
             <div className="mb-4">
-                <label className="label">
+                <label htmlFor="motor-size-input" className="label">
                     <SettingsIcon size={14} />
                     {t("maintenanceMotorSize")}
                     <span className="text-text-muted font-normal ml-1">
@@ -29,6 +29,7 @@ const MotorDataSection: React.FC<MotorDataSectionProps> = ({
                     </span>
                 </label>
                 <input
+                    id="motor-size-input"
                     type="text"
                     value={motorSize}
                     onChange={(e) => onMotorSizeChange(e.target.value)}
@@ -39,7 +40,7 @@ const MotorDataSection: React.FC<MotorDataSectionProps> = ({
 
             {/* Temperature */}
             <div className="mb-4 text-left">
-                <label className="label">
+                <label htmlFor="motor-temp-input" className="label">
                     <ThermometerIcon size={14} />
                     {t("maintenanceTemperature")}
                     <span className="text-text-muted font-normal ml-1">
@@ -47,6 +48,7 @@ const MotorDataSection: React.FC<MotorDataSectionProps> = ({
                     </span>
                 </label>
                 <input
+                    id="motor-temp-input"
                     type="text"
                     value={temperature}
                     onChange={(e) => onTemperatureChange(e.target.value)}

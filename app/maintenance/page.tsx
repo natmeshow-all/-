@@ -478,7 +478,7 @@ export default function MaintenancePage() {
                 {/* Loading State */}
                 {loading && (
                     <div className="flex justify-center py-12">
-                        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-accent-blue"></div>
+                        <div className="animate-spin rounded-full h-8 w-8 text-accent-blue" style={{ border: '2px solid currentColor', borderTopColor: 'transparent' }}></div>
                     </div>
                 )}
 

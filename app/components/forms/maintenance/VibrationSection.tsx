@@ -22,8 +22,11 @@ const VibrationSection: React.FC<VibrationSectionProps> = ({
     t 
 }) => (
     <div className="bg-bg-primary/50 rounded-lg p-3 border border-border-light">
-        <h4 className="text-sm font-medium text-text-primary mb-2">{axisLabel}</h4>
+        <label htmlFor={`vibration-input-${axis}`} className="block text-sm font-medium text-text-primary mb-2 cursor-pointer">
+            {axisLabel}
+        </label>
         <input
+            id={`vibration-input-${axis}`}
             type="text"
             value={value}
             onChange={(e) => onValueChange(e.target.value)}
@@ -32,8 +35,9 @@ const VibrationSection: React.FC<VibrationSectionProps> = ({
         />
         <div className="space-y-1">
             {(["normal", "medium", "abnormal"] as VibrationLevel[]).map((lvl) => (
-                <label key={lvl} className="flex items-center gap-2 cursor-pointer">
+                <label key={lvl} htmlFor={`vibration-${axis}-${lvl}`} className="flex items-center gap-2 cursor-pointer">
                     <input
+                        id={`vibration-${axis}-${lvl}`}
                         type="radio"
                         name={`vibration-${axis}`}
                         checked={level === lvl}

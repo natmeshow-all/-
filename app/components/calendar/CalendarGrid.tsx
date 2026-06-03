@@ -67,10 +67,11 @@ export default function CalendarGrid({ events }: CalendarGridProps) {
                     {dayEvents.map(event => (
                         <div
                             key={event.id}
-                            className={`text-[10px] truncate px-1.5 py-0.5 rounded border-l-2 ${event.status === 'due' ? 'bg-error/10 border-error text-error' :
+                            className={`text-[10px] truncate px-1.5 py-0.5 rounded ${event.status === 'due' ? 'bg-error/10 border-error text-error' :
                                 event.status === 'upcoming' ? 'bg-warning/10 border-warning text-warning' :
                                     'bg-success/10 border-success text-success'
                                 }`}
+                            style={{ borderLeft: '2px solid currentColor' }}
                             title={event.title}
                         >
                             {event.title}

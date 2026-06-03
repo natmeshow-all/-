@@ -348,11 +348,13 @@ export default function SchedulePage() {
                             return (
                                 <div
                                     key={item.id}
-                                    className={`card p-3 hover-lift animate-fade-in-up border-l-4 relative ${isOverdue ? "border-l-accent-red animate-warning-pulse" :
-                                        status.days <= 3 ? "border-l-accent-yellow" :
-                                            "border-l-accent-green"
-                                        } ${priorityColor} transition-all duration-300`}
-                                    style={{ animationDelay: `${index * 50}ms` }}
+                                    className={`card p-3 hover-lift animate-fade-in-up relative ${isOverdue ? "animate-warning-pulse" : ""} ${priorityColor} transition-all duration-300`}
+                                    style={{ 
+                                        borderLeftWidth: '4px', 
+                                        borderLeftStyle: 'solid', 
+                                        borderLeftColor: isOverdue ? '#ef4444' : status.days <= 3 ? '#eab308' : '#22c55e',
+                                        animationDelay: `${index * 50}ms` 
+                                    }}
                                 >
                                     <div className="flex items-stretch gap-3">
                                         {/* Icon */}

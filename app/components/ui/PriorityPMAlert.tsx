@@ -73,7 +73,7 @@ export default function PriorityPMAlert() {
                             </div>
                         </div>
                         {/* Notification Badge */}
-                        <div className="absolute -top-1 -right-1 bg-white text-red-600 text-xs font-extrabold w-6 h-6 flex items-center justify-center rounded-full border-2 border-red-500 shadow-sm z-10 animate-bounce">
+                        <div className="absolute -top-1 -right-1 bg-white text-red-600 text-xs font-extrabold w-6 h-6 flex items-center justify-center rounded-full border-2 border-red-500 shadow-sm z-10 animate-pulse">
                             {totalUrgent}
                         </div>
                     </div>

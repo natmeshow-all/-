@@ -125,11 +125,11 @@ export default function Modal({
                 className={`
                     modal-content bg-bg-secondary rounded-2xl border border-white/10 shadow-2xl
                     flex flex-col max-h-[90vh] w-full
-                    transform transition-all duration-300 cubic-bezier(0.34, 1.56, 0.64, 1)
+                    transform transition-all ease-out
                     ${sizeClasses[size]}
                     ${isVisible
-                        ? "opacity-100 scale-100 translate-y-0"
-                        : "opacity-0 scale-95 translate-y-8"
+                        ? "opacity-100 scale-100 translate-y-0 duration-300"
+                        : "opacity-0 scale-95 translate-y-8 duration-200"
                     }
                 `}
             >
@@ -146,7 +146,7 @@ export default function Modal({
                         </h2>
                         <button
                             onClick={handleClose}
-                            className="p-2 rounded-lg text-text-muted hover:text-white hover:bg-white/10 transition-colors"
+                            className="p-2 rounded-lg text-text-muted hover:text-white hover:bg-white/10 hover:rotate-90 transition-all duration-200"
                             aria-label="Close modal"
                         >
                             <XIcon size={20} />

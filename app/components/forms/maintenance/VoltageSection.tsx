@@ -27,15 +27,18 @@ const VoltageSection: React.FC<VoltageSectionProps> = ({
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             {/* Voltage */}
             <div className="mb-4">
-                <label className="label">
+                <span className="label flex items-center gap-1 font-semibold text-text-secondary">
                     <ZapIcon size={14} />
                     {t("maintenanceVoltage")}
-                </label>
+                </span>
                 <div className="grid grid-cols-3 gap-3">
                     {["L1", "L2", "L3"].map((phase) => (
                         <div key={phase}>
-                            <span className="text-xs text-text-muted mb-1 block">{phase} (V)</span>
+                            <label htmlFor={`voltage-input-${phase}`} className="text-xs text-text-muted mb-1 block cursor-pointer">
+                                {phase} (V)
+                            </label>
                             <input
+                                id={`voltage-input-${phase}`}
                                 type="text"
                                 value={phase === 'L1' ? voltageL1 : phase === 'L2' ? voltageL2 : voltageL3}
                                 onChange={(e) => onVoltageChange(phase as 'L1' | 'L2' | 'L3', e.target.value)}
@@ -49,16 +52,17 @@ const VoltageSection: React.FC<VoltageSectionProps> = ({
 
             {/* Current */}
             <div className="mb-4">
-                <label className="label">
+                <span className="label flex items-center gap-1 font-semibold text-text-secondary">
                     <ZapIcon size={14} />
                     {t("maintenanceCurrent")}
-                </label>
+                </span>
                 <div className="grid grid-cols-2 gap-3">
                     <div>
-                        <span className="text-xs text-text-muted mb-1 block">
+                        <label htmlFor="current-idle-input" className="text-xs text-text-muted mb-1 block cursor-pointer">
                             {t("maintenanceCurrentIdle")}
-                        </span>
+                        </label>
                         <input
+                            id="current-idle-input"
                             type="text"
                             value={currentIdle}
                             onChange={(e) => onCurrentChange('idle', e.target.value)}
@@ -67,10 +71,11 @@ const VoltageSection: React.FC<VoltageSectionProps> = ({
                         />
                     </div>
                     <div>
-                        <span className="text-xs text-text-muted mb-1 block">
+                        <label htmlFor="current-load-input" className="text-xs text-text-muted mb-1 block cursor-pointer">
                             {t("maintenanceCurrentLoad")}
-                        </span>
+                        </label>
                         <input
+                            id="current-load-input"
                             type="text"
                             value={currentLoad}
                             onChange={(e) => onCurrentChange('load', e.target.value)}

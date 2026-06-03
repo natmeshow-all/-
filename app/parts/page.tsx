@@ -40,12 +40,12 @@ export default function PartsPage() {
 
     const getPartTheme = (category: string) => {
         const cat = category?.toLowerCase() || "";
-        if (cat.includes("mech")) return { glow: "bg-blue-500/10", borderLine: "from-transparent via-blue-500 to-transparent", textGradient: "group-hover:from-blue-400 group-hover:to-indigo-400" };
-        if (cat.includes("elect") || cat.includes("wire")) return { glow: "bg-accent-yellow/10", borderLine: "from-transparent via-accent-yellow to-transparent", textGradient: "group-hover:from-accent-yellow group-hover:to-amber-500" };
-        if (cat.includes("hyd")) return { glow: "bg-accent-red/10", borderLine: "from-transparent via-accent-red to-transparent", textGradient: "group-hover:from-accent-red group-hover:to-pink-500" };
-        if (cat.includes("pneu")) return { glow: "bg-accent-cyan/10", borderLine: "from-transparent via-accent-cyan to-transparent", textGradient: "group-hover:from-accent-cyan group-hover:to-teal-400" };
-        if (cat.includes("con") || cat.includes("oil") || cat.includes("grease") || cat.includes("spare")) return { glow: "bg-green-500/10", borderLine: "from-transparent via-green-500 to-transparent", textGradient: "group-hover:from-green-400 group-hover:to-emerald-400" };
-        return { glow: "bg-primary/10", borderLine: "from-transparent via-primary-light to-transparent", textGradient: "group-hover:from-primary-light group-hover:to-indigo-400" };
+        if (cat.includes("mech")) return { glow: "bg-blue-500/10", borderLine: "from-transparent via-blue-500 to-transparent", textColor: "text-blue-400 group-hover:text-blue-300" };
+        if (cat.includes("elect") || cat.includes("wire")) return { glow: "bg-accent-yellow/10", borderLine: "from-transparent via-accent-yellow to-transparent", textColor: "text-accent-yellow group-hover:text-amber-400" };
+        if (cat.includes("hyd")) return { glow: "bg-accent-red/10", borderLine: "from-transparent via-accent-red to-transparent", textColor: "text-accent-red group-hover:text-pink-400" };
+        if (cat.includes("pneu")) return { glow: "bg-accent-cyan/10", borderLine: "from-transparent via-accent-cyan to-transparent", textColor: "text-accent-cyan group-hover:text-teal-400" };
+        if (cat.includes("con") || cat.includes("oil") || cat.includes("grease") || cat.includes("spare")) return { glow: "bg-green-500/10", borderLine: "from-transparent via-green-500 to-transparent", textColor: "text-green-400 group-hover:text-emerald-400" };
+        return { glow: "bg-primary/10", borderLine: "from-transparent via-primary-light to-transparent", textColor: "text-primary-light group-hover:text-indigo-400" };
     };
 
     // Pagination State
@@ -426,7 +426,7 @@ export default function PartsPage() {
 
                                                                     <div className="relative z-10 flex items-center gap-4">
                                                                         <div className="w-12 h-12 rounded-xl bg-gradient-to-b from-white/10 to-white/5 border border-white/15 flex items-center justify-center shadow-lg shadow-black/50 group-hover:scale-110 transition-transform">
-                                                                            <span className={`text-xl font-black text-transparent bg-clip-text bg-gradient-to-r ${theme.textGradient}`}>
+                                                                            <span className={`text-xl font-black ${theme.textColor}`}>
                                                                                 {part.name ? part.name.substring(0, 2).toUpperCase() : "PT"}
                                                                             </span>
                                                                         </div>

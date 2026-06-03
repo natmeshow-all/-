@@ -1,0 +1,465 @@
+[
+  {
+    "antipattern": "side-tab",
+    "name": "Side-tab accent border",
+    "description": "Thick colored border on one side of a card — the most recognizable tell of AI-generated UIs. Use a subtler accent or remove it entirely.",
+    "severity": "warning",
+    "file": "C:\\Users\\natsh\\AOB\\maintenance-team\\app\\audit\\page.tsx",
+    "line": 113,
+    "snippet": "border-l-4"
+  },
+  {
+    "antipattern": "side-tab",
+    "name": "Side-tab accent border",
+    "description": "Thick colored border on one side of a card — the most recognizable tell of AI-generated UIs. Use a subtler accent or remove it entirely.",
+    "severity": "warning",
+    "file": "C:\\Users\\natsh\\AOB\\maintenance-team\\app\\audit\\page.tsx",
+    "line": 136,
+    "snippet": "border-l-4"
+  },
+  {
+    "antipattern": "side-tab",
+    "name": "Side-tab accent border",
+    "description": "Thick colored border on one side of a card — the most recognizable tell of AI-generated UIs. Use a subtler accent or remove it entirely.",
+    "severity": "warning",
+    "file": "C:\\Users\\natsh\\AOB\\maintenance-team\\app\\audit\\page.tsx",
+    "line": 156,
+    "snippet": "border-l-4"
+  },
+  {
+    "antipattern": "side-tab",
+    "name": "Side-tab accent border",
+    "description": "Thick colored border on one side of a card — the most recognizable tell of AI-generated UIs. Use a subtler accent or remove it entirely.",
+    "severity": "warning",
+    "file": "C:\\Users\\natsh\\AOB\\maintenance-team\\app\\audit\\page.tsx",
+    "line": 176,
+    "snippet": "border-l-4"
+  },
+  {
+    "antipattern": "side-tab",
+    "name": "Side-tab accent border",
+    "description": "Thick colored border on one side of a card — the most recognizable tell of AI-generated UIs. Use a subtler accent or remove it entirely.",
+    "severity": "warning",
+    "file": "C:\\Users\\natsh\\AOB\\maintenance-team\\app\\components\\admin\\UserApprovalTab.tsx",
+    "line": 96,
+    "snippet": "border-l-4",
+    "importedBy": [
+      "page.tsx"
+    ]
+  },
+  {
+    "antipattern": "gradient-text",
+    "name": "Gradient text",
+    "description": "Gradient text is decorative rather than meaningful — a common AI tell, especially on headings and metrics. Use solid colors for text.",
+    "severity": "warning",
+    "file": "C:\\Users\\natsh\\AOB\\maintenance-team\\app\\components\\ai\\AIAssistant.tsx",
+    "line": 357,
+    "snippet": "bg-clip-text + bg-gradient",
+    "importedBy": [
+      "MaintenanceWrapper.tsx"
+    ]
+  },
+  {
+    "antipattern": "gradient-text",
+    "name": "Gradient text",
+    "description": "Gradient text is decorative rather than meaningful — a common AI tell, especially on headings and metrics. Use solid colors for text.",
+    "severity": "warning",
+    "file": "C:\\Users\\natsh\\AOB\\maintenance-team\\app\\components\\ai\\AIAssistant.tsx",
+    "line": 390,
+    "snippet": "bg-clip-text + bg-gradient",
+    "importedBy": [
+      "MaintenanceWrapper.tsx"
+    ]
+  },
+  {
+    "antipattern": "side-tab",
+    "name": "Side-tab accent border",
+    "description": "Thick colored border on one side of a card — the most recognizable tell of AI-generated UIs. Use a subtler accent or remove it entirely.",
+    "severity": "warning",
+    "file": "C:\\Users\\natsh\\AOB\\maintenance-team\\app\\components\\calendar\\CalendarGrid.tsx",
+    "line": 70,
+    "snippet": "border-l-2"
+  },
+  {
+    "antipattern": "border-accent-on-rounded",
+    "name": "Border accent on rounded element",
+    "description": "Thick accent border on a rounded card — the border clashes with the rounded corners. Remove the border or the border-radius.",
+    "severity": "warning",
+    "file": "C:\\Users\\natsh\\AOB\\maintenance-team\\app\\components\\forms\\AddPartModal.tsx",
+    "line": 252,
+    "snippet": "border-b-2",
+    "importedBy": [
+      "page.tsx"
+    ]
+  },
+  {
+    "antipattern": "border-accent-on-rounded",
+    "name": "Border accent on rounded element",
+    "description": "Thick accent border on a rounded card — the border clashes with the rounded corners. Remove the border or the border-radius.",
+    "severity": "warning",
+    "file": "C:\\Users\\natsh\\AOB\\maintenance-team\\app\\components\\forms\\maintenance\\EvidenceImageSection.tsx",
+    "line": 87,
+    "snippet": "border-b-2",
+    "importedBy": [
+      "MaintenanceRecordModal.tsx"
+    ]
+  },
+  {
+    "antipattern": "border-accent-on-rounded",
+    "name": "Border accent on rounded element",
+    "description": "Thick accent border on a rounded card — the border clashes with the rounded corners. Remove the border or the border-radius.",
+    "severity": "warning",
+    "file": "C:\\Users\\natsh\\AOB\\maintenance-team\\app\\components\\forms\\MaintenanceRecordModal.tsx",
+    "line": 491,
+    "snippet": "border-b-2",
+    "importedBy": [
+      "page.tsx",
+      "page.tsx"
+    ]
+  },
+  {
+    "antipattern": "bounce-easing",
+    "name": "Bounce or elastic easing",
+    "description": "Bounce and elastic easing feel dated and tacky. Real objects decelerate smoothly — use exponential easing (ease-out-quart/quint/expo) instead.",
+    "severity": "warning",
+    "file": "C:\\Users\\natsh\\AOB\\maintenance-team\\app\\components\\MaintenanceModePage.tsx",
+    "line": 220,
+    "snippet": "animate-bounce (Tailwind)",
+    "importedBy": [
+      "MaintenanceWrapper.tsx"
+    ]
+  },
+  {
+    "antipattern": "gradient-text",
+    "name": "Gradient text",
+    "description": "Gradient text is decorative rather than meaningful — a common AI tell, especially on headings and metrics. Use solid colors for text.",
+    "severity": "warning",
+    "file": "C:\\Users\\natsh\\AOB\\maintenance-team\\app\\components\\parts\\PartDetailsModal.tsx",
+    "line": 117,
+    "snippet": "bg-clip-text + bg-gradient",
+    "importedBy": [
+      "page.tsx"
+    ]
+  },
+  {
+    "antipattern": "side-tab",
+    "name": "Side-tab accent border",
+    "description": "Thick colored border on one side of a card — the most recognizable tell of AI-generated UIs. Use a subtler accent or remove it entirely.",
+    "severity": "warning",
+    "file": "C:\\Users\\natsh\\AOB\\maintenance-team\\app\\components\\ui\\GlobalLoadingSpinner.tsx",
+    "line": 68,
+    "snippet": "border-r-2",
+    "importedBy": [
+      "MaintenanceWrapper.tsx"
+    ]
+  },
+  {
+    "antipattern": "border-accent-on-rounded",
+    "name": "Border accent on rounded element",
+    "description": "Thick accent border on a rounded card — the border clashes with the rounded corners. Remove the border or the border-radius.",
+    "severity": "warning",
+    "file": "C:\\Users\\natsh\\AOB\\maintenance-team\\app\\components\\ui\\GlobalLoadingSpinner.tsx",
+    "line": 68,
+    "snippet": "border-t-2",
+    "importedBy": [
+      "MaintenanceWrapper.tsx"
+    ]
+  },
+  {
+    "antipattern": "gradient-text",
+    "name": "Gradient text",
+    "description": "Gradient text is decorative rather than meaningful — a common AI tell, especially on headings and metrics. Use solid colors for text.",
+    "severity": "warning",
+    "file": "C:\\Users\\natsh\\AOB\\maintenance-team\\app\\components\\ui\\GlobalLoadingSpinner.tsx",
+    "line": 106,
+    "snippet": "bg-clip-text + bg-gradient",
+    "importedBy": [
+      "MaintenanceWrapper.tsx"
+    ]
+  },
+  {
+    "antipattern": "ai-color-palette",
+    "name": "AI color palette",
+    "description": "Purple/violet gradients and cyan-on-dark are the most recognizable tells of AI-generated UIs. Choose a distinctive, intentional palette.",
+    "severity": "warning",
+    "file": "C:\\Users\\natsh\\AOB\\maintenance-team\\app\\components\\ui\\GlobalLoadingSpinner.tsx",
+    "line": 35,
+    "snippet": "from-purple-500 gradient",
+    "importedBy": [
+      "MaintenanceWrapper.tsx"
+    ]
+  },
+  {
+    "antipattern": "ai-color-palette",
+    "name": "AI color palette",
+    "description": "Purple/violet gradients and cyan-on-dark are the most recognizable tells of AI-generated UIs. Choose a distinctive, intentional palette.",
+    "severity": "warning",
+    "file": "C:\\Users\\natsh\\AOB\\maintenance-team\\app\\components\\ui\\GlobalLoadingSpinner.tsx",
+    "line": 42,
+    "snippet": "from-indigo-500 gradient",
+    "importedBy": [
+      "MaintenanceWrapper.tsx"
+    ]
+  },
+  {
+    "antipattern": "bounce-easing",
+    "name": "Bounce or elastic easing",
+    "description": "Bounce and elastic easing feel dated and tacky. Real objects decelerate smoothly — use exponential easing (ease-out-quart/quint/expo) instead.",
+    "severity": "warning",
+    "file": "C:\\Users\\natsh\\AOB\\maintenance-team\\app\\components\\ui\\GlobalLoadingSpinner.tsx",
+    "line": 121,
+    "snippet": "animate-bounce (Tailwind)",
+    "importedBy": [
+      "MaintenanceWrapper.tsx"
+    ]
+  },
+  {
+    "antipattern": "side-tab",
+    "name": "Side-tab accent border",
+    "description": "Thick colored border on one side of a card — the most recognizable tell of AI-generated UIs. Use a subtler accent or remove it entirely.",
+    "severity": "warning",
+    "file": "C:\\Users\\natsh\\AOB\\maintenance-team\\app\\components\\ui\\PageLoadingOverlay.tsx",
+    "line": 28,
+    "snippet": "border-r-2",
+    "importedBy": [
+      "page.tsx"
+    ]
+  },
+  {
+    "antipattern": "border-accent-on-rounded",
+    "name": "Border accent on rounded element",
+    "description": "Thick accent border on a rounded card — the border clashes with the rounded corners. Remove the border or the border-radius.",
+    "severity": "warning",
+    "file": "C:\\Users\\natsh\\AOB\\maintenance-team\\app\\components\\ui\\PageLoadingOverlay.tsx",
+    "line": 28,
+    "snippet": "border-t-2",
+    "importedBy": [
+      "page.tsx"
+    ]
+  },
+  {
+    "antipattern": "bounce-easing",
+    "name": "Bounce or elastic easing",
+    "description": "Bounce and elastic easing feel dated and tacky. Real objects decelerate smoothly — use exponential easing (ease-out-quart/quint/expo) instead.",
+    "severity": "warning",
+    "file": "C:\\Users\\natsh\\AOB\\maintenance-team\\app\\components\\ui\\PageLoadingOverlay.tsx",
+    "line": 43,
+    "snippet": "animate-bounce (Tailwind)",
+    "importedBy": [
+      "page.tsx"
+    ]
+  },
+  {
+    "antipattern": "bounce-easing",
+    "name": "Bounce or elastic easing",
+    "description": "Bounce and elastic easing feel dated and tacky. Real objects decelerate smoothly — use exponential easing (ease-out-quart/quint/expo) instead.",
+    "severity": "warning",
+    "file": "C:\\Users\\natsh\\AOB\\maintenance-team\\app\\components\\ui\\PriorityPMAlert.tsx",
+    "line": 76,
+    "snippet": "animate-bounce (Tailwind)",
+    "importedBy": [
+      "page.tsx"
+    ]
+  },
+  {
+    "antipattern": "side-tab",
+    "name": "Side-tab accent border",
+    "description": "Thick colored border on one side of a card — the most recognizable tell of AI-generated UIs. Use a subtler accent or remove it entirely.",
+    "severity": "warning",
+    "file": "C:\\Users\\natsh\\AOB\\maintenance-team\\app\\components\\ui\\ScannerModal.tsx",
+    "line": 136,
+    "snippet": "border-l-4"
+  },
+  {
+    "antipattern": "side-tab",
+    "name": "Side-tab accent border",
+    "description": "Thick colored border on one side of a card — the most recognizable tell of AI-generated UIs. Use a subtler accent or remove it entirely.",
+    "severity": "warning",
+    "file": "C:\\Users\\natsh\\AOB\\maintenance-team\\app\\components\\ui\\ScannerModal.tsx",
+    "line": 137,
+    "snippet": "border-r-4"
+  },
+  {
+    "antipattern": "border-accent-on-rounded",
+    "name": "Border accent on rounded element",
+    "description": "Thick accent border on a rounded card — the border clashes with the rounded corners. Remove the border or the border-radius.",
+    "severity": "warning",
+    "file": "C:\\Users\\natsh\\AOB\\maintenance-team\\app\\components\\ui\\ScannerModal.tsx",
+    "line": 136,
+    "snippet": "border-t-4"
+  },
+  {
+    "antipattern": "border-accent-on-rounded",
+    "name": "Border accent on rounded element",
+    "description": "Thick accent border on a rounded card — the border clashes with the rounded corners. Remove the border or the border-radius.",
+    "severity": "warning",
+    "file": "C:\\Users\\natsh\\AOB\\maintenance-team\\app\\components\\ui\\ScannerModal.tsx",
+    "line": 138,
+    "snippet": "border-b-4"
+  },
+  {
+    "antipattern": "gradient-text",
+    "name": "Gradient text",
+    "description": "Gradient text is decorative rather than meaningful — a common AI tell, especially on headings and metrics. Use solid colors for text.",
+    "severity": "warning",
+    "file": "C:\\Users\\natsh\\AOB\\maintenance-team\\app\\globals.css",
+    "line": 439,
+    "snippet": "background-clip: text + gradient",
+    "importedBy": [
+      "global-error.tsx"
+    ]
+  },
+  {
+    "antipattern": "gradient-text",
+    "name": "Gradient text",
+    "description": "Gradient text is decorative rather than meaningful — a common AI tell, especially on headings and metrics. Use solid colors for text.",
+    "severity": "warning",
+    "file": "C:\\Users\\natsh\\AOB\\maintenance-team\\app\\globals.css",
+    "line": 446,
+    "snippet": "background-clip: text + gradient",
+    "importedBy": [
+      "global-error.tsx"
+    ]
+  },
+  {
+    "antipattern": "bounce-easing",
+    "name": "Bounce or elastic easing",
+    "description": "Bounce and elastic easing feel dated and tacky. Real objects decelerate smoothly — use exponential easing (ease-out-quart/quint/expo) instead.",
+    "severity": "warning",
+    "file": "C:\\Users\\natsh\\AOB\\maintenance-team\\app\\globals.css",
+    "line": 352,
+    "snippet": "animate-bounce (Tailwind)",
+    "importedBy": [
+      "global-error.tsx"
+    ]
+  },
+  {
+    "antipattern": "bounce-easing",
+    "name": "Bounce or elastic easing",
+    "description": "Bounce and elastic easing feel dated and tacky. Real objects decelerate smoothly — use exponential easing (ease-out-quart/quint/expo) instead.",
+    "severity": "warning",
+    "file": "C:\\Users\\natsh\\AOB\\maintenance-team\\app\\globals.css",
+    "line": 368,
+    "snippet": "animate-bounce (Tailwind)",
+    "importedBy": [
+      "global-error.tsx"
+    ]
+  },
+  {
+    "antipattern": "bounce-easing",
+    "name": "Bounce or elastic easing",
+    "description": "Bounce and elastic easing feel dated and tacky. Real objects decelerate smoothly — use exponential easing (ease-out-quart/quint/expo) instead.",
+    "severity": "warning",
+    "file": "C:\\Users\\natsh\\AOB\\maintenance-team\\app\\globals.css",
+    "line": 353,
+    "snippet": "animation: bounce",
+    "importedBy": [
+      "global-error.tsx"
+    ]
+  },
+  {
+    "antipattern": "bounce-easing",
+    "name": "Bounce or elastic easing",
+    "description": "Bounce and elastic easing feel dated and tacky. Real objects decelerate smoothly — use exponential easing (ease-out-quart/quint/expo) instead.",
+    "severity": "warning",
+    "file": "C:\\Users\\natsh\\AOB\\maintenance-team\\app\\globals.css",
+    "line": 369,
+    "snippet": "animation: bounce",
+    "importedBy": [
+      "global-error.tsx"
+    ]
+  },
+  {
+    "antipattern": "bounce-easing",
+    "name": "Bounce or elastic easing",
+    "description": "Bounce and elastic easing feel dated and tacky. Real objects decelerate smoothly — use exponential easing (ease-out-quart/quint/expo) instead.",
+    "severity": "warning",
+    "file": "C:\\Users\\natsh\\AOB\\maintenance-team\\app\\globals.css",
+    "line": 1398,
+    "snippet": "animation: typing-bounce",
+    "importedBy": [
+      "global-error.tsx"
+    ]
+  },
+  {
+    "antipattern": "border-accent-on-rounded",
+    "name": "Border accent on rounded element",
+    "description": "Thick accent border on a rounded card — the border clashes with the rounded corners. Remove the border or the border-radius.",
+    "severity": "warning",
+    "file": "C:\\Users\\natsh\\AOB\\maintenance-team\\app\\machines\\page.tsx",
+    "line": 178,
+    "snippet": "border-b-2"
+  },
+  {
+    "antipattern": "border-accent-on-rounded",
+    "name": "Border accent on rounded element",
+    "description": "Thick accent border on a rounded card — the border clashes with the rounded corners. Remove the border or the border-radius.",
+    "severity": "warning",
+    "file": "C:\\Users\\natsh\\AOB\\maintenance-team\\app\\maintenance\\page.tsx",
+    "line": 481,
+    "snippet": "border-b-2"
+  },
+  {
+    "antipattern": "gradient-text",
+    "name": "Gradient text",
+    "description": "Gradient text is decorative rather than meaningful — a common AI tell, especially on headings and metrics. Use solid colors for text.",
+    "severity": "warning",
+    "file": "C:\\Users\\natsh\\AOB\\maintenance-team\\app\\parts\\page.tsx",
+    "line": 429,
+    "snippet": "bg-clip-text + bg-gradient"
+  },
+  {
+    "antipattern": "bounce-easing",
+    "name": "Bounce or elastic easing",
+    "description": "Bounce and elastic easing feel dated and tacky. Real objects decelerate smoothly — use exponential easing (ease-out-quart/quint/expo) instead.",
+    "severity": "warning",
+    "file": "C:\\Users\\natsh\\AOB\\maintenance-team\\app\\pending\\page.tsx",
+    "line": 51,
+    "snippet": "animate-bounce (Tailwind)"
+  },
+  {
+    "antipattern": "side-tab",
+    "name": "Side-tab accent border",
+    "description": "Thick colored border on one side of a card — the most recognizable tell of AI-generated UIs. Use a subtler accent or remove it entirely.",
+    "severity": "warning",
+    "file": "C:\\Users\\natsh\\AOB\\maintenance-team\\app\\predictive\\page.tsx",
+    "line": 325,
+    "snippet": "border-l-4"
+  },
+  {
+    "antipattern": "side-tab",
+    "name": "Side-tab accent border",
+    "description": "Thick colored border on one side of a card — the most recognizable tell of AI-generated UIs. Use a subtler accent or remove it entirely.",
+    "severity": "warning",
+    "file": "C:\\Users\\natsh\\AOB\\maintenance-team\\app\\predictive\\page.tsx",
+    "line": 333,
+    "snippet": "border-l-4"
+  },
+  {
+    "antipattern": "side-tab",
+    "name": "Side-tab accent border",
+    "description": "Thick colored border on one side of a card — the most recognizable tell of AI-generated UIs. Use a subtler accent or remove it entirely.",
+    "severity": "warning",
+    "file": "C:\\Users\\natsh\\AOB\\maintenance-team\\app\\predictive\\page.tsx",
+    "line": 341,
+    "snippet": "border-l-4"
+  },
+  {
+    "antipattern": "side-tab",
+    "name": "Side-tab accent border",
+    "description": "Thick colored border on one side of a card — the most recognizable tell of AI-generated UIs. Use a subtler accent or remove it entirely.",
+    "severity": "warning",
+    "file": "C:\\Users\\natsh\\AOB\\maintenance-team\\app\\schedule\\page.tsx",
+    "line": 351,
+    "snippet": "border-l-4"
+  },
+  {
+    "antipattern": "side-tab",
+    "name": "Side-tab accent border",
+    "description": "Thick colored border on one side of a card — the most recognizable tell of AI-generated UIs. Use a subtler accent or remove it entirely.",
+    "severity": "warning",
+    "file": "C:\\Users\\natsh\\AOB\\maintenance-team\\app\\users\\page.tsx",
+    "line": 289,
+    "snippet": "border-l-4"
+  }
+]

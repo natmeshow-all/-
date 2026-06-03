@@ -26,11 +26,12 @@ const DetailsNotesSection: React.FC<DetailsNotesSectionProps> = ({
             </h3>
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 <div>
-                    <label className="label">
+                    <label className="label" htmlFor="m-details-textarea">
                         <FileTextIcon size={14} />
                         {t("maintenanceDetailDescription")}
                     </label>
                     <textarea
+                        id="m-details-textarea"
                         name="details"
                         value={details}
                         onChange={onInputChange}
@@ -40,11 +41,12 @@ const DetailsNotesSection: React.FC<DetailsNotesSectionProps> = ({
                     />
                 </div>
                 <div>
-                    <label className="label">
+                    <label className="label" htmlFor="m-notes-textarea">
                         <EditIcon size={14} />
                         {t("maintenanceAdditionalNotes")}
                     </label>
                     <textarea
+                        id="m-notes-textarea"
                         name="notes"
                         value={notes}
                         onChange={onInputChange}

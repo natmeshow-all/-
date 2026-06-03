@@ -488,7 +488,7 @@ export default function MaintenanceRecordModal({
                     <button onClick={handleSubmit} className="btn btn-secondary" disabled={isSubmitting}>
                         {isSubmitting ? (
                             <span className="flex items-center gap-2">
-                                <span className="animate-spin rounded-full h-4 w-4 border-b-2 border-white"></span>
+                                <span className="animate-spin rounded-full h-4 w-4 border-2 border-t-transparent border-white"></span>
                                 {t("msgSavingData")}
                             </span>
                         ) : (
@@ -511,7 +511,7 @@ export default function MaintenanceRecordModal({
                     <div className="form-grid form-grid-2">
                         <div>
                             <div className="flex items-center justify-between mb-2">
-                                <label className="label !mb-0">
+                                <label className="label !mb-0" htmlFor="m-machineId-select">
                                     <SettingsIcon size={14} />
                                     {t("maintenanceMachine")}
                                 </label>
@@ -532,6 +532,7 @@ export default function MaintenanceRecordModal({
                                 </div>
                             </div>
                             <select
+                                id="m-machineId-select"
                                 name="machineId"
                                 value={formData.machineId}
                                 onChange={handleInputChange}
@@ -546,11 +547,12 @@ export default function MaintenanceRecordModal({
                             </select>
                         </div>
                         <div>
-                            <label className="label">
+                            <label className="label" htmlFor={formData.partId === "others" ? "m-manualPartName-input" : "m-partId-select"}>
                                 <BoxIcon size={14} />
                                 {t("filterPartName")}
                             </label>
                             <select
+                                id="m-partId-select"
                                 name="partId"
                                 value={formData.partId}
                                 onChange={handleInputChange}
@@ -570,6 +572,7 @@ export default function MaintenanceRecordModal({
                             {formData.partId === "others" && (
                                 <div className="mt-2 animate-fade-in">
                                     <input
+                                        id="m-manualPartName-input"
                                         type="text"
                                         name="manualPartName"
                                         value={formData.manualPartName}
@@ -617,11 +620,12 @@ export default function MaintenanceRecordModal({
                 </div>
                 <div className="form-grid form-grid-2 mt-3">
                     <div>
-                        <label className="label">
+                        <label className="label" htmlFor="m-type-select">
                             <SettingsIcon size={14} />
                             {t("maintenanceType")}
                         </label>
                         <select
+                            id="m-type-select"
                             name="type"
                             value={formData.type}
                             onChange={handleInputChange}
@@ -636,11 +640,12 @@ export default function MaintenanceRecordModal({
                         </select>
                     </div>
                     <div>
-                        <label className="label">
+                        <label className="label" htmlFor="m-priority-select">
                             <ActivityIcon size={14} />
                             {t("maintenancePriority")}
                         </label>
                         <select
+                            id="m-priority-select"
                             name="priority"
                             value={formData.priority}
                             onChange={handleInputChange}
@@ -661,11 +666,12 @@ export default function MaintenanceRecordModal({
                     </h3>
                     <div className="form-grid form-grid-2">
                         <div>
-                            <label className="label">
+                            <label className="label" htmlFor="m-startTime-input">
                                 <CalendarIcon size={14} />
                                 {t("labelStartDate")}
                             </label>
                             <input
+                                id="m-startTime-input"
                                 type="date"
                                 name="startTime"
                                 value={formData.startTime}
@@ -674,11 +680,12 @@ export default function MaintenanceRecordModal({
                             />
                         </div>
                         <div>
-                            <label className="label">
+                            <label className="label" htmlFor="m-endTime-input">
                                 <CalendarIcon size={14} />
                                 {t("labelEndDate")}
                             </label>
                             <input
+                                id="m-endTime-input"
                                 type="date"
                                 name="endTime"
                                 value={formData.endTime}
@@ -689,11 +696,12 @@ export default function MaintenanceRecordModal({
                     </div>
                     <div className="form-grid form-grid-2 mt-3">
                         <div>
-                            <label className="label">
+                            <label className="label" htmlFor="m-duration-input">
                                 <ClockIcon size={14} />
                                 {t("maintenanceDuration")}
                             </label>
                             <input
+                                id="m-duration-input"
                                 type="text"
                                 name="duration"
                                 value={formData.duration}
@@ -704,11 +712,12 @@ export default function MaintenanceRecordModal({
                             />
                         </div>
                         <div>
-                            <label className="label">
+                            <label className="label" htmlFor="m-technician-input">
                                 <UserIcon size={14} />
                                 {t("maintenanceTechnician")}
                             </label>
                             <input
+                                id="m-technician-input"
                                 type="text"
                                 name="technician"
                                 value={formData.technician}
@@ -720,11 +729,12 @@ export default function MaintenanceRecordModal({
                     </div>
                     <div className="form-grid form-grid-2 mt-3">
                         <div>
-                            <label className="label">
+                            <label className="label" htmlFor="m-status-select">
                                 <CheckIcon size={14} />
                                 {t("maintenanceStatus")}
                             </label>
                             <select
+                                id="m-status-select"
                                 name="status"
                                 value={formData.status}
                                 onChange={handleInputChange}

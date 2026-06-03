@@ -68,16 +68,18 @@ export function Toast({ toast, onClose }: ToastProps) {
 
     return (
         <div
+            role={toast.type === "error" ? "alert" : "status"}
+            aria-live={toast.type === "error" ? "assertive" : "polite"}
             className={`
                 pointer-events-auto
                 relative flex items-center justify-start p-4 rounded-xl 
                 bg-bg-secondary border border-white/10
                 shadow-xl shadow-black/40 backdrop-blur-md
                 min-w-[280px] max-w-sm text-left gap-4
-                transform transition-all duration-300 ease-out
+                transform transition-all duration-300 cubic-bezier(0.16, 1, 0.3, 1)
                 ${isVisible && !isExiting
-                    ? "opacity-100 scale-100 translate-y-0"
-                    : "opacity-0 scale-95 translate-y-8"
+                    ? "opacity-100 scale-100 translate-x-0"
+                    : "opacity-0 scale-95 translate-x-12"
                 }
             `}
         >

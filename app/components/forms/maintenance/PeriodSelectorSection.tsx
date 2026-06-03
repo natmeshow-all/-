@@ -24,11 +24,12 @@ const PeriodSelectorSection: React.FC<PeriodSelectorSectionProps> = ({
             </h3>
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 <div>
-                    <label className="label">
+                    <label htmlFor="period-select" className="label">
                         <RefreshCwIcon size={14} />
                         {t("labelPeriod")}
                     </label>
                     <select
+                        id="period-select"
                         name="period"
                         value={period || "routine"}
                         onChange={onInputChange}

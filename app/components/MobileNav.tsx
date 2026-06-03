@@ -72,12 +72,15 @@ export default function MobileNav() {
                                 <Link
                                     key={item.href}
                                     href={item.href}
-                                    className={`flex flex-col items-center justify-center h-full min-w-[70px] gap-1 transition-colors ${isActive ? "text-white" : "text-text-muted hover:text-white/80"}`}
+                                    className={`relative flex flex-col items-center justify-center h-full min-w-[70px] gap-1 transition-all active:scale-90 ${isActive ? "text-white" : "text-text-muted hover:text-white/80"}`}
                                 >
-                                    <Icon size={20} className={isActive ? "text-white" : "text-text-muted"} />
+                                    <Icon size={20} className={`transition-transform duration-200 ${isActive ? "text-white scale-110" : "text-text-muted"}`} />
                                     <span className={`text-[10px] font-bold whitespace-nowrap ${isActive ? "text-white" : "text-text-muted"}`}>
                                         {t(item.labelKey as any)}
                                     </span>
+                                    {isActive && (
+                                        <span className="absolute -bottom-0.5 left-1/2 -translate-x-1/2 w-4 h-0.5 bg-white rounded-full animate-scale-in" />
+                                    )}
                                 </Link>
                             );
                         })}

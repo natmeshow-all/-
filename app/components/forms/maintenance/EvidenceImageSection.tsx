@@ -52,12 +52,13 @@ const EvidenceImageSection: React.FC<EvidenceImageSectionProps> = ({
                 {!imagePreview && (
                     <div className="grid grid-cols-2 gap-3">
                         {/* Option 1: Take Photo (Camera) */}
-                        <label className="flex flex-col items-center justify-center w-full h-32 rounded-lg border-2 border-dashed border-border-light hover:border-primary/50 bg-bg-tertiary/30 hover:bg-bg-tertiary/50 cursor-pointer transition-all group">
+                        <label htmlFor="camera-capture-input" className="flex flex-col items-center justify-center w-full h-32 rounded-lg border-2 border-dashed border-border-light hover:border-primary/50 bg-bg-tertiary/30 hover:bg-bg-tertiary/50 cursor-pointer transition-all group">
                             <div className="flex flex-col items-center justify-center pt-5 pb-6">
                                 <CameraIcon size={32} className="text-text-muted group-hover:text-primary transition-colors mb-2" />
                                 <p className="text-sm text-text-muted group-hover:text-text-primary">ถ่ายภาพ</p>
                             </div>
                             <input
+                                id="camera-capture-input"
                                 type="file"
                                 accept="image/*"
                                 capture="environment"
@@ -67,12 +68,13 @@ const EvidenceImageSection: React.FC<EvidenceImageSectionProps> = ({
                         </label>
 
                         {/* Option 2: Upload Photo (Gallery) */}
-                        <label className="flex flex-col items-center justify-center w-full h-32 rounded-lg border-2 border-dashed border-border-light hover:border-primary/50 bg-bg-tertiary/30 hover:bg-bg-tertiary/50 cursor-pointer transition-all group">
+                        <label htmlFor="gallery-upload-input" className="flex flex-col items-center justify-center w-full h-32 rounded-lg border-2 border-dashed border-border-light hover:border-primary/50 bg-bg-tertiary/30 hover:bg-bg-tertiary/50 cursor-pointer transition-all group">
                             <div className="flex flex-col items-center justify-center pt-5 pb-6">
                                 <UploadIcon size={32} className="text-text-muted group-hover:text-primary transition-colors mb-2" />
                                 <p className="text-sm text-text-muted group-hover:text-text-primary">อัปโหลดรูป</p>
                             </div>
                             <input
+                                id="gallery-upload-input"
                                 type="file"
                                 accept="image/*"
                                 className="hidden"
@@ -84,7 +86,7 @@ const EvidenceImageSection: React.FC<EvidenceImageSectionProps> = ({
 
                 {uploadingImage && (
                     <div className="flex items-center justify-center gap-2 text-sm text-text-muted">
-                        <span className="animate-spin rounded-full h-4 w-4 border-b-2 border-primary"></span>
+                        <span className="animate-spin rounded-full h-4 w-4 border-2 border-t-transparent border-primary"></span>
                         <span>กำลังอัปโหลดรูปภาพ...</span>
                     </div>
                 )}

@@ -26,11 +26,12 @@ const ShaftDataSection: React.FC<ShaftDataSectionProps> = ({
             </h3>
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 <div>
-                    <label className="label">
+                    <label htmlFor="shaft-bend-input" className="label">
                         <TargetIcon size={14} />
                         {t("maintenanceShaftBend")}
                     </label>
                     <input
+                        id="shaft-bend-input"
                         type="text"
                         name="shaftBend"
                         value={shaftBend}
@@ -40,11 +41,12 @@ const ShaftDataSection: React.FC<ShaftDataSectionProps> = ({
                     />
                 </div>
                 <div>
-                    <label className="label">
+                    <label htmlFor="dial-gauge-input" className="label">
                         <RulerIcon size={14} />
                         {t("maintenanceDialGauge")}
                     </label>
                     <input
+                        id="dial-gauge-input"
                         type="text"
                         name="dialGauge"
                         value={dialGauge}

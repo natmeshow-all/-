@@ -82,12 +82,13 @@ export default function DesktopPartTable({
                     </span>
                   </td>
                   <td className="py-3 px-4 font-medium text-text-primary">
-                    <span
-                      className="cursor-pointer hover:text-primary transition-colors"
+                    <button
+                      type="button"
+                      className="cursor-pointer hover:text-primary transition-colors focus-visible:outline-none focus-visible:underline text-left"
                       onClick={() => onOpenMachine(part)}
                     >
                       {part.machineName || "-"}
-                    </span>
+                    </button>
                   </td>
                   <td className="py-3 px-4 text-text-secondary font-medium">
                     {tData(part.partName)}

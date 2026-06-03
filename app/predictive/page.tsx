@@ -322,7 +322,7 @@ export default function PredictivePage() {
                     <>
                         {/* Predict Insight Summary */}
                         <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-8">
-                            <div className="card bg-bg-secondary border-l-4 border-l-accent-red">
+                            <div className="card bg-accent-red/5 border border-accent-red/20">
                                 <div className="flex justify-between items-start mb-2">
                                     <AlertTriangleIcon className="text-accent-red" size={20} />
                                     <span className="badge badge-error">{t("statusHighRisk")}</span>
@@ -330,7 +330,7 @@ export default function PredictivePage() {
                                 <h4 className="text-xs text-text-muted uppercase tracking-wider mb-1">{t("predictiveCriticalTitle")}</h4>
                                 <div className="text-2xl font-bold text-text-primary">{t("predictiveMachineCount", { count: stats.highRisk })}</div>
                             </div>
-                            <div className="card bg-bg-secondary border-l-4 border-l-accent-yellow">
+                            <div className="card bg-accent-yellow/5 border border-accent-yellow/20">
                                 <div className="flex justify-between items-start mb-2">
                                     <ZapIcon className="text-accent-yellow" size={20} />
                                     <span className="badge badge-warning">{t("statusMonitoring")}</span>
@@ -338,7 +338,7 @@ export default function PredictivePage() {
                                 <h4 className="text-xs text-text-muted uppercase tracking-wider mb-1">{t("predictiveUpcomingTitle")}</h4>
                                 <div className="text-2xl font-bold text-text-primary">{t("predictiveAreaCount", { count: stats.monitoring })}</div>
                             </div>
-                            <div className="card bg-bg-secondary border-l-4 border-l-accent-green">
+                            <div className="card bg-accent-green/5 border border-accent-green/20">
                                 <div className="flex justify-between items-start mb-2">
                                     <TrendingUpIcon className="text-accent-green" size={20} />
                                     <span className="badge badge-primary">{t("statusHealthy")}</span>

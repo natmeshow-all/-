@@ -354,7 +354,7 @@ export default function AIAssistant() {
                         <div className="ai-modal-header">
                             <div className="flex items-center gap-2">
                                 <SparkleIcon size={20} className={userProfile?.role === 'admin' ? "text-amber-400" : "text-accent-purple"} />
-                                <h3 className={userProfile?.role === 'admin' ? "font-bold text-transparent bg-clip-text bg-gradient-to-r from-amber-300 via-yellow-500 to-amber-300" : "font-semibold text-text-primary"}>
+                                <h3 className={userProfile?.role === 'admin' ? "font-bold text-amber-400" : "font-semibold text-text-primary"}>
                                     {userProfile?.role === 'admin' ? "Admin Co-Pilot" : "Pm Team AOB"}
                                 </h3>
                                 {isLoadingContext && (
@@ -387,7 +387,7 @@ export default function AIAssistant() {
 
                                     {userProfile?.role === 'admin' ? (
                                         <>
-                                            <h3 className="font-bold text-transparent bg-clip-text bg-gradient-to-r from-amber-300 via-yellow-500 to-amber-300 mb-2">
+                                            <h3 className="font-bold text-amber-400 mb-2">
                                                 Admin Co-Pilot Mode
                                             </h3>
                                             <p className="text-text-secondary text-xs mb-3 text-center">

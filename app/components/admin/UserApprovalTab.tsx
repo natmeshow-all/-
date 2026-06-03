@@ -93,7 +93,7 @@ export default function UserApprovalTab() {
                 <div className="grid gap-4">
                     {pendingUsers.map((user, idx) => (
                         <div key={user.uid}
-                            className="card p-4 border-l-4 border-accent-yellow bg-bg-secondary/30 hover:bg-bg-secondary/50 hover:scale-[1.01] hover:shadow-lg hover:shadow-accent-yellow/5 transition-all duration-300 group"
+                            className="card p-4 border border-accent-yellow/20 bg-accent-yellow/5 hover:bg-accent-yellow/10 hover:scale-[1.01] hover:shadow-lg hover:shadow-accent-yellow/5 transition-all duration-300 group"
                             style={{ animationDelay: `${idx * 100}ms` }}>
                             <div className="flex items-center gap-4">
                                 <div className="relative">

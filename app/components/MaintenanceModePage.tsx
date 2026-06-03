@@ -217,7 +217,7 @@ export default function MaintenanceModePage() {
             {/* Header */}
             <div className="text-center mb-6 relative z-10">
                 <div className="flex items-center justify-center gap-3 mb-3">
-                    <div className="w-12 h-12 rounded-2xl bg-gradient-to-br from-accent-orange to-accent-red flex items-center justify-center animate-bounce shadow-lg shadow-accent-orange/30">
+                    <div className="w-12 h-12 rounded-2xl bg-gradient-to-br from-accent-orange to-accent-red flex items-center justify-center animate-pulse shadow-lg shadow-accent-orange/30">
                         <WrenchIcon size={28} className="text-white" />
                     </div>
                 </div>

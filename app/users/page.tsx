@@ -286,7 +286,7 @@ export default function UsersPage() {
                                 </div>
                             ) : (
                                 pendingUsers.map((user) => (
-                                    <div key={user.uid} className="card p-4 border-l-4 border-l-accent-yellow hover:scale-[1.01] hover:shadow-lg transition-all duration-300">
+                                    <div key={user.uid} className="card p-4 border border-accent-yellow/20 bg-accent-yellow/5 hover:scale-[1.01] hover:shadow-lg transition-all duration-300">
                                         <div className="flex items-center gap-4">
                                             {user.photoURL ? (
                                                 <img

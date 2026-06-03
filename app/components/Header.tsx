@@ -40,9 +40,9 @@ export default function Header({ className = "" }: HeaderProps) {
                             <div className="absolute inset-0 rounded-lg sm:rounded-xl bg-primary/30 blur-lg -z-10" />
                         </div>
                         <div className="flex flex-col min-w-0">
-                            <h1 className="text-sm sm:text-lg font-extrabold gradient-text leading-tight tracking-tight whitespace-nowrap sm:whitespace-normal">
+                            <span className="text-sm sm:text-lg font-extrabold gradient-text leading-tight tracking-tight whitespace-nowrap sm:whitespace-normal">
                                 {t("appTitle")}
-                            </h1>
+                            </span>
                             <p className="text-[10px] sm:text-xs text-text-muted mt-0.5 sm:mt-0 font-medium line-clamp-1 sm:line-clamp-none">
                                 {t("appSubtitle")}
                             </p>
@@ -58,8 +58,9 @@ export default function Header({ className = "" }: HeaderProps) {
                         {/* Language Switcher - Single Toggle Button */}
                         <button
                             onClick={() => setLanguage(language === "th" ? "en" : "th")}
-                            className="px-2 py-0.5 sm:px-2.5 sm:py-1 bg-bg-tertiary/40 hover:bg-bg-tertiary border border-border-light rounded-md transition-all active:scale-95 ml-1 sm:ml-0 min-w-[32px] flex items-center justify-center group"
+                            className="px-2 py-0.5 sm:px-2.5 sm:py-1 bg-bg-tertiary/40 hover:bg-bg-tertiary border border-border-light rounded-md transition-all active:scale-95 ml-1 sm:ml-0 min-w-[44px] min-h-[44px] sm:min-w-[32px] sm:min-h-0 flex items-center justify-center group"
                             title={language === "th" ? "Switch to English" : "เปลี่ยนเป็นภาษาไทย"}
+                            aria-label={language === "th" ? "Switch to English" : "เปลี่ยนเป็นภาษาไทย"}
                         >
                             <span className="text-[10px] sm:text-xs font-bold text-text-primary uppercase transition-colors group-hover:text-primary">
                                 {language}
@@ -71,7 +72,10 @@ export default function Header({ className = "" }: HeaderProps) {
                             <div className="relative">
                                 <button
                                     onClick={() => setShowProfileMenu(!showProfileMenu)}
-                                    className="relative group p-1"
+                                    className="relative group p-1 min-w-[44px] min-h-[44px] flex items-center justify-center"
+                                    aria-expanded={showProfileMenu}
+                                    aria-haspopup="menu"
+                                    aria-label="User profile menu"
                                 >
                                     <div className="user-avatar-glow">
                                         <img
@@ -90,7 +94,7 @@ export default function Header({ className = "" }: HeaderProps) {
                                             className="fixed inset-0 z-40 bg-transparent"
                                             onClick={() => setShowProfileMenu(false)}
                                         />
-                                        <div className="absolute right-0 top-full mt-2 w-56 py-1 bg-bg-secondary rounded-xl border border-border-light shadow-xl z-50 animate-in fade-in slide-in-from-top-2">
+                                        <div className="absolute right-0 top-full mt-2 w-56 py-1 bg-bg-secondary rounded-xl border border-border-light shadow-xl z-50 animate-slide-down origin-top-right">
                                             <div className="px-4 py-3 border-b border-border-light/50">
                                                 <p className="text-sm font-semibold text-text-primary truncate">
                                                     {displayName}

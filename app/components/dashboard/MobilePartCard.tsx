@@ -99,10 +99,11 @@ export default function MobilePartCards({
                     e.stopPropagation();
                     onDeletePart(part);
                   }}
-                  className="w-6 h-6 rounded-full bg-accent-red/10 text-accent-red border border-accent-red/20 flex items-center justify-center hover:bg-accent-red hover:text-white transition-all active:scale-90"
+                  className="w-11 h-11 rounded-full bg-accent-red/10 text-accent-red border border-accent-red/20 flex items-center justify-center hover:bg-accent-red hover:text-white transition-all active:scale-90"
                   title={t("actionDelete")}
+                  aria-label={t("actionDelete")}
                 >
-                  <BoxIcon size={12} className="rotate-45" />
+                  <BoxIcon size={16} className="rotate-45" />
                 </button>
               </div>
             </div>

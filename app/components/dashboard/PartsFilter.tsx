@@ -67,7 +67,7 @@ export default function PartsFilter({
         </div>
 
         {isExpanded && (
-          <div className="mt-2 animate-fade-in">
+          <div className="mt-2 animate-slide-down">
             {/* Area Buttons */}
             <div className="flex flex-wrap items-center gap-1.5 mb-4">
               {areaButtons.map((loc) => (
@@ -76,7 +76,7 @@ export default function PartsFilter({
                   onClick={() => onFilterChange("location", loc.id)}
                   className={`
                     relative px-3 py-1.5 rounded-lg transition-all duration-200
-                    border flex items-center gap-1.5
+                    border flex items-center gap-1.5 active:scale-95
                     ${filters.location === loc.id
                       ? `bg-${loc.color}/20 border-${loc.color}/40 text-white`
                       : "bg-white/5 border-white/10 text-text-muted hover:bg-white/10"}

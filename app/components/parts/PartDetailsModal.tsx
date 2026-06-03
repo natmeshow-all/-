@@ -76,12 +76,12 @@ export default function PartDetailsModal({
                     {(() => {
                         const getPartTheme = (category: string) => {
                             const cat = category?.toLowerCase() || "";
-                            if (cat.includes("mech")) return { glow: "bg-blue-500/10", borderLine: "from-transparent via-blue-500 to-transparent", textGradient: "from-blue-400 to-indigo-400", bar: "bg-blue-500" };
-                            if (cat.includes("elect") || cat.includes("wire")) return { glow: "bg-accent-yellow/10", borderLine: "from-transparent via-accent-yellow to-transparent", textGradient: "from-accent-yellow to-amber-500", bar: "bg-accent-yellow" };
-                            if (cat.includes("hyd")) return { glow: "bg-accent-red/10", borderLine: "from-transparent via-accent-red to-transparent", textGradient: "from-accent-red to-pink-500", bar: "bg-accent-red" };
-                            if (cat.includes("pneu")) return { glow: "bg-accent-cyan/10", borderLine: "from-transparent via-accent-cyan to-transparent", textGradient: "from-accent-cyan to-teal-400", bar: "bg-accent-cyan" };
-                            if (cat.includes("con") || cat.includes("oil") || cat.includes("grease") || cat.includes("spare")) return { glow: "bg-green-500/10", borderLine: "from-transparent via-green-500 to-transparent", textGradient: "from-green-400 to-emerald-400", bar: "bg-green-500" };
-                            return { glow: "bg-primary/10", borderLine: "from-transparent via-primary-light to-transparent", textGradient: "from-primary-light to-indigo-400", bar: "bg-primary" };
+                            if (cat.includes("mech")) return { glow: "bg-blue-500/10", borderLine: "from-transparent via-blue-500 to-transparent", textColor: "text-blue-400", bar: "bg-blue-500" };
+                            if (cat.includes("elect") || cat.includes("wire")) return { glow: "bg-accent-yellow/10", borderLine: "from-transparent via-accent-yellow to-transparent", textColor: "text-accent-yellow", bar: "bg-accent-yellow" };
+                            if (cat.includes("hyd")) return { glow: "bg-accent-red/10", borderLine: "from-transparent via-accent-red to-transparent", textColor: "text-accent-red", bar: "bg-accent-red" };
+                            if (cat.includes("pneu")) return { glow: "bg-accent-cyan/10", borderLine: "from-transparent via-accent-cyan to-transparent", textColor: "text-accent-cyan", bar: "bg-accent-cyan" };
+                            if (cat.includes("con") || cat.includes("oil") || cat.includes("grease") || cat.includes("spare")) return { glow: "bg-green-500/10", borderLine: "from-transparent via-green-500 to-transparent", textColor: "text-green-400", bar: "bg-green-500" };
+                            return { glow: "bg-primary/10", borderLine: "from-transparent via-primary-light to-transparent", textColor: "text-primary-light", bar: "bg-primary" };
                         };
                         const theme = getPartTheme(part.category || "");
                         const stockPercent = part.minStockThreshold && part.minStockThreshold > 0 
@@ -114,7 +114,7 @@ export default function PartDetailsModal({
                                         relative
                                     ">
                                         <div className={`absolute inset-x-3 top-0 h-px bg-gradient-to-r ${theme.borderLine} opacity-70`}></div>
-                                        <span className={`text-4xl font-black text-transparent bg-clip-text bg-gradient-to-r ${theme.textGradient} drop-shadow-[0_2px_6px_rgba(255,255,255,0.1)]`}>
+                                        <span className={`text-4xl font-black ${theme.textColor} drop-shadow-[0_2px_6px_rgba(255,255,255,0.1)]`}>
                                             {part.name ? part.name.substring(0, 2).toUpperCase() : "PT"}
                                         </span>
                                         <span className="absolute -bottom-2.5 px-2 py-0.5 rounded bg-black/85 border border-white/10 text-[9px] font-black text-text-muted tracking-widest uppercase shadow-sm">

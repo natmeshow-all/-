@@ -249,7 +249,7 @@ export default function AddPartModal({ isOpen, onClose, onSuccess, partToEdit }:
                     <button onClick={handleSubmit} className="btn btn-primary" disabled={isSubmitting}>
                         {isSubmitting ? (
                             <span className="flex items-center gap-2">
-                                <span className="animate-spin rounded-full h-4 w-4 border-b-2 border-white"></span>
+                                <span className="animate-spin rounded-full h-4 w-4 border-2 border-t-transparent border-white"></span>
                                 {t("msgSaving")}
                             </span>
                         ) : (
@@ -263,7 +263,7 @@ export default function AddPartModal({ isOpen, onClose, onSuccess, partToEdit }:
                 {/* Machine & Part Name */}
                 <div className="form-grid form-grid-2">
                     <div>
-                        <label className="label mb-1">
+                        <label className="label mb-1" htmlFor="machineId-select">
                             <SettingsIcon size={14} />
                             {t("addPartMachine")}
                         </label>
@@ -288,6 +288,7 @@ export default function AddPartModal({ isOpen, onClose, onSuccess, partToEdit }:
                         </div>
 
                         <select
+                            id="machineId-select"
                             name="machineId"
                             value={formData.machineId}
                             onChange={handleInputChange}
@@ -309,12 +310,13 @@ export default function AddPartModal({ isOpen, onClose, onSuccess, partToEdit }:
                         </select>
                     </div>
                     <div>
-                        <label className="label">
+                        <label className="label" htmlFor={!isCustomPartName ? "selectPartName-select" : "partName-input"}>
                             <BoxIcon size={14} />
                             {t("addPartName")}
                         </label>
                         {!isCustomPartName ? (
                             <select
+                                id="selectPartName-select"
                                 name="selectPartName"
                                 value={PART_NAMES.includes(formData.partName) ? formData.partName : (formData.partName ? "other" : "")}
                                 onChange={(e) => {
@@ -337,6 +339,7 @@ export default function AddPartModal({ isOpen, onClose, onSuccess, partToEdit }:
                         ) : (
                             <div className="flex gap-2 animate-fade-in">
                                 <input
+                                    id="partName-input"
                                     type="text"
                                     name="partName"
                                     value={formData.partName}
@@ -375,11 +378,12 @@ export default function AddPartModal({ isOpen, onClose, onSuccess, partToEdit }:
 
                 {/* Model/Spec */}
                 <div>
-                    <label className="label">
+                    <label className="label" htmlFor="modelSpec-input">
                         <FileTextIcon size={14} />
                         {t("addPartModelSpec")}
                     </label>
                     <input
+                        id="modelSpec-input"
                         type="text"
                         name="modelSpec"
                         value={formData.modelSpec}
@@ -392,11 +396,12 @@ export default function AddPartModal({ isOpen, onClose, onSuccess, partToEdit }:
                 {/* Zone & Brand */}
                 <div className="form-grid form-grid-2">
                     <div>
-                        <label className="label">
+                        <label className="label" htmlFor="Location-input">
                             <MapPinIcon size={14} />
                             {t("addPartLocationArea")}
                         </label>
                         <input
+                            id="Location-input"
                             type="text"
                             name="Location"
                             value={formData.Location}
@@ -406,11 +411,12 @@ export default function AddPartModal({ isOpen, onClose, onSuccess, partToEdit }:
                         />
                     </div>
                     <div>
-                        <label className="label">
+                        <label className="label" htmlFor="brand-input">
                             <TagIcon size={14} />
                             {t("addPartBrand")}
                         </label>
                         <input
+                            id="brand-input"
                             type="text"
                             name="brand"
                             value={formData.brand}
@@ -424,11 +430,12 @@ export default function AddPartModal({ isOpen, onClose, onSuccess, partToEdit }:
                 {/* Quantity & Min Stock */}
                 <div className="form-grid form-grid-3">
                     <div>
-                        <label className="label">
+                        <label className="label" htmlFor="quantity-input">
                             <HashIcon size={14} />
                             {t("addPartQuantity")}
                         </label>
                         <input
+                            id="quantity-input"
                             type="number"
                             name="quantity"
                             value={formData.quantity}
@@ -438,11 +445,12 @@ export default function AddPartModal({ isOpen, onClose, onSuccess, partToEdit }:
                         />
                     </div>
                     <div>
-                        <label className="label">
+                        <label className="label" htmlFor="minStockThreshold-input">
                             <AlertTriangleIcon size={14} />
                             Min Stock
                         </label>
                         <input
+                            id="minStockThreshold-input"
                             type="number"
                             name="minStockThreshold"
                             value={formData.minStockThreshold}
@@ -453,11 +461,12 @@ export default function AddPartModal({ isOpen, onClose, onSuccess, partToEdit }:
                         />
                     </div>
                     <div>
-                        <label className="label">
+                        <label className="label" htmlFor="location-input">
                             <MapPinIcon size={14} />
                             {t("addPartLocation")}
                         </label>
                         <input
+                            id="location-input"
                             type="text"
                             name="location"
                             value={formData.location}
@@ -470,7 +479,7 @@ export default function AddPartModal({ isOpen, onClose, onSuccess, partToEdit }:
 
                 {/* Image Upload */}
                 <div>
-                    <label className="label">
+                    <label className="label" htmlFor="image-file-input">
                         <ImageIcon size={14} />
                         {t("addPartImage")}
                     </label>
@@ -493,15 +502,16 @@ export default function AddPartModal({ isOpen, onClose, onSuccess, partToEdit }:
 
                         <div className="flex flex-col gap-2">
                             <div className="flex items-center gap-3 p-3 bg-bg-tertiary rounded-lg border border-border-light shadow-inner">
-                                <label className="btn btn-primary cursor-pointer text-sm py-2 shrink-0">
+                                <label className="btn btn-primary cursor-pointer text-sm py-2 shrink-0" htmlFor="image-file-input">
                                     {t("addPartChooseFile")}
-                                    <input
-                                        type="file"
-                                        accept="image/jpeg,image/png,image/gif"
-                                        onChange={handleFileChange}
-                                        className="hidden"
-                                    />
                                 </label>
+                                <input
+                                    id="image-file-input"
+                                    type="file"
+                                    accept="image/jpeg,image/png,image/gif"
+                                    onChange={handleFileChange}
+                                    className="hidden"
+                                />
                                 <div className="flex flex-col min-w-0">
                                     <span className="text-text-primary text-sm font-medium truncate">
                                         {selectedFile ? selectedFile.name : t("addPartNoFile")}
@@ -534,11 +544,12 @@ export default function AddPartModal({ isOpen, onClose, onSuccess, partToEdit }:
 
                 {/* Category */}
                 <div>
-                    <label className="label">
+                    <label className="label" htmlFor="category-select">
                         <FolderIcon size={14} />
                         {t("addPartCategory")}
                     </label>
                     <select
+                        id="category-select"
                         name="category"
                         value={formData.category}
                         onChange={handleInputChange}
@@ -555,11 +566,12 @@ export default function AddPartModal({ isOpen, onClose, onSuccess, partToEdit }:
 
                 {/* Notes */}
                 <div>
-                    <label className="label">
+                    <label className="label" htmlFor="notes-textarea">
                         <FileTextIcon size={14} />
                         {t("addPartNotes")}
                     </label>
                     <textarea
+                        id="notes-textarea"
                         name="notes"
                         value={formData.notes}
                         onChange={handleInputChange}

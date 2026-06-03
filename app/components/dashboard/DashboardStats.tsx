@@ -22,7 +22,7 @@ export default function DashboardStatsSection({ stats, statsLoading }: Dashboard
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-4 xl:gap-6">
 
         {/* Inventory Overview (Present) */}
-        <div className="glass-card overflow-hidden relative group p-0 border-white/10 hover:border-primary/50 transition-all duration-300 shadow-lg shadow-black/20">
+        <div className="glass-card overflow-hidden relative group p-0 border-white/10 hover:border-primary/50 transition-all duration-300 shadow-lg shadow-black/20 animate-fade-in-up" style={{ animationDelay: '0ms', animationFillMode: 'both' }}>
           <div className="p-4 border-b border-white/5 bg-gradient-to-r from-bg-tertiary/40 to-transparent flex items-center justify-between relative z-10">
             <h3 className="font-semibold text-text-primary flex items-center gap-2 text-sm">
               <span className="p-1.5 rounded-lg bg-primary/20 text-primary-light border border-primary/20">
@@ -50,7 +50,7 @@ export default function DashboardStatsSection({ stats, statsLoading }: Dashboard
         </div>
 
         {/* Historical Maintenance (Past) */}
-        <div className="glass-card overflow-hidden relative group p-0 border-white/10 hover:border-accent-green/50 transition-all duration-300 shadow-lg shadow-black/20">
+        <div className="glass-card overflow-hidden relative group p-0 border-white/10 hover:border-accent-green/50 transition-all duration-300 shadow-lg shadow-black/20 animate-fade-in-up" style={{ animationDelay: '80ms', animationFillMode: 'both' }}>
           <div className="p-4 border-b border-white/5 bg-gradient-to-r from-bg-tertiary/40 to-transparent flex items-center justify-between relative z-10">
             <h3 className="font-semibold text-text-primary flex items-center gap-2 text-sm">
               <span className="p-1.5 rounded-lg bg-accent-green/20 text-accent-green border border-accent-green/20">
@@ -74,7 +74,7 @@ export default function DashboardStatsSection({ stats, statsLoading }: Dashboard
         </div>
 
         {/* Upcoming & Pending (Future) */}
-        <div className={`glass-card overflow-hidden relative group p-0 border-white/10 transition-all duration-300 shadow-lg shadow-black/20 ${!statsLoading && stats.pendingMaintenance > 0 ? "border-accent-yellow/40 hover:border-accent-yellow/70" : "hover:border-accent-yellow/50"}`}>
+        <div className={`glass-card overflow-hidden relative group p-0 border-white/10 transition-all duration-300 shadow-lg shadow-black/20 animate-fade-in-up ${!statsLoading && stats.pendingMaintenance > 0 ? "border-accent-yellow/40 hover:border-accent-yellow/70" : "hover:border-accent-yellow/50"}`} style={{ animationDelay: '160ms', animationFillMode: 'both' }}>
           <div className="p-4 border-b border-white/5 bg-gradient-to-r from-bg-tertiary/40 to-transparent flex items-center justify-between relative z-10">
             <h3 className="font-semibold text-text-primary flex items-center gap-2 text-sm">
               <span className={`p-1.5 rounded-lg border ${!statsLoading && stats.pendingMaintenance > 0 ? "bg-accent-red/20 text-accent-red border-accent-red/30 animate-pulse" : "bg-accent-yellow/20 text-accent-yellow border-accent-yellow/20"}`}>

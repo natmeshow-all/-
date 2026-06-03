@@ -19,30 +19,34 @@ export default function GlobalLoadingSpinner({
             case "auth":
                 return {
                     primary: "from-amber-500 to-orange-500",
+                    textColor: "text-amber-500",
                     glow: "shadow-amber-500/30",
                     ring: "border-amber-500/20",
                     dot: "bg-amber-500",
                 };
             case "data":
                 return {
-                    primary: "from-cyan-500 to-blue-500",
-                    glow: "shadow-cyan-500/30",
-                    ring: "border-cyan-500/20",
-                    dot: "bg-cyan-500",
+                    primary: "from-emerald-500 to-teal-500",
+                    textColor: "text-emerald-500",
+                    glow: "shadow-emerald-500/30",
+                    ring: "border-emerald-500/20",
+                    dot: "bg-emerald-500",
                 };
             case "ai":
                 return {
-                    primary: "from-purple-500 to-pink-500",
-                    glow: "shadow-purple-500/30",
-                    ring: "border-purple-500/20",
-                    dot: "bg-purple-500",
+                    primary: "from-teal-500 to-cyan-500",
+                    textColor: "text-teal-400",
+                    glow: "shadow-teal-500/30",
+                    ring: "border-teal-500/20",
+                    dot: "bg-teal-500",
                 };
             default:
                 return {
-                    primary: "from-indigo-500 to-violet-500",
-                    glow: "shadow-indigo-500/30",
-                    ring: "border-indigo-500/20",
-                    dot: "bg-indigo-500",
+                    primary: "from-sky-500 to-blue-600",
+                    textColor: "text-sky-400",
+                    glow: "shadow-sky-500/30",
+                    ring: "border-sky-500/20",
+                    dot: "bg-sky-500",
                 };
         }
     };
@@ -65,8 +69,15 @@ export default function GlobalLoadingSpinner({
                 <div className={`absolute w-20 h-20 rounded-full border-2 border-dashed ${colors.ring} animate-[spin_2s_linear_infinite_reverse]`} />
 
                 {/* Inner Ring - Fast Spin */}
-                <div className={`absolute w-16 h-16 rounded-full border-t-2 border-r-2 bg-gradient-to-r ${colors.primary} border-transparent animate-[spin_1s_linear_infinite] ${colors.glow} shadow-lg`}
-                    style={{ borderRadius: '50%', background: `conic-gradient(from 0deg, transparent, rgba(99, 102, 241, 0.3), transparent)` }}
+                <div className={`absolute w-16 h-16 rounded-full animate-[spin_1s_linear_infinite] ${colors.glow} shadow-lg`}
+                    style={{ 
+                        borderRadius: '50%', 
+                        borderTop: '2px solid currentColor', 
+                        borderRight: '2px solid currentColor',
+                        borderBottom: '2px solid transparent',
+                        borderLeft: '2px solid transparent',
+                        background: `conic-gradient(from 0deg, transparent, rgba(99, 102, 241, 0.3), transparent)` 
+                    }}
                 />
 
                 {/* Center Icon/Logo Area */}
@@ -103,7 +114,7 @@ export default function GlobalLoadingSpinner({
 
             {/* Status Text */}
             <div className="mt-10 text-center z-10">
-                <p className={`text-lg font-semibold bg-gradient-to-r ${colors.primary} bg-clip-text text-transparent animate-pulse`}>
+                <p className={`text-lg font-semibold ${colors.textColor} animate-pulse`}>
                     {status}
                 </p>
                 {subStatus && (
@@ -118,7 +129,7 @@ export default function GlobalLoadingSpinner({
                 {[0, 1, 2].map((i) => (
                     <div
                         key={i}
-                        className={`w-2 h-2 rounded-full ${colors.dot} animate-bounce`}
+                        className={`w-2 h-2 rounded-full ${colors.dot} animate-pulse`}
                         style={{ animationDelay: `${i * 150}ms` }}
                     />
                 ))}
