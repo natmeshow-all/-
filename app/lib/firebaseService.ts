@@ -29,4 +29,4 @@ export * from "../services/maintenanceService";
 export * from "../services/userService";
 export * from "../services/analyticsService";
 export * from "../services/systemService";
-export * from "../services/chatHistoryService";
+// export * from "../services/chatHistoryService"; // AI disabled

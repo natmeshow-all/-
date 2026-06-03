@@ -17,9 +17,8 @@ import {
     getSpareParts,
     getMaintenanceRecords,
     getPMPlans,
-    getRecentChatHistory,
-    saveChatLog
 } from "../lib/firebaseService";
+import { getRecentChatHistory, saveChatLog } from "./chatHistoryService";
 
 // Blocked topics for security (Non-Admin only)
 const BLOCKED_TOPICS = [

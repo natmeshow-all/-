@@ -7,7 +7,7 @@ import { getSystemSettings } from "../lib/firebaseService";
 import { checkAndClearOldCache, isMemoryCritical, emergencyCleanup, APP_VERSION } from "../lib/cacheManager";
 import MaintenanceModePage from "./MaintenanceModePage";
 import GlobalLoadingSpinner from "./ui/GlobalLoadingSpinner";
-import AIAssistant from "./ai/AIAssistant";
+// AI Assistant disabled
 import { SystemSettings } from "../types";
 
 interface MaintenanceWrapperProps {
@@ -201,8 +201,7 @@ export default function MaintenanceWrapper({ children }: MaintenanceWrapperProps
                 </>
             )}
             {children}
-            {/* AI Assistant Floating Button */}
-            <AIAssistant />
+
         </>
     );
 }
