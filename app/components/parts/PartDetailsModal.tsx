@@ -32,35 +32,7 @@ export default function PartDetailsModal({
 }: PartDetailsModalProps) {
     const { t } = useLanguage();
     const { checkAuth, isAdmin } = useAuth();
-    const [lightboxOpen, setLightboxOpen] = useState(false);
-    const [imageError, setImageError] = useState(false);
-
     if (!part) return null;
-
-    // Lightbox Component
-    const LocalLightbox = () => {
-        if (!lightboxOpen || !part.imageUrl) return null;
-
-        return (
-            <div
-                className="fixed inset-0 z-[60] bg-black/90 backdrop-blur-md flex items-center justify-center p-4 animate-fade-in"
-                onClick={() => setLightboxOpen(false)}
-            >
-                <button
-                    onClick={() => setLightboxOpen(false)}
-                    className="absolute top-4 right-4 p-2 rounded-full bg-white/10 text-white hover:bg-white/20 transition-colors"
-                >
-                    <XIcon size={24} />
-                </button>
-                <img
-                    src={part.imageUrl}
-                    alt={part.partName || part.name || t("altImage")}
-                    className="max-w-full max-h-screen object-contain rounded-lg shadow-2xl animate-scale-in"
-                    onClick={(e) => e.stopPropagation()}
-                />
-            </div>
-        );
-    };
 
     return (
         <>
@@ -287,9 +259,6 @@ export default function PartDetailsModal({
                     </div>
                 </div>
             </Modal>
-
-            {/* Render Lightbox outside Modal to ensure it's on top */}
-            <LocalLightbox />
         </>
     );
 }

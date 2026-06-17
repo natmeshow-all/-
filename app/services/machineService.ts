@@ -14,7 +14,6 @@ import {
 import { database } from "../lib/firebase";
 import { Machine } from "../types";
 import { syncTranslation } from "./translationService";
-import { compressToBase64 } from "../lib/imageCompression";
 import { COLLECTIONS } from "./constants";
 import { incrementDashboardStat } from "./analyticsService";
 
@@ -33,7 +32,6 @@ export function mapMachineData(key: string, data: any): Machine {
         Location: data.Location || data.zone || "No Zone",
         location: data.location || "",
         status: data.status || "active",
-        imageUrl: data.imageUrl || "",
         serialNumber: data.serialNumber || "",
         installationDate: data.installationDate || "",
         brandModel: data.brandModel || "",
@@ -118,59 +116,6 @@ export async function getMachinesPaginated(
         return { machines, lastItem: newLastItem };
     } catch (error) {
         console.error("Error fetching paginated machines:", error);
-        throw error;
-    }
-}
-
-/**
- * Updates or creates a machine record with a new image.
- */
-export async function updateMachineImage(machineName: string, file: File, machineId?: string): Promise<string> {
-    try {
-        // 1. Compress & Convert to Base64
-        const downloadUrl = await compressToBase64(file);
-
-        // 2. Save/Update machine record in Realtime Database
-        const machinesRef = ref(database, COLLECTIONS.MACHINES);
-        let existingKey: string | null = machineId || null;
-
-        // If no ID provided, try to find by Name or Key match (consistent with getMachines)
-        if (!existingKey) {
-            const snapshot = await get(machinesRef);
-            if (snapshot.exists()) {
-                snapshot.forEach((child) => {
-                    const data = child.val();
-                    if (child.key === machineName || data.name === machineName) {
-                        existingKey = child.key;
-                    }
-                });
-            }
-        }
-
-        if (existingKey) {
-            // Update existing record
-            const machineRef = ref(database, `${COLLECTIONS.MACHINES}/${existingKey}`);
-            await update(machineRef, {
-                imageUrl: downloadUrl,
-                updatedAt: new Date().toISOString()
-            });
-        } else {
-            // Create new record
-            const newMachineRef = push(machinesRef);
-            await set(newMachineRef, {
-                name: machineName,
-                imageUrl: downloadUrl,
-                createdAt: new Date().toISOString(),
-                updatedAt: new Date().toISOString(),
-                description: "Machine record",
-                status: "active",
-                Location: "Unknown"
-            });
-        }
-
-        return downloadUrl;
-    } catch (error) {
-        console.error("Error updating machine image:", error);
         throw error;
     }
 }

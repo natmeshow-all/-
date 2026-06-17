@@ -228,15 +228,9 @@ export default function AuditPage() {
                                 filteredRecords.slice(0, 10).map((record) => (
                                     <div key={record.id} className="card-glass p-4 hover:border-white/20 hover:translate-x-1 hover:shadow-lg transition-all duration-300 group cursor-pointer">
                                         <div className="flex gap-4">
-                                            {record.evidenceImageUrl ? (
-                                                <div className="w-16 h-16 rounded-lg overflow-hidden flex-none border border-white/10">
-                                                    <img src={record.evidenceImageUrl} alt="Evidence" className="w-full h-full object-cover" />
-                                                </div>
-                                            ) : (
-                                                <div className="w-16 h-16 rounded-lg bg-white/5 flex items-center justify-center flex-none border border-dashed border-white/10">
-                                                    <WrenchIcon size={20} className="text-white/20" />
-                                                </div>
-                                            )}
+                                            <div className="w-16 h-16 rounded-lg bg-white/5 flex items-center justify-center flex-none border border-dashed border-white/10">
+                                                <WrenchIcon size={20} className="text-white/20" />
+                                            </div>
                                             <div className="flex-1 min-w-0">
                                                 <div className="flex items-start justify-between gap-2">
                                                     <h4 className="font-bold text-sm truncate">{record.machineName}</h4>

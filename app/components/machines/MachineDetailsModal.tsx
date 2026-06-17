@@ -95,7 +95,6 @@ export default function MachineDetailsModal({
     // Safety fallback for display
     const displayName = machine?.name || machineName || initialPart?.machineName || "Unknown Machine";
     const displayZone = machine?.Location || initialPart?.Location || "-";
-    const displayImage = machine?.imageUrl || initialPart?.imageUrl || "";
 
     // Calculate stats & Filter
     const uniqueLocations = Array.from(new Set(parts.map(p => p.Location).filter(Boolean))).sort();
@@ -166,7 +165,6 @@ export default function MachineDetailsModal({
                             Location: initialPart?.Location || "All",
                             location: initialPart?.location || "",
                             status: "active",
-                            imageUrl: "",
                             description: "",
                             serialNumber: "",
                             brandModel: "",

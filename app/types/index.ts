@@ -39,7 +39,6 @@ export interface Machine {
     remark?: string;
     description?: string;
     status: "active" | "maintenance" | "inactive";
-    imageUrl?: string;
     installationDate?: string;
     brandModel?: string; // Legacy field, keeping for compatibility
     operatingHours?: number;
@@ -67,7 +66,6 @@ export interface Part {
     category: PartCategory;
     parentId?: string; // For sub-parts (e.g. bearing inside a motor)
     hasSubParts?: boolean; // If this is an assembly (e.g. a motor)
-    imageUrl?: string;
     description?: string;
     notes?: string;
     supplier?: string;
@@ -147,8 +145,6 @@ export interface MaintenanceRecord {
     Location?: string; // Location of the machine 
     location?: string; // FZ/RTE/UT 
     notes?: string;
-    evidenceImageUrl?: string; // Photo after work completion (Legacy/Primary)
-    additionalEvidence?: { label: string; url: string; }[]; // Additional photos (e.g., Vibration, Amp)
     pmPlanId?: string; // Reference to the PMPlan if this was a PM task
     startTime?: Date;
     endTime?: Date;
@@ -257,7 +253,6 @@ export interface AddPartFormData {
     location: string;
     category: PartCategory;
     parentId?: string; // For hierarchical association
-    imageFile?: File;
     notes: string;
 }
 
@@ -326,7 +321,6 @@ export interface SparePart {
     location?: string; // Shelf A1, Cabinet 3
     supplier?: string;
     pricePerUnit?: number; // Cost tracking
-    imageUrl?: string;
     lastUpdatedBy?: string;
     parentId?: string; // For nested spare parts
     hasSubParts?: boolean;
@@ -355,7 +349,6 @@ export interface StockTransaction {
     supplier?: string; // For restock
     refDocument?: string; // PO/Invoice number
     Location?: string; // Where it's being used
-    evidenceImageUrl?: string; // Proof of change (Withdrawal)
 }
 
 export interface PartFilters {

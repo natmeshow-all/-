@@ -317,7 +317,6 @@ export async function getTechnicianWorkMetrics(technicianName: string, userId: s
             preventiveCount,
             correctiveCount,
             avgNoteLength,
-            hasPhotoEvidence: allRecords.filter(r => r.evidenceImageUrl).length,
             records: allRecords.slice(0, 10) // Last 10 records for context
         };
     } catch (error) {

@@ -45,8 +45,7 @@ export default function EvaluationModal({ isOpen, onClose, technician, onSuccess
                 return;
             }
 
-            // Heuristic scoring logic
-            const sQuality = Math.min(3 + (metrics.hasPhotoEvidence / metrics.totalTasks) * 2, 5);
+            const sQuality = 4.0; // Assume baseline quality is good if no issues reported
             const sReliability = Math.min(2 + (metrics.preventiveCount / Math.max(metrics.totalTasks, 1)) * 4, 5);
             const sKnowledge = Math.min(2 + (metrics.avgNoteLength / 150) * 3, 5);
             const sSpeed = 4.0; // Assume baseline speed is good unless many overdue tasks (not yet tracked)
@@ -63,9 +62,6 @@ export default function EvaluationModal({ isOpen, onClose, technician, onSuccess
             // Generate Reasoning text
             let reasoning = `Based on ${metrics.totalTasks} recorded tasks:\n`;
             reasoning += `- ${metrics.preventiveCount} PM tasks completed (${Math.round((metrics.preventiveCount / metrics.totalTasks) * 100)}% proactive).\n`;
-            if (metrics.hasPhotoEvidence > 0) {
-                reasoning += `- High accountability with ${metrics.hasPhotoEvidence} tasks having photo evidence.\n`;
-            }
             if (metrics.avgNoteLength > 100) {
                 reasoning += `- Detailed reporting style (avg ${Math.round(metrics.avgNoteLength)} chars per task) indicating strong technical documentation and knowledge.`;
             } else {

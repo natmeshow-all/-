@@ -260,71 +260,7 @@ export const lineService = {
             }
         };
 
-        // Collect all images
-        const evidenceImages: { url: string; label: string }[] = [];
 
-        // Primary image
-        if (record.evidenceImageUrl) {
-            evidenceImages.push({
-                url: record.evidenceImageUrl,
-                label: "รูปภาพหลักฐาน"
-            });
-        }
-
-        // Additional images
-        if (record.additionalEvidence && record.additionalEvidence.length > 0) {
-            record.additionalEvidence.forEach(img => {
-                evidenceImages.push({
-                    url: img.url,
-                    label: img.label || "รูปภาพเพิ่มเติม"
-                });
-            });
-        }
-
-        // Add footer with images if any exist
-        if (evidenceImages.length > 0) {
-            const footerContents: any[] = [
-                {
-                    type: "text",
-                    text: "📷 รูปภาพตรวจสอบ",
-                    weight: "bold",
-                    size: "sm",
-                    color: "#00d4ff"
-                }
-            ];
-
-            // Add each image with its label
-            evidenceImages.forEach((img) => {
-                footerContents.push({
-                    type: "text",
-                    text: img.label,
-                    size: "xs",
-                    color: "#bbbbbb",
-                    margin: "md"
-                });
-
-                footerContents.push({
-                    type: "image",
-                    url: img.url,
-                    size: "full",
-                    aspectRatio: "4:3",
-                    aspectMode: "cover",
-                    margin: "sm",
-                    action: {
-                        type: "uri",
-                        uri: img.url
-                    }
-                });
-            });
-
-            bubble.footer = {
-                type: "box",
-                layout: "vertical",
-                backgroundColor: "#1e2433",
-                paddingAll: "10px",
-                contents: footerContents
-            };
-        }
 
         return {
             type: "flex",

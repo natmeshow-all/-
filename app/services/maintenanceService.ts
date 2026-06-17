@@ -17,7 +17,6 @@ import {
 import { database } from "../lib/firebase";
 import { MaintenanceRecord, MaintenanceSchedule, PMPlan, MaintenanceType } from "../types";
 import { syncTranslation } from "./translationService";
-import { compressToBase64 } from "../lib/imageCompression";
 import { COLLECTIONS } from "./constants";
 import { getMachines } from "./machineService";
 import { incrementDashboardStat } from "./analyticsService";
@@ -204,18 +203,6 @@ export async function getMaintenanceRecordsByPMPlan(planId: string): Promise<Mai
     }
 }
 
-/**
- * Upload a maintenance evidence image with compression.
- * Returns the download URL.
- */
-export async function uploadMaintenanceEvidence(file: File): Promise<string> {
-    try {
-        return await compressToBase64(file);
-    } catch (error) {
-        console.error("Error uploading maintenance evidence:", error);
-        throw error;
-    }
-}
 
 export async function addMaintenanceRecord(record: Omit<MaintenanceRecord, "id" | "createdAt" | "updatedAt">): Promise<string> {
     try {
@@ -535,40 +522,11 @@ export async function deletePMPlan(id: string): Promise<void> {
     }
 }
 
-export async function uploadEvidenceImage(file: File): Promise<string> {
-    try {
-        return await compressToBase64(file);
-    } catch (error) {
-        console.error("Error uploading evidence image:", error);
-        throw error;
-    }
-}
-
 export const completePMTask = async (
     planId: string,
-    record: Omit<MaintenanceRecord, "id" | "createdAt" | "updatedAt">,
-    evidenceFile?: File,
-    additionalEvidenceFiles?: { label: string; file: File }[]
+    record: Omit<MaintenanceRecord, "id" | "createdAt" | "updatedAt">
 ): Promise<void> => {
     try {
-        let imageUrl = "";
-
-        if (evidenceFile) {
-            imageUrl = await uploadEvidenceImage(evidenceFile);
-        }
-
-        // Upload additional evidence
-        const additionalEvidence: { label: string; url: string; }[] = [];
-        if (additionalEvidenceFiles && additionalEvidenceFiles.length > 0) {
-            for (const item of additionalEvidenceFiles) {
-                const url = await uploadEvidenceImage(item.file);
-                additionalEvidence.push({
-                    label: item.label,
-                    url
-                });
-            }
-        }
-
         // Add Maintenance Record
         const recordRef = push(ref(database, COLLECTIONS.MAINTENANCE_RECORDS));
         const now = new Date();
@@ -576,8 +534,6 @@ export const completePMTask = async (
             ...record,
             id: recordRef.key,
             pmPlanId: planId,
-            evidenceImageUrl: imageUrl,
-            additionalEvidence: additionalEvidence.length > 0 ? additionalEvidence : undefined,
             date: record.date instanceof Date ? record.date.toISOString() : record.date,
             createdAt: now.toISOString(),
             updatedAt: now.toISOString(),

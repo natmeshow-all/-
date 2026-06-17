@@ -85,23 +85,6 @@ export default function RecordDetailsModal({
                                 </div>
                             </div>
                         )}
-
-                        {/* Evidence Photo */}
-                        {record.evidenceImageUrl && (
-                            <div className="space-y-2">
-                                <p className="text-xs font-bold text-text-muted uppercase flex items-center gap-2">
-                                    <CameraIcon size={12} /> {t("labelEvidencePhotoShort")}
-                                </p>
-                                <div className="relative w-full h-48 sm:h-64 rounded-xl overflow-hidden border border-white/10 group">
-                                    <Image
-                                        src={record.evidenceImageUrl}
-                                        alt="Evidence"
-                                        fill
-                                        className="object-cover transition-transform group-hover:scale-105"
-                                    />
-                                </div>
-                            </div>
-                        )}
                     </div>
 
                     {/* Right Column: Technical Data */}

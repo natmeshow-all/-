@@ -20,8 +20,6 @@ import {
 } from "../ui/Icons";
 import { PART_NAMES } from "../../constants";
 import { AddPartFormData, PartCategory, Part, Machine } from "../../types";
-import Image from "next/image";
-
 interface AddPartModalProps {
     isOpen: boolean;
     onClose: () => void;
@@ -59,19 +57,8 @@ export default function AddPartModal({ isOpen, onClose, onSuccess, partToEdit }:
         category: "other",
         notes: "",
     });
-    const [selectedFile, setSelectedFile] = useState<File | null>(null);
-    const [previewUrl, setPreviewUrl] = useState<string | null>(null);
     const [isCustomPartName, setIsCustomPartName] = useState(false);
     const [filterLocation, setFilterLocation] = useState("ALL");
-
-    // Helper to format file size
-    const formatFileSize = (bytes: number) => {
-        if (bytes === 0) return "0 Bytes";
-        const k = 1024;
-        const sizes = ["Bytes", "KB", "MB", "GB"];
-        const i = Math.floor(Math.log(bytes) / Math.log(k));
-        return parseFloat((bytes / Math.pow(k, i)).toFixed(2)) + " " + sizes[i];
-    };
 
     // Populate form if partToEdit changes
     useEffect(() => {
@@ -111,11 +98,6 @@ export default function AddPartModal({ isOpen, onClose, onSuccess, partToEdit }:
                 notes: "",
             });
             setIsCustomPartName(false);
-        }
-        setSelectedFile(null);
-        if (previewUrl) {
-            URL.revokeObjectURL(previewUrl);
-            setPreviewUrl(null);
         }
     }, [partToEdit, isOpen]);
 
@@ -159,20 +141,6 @@ export default function AddPartModal({ isOpen, onClose, onSuccess, partToEdit }:
         }
     };
 
-    const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-        const file = e.target.files?.[0];
-        if (file) {
-            // Clean up old preview URL if exists
-            if (previewUrl) {
-                URL.revokeObjectURL(previewUrl);
-            }
-
-            setSelectedFile(file);
-            setPreviewUrl(URL.createObjectURL(file));
-            setFormData(prev => ({ ...prev, imageFile: file }));
-        }
-    };
-
     const handleSubmit = async () => {
         // Validation
         if (!formData.machineName) {
@@ -197,8 +165,8 @@ export default function AddPartModal({ isOpen, onClose, onSuccess, partToEdit }:
 
             // Handle Update vs Add
             const actionPromise = partToEdit
-                ? updatePart(partToEdit.id, formData, selectedFile || undefined)
-                : addPart(formData, selectedFile || undefined);
+                ? updatePart(partToEdit.id, formData)
+                : addPart(formData);
 
             // Race between the actual request and the timeout
             await Promise.race([
@@ -474,71 +442,6 @@ export default function AddPartModal({ isOpen, onClose, onSuccess, partToEdit }:
                             placeholder={t("placeholderLocation")}
                             className="input"
                         />
-                    </div>
-                </div>
-
-                {/* Image Upload */}
-                <div>
-                    <label className="label" htmlFor="image-file-input">
-                        <ImageIcon size={14} />
-                        {t("addPartImage")}
-                    </label>
-
-                    <div className="space-y-3">
-                        {/* Preview Area */}
-                        {(previewUrl || partToEdit?.imageUrl) && (
-                            <div className="relative group w-40 h-40 mx-auto bg-bg-tertiary rounded-xl overflow-hidden border-2 border-dashed border-border-light hover:border-accent-green transition-all duration-300">
-                                <Image
-                                    src={previewUrl || partToEdit?.imageUrl || ""}
-                                    alt="Preview"
-                                    fill
-                                    className="object-cover transition-transform duration-500 group-hover:scale-110"
-                                />
-                                <div className="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center">
-                                    <p className="text-white text-xs font-medium">New Selection</p>
-                                </div>
-                            </div>
-                        )}
-
-                        <div className="flex flex-col gap-2">
-                            <div className="flex items-center gap-3 p-3 bg-bg-tertiary rounded-lg border border-border-light shadow-inner">
-                                <label className="btn btn-primary cursor-pointer text-sm py-2 shrink-0" htmlFor="image-file-input">
-                                    {t("addPartChooseFile")}
-                                </label>
-                                <input
-                                    id="image-file-input"
-                                    type="file"
-                                    accept="image/jpeg,image/png,image/gif"
-                                    onChange={handleFileChange}
-                                    className="hidden"
-                                />
-                                <div className="flex flex-col min-w-0">
-                                    <span className="text-text-primary text-sm font-medium truncate">
-                                        {selectedFile ? selectedFile.name : t("addPartNoFile")}
-                                    </span>
-                                    {selectedFile && (
-                                        <span className="text-text-muted text-[10px] flex items-center gap-1">
-                                            {t("labelFileSize")} {formatFileSize(selectedFile.size)}
-                                            {selectedFile.size > 5 * 1024 * 1024 && (
-                                                <span className="text-accent-red font-bold">(! Too large)</span>
-                                            )}
-                                        </span>
-                                    )}
-                                </div>
-                            </div>
-
-                            {partToEdit?.imageUrl && !selectedFile && (
-                                <p className="text-xs text-accent-green flex items-center gap-1 bg-accent-green/10 p-2 rounded-md border border-accent-green/20">
-                                    <CheckIcon size={12} />
-                                    {t("msgCurrentImagePreserved")}
-                                </p>
-                            )}
-
-                            <p className="text-xs text-text-muted flex items-center gap-1 pl-1">
-                                <ImageIcon size={12} className="opacity-60" />
-                                {t("addPartImageHint")}
-                            </p>
-                        </div>
                     </div>
                 </div>
 

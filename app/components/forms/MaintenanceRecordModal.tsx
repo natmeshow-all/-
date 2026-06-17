@@ -4,7 +4,7 @@ import React, { useState } from "react";
 import { useLanguage } from "../../contexts/LanguageContext";
 import { useToast } from "../../contexts/ToastContext";
 import Modal from "../ui/Modal";
-import { addMaintenanceRecord, uploadMaintenanceEvidence } from "../../lib/firebaseService";
+import { addMaintenanceRecord } from "../../lib/firebaseService";
 import { useAuth } from "../../contexts/AuthContext";
 import {
     EditIcon,
@@ -24,7 +24,6 @@ import {
     RefreshCwIcon,
     TrendingUpIcon,
     AlertTriangleIcon,
-    ImageIcon,
     TrashIcon,
 } from "../ui/Icons";
 import { VOLTAGE_OPTIONS } from "../../constants";
@@ -55,7 +54,6 @@ import VoltageSection from "./maintenance/VoltageSection";
 import AdvancedTrackingSection from "./maintenance/AdvancedTrackingSection";
 import ShaftDataSection from "./maintenance/ShaftDataSection";
 import PeriodSelectorSection from "./maintenance/PeriodSelectorSection";
-import EvidenceImageSection from "./maintenance/EvidenceImageSection";
 import DetailsNotesSection from "./maintenance/DetailsNotesSection";
 
 export default function MaintenanceRecordModal({
@@ -119,29 +117,6 @@ export default function MaintenanceRecordModal({
     const [machines, setMachines] = useState<Machine[]>([]);
     const [locationFilter, setLocationFilter] = useState<string>("All");
     const [loadingParts, setLoadingParts] = useState(false);
-
-    // Image Upload State
-    const [imageFile, setImageFile] = useState<File | null>(null);
-    const [imagePreview, setImagePreview] = useState<string | null>(null);
-    const [uploadingImage, setUploadingImage] = useState(false);
-
-    // Handle Image Selection
-    const handleImageChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-        const file = e.target.files?.[0];
-        if (file) {
-            setImageFile(file);
-            const reader = new FileReader();
-            reader.onloadend = () => {
-                setImagePreview(reader.result as string);
-            };
-            reader.readAsDataURL(file);
-        }
-    };
-
-    const handleRemoveImage = () => {
-        setImageFile(null);
-        setImagePreview(null);
-    };
 
     useEffect(() => {
         const fetchInitialData = async () => {
@@ -427,23 +402,7 @@ export default function MaintenanceRecordModal({
                 period: formData.period || "routine",
             };
 
-            // Upload evidence image if selected
-            if (imageFile) {
-                setUploadingImage(true);
-                try {
-                    const evidenceUrl = await uploadMaintenanceEvidence(imageFile);
-                    dataToSubmit.evidenceImageUrl = evidenceUrl;
-                } catch (imgErr) {
-                    console.error("Error uploading image:", imgErr);
-                    // Continue without image if upload fails
-                }
-                setUploadingImage(false);
-            }
-
             await addMaintenanceRecord(dataToSubmit);
-
-            // Reset image state
-            handleRemoveImage();
 
             // Show success toast
             toast.success(t("msgSaveSuccess"), t("msgSaveSuccess"));
@@ -863,15 +822,6 @@ export default function MaintenanceRecordModal({
                         />
                     )
                 }
-
-                {/* Section: Evidence Image Upload */}
-                <EvidenceImageSection
-                    imagePreview={imagePreview}
-                    uploadingImage={uploadingImage}
-                    onImageChange={handleImageChange}
-                    onRemoveImage={handleRemoveImage}
-                    t={t}
-                />
 
                 {/* Section 5: Details & Notes - Hide for part changes */}
                 {

@@ -17,7 +17,6 @@ import {
 import { database } from "../lib/firebase";
 import { Part, SparePart, StockTransaction } from "../types";
 import { syncTranslation } from "./translationService";
-import { compressToBase64 } from "../lib/imageCompression";
 import { COLLECTIONS } from "./constants";
 import { incrementDashboardStat } from "./analyticsService";
 
@@ -32,7 +31,6 @@ const cleanObject = (obj: any) => {
 
 // Helper to map legacy/varied part data to Part interface
 function mapPartData(key: string, data: any): Part {
-    const imageUrl = data.image || data.image_url || data.imageUrl || "";
     const quantity = data.quantity !== undefined ? data.quantity : (data.qty !== undefined ? data.qty : 0);
     const modelSpec = data.modelSpec || data.model || "";
     const machineName = data.machineName || data.machine || "";
@@ -43,7 +41,6 @@ function mapPartData(key: string, data: any): Part {
         ...data,
         partName,
         name: partName, // Alias
-        imageUrl,
         quantity,
         modelSpec,
         model: modelSpec, // Alias
@@ -75,104 +72,11 @@ function mapSparePartData(key: string, data: any): SparePart {
         location: data.location || data.Location || "",
         supplier: data.supplier || "",
         pricePerUnit: data.pricePerUnit,
-        imageUrl: data.imageUrl || data.image_url || "",
         parentId: data.parentId,
         hasSubParts: data.hasSubParts,
         createdAt: data.createdAt ? new Date(data.createdAt) : new Date(),
         updatedAt: data.updatedAt ? new Date(data.updatedAt) : new Date(),
     };
-}
-
-// ==================== IMAGE DEDUPLICATION ====================
-
-// Helper: Calculate SHA-256 hash of a file
-async function calculateFileHash(file: File): Promise<string> {
-    const buffer = await file.arrayBuffer();
-    const hashBuffer = await crypto.subtle.digest("SHA-256", buffer);
-    const hashArray = Array.from(new Uint8Array(hashBuffer));
-    return hashArray.map((b) => b.toString(16).padStart(2, "0")).join("");
-}
-
-// Helper: Find existing image by hash
-async function findImageByHash(hash: string): Promise<any | null> {
-    const hashesRef = ref(database, "image_hashes");
-
-    try {
-        // Attempt 1: Server-side filtering (Requires Index)
-        const q = query(hashesRef, orderByChild("hash"), equalTo(hash));
-        const snapshot = await get(q);
-
-        if (snapshot.exists()) {
-            // Return the first match
-            const key = Object.keys(snapshot.val())[0];
-            return { key, ...snapshot.val()[key] };
-        }
-    } catch (error) {
-        // Attempt 2: Fallback to Client-side filtering if index is missing
-        console.warn("Firebase Index missing for 'hash'. Falling back to client-side filtering.");
-        try {
-            const snapshot = await get(hashesRef);
-            if (snapshot.exists()) {
-                const allData = snapshot.val();
-                for (const [key, val] of Object.entries(allData)) {
-                    if ((val as any).hash === hash) {
-                        return { key, ...val as any };
-                    }
-                }
-            }
-        } catch (innerError) {
-            console.error("Error in fallback image search:", innerError);
-        }
-    }
-
-    return null;
-}
-
-// Helper: Save new image hash record
-async function saveImageHashRecord(file: File, hash: string, url: string) {
-    try {
-        const hashesRef = ref(database, "image_hashes");
-        const newHashRef = push(hashesRef);
-        await set(newHashRef, {
-            hash,
-            url,
-            fileName: file.name,
-            size: file.size,
-            usageCount: 1,
-            createdAt: new Date().toISOString(),
-            updatedAt: new Date().toISOString(),
-        });
-    } catch (error) {
-        console.error("Error saving image hash record:", error);
-        throw error;
-    }
-}
-
-// Helper: Increment usage count
-async function incrementImageUsage(key: string, currentCount: number) {
-    try {
-        const hashRef = ref(database, `image_hashes/${key}`);
-        await update(hashRef, {
-            usageCount: currentCount + 1,
-            updatedAt: new Date().toISOString(),
-        });
-    } catch (error) {
-        console.error("Error incrementing image usage:", error);
-        throw error;
-    }
-}
-
-export async function uploadPartImage(file: File): Promise<string> {
-    try {
-        return await compressToBase64(file);
-    } catch (error) {
-        console.error("Error handling image upload:", error);
-        throw error;
-    }
-}
-
-export async function deletePartImage(imageUrl: string): Promise<void> {
-    // Base64 images are stored inline and deleted automatically with the part record.
 }
 
 // ==================== PARTS ====================
@@ -371,8 +275,7 @@ export async function getPartsByLocation(location: string): Promise<Part[]> {
 }
 
 export async function addPart(
-    part: Omit<Part, "id" | "createdAt" | "updatedAt">,
-    imageFile?: File
+    part: Omit<Part, "id" | "createdAt" | "updatedAt">
 ): Promise<string> {
     try {
         const safePartData = cleanObject(part);
@@ -391,19 +294,9 @@ export async function addPart(
         const partsRef = ref(database, COLLECTIONS.PARTS);
         const newPartRef = push(partsRef);
 
-        let imageUrl = "";
-        if (imageFile) {
-            imageUrl = await uploadPartImage(imageFile);
-        } else if (safePartData.imageUrl) {
-            imageUrl = safePartData.imageUrl;
-        }
-
         await set(newPartRef, {
             ...safePartData,
             name: safePartData.partName, // Ensure 'name' field exists for sorting/indexing
-            imageUrl,
-            // Save both camelCase and snake_case for compatibility if needed, or just new standard
-            image_url: imageUrl,
             createdAt: new Date().toISOString(),
             updatedAt: new Date().toISOString(),
         });
@@ -427,16 +320,9 @@ export async function addPart(
 
 export async function updatePart(
     id: string,
-    data: Partial<Part>,
-    imageFile?: File
+    data: Partial<Part>
 ): Promise<void> {
     try {
-        let imageUrl = data.imageUrl;
-
-        if (imageFile) {
-            imageUrl = await uploadPartImage(imageFile);
-        }
-
         const partRef = ref(database, `${COLLECTIONS.PARTS}/${id}`);
 
         const updateData: any = {
@@ -446,11 +332,6 @@ export async function updatePart(
 
         if (data.partName) {
             updateData.name = data.partName; // Ensure name stays in sync
-        }
-
-        if (imageUrl !== undefined) {
-            updateData.imageUrl = imageUrl;
-            updateData.image_url = imageUrl; // Keep sync
         }
 
         await update(partRef, updateData);
@@ -557,23 +438,16 @@ export async function getSpareParts(): Promise<SparePart[]> {
 }
 
 export async function addSparePart(
-    part: Omit<SparePart, "id" | "createdAt" | "updatedAt">,
-    imageFile?: File
+    part: Omit<SparePart, "id" | "createdAt" | "updatedAt">
 ): Promise<string> {
     try {
         if (!part.name) throw new Error("Spare part name is required");
-
-        let imageUrl = "";
-        if (imageFile) {
-            imageUrl = await uploadPartImage(imageFile); // Reuse part image upload for now
-        }
 
         const partsRef = ref(database, COLLECTIONS.PARTS);
         const newPartRef = push(partsRef);
 
         await set(newPartRef, cleanObject({
             ...part,
-            imageUrl,
             createdAt: new Date().toISOString(),
             updatedAt: new Date().toISOString(),
         }));
@@ -598,27 +472,16 @@ export async function addSparePart(
 
 export async function updateSparePart(
     id: string,
-    data: Partial<SparePart>,
-    imageFile?: File
+    data: Partial<SparePart>
 ): Promise<void> {
     try {
         if (!id) throw new Error("Spare part ID is required for update");
-
-        let imageUrl = data.imageUrl;
-
-        if (imageFile) {
-            imageUrl = await uploadPartImage(imageFile);
-        }
 
         const partRef = ref(database, `${COLLECTIONS.PARTS}/${id}`);
         const updateData: any = {
             ...data,
             updatedAt: new Date().toISOString(),
         };
-
-        if (imageUrl !== undefined) {
-            updateData.imageUrl = imageUrl;
-        }
 
         await update(partRef, cleanObject(updateData));
 
@@ -638,19 +501,12 @@ export async function updateSparePart(
 // ==================== STOCK TRANSACTIONS ====================
 
 export async function adjustStock(
-    transaction: Omit<StockTransaction, "id">,
-    evidenceImageFile?: File
+    transaction: Omit<StockTransaction, "id">
 ): Promise<void> {
     try {
         if (!transaction.partId) throw new Error("Part ID is required for stock adjustment");
         if (!transaction.type) throw new Error("Transaction type is required");
         if (transaction.quantity === undefined || transaction.quantity === null) throw new Error("Quantity is required");
-
-        // 1. Upload Evidence Image if provided (Base64)
-        let evidenceImageUrl = "";
-        if (evidenceImageFile) {
-            evidenceImageUrl = await compressToBase64(evidenceImageFile);
-        }
 
         // 2. Record Transaction
         const txnRef = ref(database, "stock_transactions");
@@ -658,7 +514,6 @@ export async function adjustStock(
 
         await set(newTxnRef, cleanObject({
             ...transaction,
-            evidenceImageUrl: evidenceImageUrl || transaction.evidenceImageUrl || "",
             performedAt: transaction.performedAt.toISOString(),
         }));
 

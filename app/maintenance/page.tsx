@@ -739,28 +739,6 @@ export default function MaintenancePage() {
                                                 </div>
                                             )}
 
-                                            {/* Section 4: Evidence Image */}
-                                            {record.evidenceImageUrl && (
-                                                <div className="bg-white/5 p-2 rounded-lg border border-white/5">
-                                                    <h4 className="text-[11px] font-bold text-accent-cyan mb-2 pb-1 border-b border-white/10 flex items-center gap-1.5 opacity-80">
-                                                        <ImageIcon size={10} />
-                                                        รูปภาพหลักฐาน
-                                                    </h4>
-                                                    <div className="relative rounded-lg overflow-hidden border border-white/10 aspect-video bg-black/20">
-                                                        <img
-                                                            src={record.evidenceImageUrl}
-                                                            alt="Maintenance Evidence"
-                                                            className="w-full h-full object-contain cursor-pointer hover:scale-105 transition-transform duration-500"
-                                                            onClick={(e) => {
-                                                                e.stopPropagation();
-                                                                // You might want to implement a Lightbox here later
-                                                                window.open(record.evidenceImageUrl, '_blank');
-                                                            }}
-                                                        />
-                                                    </div>
-                                                </div>
-                                            )}
-
                                             {/* Section 5: Details & Notes */}
                                             {(record.details || record.notes) && (
                                                 <div className="bg-white/5 p-2 rounded-lg border border-white/5">

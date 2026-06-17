@@ -1,5 +1,5 @@
-import React, { useState, useRef, useEffect } from "react";
-import { BoxIcon, XIcon, UploadIcon, SaveIcon, ArrowUpIcon, ArrowDownIcon, CalendarIcon } from "../ui/Icons";
+import React, { useState, useEffect } from "react";
+import { BoxIcon, XIcon, SaveIcon, ArrowUpIcon, ArrowDownIcon, CalendarIcon } from "../ui/Icons";
 import { useLanguage } from "../../contexts/LanguageContext";
 import { adjustStock, getMachines } from "../../lib/firebaseService";
 import { Machine, Part, TransactionType } from "../../types";
@@ -19,7 +19,6 @@ export default function StockActionModal({ isOpen, onClose, onSuccess, actionTyp
     const { user } = useAuth();
     const { success, error: showError, loginRequired } = useToast();
     const [loading, setLoading] = useState(false);
-    const fileInputRef = useRef<HTMLInputElement>(null);
     const [machines, setMachines] = useState<Machine[]>([]);
 
     const [formData, setFormData] = useState({
@@ -34,8 +33,7 @@ export default function StockActionModal({ isOpen, onClose, onSuccess, actionTyp
         refDocument: "", // For restock
     });
 
-    const [evidenceFile, setEvidenceFile] = useState<File | null>(null);
-    const [previewUrl, setPreviewUrl] = useState<string | null>(null);
+
 
     useEffect(() => {
         if (isOpen && actionType === "withdraw") {
@@ -44,12 +42,7 @@ export default function StockActionModal({ isOpen, onClose, onSuccess, actionTyp
         }
     }, [isOpen, actionType]);
 
-    // Cleanup preview URL
-    useEffect(() => {
-        return () => {
-            if (previewUrl) URL.revokeObjectURL(previewUrl);
-        };
-    }, [previewUrl]);
+
 
     if (!isOpen || !part) return null;
 
@@ -68,14 +61,7 @@ export default function StockActionModal({ isOpen, onClose, onSuccess, actionTyp
         }
     };
 
-    const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-        if (e.target.files && e.target.files[0]) {
-            const file = e.target.files[0];
-            setEvidenceFile(file);
-            const url = URL.createObjectURL(file);
-            setPreviewUrl(url);
-        }
-    };
+
 
     const handleSubmit = async (e: React.FormEvent) => {
         e.preventDefault();
@@ -104,7 +90,7 @@ export default function StockActionModal({ isOpen, onClose, onSuccess, actionTyp
                 pricePerUnit: (actionType === "restock" && formData.pricePerUnit) ? Number(formData.pricePerUnit) : undefined,
                 refDocument: (actionType === "restock" && formData.refDocument) ? formData.refDocument : undefined,
                 componentName: actionType === "withdraw" ? formData.componentName : undefined,
-            }, evidenceFile || undefined);
+            });
 
             onSuccess();
             success(
@@ -124,8 +110,7 @@ export default function StockActionModal({ isOpen, onClose, onSuccess, actionTyp
                 pricePerUnit: "",
                 refDocument: "",
             });
-            setEvidenceFile(null);
-            setPreviewUrl(null);
+
         } catch (error: any) {
             console.error("Error adjusting stock:", error);
             showError(
@@ -253,35 +238,7 @@ export default function StockActionModal({ isOpen, onClose, onSuccess, actionTyp
                                 />
                             </div>
 
-                            {/* Evidence Photo */}
-                            <div>
-                                <label className="block text-sm font-medium text-text-secondary mb-1.5">
-                                    {t("stockEvidence")}
-                                </label>
-                                <div className="flex items-center gap-4">
-                                    <div
-                                        onClick={() => fileInputRef.current?.click()}
-                                        className="relative w-24 h-24 rounded-xl border-2 border-dashed border-white/20 hover:border-primary/50 flex flex-col items-center justify-center cursor-pointer transition-all bg-white/5 hover:bg-white/10 overflow-hidden shrink-0"
-                                    >
-                                        {previewUrl ? (
-                                            <img src={previewUrl} alt="Preview" className="w-full h-full object-cover" />
-                                        ) : (
-                                            <UploadIcon size={20} className="text-text-muted" />
-                                        )}
-                                        <input
-                                            ref={fileInputRef}
-                                            type="file"
-                                            accept="image/*"
-                                            onChange={handleFileChange}
-                                            className="hidden"
-                                        />
-                                    </div>
-                                    <div className="text-xs text-text-muted">
-                                        {t("stockEvidenceHint")}
-                                        {t("stockOptionalRecommended")}
-                                    </div>
-                                </div>
-                            </div>
+
                         </>
                     )}
 

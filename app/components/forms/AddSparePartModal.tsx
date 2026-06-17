@@ -2,7 +2,6 @@ import React, { useState, useRef, useEffect } from "react";
 import {
     BoxIcon,
     XIcon,
-    UploadIcon,
     SaveIcon,
     LayersIcon,
     SettingsIcon
@@ -26,7 +25,6 @@ export default function AddSparePartModal({ isOpen, onClose, onSuccess, initialP
     const { success, error: showError } = useToast();
     const [loading, setLoading] = useState(false);
     const [isCustomName, setIsCustomName] = useState(false);
-    const fileInputRef = useRef<HTMLInputElement>(null);
 
     const [formData, setFormData] = useState({
         name: "",
@@ -42,8 +40,6 @@ export default function AddSparePartModal({ isOpen, onClose, onSuccess, initialP
         customCategory: "",
     });
 
-    const [imageFile, setImageFile] = useState<File | null>(null);
-    const [previewUrl, setPreviewUrl] = useState<string | null>(null);
 
     // Populate form when editing
     React.useEffect(() => {
@@ -62,9 +58,6 @@ export default function AddSparePartModal({ isOpen, onClose, onSuccess, initialP
                 customCategory: partToEdit.category && !["bearing", "belt", "oil", "filter", "seal", "other"].includes(partToEdit.category) ? partToEdit.category : "",
             });
             setIsCustomName(!PART_NAMES.includes(partToEdit.partName || partToEdit.name || ""));
-            if (partToEdit.imageUrl) {
-                setPreviewUrl(partToEdit.imageUrl);
-            }
         } else if (isOpen && !partToEdit) {
             // Reset form when adding new
             setFormData({
@@ -81,8 +74,6 @@ export default function AddSparePartModal({ isOpen, onClose, onSuccess, initialP
                 customCategory: "",
             });
             setIsCustomName(false);
-            setPreviewUrl(null);
-            setImageFile(null);
         }
     }, [isOpen, partToEdit]);
 
@@ -91,15 +82,6 @@ export default function AddSparePartModal({ isOpen, onClose, onSuccess, initialP
     const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement | HTMLTextAreaElement>) => {
         const { name, value } = e.target;
         setFormData(prev => ({ ...prev, [name]: value }));
-    };
-
-    const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-        if (e.target.files && e.target.files[0]) {
-            const file = e.target.files[0];
-            setImageFile(file);
-            const url = URL.createObjectURL(file);
-            setPreviewUrl(url);
-        }
     };
 
     const handleSubmit = async (e: React.FormEvent) => {
@@ -122,11 +104,11 @@ export default function AddSparePartModal({ isOpen, onClose, onSuccess, initialP
 
             if (partToEdit) {
                 // Update existing part
-                await updateSparePart(partToEdit.id, partData, imageFile || undefined);
+                await updateSparePart(partToEdit.id, partData);
                 success(t("msgEditPartSuccess") || "แก้ไขอะไหล่สำเร็จ!", t("msgEditPartDetail", { name: formData.name }));
             } else {
                 // Add new part
-                await addSparePart(partData, imageFile || undefined);
+                await addSparePart(partData);
                 success(t("msgAddPartSuccess") || "เพิ่มอะไหล่สำเร็จ!", t("msgAddPartDetail", { name: formData.name }));
             }
 
@@ -146,8 +128,6 @@ export default function AddSparePartModal({ isOpen, onClose, onSuccess, initialP
                 model: "",
                 customCategory: "",
             });
-            setImageFile(null);
-            setPreviewUrl(null);
         } catch (error: any) {
             console.error(`Error ${partToEdit ? 'updating' : 'adding'} spare part:`, error);
             showError(t("msgSaveError") || "ไม่สามารถบันทึกได้", error.message);
@@ -177,30 +157,6 @@ export default function AddSparePartModal({ isOpen, onClose, onSuccess, initialP
 
                 {/* Body */}
                 <form onSubmit={handleSubmit} className="flex-1 overflow-y-auto p-6 space-y-6">
-                    {/* Image Upload */}
-                    <div className="flex justify-center">
-                        <div
-                            onClick={() => fileInputRef.current?.click()}
-                            className="relative w-32 h-32 rounded-2xl border-2 border-dashed border-white/20 hover:border-primary/50 flex flex-col items-center justify-center cursor-pointer transition-all bg-white/5 hover:bg-white/10 group overflow-hidden"
-                        >
-                            {previewUrl ? (
-                                <img src={previewUrl} alt="Preview" className="w-full h-full object-cover" />
-                            ) : (
-                                <>
-                                    <UploadIcon size={24} className="text-text-muted group-hover:text-primary mb-2 transition-colors" />
-                                    <span className="text-xs text-text-muted">{t("actionUploadPhoto")}</span>
-                                </>
-                            )}
-                            <input
-                                ref={fileInputRef}
-                                type="file"
-                                accept="image/*"
-                                onChange={handleFileChange}
-                                className="hidden"
-                            />
-                        </div>
-                    </div>
-
                     <div className="grid grid-cols-1 sm:grid-cols-2 gap-6">
                         {/* Name & Category */}
                         <div className="sm:col-span-2">

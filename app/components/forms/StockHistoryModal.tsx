@@ -167,27 +167,12 @@ export default function StockHistoryModal({ isOpen, onClose, part }: StockHistor
                                             </div>
                                         </div>
 
-                                        {/* Notes & Evidence */}
-                                        {(txn.notes || txn.evidenceImageUrl) && (
+                                        {/* Notes */}
+                                        {txn.notes && (
                                             <div className="mt-3 pt-3 border-t border-white/5 flex gap-4">
-                                                {txn.notes && (
-                                                    <p className="flex-1 text-xs text-text-muted italic bg-white/5 p-2 rounded-lg">
-                                                        "{txn.notes}"
-                                                    </p>
-                                                )}
-                                                {txn.evidenceImageUrl && (
-                                                    <a
-                                                        href={txn.evidenceImageUrl}
-                                                        target="_blank"
-                                                        rel="noopener noreferrer"
-                                                        className="group/img relative w-12 h-12 rounded-lg overflow-hidden border border-white/10 shrink-0 block"
-                                                    >
-                                                        <img src={txn.evidenceImageUrl} className="w-full h-full object-cover group-hover/img:scale-110 transition-transform" />
-                                                        <div className="absolute inset-0 bg-black/40 flex items-center justify-center opacity-0 group-hover/img:opacity-100 transition-opacity">
-                                                            <ImageIcon size={12} className="text-white" />
-                                                        </div>
-                                                    </a>
-                                                )}
+                                                <p className="flex-1 text-xs text-text-muted italic bg-white/5 p-2 rounded-lg">
+                                                    "{txn.notes}"
+                                                </p>
                                             </div>
                                         )}
                                     </div>

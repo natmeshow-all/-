@@ -5,9 +5,8 @@ import Modal from "../ui/Modal";
 import { useLanguage } from "../../contexts/LanguageContext";
 import { useAuth } from "../../contexts/AuthContext";
 import { PMPlan } from "../../types";
-import { CameraIcon, CheckCircleIcon, XIcon, ActivityIcon, PlusIcon, UserIcon, FileTextIcon, ClockIcon, UploadIcon } from "../ui/Icons";
+import { CheckCircleIcon, XIcon, ActivityIcon, PlusIcon, UserIcon, FileTextIcon, ClockIcon } from "../ui/Icons";
 import { completePMTask } from "../../lib/firebaseService";
-import Image from "next/image";
 import { useToast } from "../../contexts/ToastContext";
 
 interface PMExecutionModalProps {
@@ -31,27 +30,7 @@ export default function PMExecutionModal({ isOpen, onClose, plan, onSuccess }: P
     const defaultTechnician = userProfile?.nickname || userProfile?.displayName || "";
     const [technician, setTechnician] = useState(defaultTechnician);
     const [additionalNotes, setAdditionalNotes] = useState("");
-    // State for multiple images (for Monthly PM)
-    const [images, setImages] = useState<{ [key: string]: File | null }>({});
-    const [previews, setPreviews] = useState<{ [key: string]: string | null }>({}); // Store previews as strings
 
-    // Determine if this is a monthly plan (or any periodic plan except weekly) that requires 3 photos
-    // This ensures Custom/Yearly/Monthly all get the 3-photo treatment
-    const isMonthly = plan.scheduleType !== 'weekly';
-
-    // Required photo keys for Monthly
-    const requiredPhotos = isMonthly
-        ? ['current', 'vibration', 'other']
-        : ['evidence']; // 'evidence' is the default single photo key
-
-    const getPhotoLabel = (key: string) => {
-        switch (key) {
-            case 'current': return t("labelPhotoAmp") || "ภาพถ่ายกระแสไฟฟ้า (Amp)";
-            case 'vibration': return t("labelPhotoVibration") || "ภาพถ่ายค่าความสั่นสะเทือน";
-            case 'other': return t("labelPhotoOther") || "จุดที่สำคัญอื่นๆ";
-            default: return t("labelEvidencePhoto");
-        }
-    };
 
     const [checklistResults, setChecklistResults] = useState<ChecklistItemResult[]>(
         plan.checklistItems?.map(() => ({ completed: false, value: "" })) || []
@@ -63,8 +42,6 @@ export default function PMExecutionModal({ isOpen, onClose, plan, onSuccess }: P
             // Reset states when modal opens
             setTechnician(defaultTechnician);
             setAdditionalNotes("");
-            setImages({});
-            setPreviews({});
             setChecklistResults(plan.checklistItems?.map(() => ({ completed: false, value: "" })) || []);
             setLoading(false);
         }
@@ -78,41 +55,7 @@ export default function PMExecutionModal({ isOpen, onClose, plan, onSuccess }: P
         });
     };
 
-    const handleMultiImageChange = (key: string, e: React.ChangeEvent<HTMLInputElement>) => {
-        const file = e.target.files?.[0];
-        if (file) {
-            setImages(prev => ({ ...prev, [key]: file }));
-            const reader = new FileReader();
-            reader.onloadend = () => {
-                setPreviews(prev => ({ ...prev, [key]: reader.result as string }));
-            };
-            reader.readAsDataURL(file);
-        }
-    };
 
-    const handleRemoveMultiImage = (key: string) => {
-        setImages(prev => {
-            const temp = { ...prev };
-            delete temp[key];
-            return temp;
-        });
-        setPreviews(prev => {
-            const temp = { ...prev };
-            delete temp[key];
-            return temp;
-        });
-        const input = document.getElementById(`file-${key}`) as HTMLInputElement;
-        if (input) input.value = "";
-    };
-
-    // Legacy handler
-    const handleRemoveImage = () => {
-        // dummy for safety if invoked
-    };
-    // Legacy handler mostly for compatibility if needed, but we'll switch to using the multi-state primarily
-    const handleImageChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-        handleMultiImageChange('evidence', e);
-    };
 
     // Build details string from checklist results
     const buildDetailsString = (): string => {
@@ -155,18 +98,6 @@ export default function PMExecutionModal({ isOpen, onClose, plan, onSuccess }: P
                 value: checklistResults[index]?.value || ""
             }));
 
-            // Prepare additional evidence files
-            const additionalFiles: { label: string; file: File }[] = [];
-
-            if (isMonthly) {
-                if (images['current']) additionalFiles.push({ label: 'Electric Current (Amp)', file: images['current']! });
-                if (images['vibration']) additionalFiles.push({ label: 'Vibration', file: images['vibration']! });
-                if (images['other']) additionalFiles.push({ label: 'Other', file: images['other']! });
-            }
-
-            const primaryFile = isMonthly ? images['other'] : images['evidence'];
-            const filteredAdditional = additionalFiles.filter(f => f.file !== primaryFile);
-
             await completePMTask(
                 plan.id,
                 {
@@ -181,9 +112,7 @@ export default function PMExecutionModal({ isOpen, onClose, plan, onSuccess }: P
                     details: details,
                     checklist: structuredChecklist,
                     Location: plan.customLocation || "",
-                },
-                primaryFile || undefined,
-                filteredAdditional
+                }
             );
 
             success(t("msgSaveSuccess") || "บันทึกข้อมูลสำเร็จ", plan.taskName);
@@ -201,14 +130,13 @@ export default function PMExecutionModal({ isOpen, onClose, plan, onSuccess }: P
     const completedCount = Object.values(checklistResults).filter(r => r.completed).length;
     const totalItems = plan?.checklistItems?.length || 0;
 
-    // Check if all required photos are present
-    const hasRequiredPhotos = requiredPhotos.every(key => !!images[key]);
+
 
     // Submit Button Footer
     const footerContent = (
         <button
             onClick={handleSubmit}
-            disabled={loading || !hasRequiredPhotos}
+            disabled={loading}
             className="btn-primary w-full justify-center py-3 text-base shadow-lg shadow-accent-blue/20 disabled:opacity-50 disabled:cursor-not-allowed"
         >
             {loading ? (
@@ -273,79 +201,7 @@ export default function PMExecutionModal({ isOpen, onClose, plan, onSuccess }: P
                         />
                     </div>
 
-                    {/* Photo Evidence */}
-                    <div className="space-y-4">
-                        <label className="text-xs font-semibold text-accent-orange uppercase tracking-wider flex items-center gap-2">
-                            {isMonthly ? `${t("labelEvidencePhoto")} (3 Required)` : t("labelEvidencePhoto")}
-                        </label>
 
-                        <div className={`grid gap-3 ${isMonthly ? 'grid-cols-1 sm:grid-cols-3' : 'grid-cols-1'}`}>
-                            {requiredPhotos.map((key) => (
-                                <div key={key} className="space-y-2">
-                                    {isMonthly && (
-                                        <p className="text-xs text-text-muted font-bold ml-1">{getPhotoLabel(key)}</p>
-                                    )}
-
-                                    {!previews[key] ? (
-                                        <div className="grid grid-cols-2 gap-2">
-                                            {/* Camera Button */}
-                                            <button
-                                                type="button"
-                                                onClick={() => document.getElementById(`file-cam-${key}`)?.click()}
-                                                className="h-28 border-2 border-dashed border-white/10 rounded-xl flex flex-col items-center justify-center gap-2 text-text-muted hover:border-accent-blue/50 hover:text-accent-blue transition-all bg-white/5"
-                                            >
-                                                <CameraIcon size={24} />
-                                                <span className="text-[10px] text-center px-1">ถ่ายภาพ</span>
-                                            </button>
-
-                                            {/* Upload Button */}
-                                            <button
-                                                type="button"
-                                                onClick={() => document.getElementById(`file-up-${key}`)?.click()}
-                                                className="h-28 border-2 border-dashed border-white/10 rounded-xl flex flex-col items-center justify-center gap-2 text-text-muted hover:border-accent-blue/50 hover:text-accent-blue transition-all bg-white/5"
-                                            >
-                                                <UploadIcon size={24} />
-                                                <span className="text-[10px] text-center px-1">อัปโหลด</span>
-                                            </button>
-                                        </div>
-                                    ) : (
-                                        <div className="relative w-full h-28 rounded-xl overflow-hidden border border-white/10 shadow-lg group">
-                                            <Image
-                                                src={previews[key]!}
-                                                alt={key}
-                                                fill
-                                                className="object-cover"
-                                            />
-                                            <button
-                                                type="button"
-                                                onClick={() => handleRemoveMultiImage(key)}
-                                                className="absolute top-1 right-1 w-6 h-6 rounded-full bg-black/60 text-white flex items-center justify-center backdrop-blur-md border border-white/20 hover:bg-accent-red transition-colors"
-                                            >
-                                                <XIcon size={12} />
-                                            </button>
-                                        </div>
-                                    )}
-
-                                    {/* Hidden Inputs for different sources */}
-                                    <input
-                                        id={`file-cam-${key}`}
-                                        type="file"
-                                        accept="image/*"
-                                        capture="environment"
-                                        className="hidden"
-                                        onChange={(e) => handleMultiImageChange(key, e)}
-                                    />
-                                    <input
-                                        id={`file-up-${key}`}
-                                        type="file"
-                                        accept="image/*"
-                                        className="hidden"
-                                        onChange={(e) => handleMultiImageChange(key, e)}
-                                    />
-                                </div>
-                            ))}
-                        </div>
-                    </div>
 
                     {/* Checklist Items - Dynamic based on PM plan */}
                     {hasChecklistItems && (

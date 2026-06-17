@@ -118,17 +118,6 @@ export default function PMHistoryModal({ isOpen, onClose, plan }: PMHistoryModal
                                             </div>
                                         </div>
 
-                                        {/* Evidence Photo */}
-                                        {record.evidenceImageUrl && (
-                                            <div className="relative w-full h-48 rounded-xl overflow-hidden border border-white/10 mt-2 group">
-                                                <Image
-                                                    src={record.evidenceImageUrl}
-                                                    alt="Evidence"
-                                                    fill
-                                                    className="object-cover transition-transform group-hover:scale-105"
-                                                />
-                                            </div>
-                                        )}
                                     </div>
                                 </div>
                             </div>
