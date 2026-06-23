@@ -298,45 +298,52 @@ export default function SchedulePage() {
                     )}
 
                 {/* Schedule Timeline */}
-                <div className="space-y-4">
+                <div className="space-y-6">
                     {loading ? (
                         <div className="flex flex-col items-center justify-center py-20 opacity-50">
                             <div className="w-8 h-8 border-2 border-accent-blue border-t-transparent rounded-full animate-spin mb-4" />
                             <p>{t("msgLoadingPlans")}</p>
                         </div>
-                    ) : plans.length > 0 ? (
-                        [...plans].sort((a, b) => {
-                            const getDiffDays = (date: Date) => {
-                                const now = new Date();
-                                now.setHours(0, 0, 0, 0);
-                                const due = new Date(date);
-                                due.setHours(0, 0, 0, 0);
-                                return Math.ceil((due.getTime() - now.getTime()) / (1000 * 60 * 60 * 24));
-                            };
+                    ) : plans.length > 0 ? (() => {
+                        // -- Categorize plans into groups --
+                        const getDiffDays = (date: Date) => {
+                            const now = new Date();
+                            now.setHours(0, 0, 0, 0);
+                            const due = new Date(date);
+                            due.setHours(0, 0, 0, 0);
+                            return Math.ceil((due.getTime() - now.getTime()) / (1000 * 60 * 60 * 24));
+                        };
 
-                            const daysA = getDiffDays(a.nextDueDate);
-                            const daysB = getDiffDays(b.nextDueDate);
+                        const sorted = [...plans].sort((a, b) => getDiffDays(a.nextDueDate) - getDiffDays(b.nextDueDate));
 
-                            // 1. Today (days === 0)
-                            const isTodayA = daysA === 0;
-                            const isTodayB = daysB === 0;
-                            if (isTodayA && !isTodayB) return -1;
-                            if (!isTodayA && isTodayB) return 1;
+                        const overdueItems = sorted.filter(p => getDiffDays(p.nextDueDate) < 0);
+                        const dueSoonItems = sorted.filter(p => {
+                            const d = getDiffDays(p.nextDueDate);
+                            return d >= 0 && d <= 3;
+                        });
+                        const upcomingItems = sorted.filter(p => {
+                            const d = getDiffDays(p.nextDueDate);
+                            return d > 3 && d <= 30;
+                        });
+                        const laterItems = sorted.filter(p => getDiffDays(p.nextDueDate) > 30);
 
-                            // 2. Overdue (days < 0)
-                            const isOverdueA = daysA < 0;
-                            const isOverdueB = daysB < 0;
-                            if (isOverdueA && !isOverdueB) return -1;
-                            if (!isOverdueA && isOverdueB) return 1;
+                        // -- Summary Stats --
+                        const totalPlans = plans.length;
 
-                            // 3. Date Ascending
-                            return daysA - daysB;
-                        }).map((item, index) => {
+                        const summaryCards = [
+                            { label: language === 'th' ? "เกินกำหนด" : "Overdue", count: overdueItems.length, color: "accent-red", icon: <AlertTriangleIcon size={18} /> },
+                            { label: language === 'th' ? "ถึงกำหนด / ใกล้ถึง" : "Due Soon", count: dueSoonItems.length, color: "accent-yellow", icon: <ClockIcon size={18} /> },
+                            { label: language === 'th' ? "อีก ≤30 วัน" : "≤30 Days", count: upcomingItems.length, color: "accent-cyan", icon: <CalendarIcon size={18} /> },
+                            { label: language === 'th' ? "ตามกำหนด" : "On Track", count: laterItems.length, color: "accent-green", icon: <CheckCircleIcon size={18} /> },
+                        ];
+
+                        // -- Render a single plan card (reusable) --
+                        const renderPlanCard = (item: PMPlan, animIndex: number) => {
                             const status = getStatusInfo(item.nextDueDate);
                             const isToday = status.days === 0;
                             const isOverdue = status.days < 0;
+                            const daysUntilDue = getDiffDays(item.nextDueDate);
 
-                            // Priority Styles
                             const priorityColor = item.priority === 'urgent' ? 'border-accent-red bg-accent-red/5'
                                 : item.priority === 'high' ? 'border-accent-yellow bg-accent-yellow/5'
                                     : 'border-white/5 bg-transparent';
@@ -349,11 +356,11 @@ export default function SchedulePage() {
                                 <div
                                     key={item.id}
                                     className={`card p-3 hover-lift animate-fade-in-up relative ${isOverdue ? "animate-warning-pulse" : ""} ${priorityColor} transition-all duration-300`}
-                                    style={{ 
-                                        borderLeftWidth: '4px', 
-                                        borderLeftStyle: 'solid', 
-                                        borderLeftColor: isOverdue ? '#ef4444' : status.days <= 3 ? '#eab308' : '#22c55e',
-                                        animationDelay: `${index * 50}ms` 
+                                    style={{
+                                        borderLeftWidth: '4px',
+                                        borderLeftStyle: 'solid',
+                                        borderLeftColor: isOverdue ? '#ef4444' : daysUntilDue <= 3 ? '#eab308' : daysUntilDue <= 30 ? '#06b6d4' : '#22c55e',
+                                        animationDelay: `${animIndex * 50}ms`
                                     }}
                                 >
                                     <div className="flex items-stretch gap-3">
@@ -380,6 +387,17 @@ export default function SchedulePage() {
                                                     {priorityBadge && (
                                                         <span className={`text-[9px] px-1.5 py-0.5 rounded-full uppercase font-bold tracking-wider ${priorityBadge.color}`}>
                                                             {priorityBadge.label}
+                                                        </span>
+                                                    )}
+                                                    {/* Countdown badge for upcoming items */}
+                                                    {daysUntilDue > 0 && (
+                                                        <span className={`text-[9px] px-1.5 py-0.5 rounded-full font-bold tracking-wider ${daysUntilDue <= 3
+                                                            ? 'bg-accent-yellow/20 text-accent-yellow border border-accent-yellow/30'
+                                                            : daysUntilDue <= 30
+                                                                ? 'bg-accent-cyan/15 text-accent-cyan border border-accent-cyan/25'
+                                                                : 'bg-accent-green/15 text-accent-green border border-accent-green/25'
+                                                            }`}>
+                                                            {language === 'th' ? `อีก ${daysUntilDue} วัน` : `${daysUntilDue} days left`}
                                                         </span>
                                                     )}
                                                 </div>
@@ -431,7 +449,7 @@ export default function SchedulePage() {
                                                 {getCycleInfo(item).label}
                                             </span>
 
-                                            {/* Main Action (Execute) - Centered in the right side */}
+                                            {/* Main Action (Execute) */}
                                             <button
                                                 onClick={() => handleExecuteClick(item)}
                                                 className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-bold transition-all shadow-md active:scale-95 whitespace-nowrap ${status.days <= 0
@@ -449,7 +467,7 @@ export default function SchedulePage() {
                                                 )}
                                             </button>
 
-                                            {/* Edit/Delete Buttons - Bottom row of the right side */}
+                                            {/* Edit/Delete Buttons */}
                                             <div className="flex items-center gap-1">
                                                 <button
                                                     onClick={(e) => {
@@ -478,8 +496,123 @@ export default function SchedulePage() {
                                     </div>
                                 </div>
                             );
-                        })
-                    ) : (
+                        };
+
+                        // -- Section Header component --
+                        const SectionHeader = ({ icon, title, count, color, accentBorder }: {
+                            icon: React.ReactNode; title: string; count: number; color: string; accentBorder: string;
+                        }) => (
+                            <div className={`flex items-center gap-3 py-2 px-1`}>
+                                <div className={`w-8 h-8 rounded-lg flex items-center justify-center bg-${color}/15 text-${color}`}>
+                                    {icon}
+                                </div>
+                                <div className="flex-1">
+                                    <h2 className={`text-sm font-bold text-${color} uppercase tracking-wider`}>{title}</h2>
+                                </div>
+                                <span className={`text-xs font-bold px-2.5 py-1 rounded-full bg-${color}/15 text-${color} border border-${color}/25`}>
+                                    {count} {language === 'th' ? 'แผน' : 'plans'}
+                                </span>
+                            </div>
+                        );
+
+                        let animCounter = 0;
+
+                        return (
+                            <>
+                                {/* Summary Stats Cards */}
+                                <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 mb-2">
+                                    {summaryCards.map((card) => (
+                                        <div
+                                            key={card.label}
+                                            className={`relative p-3 rounded-xl bg-bg-secondary border border-white/5 flex items-center gap-3 overflow-hidden transition-all hover:border-${card.color}/30`}
+                                        >
+                                            <div className={`absolute inset-0 bg-${card.color}/5 pointer-events-none`} />
+                                            <div className={`relative shrink-0 w-9 h-9 rounded-lg bg-${card.color}/15 flex items-center justify-center text-${card.color}`}>
+                                                {card.icon}
+                                            </div>
+                                            <div className="relative">
+                                                <p className={`text-xl font-black text-${card.color}`}>{card.count}</p>
+                                                <p className="text-[10px] text-text-muted font-medium leading-tight">{card.label}</p>
+                                            </div>
+                                        </div>
+                                    ))}
+                                </div>
+
+                                {/* Total plans line */}
+                                <div className="flex items-center gap-2 px-1 pb-1">
+                                    <FolderIcon size={14} className="text-text-muted" />
+                                    <span className="text-xs text-text-muted">
+                                        {language === 'th' ? `ทั้งหมด ${totalPlans} แผน PM` : `Total ${totalPlans} PM Plans`}
+                                    </span>
+                                    <div className="flex-1 h-px bg-white/5" />
+                                </div>
+
+                                {/* === SECTION: Overdue === */}
+                                {overdueItems.length > 0 && (
+                                    <div className="space-y-3">
+                                        <SectionHeader
+                                            icon={<AlertTriangleIcon size={16} />}
+                                            title={language === 'th' ? 'เกินกำหนด — ต้องดำเนินการ' : 'Overdue — Action Required'}
+                                            count={overdueItems.length}
+                                            color="accent-red"
+                                            accentBorder="border-accent-red/30"
+                                        />
+                                        <div className="space-y-3">
+                                            {overdueItems.map((item) => renderPlanCard(item, animCounter++))}
+                                        </div>
+                                    </div>
+                                )}
+
+                                {/* === SECTION: Due Soon === */}
+                                {dueSoonItems.length > 0 && (
+                                    <div className="space-y-3">
+                                        <SectionHeader
+                                            icon={<ClockIcon size={16} />}
+                                            title={language === 'th' ? 'ถึงกำหนด / ใกล้ถึงกำหนด' : 'Due Today / Due Soon'}
+                                            count={dueSoonItems.length}
+                                            color="accent-yellow"
+                                            accentBorder="border-accent-yellow/30"
+                                        />
+                                        <div className="space-y-3">
+                                            {dueSoonItems.map((item) => renderPlanCard(item, animCounter++))}
+                                        </div>
+                                    </div>
+                                )}
+
+                                {/* === SECTION: Upcoming (≤30 days) === */}
+                                {upcomingItems.length > 0 && (
+                                    <div className="space-y-3">
+                                        <SectionHeader
+                                            icon={<CalendarIcon size={16} />}
+                                            title={language === 'th' ? 'กำลังจะถึงกำหนด (≤30 วัน)' : 'Upcoming (≤30 Days)'}
+                                            count={upcomingItems.length}
+                                            color="accent-cyan"
+                                            accentBorder="border-accent-cyan/30"
+                                        />
+                                        <div className="space-y-3">
+                                            {upcomingItems.map((item) => renderPlanCard(item, animCounter++))}
+                                        </div>
+                                    </div>
+                                )}
+
+                                {/* === SECTION: On Track (>30 days) === */}
+                                {laterItems.length > 0 && (
+                                    <div className="space-y-3">
+                                        <SectionHeader
+                                            icon={<CheckCircleIcon size={16} />}
+                                            title={language === 'th' ? 'ตามกำหนด (>30 วัน)' : 'On Track (>30 Days)'}
+                                            count={laterItems.length}
+                                            color="accent-green"
+                                            accentBorder="border-accent-green/30"
+                                        />
+                                        <div className="space-y-3">
+                                            {laterItems.map((item) => renderPlanCard(item, animCounter++))}
+                                        </div>
+                                    </div>
+                                )}
+                            </>
+                        );
+                    })() : (
                         <div className="flex flex-col items-center justify-center py-20 text-text-muted opacity-60 bg-bg-secondary/30 rounded-3xl border border-dashed border-white/10">
                             <BoxIcon size={48} className="mb-4" />
                             <p>{t("msgNoPlans")}</p>
