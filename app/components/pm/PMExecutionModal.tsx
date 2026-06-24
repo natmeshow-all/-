@@ -68,7 +68,8 @@ function detectInputType(label: string): InputFieldType {
 
     // ── Condition checks (parts, wiring, safety, general inspection) ──────────
     if (
-        l.includes("ตรวจสภาพ") || l.includes("สภาพ") ||
+        l.includes("ตรวจสภาพ") || l.includes("สภาพ") || l.includes("ตรวจสอบ") ||
+        l.includes("ตรวจพัดลม") || l.includes("ตรวจฮีตเตอร์") || l.includes("ตรวจ tem") ||
         l.includes("ตรวจซีล") || l.includes("ตรวจใบพัด") || l.includes("ตรวจใบมีด") ||
         l.includes("ตรวจความไว") || l.includes("ตรวจการสึกหรอ") ||
         l.includes("ตรวจการหมุน") || l.includes("ตรวจการเปิด-ปิด") || l.includes("ตรวจการทำงาน") ||
@@ -81,7 +82,7 @@ function detectInputType(label: string): InputFieldType {
         l.includes("ตรวจคุณภาพ") || l.includes("ตรวจวันหมดอายุ") ||
         l.includes("ตรวจหัวจ่าย") || l.includes("ตรวจแรงขัน") || l.includes("ตรวจระยะ") ||
         l.includes("ตรวจตำแหน่ง") || l.includes("ตรวจบานพับ") || l.includes("ตรวจเฟือง") ||
-        l.includes("ตรวจ gauge") || l.includes("ตรวจ safety lip")
+        l.includes("ตรวจ gauge") || l.includes("ตรวจ safety lip") || l.includes("ตรวจ")
     ) return "condition";
 
     // ── Level checks ─────────────────────────────────────────────────────────
