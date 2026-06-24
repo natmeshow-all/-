@@ -69,11 +69,11 @@ export const telegramService = {
             record.type === 'corrective' ? 'ซ่อมบำรุงแก้ไข' : 'การบำรุงรักษา';
 
         const locationText = record.Location || record.location || 'ไม่ระบุ';
-        const machineIdText = record.machineId || 'ไม่ระบุ';
+        const machineCodeText = record.machineCode || '-';
 
         // Build the modern LINE-style HTML message (using standard fonts instead of monospace)
         return `
-<b>🔹 รหัสเครื่อง:</b> ${machineIdText}
+<b>🔹 รหัสเครื่อง:</b> ${machineCodeText}
 <b>🔹 ชื่อเครื่องจักร:</b> ${record.machineName}
 <b>📝 ชื่องาน:</b> <i>${record.description || "PM: Motor"}</i>
 <b>👤 ช่าง:</b> <i>${record.technician}</i>

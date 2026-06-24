@@ -604,8 +604,13 @@ export const completePMTask = async (
             // Trigger Notifications
             try {
                 // Fetch full record data for notification
+                const machineRef = ref(database, `${COLLECTIONS.MACHINES}/${recordData.machineId}`);
+                const machineSnapshot = await get(machineRef);
+                const machineCode = machineSnapshot.exists() ? machineSnapshot.val().code : null;
+
                 const finalRecord: MaintenanceRecord = {
                     ...recordData,
+                    machineCode: machineCode,
                     date: new Date(recordData.date),
                     createdAt: new Date(recordData.createdAt),
                     updatedAt: new Date(recordData.updatedAt),

@@ -131,6 +131,7 @@ export interface ChecklistItemResult {
 export interface MaintenanceRecord {
     id: string;
     machineId: string;
+    machineCode?: string; // Optional human-readable machine code
     machineName: string;
     description: string;
     type: MaintenanceType;
