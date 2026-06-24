@@ -36,6 +36,7 @@ import {
 } from "../components/ui/Icons";
 
 import RecordDetailsModal from "../components/pm/RecordDetailsModal";
+import PartReplacementPlanModal from "../components/pm/PartReplacementPlanModal";
 
 export default function MaintenancePage() {
     const { t } = useLanguage();
@@ -60,6 +61,16 @@ export default function MaintenancePage() {
     const [deleteConfirmOpen, setDeleteConfirmOpen] = useState(false);
     const [recordToDelete, setRecordToDelete] = useState<MaintenanceRecord | null>(null);
     const [mounted, setMounted] = useState(false);
+
+    // Part Replacement Plan Modal State
+    const [replacementPlanOpen, setReplacementPlanOpen] = useState(false);
+    const [replacementPlanMachineId, setReplacementPlanMachineId] = useState("");
+    const [replacementPlanMachineName, setReplacementPlanMachineName] = useState("");
+    const openReplacementPlan = (machineId: string, machineName: string) => {
+        setReplacementPlanMachineId(machineId);
+        setReplacementPlanMachineName(machineName);
+        setReplacementPlanOpen(true);
+    };
     const [records, setRecords] = useState<MaintenanceRecord[]>([]);
     const [loading, setLoading] = useState(true);
     const [allFetchedRecords, setAllFetchedRecords] = useState<MaintenanceRecord[]>([]);
@@ -728,6 +739,8 @@ export default function MaintenancePage() {
                                                                 bgColor = "bg-accent-red/10 border-accent-red/20";
                                                             }
 
+                                                            const isDue = val.includes("ถึงกำหนดเปลี่ยน");
+
                                                             let isVibrationData = false;
                                                             let vibrationObj: any = null;
                                                             if (val.startsWith('{') && val.includes('"x":')) {
@@ -738,7 +751,7 @@ export default function MaintenancePage() {
                                                             }
 
                                                             return (
-                                                                <div key={idx} className="flex flex-col bg-bg-tertiary p-3 rounded-lg border border-white/5">
+                                                                <div key={idx} className={`flex flex-col bg-bg-tertiary p-3 rounded-lg border transition-all ${isDue ? 'border-accent-red/30 bg-accent-red/5' : 'border-white/5'}`}>
                                                                     <div className="text-xs text-text-muted mb-2 font-medium">{item.item}</div>
                                                                     {isVibrationData && vibrationObj ? (
                                                                         <div className="flex gap-1 flex-wrap">
@@ -747,6 +760,19 @@ export default function MaintenancePage() {
                                                                                     {axis.toUpperCase()}:{vibrationObj[axis].value}
                                                                                 </span>
                                                                             ))}
+                                                                        </div>
+                                                                    ) : isDue ? (
+                                                                        <div className="flex flex-col gap-2">
+                                                                            <div className={`text-xs px-2.5 py-1 rounded border ${bgColor} ${valueColor} w-fit`}>
+                                                                                {val}
+                                                                            </div>
+                                                                            <button
+                                                                                onClick={() => openReplacementPlan(record.machineId, record.machineName)}
+                                                                                className="text-[11px] px-2.5 py-1 rounded-md border border-accent-red/40 bg-accent-red/10 text-accent-red hover:bg-accent-red/20 transition-colors w-fit flex items-center gap-1.5 font-semibold"
+                                                                            >
+                                                                                <ActivityIcon size={11} />
+                                                                                📋 ดูแผนเปลี่ยนอะไหล่
+                                                                            </button>
                                                                         </div>
                                                                     ) : (
                                                                         <div className={`text-xs px-2.5 py-1 rounded border ${bgColor} ${valueColor} w-fit`}>
@@ -820,6 +846,15 @@ export default function MaintenancePage() {
                 message={`${t("confirmDeleteMessage") || "คุณแน่ใจหรือไม่ว่าต้องการลบรายการนี้?"} ${recordToDelete ? `"${recordToDelete.machineName} - ${recordToDelete.description}"` : ""}`}
                 isDestructive={true}
                 confirmText={t("actionDelete") || "ลบ"}
+            />
+
+            <PartReplacementPlanModal
+                isOpen={replacementPlanOpen}
+                onClose={() => setReplacementPlanOpen(false)}
+                machineId={replacementPlanMachineId}
+                machineName={replacementPlanMachineName}
+                fromPMHistory={true}
+                onViewHistory={() => setReplacementPlanOpen(false)}
             />
         </div>
     );

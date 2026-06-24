@@ -15,9 +15,10 @@ interface PartReplacementPlanModalProps {
     machineId?: string; // Optional: if provided, locks to this machine
     machineName?: string;
     onViewHistory: () => void; // Callback to open PM History
+    fromPMHistory?: boolean; // Flag when opened from PM History page
 }
 
-export default function PartReplacementPlanModal({ isOpen, onClose, machineId: initialMachineId, machineName: initialMachineName, onViewHistory }: PartReplacementPlanModalProps) {
+export default function PartReplacementPlanModal({ isOpen, onClose, machineId: initialMachineId, machineName: initialMachineName, onViewHistory, fromPMHistory }: PartReplacementPlanModalProps) {
     const { t } = useLanguage();
     const { user } = useAuth();
     const { success, error: showError } = useToast();
@@ -127,6 +128,16 @@ export default function PartReplacementPlanModal({ isOpen, onClose, machineId: i
     return (
         <Modal isOpen={isOpen} onClose={onClose} title={`แผนเปลี่ยนอะไหล่: ${currentMachineName}`} size="lg">
             <div className="space-y-4">
+                {/* Banner: Opened from PM History */}
+                {fromPMHistory && (
+                    <div className="flex items-center gap-2 bg-accent-yellow/10 border border-accent-yellow/30 rounded-xl px-4 py-2.5">
+                        <span className="text-accent-yellow text-sm">⚠️</span>
+                        <div>
+                            <span className="text-accent-yellow text-xs font-bold">แผนนี้มาจากงาน PM</span>
+                            <p className="text-text-muted text-[11px] mt-0.5">พบรายการที่ถึงกำหนดเปลี่ยนจากการตรวจสอบ PM กรุณาเปลี่ยนอะไหล่และกดบันทึกเพื่อรีเซ็ตการจับเวลา</p>
+                        </div>
+                    </div>
+                )}
                 <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-3 mb-2">
                     {!initialMachineId ? (
                         <div className="w-full sm:w-1/2">
