@@ -235,10 +235,12 @@ export default function AuditPage() {
                                                 </div>
                                                 <div className="flex-1 min-w-0">
                                                     <div className="flex items-start justify-between gap-2">
-                                                        <h4 className="font-bold text-sm truncate flex items-baseline gap-1.5">
+                                                        <h4 className="font-bold text-sm truncate flex items-center gap-2">
                                                             <span>{record.machineName}</span>
                                                             {machine?.code && (
-                                                                <span className="text-text-muted font-normal text-xs font-mono">({machine.code})</span>
+                                                                <span className="px-1.5 py-0.5 rounded-md text-[10px] font-mono font-semibold bg-accent-cyan/10 text-accent-cyan border border-accent-cyan/20 whitespace-nowrap shadow-sm">
+                                                                    {machine.code}
+                                                                </span>
                                                             )}
                                                         </h4>
                                                         <span className={`text-[9px] px-1.5 py-0.5 rounded uppercase font-black ${record.type === 'preventive' ? 'bg-accent-cyan/20 text-accent-cyan' : 'bg-accent-yellow/20 text-accent-yellow'

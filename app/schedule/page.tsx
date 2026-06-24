@@ -406,11 +406,14 @@ export default function SchedulePage() {
                                                 <div className="mb-2">
                                                     {(() => {
                                                         const machine = allMachines.find(m => m.id === item.machineId || m.name === item.machineName);
-                                                        const machineCode = machine?.code ? `(${machine.code})` : "";
                                                         return (
-                                                            <h3 className="font-bold text-sm sm:text-base text-text-primary leading-tight flex flex-wrap items-baseline gap-1.5 pr-16">
-                                                                <span>{item.machineName}</span>
-                                                                <span className="text-text-muted font-normal text-xs">{machineCode}</span>
+                                                            <h3 className="font-bold text-sm sm:text-base text-text-primary leading-tight flex flex-wrap items-center gap-2 pr-16">
+                                                                <span className="truncate">{item.machineName}</span>
+                                                                {machine?.code && (
+                                                                    <span className="px-1.5 py-0.5 rounded-md text-[10px] font-mono font-semibold bg-accent-cyan/10 text-accent-cyan border border-accent-cyan/20 whitespace-nowrap shadow-sm">
+                                                                        {machine.code}
+                                                                    </span>
+                                                                )}
                                                             </h3>
                                                         );
                                                     })()}

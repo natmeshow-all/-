@@ -519,7 +519,9 @@ export default function MaintenancePage() {
                                                         <h3 className={`font-bold text-sm truncate ${isExpanded ? 'text-primary' : 'text-text-primary'} flex items-baseline gap-1.5`}>
                                                             <span>{record.machineName}</span>
                                                             {machine?.code && (
-                                                                <span className="text-text-muted font-normal text-xs font-mono">({machine.code})</span>
+                                                                <span className="px-1.5 py-0.5 rounded-md text-[10px] font-mono font-semibold bg-accent-cyan/10 text-accent-cyan border border-accent-cyan/20 whitespace-nowrap shadow-sm">
+                                                                    {machine.code}
+                                                                </span>
                                                             )}
                                                         </h3>
                                                         {/* Status Dot */}
@@ -612,9 +614,11 @@ export default function MaintenancePage() {
                                                             <span className="text-text-primary truncate ml-1">{record.technician}</span>
                                                         </div>
                                                         {machine?.code && (
-                                                            <div className="flex items-center justify-between col-span-2">
+                                                            <div className="flex items-center justify-between col-span-2 mt-0.5">
                                                                 <span className="text-text-muted">รหัสเครื่องจักร:</span>
-                                                                <span className="text-text-primary font-mono">{machine.code}</span>
+                                                                <span className="px-1.5 py-0.5 rounded-md text-[10px] font-mono font-semibold bg-accent-cyan/10 text-accent-cyan border border-accent-cyan/20 whitespace-nowrap shadow-sm">
+                                                                    {machine.code}
+                                                                </span>
                                                             </div>
                                                         )}
                                                         {record.duration && (
