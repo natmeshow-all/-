@@ -5,8 +5,8 @@ export async function POST(request: Request) {
         const body = await request.json();
         const { message, parseMode = 'HTML', botToken, chatId } = body;
 
-        const telegramBotToken = botToken || process.env.TELEGRAM_BOT_TOKEN;
-        const targetChatId = chatId || process.env.TELEGRAM_CHAT_ID;
+        const telegramBotToken = (botToken || process.env.TELEGRAM_BOT_TOKEN)?.trim();
+        const targetChatId = (chatId || process.env.TELEGRAM_CHAT_ID)?.trim();
 
         if (!telegramBotToken || !targetChatId) {
             console.error('Missing Telegram credentials');

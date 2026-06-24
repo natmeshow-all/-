@@ -15,11 +15,6 @@ export const telegramService = {
             const botToken = decodeSecret(settings?.telegramBotToken || "");
             const chatId = decodeSecret(settings?.telegramChatId || "");
 
-            if (!botToken || !chatId) {
-                console.warn('Telegram API keys not configured in System Settings.');
-                return;
-            }
-
             const htmlMessage = this.createPMHtmlMessage(record);
 
             const response = await fetch('/api/telegram', {
