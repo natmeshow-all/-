@@ -55,35 +55,39 @@ export const telegramService = {
             year: 'numeric'
         }) : '-';
 
-        // Build checklist text
-        let checklistText = '<i>ไม่มีรายการตรวจสอบ</i>';
-        if (record.checklist && record.checklist.length > 0) {
-            checklistText = record.checklist
-                .map(item => `${item.completed ? '✅' : '❌'} <b>${item.item}</b>${item.value ? ': <code>' + item.value + '</code>' : ''}`)
+        // Filter only completed items (checked)
+        const completedChecklist = record.checklist?.filter(item => item.completed) || [];
+        
+        let checklistText = '<i>ไม่มีรายการตรวจสอบที่ดำเนินการ</i>';
+        if (completedChecklist.length > 0) {
+            checklistText = completedChecklist
+                .map(item => `✓ <b>${item.item}</b>${item.value ? '  👉  <code>' + item.value + '</code>' : ''}`)
                 .join('\n');
         }
 
+        const maintenanceType = record.type === 'preventive' ? 'บำรุงรักษาเชิงป้องกัน' :
+            record.type === 'corrective' ? 'ซ่อมบำรุงแก้ไข' : 'การบำรุงรักษา';
+
         const locationText = record.Location || record.location || 'ไม่ระบุ';
 
-        // Build the modern HTML message
+        // Build the modern LINE-style HTML message
         return `
-✨ <b>รายงานผลการปิดงาน PM</b>
-━━━━━━━━━━━━━━━━━━━━
+<b>🔹 ${record.machineName}</b>
+<pre>งาน: ${record.description || "PM: Motor"}</pre>
+👤 <i>${record.technician}</i>
 
-<b>🏢 ข้อมูลเครื่องจักร:</b>
-<blockquote><b>รหัส/ชื่อ:</b> <code>${record.machineName}</code>
-<b>ชื่องาน:</b> ${record.description || "PM Maintenance"}
-<b>สถานที่:</b> ${locationText}</blockquote>
+━━━━━━━━━━━━━━━━━━━
 
-<b>👨‍🔧 ข้อมูลการปฏิบัติงาน:</b>
-<blockquote><b>ผู้ตรวจสอบ:</b> ${record.technician}
-<b>วันที่ดำเนินการ:</b> ${dateStr}</blockquote>
+📋 <b>ข้อมูลทั่วไป</b>
+<blockquote><b>ประเภท:</b> <code>${maintenanceType}</code>
+<b>วันที่:</b> <code>${dateStr}</code>
+<b>สถานที่:</b> <code>${locationText}</code></blockquote>
 
-<b>📝 สรุปรายการตรวจสอบ:</b>
+✓ <b>รายการตรวจสอบ</b>
 <blockquote>${checklistText}</blockquote>
 
-━━━━━━━━━━━━━━━━━━━━
-✅ <b>สถานะ:</b> บันทึกข้อมูลเข้าระบบเรียบร้อย
+━━━━━━━━━━━━━━━━━━━
+✅ <b>สถานะ:</b> เสร็จสิ้น
         `.trim();
     }
 };
