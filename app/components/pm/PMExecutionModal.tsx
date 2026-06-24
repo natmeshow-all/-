@@ -6,7 +6,7 @@ import { useLanguage } from "../../contexts/LanguageContext";
 import { useAuth } from "../../contexts/AuthContext";
 import { PMPlan } from "../../types";
 import { CheckCircleIcon, ActivityIcon, FileTextIcon, ClockIcon } from "../ui/Icons";
-import { completePMTask } from "../../lib/firebaseService";
+import { completePMTask, addMaintenanceRecord } from "../../lib/firebaseService";
 import { useToast } from "../../contexts/ToastContext";
 
 interface PMExecutionModalProps {
@@ -210,9 +210,11 @@ interface SmartChecklistInputProps {
     item: string;
     value: string;
     onChange: (value: string) => void;
+    onQueueReplacement?: () => void;
+    isQueued?: boolean;
 }
 
-function SmartChecklistInput({ item, value, onChange }: SmartChecklistInputProps) {
+function SmartChecklistInput({ item, value, onChange, onQueueReplacement, isQueued }: SmartChecklistInputProps) {
     const type = detectInputType(item);
 
     // --- Current (A) ---
@@ -419,17 +421,34 @@ function SmartChecklistInput({ item, value, onChange }: SmartChecklistInputProps
     // --- Condition (Part/Component) ---
     if (type === "condition") {
         return (
-            <PresetButtons
-                options={[
-                    { label: "สมบูรณ์", color: "text-green-400", bg: "bg-green-400/15", border: "border-green-400/40" },
-                    { label: "พอใช้", color: "text-yellow-400", bg: "bg-yellow-400/15", border: "border-yellow-400/40" },
-                    { label: "ถึงกำหนดเปลี่ยน", color: "text-red-400", bg: "bg-red-400/15", border: "border-red-400/40" },
-                ]}
-                value={value}
-                onChange={onChange}
-                allowCustom
-                customPlaceholder="รายละเอียดเพิ่มเติม..."
-            />
+            <div className="space-y-3">
+                <PresetButtons
+                    options={[
+                        { label: "สมบูรณ์", color: "text-green-400", bg: "bg-green-400/15", border: "border-green-400/40" },
+                        { label: "พอใช้", color: "text-yellow-400", bg: "bg-yellow-400/15", border: "border-yellow-400/40" },
+                        { label: "ถึงกำหนดเปลี่ยน", color: "text-red-400", bg: "bg-red-400/15", border: "border-red-400/40" },
+                    ]}
+                    value={value}
+                    onChange={onChange}
+                    allowCustom
+                    customPlaceholder="รายละเอียดเพิ่มเติม..."
+                />
+                {value.includes("ถึงกำหนดเปลี่ยน") && onQueueReplacement && (
+                    <button
+                        type="button"
+                        onClick={onQueueReplacement}
+                        disabled={isQueued}
+                        className={`text-[11px] px-3 py-1.5 rounded-md flex items-center gap-1.5 transition-colors border w-fit ${
+                            isQueued 
+                            ? 'bg-accent-green/20 text-accent-green border-accent-green/30 cursor-default' 
+                            : 'bg-red-500/10 text-red-400 border-red-500/30 hover:bg-red-500/20 cursor-pointer'
+                        }`}
+                    >
+                        {isQueued ? <CheckCircleIcon size={12} /> : <span>+</span>}
+                        {isQueued ? 'บันทึกคิวงานเปลี่ยนอะไหล่แล้ว' : 'สร้างแผนงานเปลี่ยนอะไหล่ (ด่วน)'}
+                    </button>
+                )}
+            </div>
         );
     }
 
@@ -552,6 +571,7 @@ export default function PMExecutionModal({ isOpen, onClose, plan, onSuccess }: P
     const [checklistResults, setChecklistResults] = useState<ChecklistItemResult[]>(
         plan.checklistItems?.map(() => ({ completed: false, value: "" })) || []
     );
+    const [pendingReplacements, setPendingReplacements] = useState<string[]>([]);
     const [loading, setLoading] = useState(false);
 
     useEffect(() => {
@@ -559,6 +579,7 @@ export default function PMExecutionModal({ isOpen, onClose, plan, onSuccess }: P
             setTechnician(defaultTechnician);
             setAdditionalNotes("");
             setChecklistResults(plan.checklistItems?.map(() => ({ completed: false, value: "" })) || []);
+            setPendingReplacements([]);
             setLoading(false);
         }
     }, [isOpen, plan, defaultTechnician]);
@@ -623,6 +644,24 @@ export default function PMExecutionModal({ isOpen, onClose, plan, onSuccess }: P
                 checklist: structuredChecklist,
                 Location: plan.customLocation || "",
             });
+
+            // Create pending replacements
+            if (pendingReplacements.length > 0) {
+                for (const item of pendingReplacements) {
+                    await addMaintenanceRecord({
+                        machineId: plan.machineId,
+                        machineName: plan.machineName,
+                        description: `[จากแผน PM] เปลี่ยนอะไหล่: ${item}`,
+                        type: "partReplacement",
+                        priority: "high",
+                        status: "pending",
+                        date: new Date(),
+                        technician: technician || "Technician",
+                        Location: plan.customLocation || "",
+                    });
+                }
+            }
+
             success(t("msgSaveSuccess") || "บันทึกข้อมูลสำเร็จ", plan.taskName);
             onSuccess?.();
             onClose();
@@ -757,6 +796,8 @@ export default function PMExecutionModal({ isOpen, onClose, plan, onSuccess }: P
                                                         item={item}
                                                         value={checklistResults[index]?.value || ""}
                                                         onChange={(val) => handleChecklistChange(index, true, val)}
+                                                        onQueueReplacement={() => setPendingReplacements(prev => [...prev, item])}
+                                                        isQueued={pendingReplacements.includes(item)}
                                                     />
                                                 </div>
                                             )}
