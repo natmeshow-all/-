@@ -27,8 +27,11 @@ type InputFieldType =
     | "voltage"       // แรงดันไฟฟ้า → L1, L2, L3 + V
     | "vibration"     // สั่นสะเทือน → X, Y, Z + mm/s
     | "temperature"   // อุณหภูมิ → number + °C
+    | "resistance"    // ความต้านทาน → number + Ω
     | "oil_change"    // เปลี่ยนถ่ายน้ำมัน → number + ลิตร
     | "grease"        // เปลี่ยนจารบี → number + g
+    | "tension"       // ตรวจความตึง → เหมาะสม / ตึงไป / หย่อนไป / ต้องปรับ
+    | "pressure"      // ตรวจแรงดัน (ไม่ใช่ไฟ) → ปกติ / สูงไป / ต่ำไป / ต้องตรวจสอบ
     | "condition"     // ตรวจสภาพ (ชิ้นส่วน) → สมบูรณ์ / พอใช้ / ถึงกำหนดเปลี่ยน
     | "level"         // ตรวจระดับน้ำมัน → ปกติ / ต่ำ / ต้องเติม
     | "leak"          // ตรวจรอยรั่ว/แตก → ไม่มี / เล็กน้อย / มาก
@@ -39,34 +42,52 @@ type InputFieldType =
 function detectInputType(label: string): InputFieldType {
     const l = label.toLowerCase();
 
-    // Electrical measurements
+    // ── Numeric measurements (must come first) ──────────────────────────────
     if (l.includes("กระแส") || l.includes("amp") || l.includes("current") || l.includes("แอมแปร์")) return "current";
-    if (l.includes("แรงดัน") || l.includes("volt") || l.includes("voltage") || l.includes("โวลต์")) return "voltage";
+    if (l.includes("แรงดันไฟ") || l.includes("volt") || l.includes("voltage") || l.includes("โวลต์")) return "voltage";
     if (l.includes("สั่นสะเทือน") || l.includes("vibrat") || l.includes("x/y/z")) return "vibration";
     if (l.includes("อุณหภูมิ") || l.includes("temp") || l.includes("temperature") || l.includes("เทอร์โม")) return "temperature";
+    if (l.includes("ความต้านทาน") || l.includes("ohm") || l.includes("โอห์ม") || l.includes("resistance") || l.includes("megger")) return "resistance";
 
-    // Oil / Grease
-    if (l.includes("เปลี่ยนถ่ายน้ำมัน") || l.includes("เปลี่ยนน้ำมัน") || l.includes("oil change") || l.includes("ถ่ายน้ำมัน")) return "oil_change";
+    // ── Oil / Grease ────────────────────────────────────────────────────────
+    if (l.includes("เปลี่ยนถ่ายน้ำมัน") || l.includes("oil change") || l.includes("ถ่ายน้ำมัน")) return "oil_change";
+    if (l.includes("เปลี่ยนน้ำมัน") || l.includes("เช็คน้ำมัน") || l.includes("น้ำมันเกียร์")) return "oil_change";
     if (l.includes("จารบี") || l.includes("grease")) return "grease";
 
-    // Condition checks (parts/components)
-    if (
-        l.includes("สภาพฟัน") || l.includes("สภาพแบริ่ง") || l.includes("สภาพใบกวน") ||
-        l.includes("สภาพข้อโซ่") || l.includes("สภาพซีล") || l.includes("สภาพสายพาน") ||
-        (l.includes("ตรวจสภาพ") && !l.includes("มอเตอร์") && !l.includes("สายไฟ") && !l.includes("ฟิลเตอร์")) ||
-        l.includes("ตรวจซีลประตู")
-    ) return "condition";
+    // ── Tension checks (ความตึง) ────────────────────────────────────────────
+    if (l.includes("ความตึง") || l.includes("tension") || l.includes("ตรวจตึง")) return "tension";
 
-    // Level checks
-    if (l.includes("ระดับน้ำมัน") || l.includes("ระดับ") || l.includes("level")) return "level";
+    // ── Pressure checks (แรงดัน non-electrical) ─────────────────────────────
+    if (l.includes("แรงดัน") || l.includes("pressure") || l.includes("สุญญากาศ")) return "pressure";
 
-    // Leak / crack checks
+    // ── Leak / crack checks ─────────────────────────────────────────────────
     if (
         l.includes("รอยรั่ว") || l.includes("รอยแตก") || l.includes("รั่วซึม") ||
         l.includes("ตรวจรอย") || l.includes("leak") || l.includes("crack")
     ) return "leak";
 
-    // Sound checks
+    // ── Condition checks (parts, wiring, safety, general inspection) ──────────
+    if (
+        l.includes("ตรวจสภาพ") || l.includes("สภาพ") ||
+        l.includes("ตรวจซีล") || l.includes("ตรวจใบพัด") || l.includes("ตรวจใบมีด") ||
+        l.includes("ตรวจความไว") || l.includes("ตรวจการสึกหรอ") ||
+        l.includes("ตรวจการหมุน") || l.includes("ตรวจการเปิด-ปิด") || l.includes("ตรวจการทำงาน") ||
+        l.includes("ตรวจการ alignment") || l.includes("ตรวจ encoder") ||
+        l.includes("ตรวจสาย") || l.includes("ขั้วต่อ") || l.includes("ตรวจคอยล์") ||
+        l.includes("ตรวจ breaker") || l.includes("ตรวจ fuse") || l.includes("ตรวจ led") ||
+        l.includes("ตรวจ safety") || l.includes("ตรวจเบรก") || l.includes("ตรวจสลัก") ||
+        l.includes("ตรวจแคลมป์") || l.includes("ตรวจยาง") || l.includes("ตรวจ hook") ||
+        l.includes("ตรวจหัวสปริงเกอร์") || l.includes("ตรวจขอเอ็น") ||
+        l.includes("ตรวจคุณภาพ") || l.includes("ตรวจวันหมดอายุ") ||
+        l.includes("ตรวจหัวจ่าย") || l.includes("ตรวจแรงขัน") || l.includes("ตรวจระยะ") ||
+        l.includes("ตรวจตำแหน่ง") || l.includes("ตรวจบานพับ") || l.includes("ตรวจเฟือง") ||
+        l.includes("ตรวจ gauge") || l.includes("ตรวจ safety lip")
+    ) return "condition";
+
+    // ── Level checks ─────────────────────────────────────────────────────────
+    if (l.includes("ระดับน้ำมัน") || l.includes("ระดับน้ำ") || l.includes("ระดับ") || l.includes("level")) return "level";
+
+    // ── Sound checks ─────────────────────────────────────────────────────────
     if (l.includes("เสียงผิดปกติ") || l.includes("เสียง") || l.includes("noise") || l.includes("sound")) return "sound";
 
     // Done-type tasks (cleaning, lubrication, calibration, replacement actions)
@@ -74,10 +95,42 @@ function detectInputType(label: string): InputFieldType {
         l.includes("ทำความสะอาด") || l.includes("ล้าง") || l.includes("ฉีดสารหล่อลื่น") ||
         l.includes("หล่อลื่น") || l.includes("lubricate") || l.includes("clean") ||
         l.includes("calibrat") || l.includes("ไล่น้ำ") || l.includes("เปลี่ยนไส้กรอง") ||
-        l.includes("ทดสอบ") || l.includes("ตรวจ encoder") || l.includes("ตรวจพารามิเตอร์")
+        l.includes("ทดสอบ") || l.includes("ตรวจ encoder") || l.includes("ตรวจพารามิเตอร์") ||
+        // เพิ่ม done-type ใหม่
+        l.includes("ลับใบมีด") || l.includes("alignment") || l.includes("เปลี่ยนซีล") ||
+        l.includes("ไล่ตะกรัน") || l.includes("blow down") || l.includes("blow") ||
+        l.includes("descale") || l.includes("เติมเกลือ") || l.includes("เติมน้ำมัน") ||
+        l.includes("เปลี่ยนน้ำมัน") || l.includes("เปลี่ยนแบตเตอรี่") || l.includes("เปลี่ยนยาง") ||
+        l.includes("เปลี่ยนเมมเบรน") || l.includes("เปลี่ยนไส้") ||
+        l.includes("ทดสอบเดินเครื่อง") || l.includes("ทดสอบระบบ") ||
+        l.includes("auto drain") || l.includes("dosing") || l.includes("regeneration") ||
+        l.includes("เติมสารเคมี") || l.includes("เปลี่ยนหมึก")
     ) return "done";
 
     return "text";
+}
+
+// ===== Auto-fill default values by type =====
+function getDefaultValue(label: string): string {
+    const type = detectInputType(label);
+    switch (type) {
+        case "done":       return "เรียบร้อย";
+        case "condition":  return "สมบูรณ์";
+        case "tension":    return "เหมาะสม";
+        case "pressure":   return "ปกติ";
+        case "level":      return "ปกติ";
+        case "leak":       return "ไม่มี";
+        case "sound":      return "ปกติ";
+        // Numeric types — leave blank for actual measurement
+        case "current":
+        case "voltage":
+        case "vibration":
+        case "temperature":
+        case "resistance":
+        case "oil_change":
+        case "grease":
+        default:           return "";
+    }
 }
 
 // Encode multi-field (e.g. L1/L2/L3 or X/Y/Z) into a single string
@@ -192,6 +245,59 @@ function SmartChecklistInput({ item, value, onChange }: SmartChecklistInputProps
                     °C
                 </span>
             </div>
+        );
+    }
+
+    // --- Resistance (Ω) ---
+    if (type === "resistance") {
+        return (
+            <div className="flex items-center gap-2">
+                <input
+                    type="number" step="0.01" min="0" placeholder="0.00"
+                    value={value}
+                    onChange={(e) => onChange(e.target.value)}
+                    className="input-field text-xs flex-1 bg-black/20 min-w-0"
+                />
+                <span className="text-xs font-bold text-rose-400 shrink-0 px-2 py-1.5 bg-rose-400/10 border border-rose-400/30 rounded-md min-w-[40px] text-center">
+                    Ω
+                </span>
+            </div>
+        );
+    }
+
+    // --- Tension (ความตึง) ---
+    if (type === "tension") {
+        return (
+            <PresetButtons
+                options={[
+                    { label: "เหมาะสม", color: "text-green-400", bg: "bg-green-400/15", border: "border-green-400/40" },
+                    { label: "ตึงไป", color: "text-yellow-400", bg: "bg-yellow-400/15", border: "border-yellow-400/40" },
+                    { label: "หย่อนไป", color: "text-yellow-400", bg: "bg-yellow-400/15", border: "border-yellow-400/40" },
+                    { label: "ต้องปรับ", color: "text-red-400", bg: "bg-red-400/15", border: "border-red-400/40" },
+                ]}
+                value={value}
+                onChange={onChange}
+                allowCustom
+                customPlaceholder="หมายเหตุเพิ่มเติม..."
+            />
+        );
+    }
+
+    // --- Pressure (แรงดัน non-electrical) ---
+    if (type === "pressure") {
+        return (
+            <PresetButtons
+                options={[
+                    { label: "ปกติ", color: "text-green-400", bg: "bg-green-400/15", border: "border-green-400/40" },
+                    { label: "สูงไป", color: "text-yellow-400", bg: "bg-yellow-400/15", border: "border-yellow-400/40" },
+                    { label: "ต่ำไป", color: "text-yellow-400", bg: "bg-yellow-400/15", border: "border-yellow-400/40" },
+                    { label: "ต้องตรวจสอบ", color: "text-red-400", bg: "bg-red-400/15", border: "border-red-400/40" },
+                ]}
+                value={value}
+                onChange={onChange}
+                allowCustom
+                customPlaceholder="ระบุค่าแรงดัน..."
+            />
         );
     }
 
@@ -411,10 +517,13 @@ function TypeHintBadge({ type }: { type: InputFieldType }) {
     const map: Partial<Record<InputFieldType, { label: string; color: string; bg: string; border: string }>> = {
         current:     { label: "หน่วย: A",          color: "text-accent-blue",  bg: "bg-accent-blue/10",  border: "border-accent-blue/20" },
         temperature: { label: "หน่วย: °C",          color: "text-orange-400",   bg: "bg-orange-400/10",   border: "border-orange-400/20" },
+        resistance:  { label: "หน่วย: Ω",           color: "text-rose-400",     bg: "bg-rose-400/10",     border: "border-rose-400/20" },
         voltage:     { label: "L1, L2, L3 (V)",    color: "text-yellow-400",   bg: "bg-yellow-400/10",   border: "border-yellow-400/20" },
         vibration:   { label: "X, Y, Z (mm/s)",    color: "text-purple-400",   bg: "bg-purple-400/10",   border: "border-purple-400/20" },
         oil_change:  { label: "ปริมาณ (ลิตร)",       color: "text-amber-500",    bg: "bg-amber-500/10",    border: "border-amber-500/20" },
         grease:      { label: "ปริมาณ (g)",          color: "text-amber-300",    bg: "bg-amber-300/10",    border: "border-amber-300/20" },
+        tension:     { label: "เลือกความตึง",         color: "text-teal-400",     bg: "bg-teal-400/10",     border: "border-teal-400/20" },
+        pressure:    { label: "เลือกแรงดัน",          color: "text-teal-400",     bg: "bg-teal-400/10",     border: "border-teal-400/20" },
         condition:   { label: "เลือกสภาพ",           color: "text-cyan-400",     bg: "bg-cyan-400/10",     border: "border-cyan-400/20" },
         level:       { label: "เลือกระดับ",           color: "text-cyan-400",     bg: "bg-cyan-400/10",     border: "border-cyan-400/20" },
         leak:        { label: "เลือกสถานะ",           color: "text-cyan-400",     bg: "bg-cyan-400/10",     border: "border-cyan-400/20" },
@@ -456,7 +565,15 @@ export default function PMExecutionModal({ isOpen, onClose, plan, onSuccess }: P
     const handleChecklistChange = (index: number, completed: boolean, value?: string) => {
         setChecklistResults(prev => {
             const newResults = [...prev];
-            newResults[index] = { completed, value: value !== undefined ? value : newResults[index]?.value || "" };
+            const currentValue = newResults[index]?.value || "";
+
+            // Auto-fill default when checking an item that has no value yet
+            let finalValue = value !== undefined ? value : currentValue;
+            if (completed && !currentValue && value === undefined) {
+                finalValue = getDefaultValue(plan.checklistItems?.[index] || "");
+            }
+
+            newResults[index] = { completed, value: finalValue };
             return newResults;
         });
     };

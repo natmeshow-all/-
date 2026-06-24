@@ -5,7 +5,7 @@ import Header from "../components/Header";
 import MobileNav from "../components/MobileNav";
 import { useLanguage } from "../contexts/LanguageContext";
 import { useAuth } from "../contexts/AuthContext";
-import { CalendarIcon, ClockIcon, SettingsIcon, AlertTriangleIcon, BoxIcon, FolderIcon, CheckCircleIcon, PlusIcon, EditIcon, TrashIcon, SearchIcon } from "../components/ui/Icons";
+import { CalendarIcon, ClockIcon, SettingsIcon, AlertTriangleIcon, BoxIcon, FolderIcon, CheckCircleIcon, PlusIcon, EditIcon, TrashIcon, SearchIcon, MapPinIcon } from "../components/ui/Icons";
 import { getPMPlans, deletePMPlan, getMachines } from "../lib/firebaseService";
 import { PMPlan, Machine } from "../types";
 import PMExecutionModal from "../components/pm/PMExecutionModal";
@@ -415,6 +415,12 @@ export default function SchedulePage() {
                                                         );
                                                     })()}
                                                     <p className="text-xs text-text-muted leading-relaxed mt-0.5 pr-10">{item.taskName}</p>
+                                                    {item.customLocation && (
+                                                        <div className="flex items-center gap-1 mt-1">
+                                                            <MapPinIcon size={11} className="text-accent-cyan shrink-0" />
+                                                            <span className="text-[11px] text-accent-cyan font-medium">{item.customLocation}</span>
+                                                        </div>
+                                                    )}
                                                 </div>
                                             </div>
 
