@@ -639,14 +639,20 @@ export default function PMExecutionModal({ isOpen, onClose, plan, onSuccess }: P
             let telegramImageBase64 = undefined;
             if (reportCardRef.current) {
                 try {
+                    // Slight delay to ensure DOM is fully painted
+                    await new Promise(r => setTimeout(r, 100));
                     const canvas = await html2canvas(reportCardRef.current, {
-                        scale: 2, // high resolution
+                        scale: 1.5, // Reduced from 2 to avoid payload limits
                         backgroundColor: "#0F172A",
+                        useCORS: true,
+                        logging: true
                     });
-                    telegramImageBase64 = canvas.toDataURL("image/png");
+                    telegramImageBase64 = canvas.toDataURL("image/jpeg", 0.8);
                 } catch (imgError) {
                     console.error("Failed to generate report image:", imgError);
                 }
+            } else {
+                console.warn("reportCardRef is null, cannot generate image");
             }
 
             await completePMTask(plan.id, {
@@ -843,7 +849,7 @@ export default function PMExecutionModal({ isOpen, onClose, plan, onSuccess }: P
             </div>
             
             {/* Hidden Report Card for Telegram Export */}
-            <div className="absolute top-[-9999px] left-[-9999px] opacity-0 pointer-events-none">
+            <div style={{ position: 'fixed', top: '-10000px', left: '-10000px', zIndex: -9999 }}>
                 {isOpen && (
                     <PMReportCard 
                         ref={reportCardRef}
