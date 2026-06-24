@@ -246,6 +246,14 @@ export default function SystemSettingsTab() {
                         disabled={saving}
                     />
 
+                    <SettingToggle
+                        label={language === 'th' ? 'เปิดการแจ้งเตือน Telegram' : 'Enable Telegram Notifications'}
+                        description={language === 'th' ? 'แจ้งเตือนเมื่อปิดงาน PM เข้า Telegram' : 'Notify via Telegram on PM completion'}
+                        checked={settings?.telegramNotificationsEnabled ?? false}
+                        onChange={() => handleToggle('telegramNotificationsEnabled')}
+                        disabled={saving}
+                    />
+
                     <div className="pt-2 border-t border-white/5 space-y-2">
                         <label className="text-sm font-medium text-text-primary block">
                             {language === 'th' ? 'เก็บข้อมูลย้อนหลัง (วัน)' : 'Data Retention (Days)'}

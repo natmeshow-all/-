@@ -21,8 +21,8 @@ import { COLLECTIONS } from "./constants";
 import { getMachines } from "./machineService";
 import { incrementDashboardStat } from "./analyticsService";
 import { lineService } from "./lineService";
-
-
+import { telegramService } from "./telegramService";
+import { getSystemSettings } from "./systemService";
 // ==================== HELPERS ====================
 
 // Helper to remove undefined and null keys which Firebase doesn't like
@@ -601,7 +601,7 @@ export const completePMTask = async (
                 updatedAt: now.toISOString(),
             });
 
-            // Trigger Line Notification
+            // Trigger Notifications
             try {
                 // Fetch full record data for notification
                 const finalRecord: MaintenanceRecord = {
@@ -611,9 +611,19 @@ export const completePMTask = async (
                     updatedAt: new Date(recordData.updatedAt),
                 } as MaintenanceRecord;
 
-                await lineService.sendPMCompletionNotification(finalRecord);
+                const settings = await getSystemSettings();
+                const lineEnabled = settings?.notificationsEnabled ?? true; // Default true if not set
+                const telegramEnabled = settings?.telegramNotificationsEnabled ?? false;
+
+                if (lineEnabled) {
+                    await lineService.sendPMCompletionNotification(finalRecord);
+                }
+                
+                if (telegramEnabled) {
+                    await telegramService.sendPMCompletionNotification(finalRecord);
+                }
             } catch (notifyError) {
-                console.error("Failed to send Line notification, but record was saved:", notifyError);
+                console.error("Failed to send notification, but record was saved:", notifyError);
             }
         }
     } catch (error) {

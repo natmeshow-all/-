@@ -438,6 +438,7 @@ export interface SystemSettings {
     requireApproval: boolean;
     dataRetentionDays: number;
     notificationsEnabled: boolean;
+    telegramNotificationsEnabled?: boolean;
     lastBackupDate?: string;
     announcement?: {
         enabled: boolean;
