@@ -490,6 +490,7 @@ export default function MaintenancePage() {
                             const hasMotorData = record.motorGearData && (record.motorGearData.motorSize || record.motorGearData.temperature || record.motorGearData.currentIdle || record.motorGearData.currentLoad || record.motorGearData.voltageL1);
                             const hasShaftData = record.motorGearData?.shaftData && (record.motorGearData.shaftData.shaftBend || record.motorGearData.shaftData.dialGauge);
                             const hasVibrationData = record.motorGearData && (record.motorGearData.vibrationX?.value || record.motorGearData.vibrationY?.value || record.motorGearData.vibrationZ?.value);
+                            const machine = allMachines.find(m => m.id === record.machineId || m.name === record.machineName);
 
                             return (
                                 <div
@@ -515,8 +516,11 @@ export default function MaintenancePage() {
                                             <div className="flex items-start justify-between gap-2">
                                                 <div className="min-w-0">
                                                     <div className="flex items-center gap-2 mb-0.5">
-                                                        <h3 className={`font-bold text-sm truncate ${isExpanded ? 'text-primary' : 'text-text-primary'}`}>
-                                                            {record.machineName}
+                                                        <h3 className={`font-bold text-sm truncate ${isExpanded ? 'text-primary' : 'text-text-primary'} flex items-baseline gap-1.5`}>
+                                                            <span>{record.machineName}</span>
+                                                            {machine?.code && (
+                                                                <span className="text-text-muted font-normal text-xs font-mono">({machine.code})</span>
+                                                            )}
                                                         </h3>
                                                         {/* Status Dot */}
                                                         <span className={`w-2 h-2 rounded-full ${record.status === 'completed' ? 'bg-accent-green shadow-[0_0_8px_rgba(34,197,94,0.4)]' : 'bg-accent-yellow'}`}></span>
@@ -524,9 +528,9 @@ export default function MaintenancePage() {
 
                                                     {/* Description & Location */}
                                                     <div className="flex items-center gap-2 text-xs text-text-muted">
-                                                        {(allMachines.find(m => m.id === record.machineId)?.location) && (
+                                                        {(record.location || machine?.location || machine?.Location) && (
                                                             <span className="font-bold text-[10px] uppercase opacity-80 bg-white/5 px-1 rounded border border-white/10">
-                                                                {allMachines.find(m => m.id === record.machineId)?.location}
+                                                                {record.location || machine?.location || machine?.Location}
                                                             </span>
                                                         )}
                                                         <p className="truncate opacity-70 max-w-[150px] sm:max-w-xs">
@@ -607,6 +611,12 @@ export default function MaintenancePage() {
                                                             <span className="text-text-muted">ช่าง:</span>
                                                             <span className="text-text-primary truncate ml-1">{record.technician}</span>
                                                         </div>
+                                                        {machine?.code && (
+                                                            <div className="flex items-center justify-between col-span-2">
+                                                                <span className="text-text-muted">รหัสเครื่องจักร:</span>
+                                                                <span className="text-text-primary font-mono">{machine.code}</span>
+                                                            </div>
+                                                        )}
                                                         {record.duration && (
                                                             <div className="flex items-center justify-between col-span-2">
                                                                 <span className="text-text-muted">ระยะเวลา:</span>

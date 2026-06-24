@@ -225,20 +225,27 @@ export default function AuditPage() {
                                     <p className="text-text-muted">{t("msgNoData")}</p>
                                 </div>
                             ) : (
-                                filteredRecords.slice(0, 10).map((record) => (
-                                    <div key={record.id} className="card-glass p-4 hover:border-white/20 hover:translate-x-1 hover:shadow-lg transition-all duration-300 group cursor-pointer">
-                                        <div className="flex gap-4">
-                                            <div className="w-16 h-16 rounded-lg bg-white/5 flex items-center justify-center flex-none border border-dashed border-white/10">
-                                                <WrenchIcon size={20} className="text-white/20" />
-                                            </div>
-                                            <div className="flex-1 min-w-0">
-                                                <div className="flex items-start justify-between gap-2">
-                                                    <h4 className="font-bold text-sm truncate">{record.machineName}</h4>
-                                                    <span className={`text-[9px] px-1.5 py-0.5 rounded uppercase font-black ${record.type === 'preventive' ? 'bg-accent-cyan/20 text-accent-cyan' : 'bg-accent-yellow/20 text-accent-yellow'
-                                                        }`}>
-                                                        {t(`type${record.type.charAt(0).toUpperCase() + record.type.slice(1)}` as any)}
-                                                    </span>
+                                filteredRecords.slice(0, 10).map((record) => {
+                                    const machine = machines.find(m => m.id === record.machineId || m.name === record.machineName);
+                                    return (
+                                        <div key={record.id} className="card-glass p-4 hover:border-white/20 hover:translate-x-1 hover:shadow-lg transition-all duration-300 group cursor-pointer">
+                                            <div className="flex gap-4">
+                                                <div className="w-16 h-16 rounded-lg bg-white/5 flex items-center justify-center flex-none border border-dashed border-white/10">
+                                                    <WrenchIcon size={20} className="text-white/20" />
                                                 </div>
+                                                <div className="flex-1 min-w-0">
+                                                    <div className="flex items-start justify-between gap-2">
+                                                        <h4 className="font-bold text-sm truncate flex items-baseline gap-1.5">
+                                                            <span>{record.machineName}</span>
+                                                            {machine?.code && (
+                                                                <span className="text-text-muted font-normal text-xs font-mono">({machine.code})</span>
+                                                            )}
+                                                        </h4>
+                                                        <span className={`text-[9px] px-1.5 py-0.5 rounded uppercase font-black ${record.type === 'preventive' ? 'bg-accent-cyan/20 text-accent-cyan' : 'bg-accent-yellow/20 text-accent-yellow'
+                                                            }`}>
+                                                            {t(`type${record.type.charAt(0).toUpperCase() + record.type.slice(1)}` as any)}
+                                                        </span>
+                                                    </div>
                                                 <p className="text-xs text-text-muted line-clamp-1 mt-0.5">{record.description}</p>
                                                 <div className="flex items-center gap-3 mt-2">
                                                     <div className="flex items-center gap-1 text-[10px] text-text-muted">
@@ -253,8 +260,8 @@ export default function AuditPage() {
                                             </div>
                                         </div>
                                     </div>
-                                ))
-                            )}
+                                    );
+                                }))}
                         </div>
                     </div>
 
