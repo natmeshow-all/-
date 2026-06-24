@@ -8,7 +8,7 @@ import { PMPlan } from "../../types";
 import { CheckCircleIcon, ActivityIcon, FileTextIcon, ClockIcon } from "../ui/Icons";
 import { completePMTask, addMaintenanceRecord } from "../../lib/firebaseService";
 import { useToast } from "../../contexts/ToastContext";
-import html2canvas from "html2canvas";
+import { toJpeg } from "html-to-image";
 import { PMReportCard } from "./PMReportCard";
 
 interface PMExecutionModalProps {
@@ -640,14 +640,17 @@ export default function PMExecutionModal({ isOpen, onClose, plan, onSuccess }: P
             if (reportCardRef.current) {
                 try {
                     // Slight delay to ensure DOM is fully painted
-                    await new Promise(r => setTimeout(r, 100));
-                    const canvas = await html2canvas(reportCardRef.current, {
-                        scale: 1.5, // Reduced from 2 to avoid payload limits
+                    await new Promise(r => setTimeout(r, 150));
+                    telegramImageBase64 = await toJpeg(reportCardRef.current, {
+                        quality: 0.85,
                         backgroundColor: "#0F172A",
-                        useCORS: true,
-                        logging: true
+                        canvasWidth: 800 * 1.5,
+                        canvasHeight: reportCardRef.current.offsetHeight * 1.5,
+                        style: {
+                            transform: 'scale(1.5)',
+                            transformOrigin: 'top left',
+                        }
                     });
-                    telegramImageBase64 = canvas.toDataURL("image/jpeg", 0.8);
                 } catch (imgError) {
                     console.error("Failed to generate report image:", imgError);
                 }
@@ -849,7 +852,7 @@ export default function PMExecutionModal({ isOpen, onClose, plan, onSuccess }: P
             </div>
             
             {/* Hidden Report Card for Telegram Export */}
-            <div style={{ position: 'fixed', top: '-10000px', left: '-10000px', zIndex: -9999 }}>
+            <div style={{ position: 'absolute', top: 0, left: 0, zIndex: -100, opacity: 0.01, pointerEvents: 'none' }}>
                 {isOpen && (
                     <PMReportCard 
                         ref={reportCardRef}
