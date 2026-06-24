@@ -496,12 +496,54 @@ export default function MaintenancePage() {
                 {/* Maintenance Records */}
                 {!loading && (
                     <div className="space-y-4">
+                        {/* Helper: calculate efficiency from checklist */}
                         {filteredRecords.map((record, index) => {
                             const isExpanded = expandedRecords.has(record.id);
                             const hasMotorData = record.motorGearData && (record.motorGearData.motorSize || record.motorGearData.temperature || record.motorGearData.currentIdle || record.motorGearData.currentLoad || record.motorGearData.voltageL1);
                             const hasShaftData = record.motorGearData?.shaftData && (record.motorGearData.shaftData.shaftBend || record.motorGearData.shaftData.dialGauge);
                             const hasVibrationData = record.motorGearData && (record.motorGearData.vibrationX?.value || record.motorGearData.vibrationY?.value || record.motorGearData.vibrationZ?.value);
                             const machine = allMachines.find(m => m.id === record.machineId || m.name === record.machineName);
+
+                            // === Efficiency Calculation ===
+                            const scoreValue = (val: string): number => {
+                                const v = val.toLowerCase();
+                                if (v.includes('ถึงกำหนดเปลี่ยน')) return 10;
+                                if (v.includes('ผิดปกติ')) return 15;
+                                if (v.includes('ไม่มี')) return 20;
+                                if (v.includes('ต้องเติม')) return 30;
+                                if (v.includes('เฝ้าระวัง')) return 50;
+                                if (v.includes('พอใช้')) return 65;
+                                if (v.includes('เหมาะสม')) return 80;
+                                if (v.includes('สมบูรณ์') || v.includes('ปกติ') || v.includes('เรียบร้อย') || v.includes('ไม่มีรอย')) return 100;
+                                if (val !== '') return 75; // has a numeric/custom value → generally OK
+                                return 0; // empty = not assessed
+                            };
+
+                            const checklistItems = record.checklist || [];
+                            const assessed = checklistItems.filter(c => c.value && c.value.trim() !== '');
+                            const efficiencyPct = assessed.length > 0
+                                ? Math.round(assessed.reduce((sum, c) => sum + scoreValue(c.value || ''), 0) / assessed.length)
+                                : (record.status === 'completed' ? 100 : 0);
+
+                            // Compare with previous record of same machine
+                            const prevRecord = allFetchedRecords
+                                .filter(r => r.machineId === record.machineId && r.id !== record.id && (r.checklist?.length ?? 0) > 0)
+                                .sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime())[0];
+                            let prevEfficiency: number | null = null;
+                            if (prevRecord?.checklist) {
+                                const prevAssessed = prevRecord.checklist.filter(c => c.value && c.value.trim() !== '');
+                                if (prevAssessed.length > 0) {
+                                    prevEfficiency = Math.round(prevAssessed.reduce((sum, c) => sum + scoreValue(c.value || ''), 0) / prevAssessed.length);
+                                }
+                            }
+                            const trend = prevEfficiency !== null ? efficiencyPct - prevEfficiency : null;
+
+                            // Ring SVG params
+                            const radius = 22;
+                            const circ = 2 * Math.PI * radius;
+                            const pct = Math.min(100, Math.max(0, efficiencyPct));
+                            const strokeDashoffset = circ * (1 - pct / 100);
+                            const ringColor = pct >= 80 ? '#10b981' : pct >= 55 ? '#fbbf24' : '#ef4444';
 
                             return (
                                 <div
@@ -552,14 +594,46 @@ export default function MaintenancePage() {
                                                     </div>
                                                 </div>
 
-                                                {/* Right Data */}
-                                                <div className="flex flex-col items-end gap-1 flex-shrink-0">
-                                                    <span className={`badge text-[10px] py-0.5 px-2 font-bold uppercase tracking-wider ${getStatusColor(record.status)}`}>
-                                                        {getStatusText(record.status)}
-                                                    </span>
-                                                    <div className="flex items-center text-[10px] text-text-muted gap-1">
-                                                        <CalendarIcon size={10} />
-                                                        <span>{mounted ? formatDateThai(record.date) : '--/--'}</span>
+                                                {/* Right Data: Status + Date + Efficiency Ring */}
+                                                <div className="flex items-center gap-3 flex-shrink-0">
+                                                    {/* Efficiency Ring */}
+                                                    {assessed.length > 0 && (
+                                                        <div className="flex flex-col items-center" title={`ประสิทธิภาพ: ${efficiencyPct}%`}>
+                                                            <svg width="60" height="60" viewBox="0 0 60 60">
+                                                                {/* Track */}
+                                                                <circle cx="30" cy="30" r={radius} fill="none" stroke="rgba(255,255,255,0.06)" strokeWidth="5" />
+                                                                {/* Progress */}
+                                                                <circle
+                                                                    cx="30" cy="30" r={radius}
+                                                                    fill="none"
+                                                                    stroke={ringColor}
+                                                                    strokeWidth="5"
+                                                                    strokeLinecap="round"
+                                                                    strokeDasharray={circ}
+                                                                    strokeDashoffset={strokeDashoffset}
+                                                                    transform="rotate(-90 30 30)"
+                                                                    style={{ transition: 'stroke-dashoffset 0.6s ease', filter: `drop-shadow(0 0 4px ${ringColor}80)` }}
+                                                                />
+                                                                <text x="30" y="27" textAnchor="middle" dominantBaseline="middle" fontSize="11" fontWeight="700" fill={ringColor}>
+                                                                    {efficiencyPct}%
+                                                                </text>
+                                                                {trend !== null && (
+                                                                    <text x="30" y="39" textAnchor="middle" dominantBaseline="middle" fontSize="8" fill={trend >= 0 ? '#10b981' : '#ef4444'}>
+                                                                        {trend > 0 ? `+${trend}` : trend}
+                                                                    </text>
+                                                                )}
+                                                            </svg>
+                                                            <span className="text-[9px] text-text-muted -mt-1">ประสิทธิภาพ</span>
+                                                        </div>
+                                                    )}
+                                                    <div className="flex flex-col items-end gap-1">
+                                                        <span className={`badge text-[10px] py-0.5 px-2 font-bold uppercase tracking-wider ${getStatusColor(record.status)}`}>
+                                                            {getStatusText(record.status)}
+                                                        </span>
+                                                        <div className="flex items-center text-[10px] text-text-muted gap-1">
+                                                            <CalendarIcon size={10} />
+                                                            <span>{mounted ? formatDateThai(record.date) : '--/--'}</span>
+                                                        </div>
                                                     </div>
                                                 </div>
                                             </div>
@@ -607,6 +681,50 @@ export default function MaintenancePage() {
                                     {/* Expandable Details */}
                                     {isExpanded && (
                                         <div className="mt-2 space-y-2 animate-fade-in bg-black/10 -mx-4 px-4 py-3 border-t border-white/5">
+
+                                            {/* === Efficiency Analysis Banner === */}
+                                            {assessed.length > 0 && (
+                                                <div className="rounded-xl border border-white/10 overflow-hidden">
+                                                    <div className="flex items-center justify-between px-4 py-2.5 bg-white/5">
+                                                        <div className="flex items-center gap-2">
+                                                            <ActivityIcon size={14} className="text-accent-cyan" />
+                                                            <span className="text-sm font-bold text-white">ประสิทธิภาพเครื่องจักร</span>
+                                                            {trend !== null && (
+                                                                <span className={`text-[11px] font-semibold px-2 py-0.5 rounded-full ${trend >= 0 ? 'bg-accent-green/15 text-accent-green' : 'bg-accent-red/15 text-accent-red'}`}>
+                                                                    {trend > 0 ? `▲ ดีขึ้น +${trend}%` : trend < 0 ? `▼ ลดลง ${trend}%` : '= เท่าเดิม'}
+                                                                </span>
+                                                            )}
+                                                        </div>
+                                                        <div className="flex items-center gap-2">
+                                                            <span className="text-xs text-text-muted">เทียบครั้งก่อน: </span>
+                                                            <span className="text-xs font-bold" style={{color: ringColor}}>{efficiencyPct}%</span>
+                                                        </div>
+                                                    </div>
+                                                    {/* Problem items */}
+                                                    {assessed.filter(c => scoreValue(c.value || '') < 80).length > 0 && (
+                                                        <div className="px-4 py-3 bg-black/20 border-t border-white/5">
+                                                            <p className="text-[11px] text-text-muted mb-2 font-semibold uppercase tracking-wider">⚠ รายการที่ต้องดูแล</p>
+                                                            <div className="flex flex-wrap gap-1.5">
+                                                                {assessed
+                                                                    .filter(c => scoreValue(c.value || '') < 80)
+                                                                    .sort((a, b) => scoreValue(a.value || '') - scoreValue(b.value || ''))
+                                                                    .map((c, i) => {
+                                                                        const s = scoreValue(c.value || '');
+                                                                        const col = s < 30 ? 'bg-accent-red/15 text-accent-red border-accent-red/30' : s < 60 ? 'bg-accent-yellow/15 text-accent-yellow border-accent-yellow/30' : 'bg-accent-blue/15 text-accent-blue border-accent-blue/30';
+                                                                        return (
+                                                                            <div key={i} className={`flex items-center gap-1.5 px-2 py-1 rounded-lg border text-[10px] font-medium ${col}`}>
+                                                                                <span className="max-w-[120px] truncate opacity-80">{c.item}</span>
+                                                                                <span className="font-bold shrink-0">{c.value}</span>
+                                                                            </div>
+                                                                        );
+                                                                    })
+                                                                }
+                                                            </div>
+                                                        </div>
+                                                    )}
+                                                </div>
+                                            )}
+
                                             {/* Section 1: ข้อมูลทั่วไป & Motor/Gear (Grid Layout) */}
                                             <div className="grid grid-cols-1 md:grid-cols-2 gap-2">
                                                 {/* ข้อมูลทั่วไป */}
