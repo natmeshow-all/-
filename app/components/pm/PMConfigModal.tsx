@@ -262,8 +262,9 @@ export default function PMConfigModal({ isOpen, onClose, machine, plan, onSucces
     };
 
     const handleAddSuggestedItem = (item: string) => {
-        if (!checklistItems.includes(item)) {
-            setChecklistItems([...checklistItems, item]);
+        const finalItem = selectedPartType ? `${selectedPartType}: ${item}` : item;
+        if (!checklistItems.includes(finalItem)) {
+            setChecklistItems([...checklistItems, finalItem]);
         }
     };
 
@@ -438,7 +439,8 @@ export default function PMConfigModal({ isOpen, onClose, machine, plan, onSucces
                                 <p className="text-[10px] text-accent-blue font-bold mb-2">{t("labelSuggestedItems")}</p>
                                 <div className="flex flex-wrap gap-2">
                                     {suggestedItems.map((item, idx) => {
-                                        const isAdded = checklistItems.includes(item);
+                                        const finalItem = selectedPartType ? `${selectedPartType}: ${item}` : item;
+                                        const isAdded = checklistItems.includes(finalItem);
                                         return (
                                             <button
                                                 key={idx}
