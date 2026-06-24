@@ -554,15 +554,45 @@ export default function MaintenancePage() {
                                 >
                                     {/* Compact Header - Clickable Area */}
                                     <div className="flex items-start gap-3 relative">
-                                        {/* Icon Box */}
-                                        <div className={`w-10 h-10 rounded-xl flex items-center justify-center flex-shrink-0 shadow-inner
-                                            ${record.type === 'preventive' ? 'bg-accent-blue/10 text-accent-blue' :
-                                                record.type === 'corrective' ? 'bg-accent-red/10 text-accent-red' :
-                                                    'bg-accent-green/10 text-accent-green'}`}>
-                                            {record.type === 'preventive' ? <RefreshCwIcon size={20} /> :
-                                                record.type === 'corrective' ? <AlertTriangleIcon size={20} /> :
-                                                    <WrenchIcon size={20} />}
-                                        </div>
+                                        {/* Left Side: Efficiency Ring or Icon Box */}
+                                        {assessed.length > 0 ? (
+                                            <div className="flex flex-col items-center flex-shrink-0" title={`ประสิทธิภาพ: ${efficiencyPct}%`}>
+                                                <svg width="48" height="48" viewBox="0 0 60 60">
+                                                    {/* Track */}
+                                                    <circle cx="30" cy="30" r={radius} fill="none" stroke="rgba(255,255,255,0.06)" strokeWidth="5" />
+                                                    {/* Progress */}
+                                                    <circle
+                                                        cx="30" cy="30" r={radius}
+                                                        fill="none"
+                                                        stroke={ringColor}
+                                                        strokeWidth="5"
+                                                        strokeLinecap="round"
+                                                        strokeDasharray={circ}
+                                                        strokeDashoffset={strokeDashoffset}
+                                                        transform="rotate(-90 30 30)"
+                                                        style={{ transition: 'stroke-dashoffset 0.6s ease', filter: `drop-shadow(0 0 4px ${ringColor}80)` }}
+                                                    />
+                                                    <text x="30" y="27" textAnchor="middle" dominantBaseline="middle" fontSize="13" fontWeight="700" fill={ringColor}>
+                                                        {efficiencyPct}%
+                                                    </text>
+                                                    {trend !== null && (
+                                                        <text x="30" y="39" textAnchor="middle" dominantBaseline="middle" fontSize="9" fill={trend >= 0 ? '#10b981' : '#ef4444'}>
+                                                            {trend > 0 ? `+${trend}` : trend}
+                                                        </text>
+                                                    )}
+                                                </svg>
+                                                <span className="text-[8px] text-text-muted mt-0.5">ประสิทธิภาพ</span>
+                                            </div>
+                                        ) : (
+                                            <div className={`w-10 h-10 rounded-xl flex items-center justify-center flex-shrink-0 shadow-inner
+                                                ${record.type === 'preventive' ? 'bg-accent-blue/10 text-accent-blue' :
+                                                    record.type === 'corrective' ? 'bg-accent-red/10 text-accent-red' :
+                                                        'bg-accent-green/10 text-accent-green'}`}>
+                                                {record.type === 'preventive' ? <RefreshCwIcon size={20} /> :
+                                                    record.type === 'corrective' ? <AlertTriangleIcon size={20} /> :
+                                                        <WrenchIcon size={20} />}
+                                            </div>
+                                        )}
 
                                         {/* Main Content */}
                                         <div className="flex-1 min-w-0 pt-0.5">
@@ -594,46 +624,14 @@ export default function MaintenancePage() {
                                                     </div>
                                                 </div>
 
-                                                {/* Right Data: Status + Date + Efficiency Ring */}
-                                                <div className="flex items-center gap-3 flex-shrink-0">
-                                                    {/* Efficiency Ring */}
-                                                    {assessed.length > 0 && (
-                                                        <div className="flex flex-col items-center" title={`ประสิทธิภาพ: ${efficiencyPct}%`}>
-                                                            <svg width="60" height="60" viewBox="0 0 60 60">
-                                                                {/* Track */}
-                                                                <circle cx="30" cy="30" r={radius} fill="none" stroke="rgba(255,255,255,0.06)" strokeWidth="5" />
-                                                                {/* Progress */}
-                                                                <circle
-                                                                    cx="30" cy="30" r={radius}
-                                                                    fill="none"
-                                                                    stroke={ringColor}
-                                                                    strokeWidth="5"
-                                                                    strokeLinecap="round"
-                                                                    strokeDasharray={circ}
-                                                                    strokeDashoffset={strokeDashoffset}
-                                                                    transform="rotate(-90 30 30)"
-                                                                    style={{ transition: 'stroke-dashoffset 0.6s ease', filter: `drop-shadow(0 0 4px ${ringColor}80)` }}
-                                                                />
-                                                                <text x="30" y="27" textAnchor="middle" dominantBaseline="middle" fontSize="11" fontWeight="700" fill={ringColor}>
-                                                                    {efficiencyPct}%
-                                                                </text>
-                                                                {trend !== null && (
-                                                                    <text x="30" y="39" textAnchor="middle" dominantBaseline="middle" fontSize="8" fill={trend >= 0 ? '#10b981' : '#ef4444'}>
-                                                                        {trend > 0 ? `+${trend}` : trend}
-                                                                    </text>
-                                                                )}
-                                                            </svg>
-                                                            <span className="text-[9px] text-text-muted -mt-1">ประสิทธิภาพ</span>
-                                                        </div>
-                                                    )}
-                                                    <div className="flex flex-col items-end gap-1">
-                                                        <span className={`badge text-[10px] py-0.5 px-2 font-bold uppercase tracking-wider ${getStatusColor(record.status)}`}>
-                                                            {getStatusText(record.status)}
-                                                        </span>
-                                                        <div className="flex items-center text-[10px] text-text-muted gap-1">
-                                                            <CalendarIcon size={10} />
-                                                            <span>{mounted ? formatDateThai(record.date) : '--/--'}</span>
-                                                        </div>
+                                                {/* Right Data: Status + Date */}
+                                                <div className="flex flex-col items-end gap-1 flex-shrink-0">
+                                                    <span className={`badge text-[10px] py-0.5 px-2 font-bold uppercase tracking-wider ${getStatusColor(record.status)}`}>
+                                                        {getStatusText(record.status)}
+                                                    </span>
+                                                    <div className="flex items-center text-[10px] text-text-muted gap-1">
+                                                        <CalendarIcon size={10} />
+                                                        <span>{mounted ? formatDateThai(record.date) : '--/--'}</span>
                                                     </div>
                                                 </div>
                                             </div>
