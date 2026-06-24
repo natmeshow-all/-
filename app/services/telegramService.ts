@@ -61,7 +61,7 @@ export const telegramService = {
         let checklistText = '<i>ไม่มีรายการตรวจสอบที่ดำเนินการ</i>';
         if (completedChecklist.length > 0) {
             checklistText = completedChecklist
-                .map(item => `✓ <b>${item.item}</b>${item.value ? '  👉  <code>' + item.value + '</code>' : ''}`)
+                .map(item => `✓ <b>${item.item}</b>${item.value ? ' 👉 <i>' + item.value + '</i>' : ''}`)
                 .join('\n');
         }
 
@@ -69,19 +69,21 @@ export const telegramService = {
             record.type === 'corrective' ? 'ซ่อมบำรุงแก้ไข' : 'การบำรุงรักษา';
 
         const locationText = record.Location || record.location || 'ไม่ระบุ';
+        const machineIdText = record.machineId || 'ไม่ระบุ';
 
-        // Build the modern LINE-style HTML message
+        // Build the modern LINE-style HTML message (using standard fonts instead of monospace)
         return `
-<b>🔹 ${record.machineName}</b>
-<pre>งาน: ${record.description || "PM: Motor"}</pre>
-👤 <i>${record.technician}</i>
+<b>🔹 รหัสเครื่อง:</b> ${machineIdText}
+<b>🔹 ชื่อเครื่องจักร:</b> ${record.machineName}
+<b>📝 ชื่องาน:</b> <i>${record.description || "PM: Motor"}</i>
+<b>👤 ช่าง:</b> <i>${record.technician}</i>
 
 ━━━━━━━━━━━━━━━━━━━
 
 📋 <b>ข้อมูลทั่วไป</b>
-<blockquote><b>ประเภท:</b> <code>${maintenanceType}</code>
-<b>วันที่:</b> <code>${dateStr}</code>
-<b>สถานที่:</b> <code>${locationText}</code></blockquote>
+<blockquote><b>ประเภท:</b> <i>${maintenanceType}</i>
+<b>วันที่:</b> <i>${dateStr}</i>
+<b>สถานที่:</b> <i>${locationText}</i></blockquote>
 
 ✓ <b>รายการตรวจสอบ</b>
 <blockquote>${checklistText}</blockquote>
