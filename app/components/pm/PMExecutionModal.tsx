@@ -8,6 +8,7 @@ import { PMPlan } from "../../types";
 import { CheckCircleIcon, ActivityIcon, FileTextIcon, ClockIcon } from "../ui/Icons";
 import { completePMTask, addMaintenanceRecord } from "../../lib/firebaseService";
 import { useToast } from "../../contexts/ToastContext";
+import PartReplacementPlanModal from "./PartReplacementPlanModal";
 import { toJpeg } from "html-to-image";
 import { PMReportCard } from "./PMReportCard";
 
@@ -439,15 +440,10 @@ function SmartChecklistInput({ item, value, onChange, onQueueReplacement, isQueu
                     <button
                         type="button"
                         onClick={onQueueReplacement}
-                        disabled={isQueued}
-                        className={`text-[11px] px-3 py-1.5 rounded-md flex items-center gap-1.5 transition-colors border w-fit ${
-                            isQueued 
-                            ? 'bg-accent-green/20 text-accent-green border-accent-green/30 cursor-default' 
-                            : 'bg-red-500/10 text-red-400 border-red-500/30 hover:bg-red-500/20 cursor-pointer'
-                        }`}
+                        className="text-[11px] px-3 py-1.5 rounded-md flex items-center gap-1.5 transition-colors border w-fit bg-red-500/10 text-red-400 border-red-500/30 hover:bg-red-500/20 cursor-pointer"
                     >
-                        {isQueued ? <CheckCircleIcon size={12} /> : <span>+</span>}
-                        {isQueued ? 'บันทึกคิวงานเปลี่ยนอะไหล่แล้ว' : 'สร้างแผนงานเปลี่ยนอะไหล่ (ด่วน)'}
+                        <ActivityIcon size={12} />
+                        เปิดหน้าแผนเปลี่ยนอะไหล่
                     </button>
                 )}
             </div>
@@ -575,6 +571,7 @@ export default function PMExecutionModal({ isOpen, onClose, plan, onSuccess }: P
     );
     const [pendingReplacements, setPendingReplacements] = useState<string[]>([]);
     const [loading, setLoading] = useState(false);
+    const [isReplacementPlanModalOpen, setIsReplacementPlanModalOpen] = useState(false);
     const reportCardRef = React.useRef<HTMLDivElement>(null);
 
     useEffect(() => {
@@ -818,8 +815,8 @@ export default function PMExecutionModal({ isOpen, onClose, plan, onSuccess }: P
                                                         item={item}
                                                         value={checklistResults[index]?.value || ""}
                                                         onChange={(val) => handleChecklistChange(index, true, val)}
-                                                        onQueueReplacement={() => setPendingReplacements(prev => [...prev, item])}
-                                                        isQueued={pendingReplacements.includes(item)}
+                                                        onQueueReplacement={() => setIsReplacementPlanModalOpen(true)}
+                                                        isQueued={false}
                                                     />
                                                 </div>
                                             )}
@@ -874,6 +871,16 @@ export default function PMExecutionModal({ isOpen, onClose, plan, onSuccess }: P
                     />
                 )}
             </div>
+
+            {isReplacementPlanModalOpen && (
+                <PartReplacementPlanModal
+                    isOpen={isReplacementPlanModalOpen}
+                    onClose={() => setIsReplacementPlanModalOpen(false)}
+                    machineId={plan.machineId}
+                    machineName={plan.machineName}
+                    onViewHistory={() => {}}
+                />
+            )}
         </Modal>
     );
 }

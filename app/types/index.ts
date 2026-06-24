@@ -70,6 +70,8 @@ export interface Part {
     notes?: string;
     supplier?: string;
     pricePerUnit?: number;
+    expectedLifespanDays?: number; // How many days the part is expected to last
+    lastReplacedDate?: Date | string; // When the part was last replaced
     createdAt: Date;
     updatedAt: Date;
 }

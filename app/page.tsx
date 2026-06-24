@@ -15,12 +15,12 @@ import { useAuth } from "./contexts/AuthContext";
 import { useToast } from "./contexts/ToastContext";
 import { getDashboardStats, deletePart, getMachines, getPartsPaginated, getPartsByMachineName, getPartsByLocation } from "./lib/firebaseService";
 import MachineDetailsModal from "./components/machines/MachineDetailsModal";
-import GlobalMaintenanceHistoryModal from "./components/pm/GlobalMaintenanceHistoryModal";
-import Lightbox from "./components/ui/Lightbox";
+import PartReplacementPlanModal from "./components/pm/PartReplacementPlanModal";
+import HelpModal from "./components/ui/HelpModal";
 import PriorityPMAlert from "./components/ui/PriorityPMAlert";
 import PageLoadingOverlay from "./components/ui/PageLoadingOverlay";
 import WelcomeGuide from "./components/onboarding/WelcomeGuide";
-import HelpModal from "./components/ui/HelpModal";
+import Lightbox from "./components/ui/Lightbox";
 import {
   PlusIcon,
   HistoryIcon,
@@ -478,9 +478,12 @@ export default function Dashboard() {
         onRepairPart={(part) => { setMachineModalOpen(false); handleMaintenancePart(part); }}
         onDeletePart={(part) => { setMachineModalOpen(false); handleDeleteClick(part); }}
       />
-      <GlobalMaintenanceHistoryModal
+      <PartReplacementPlanModal
         isOpen={historyModalOpen}
         onClose={() => setHistoryModalOpen(false)}
+        onViewHistory={() => {
+            window.location.href = "/maintenance";
+        }}
       />
       <Lightbox
         isOpen={!!lightboxImage}
