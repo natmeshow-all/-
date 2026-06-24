@@ -296,7 +296,7 @@ export default function SystemSettingsTab() {
                                 {language === 'th' ? 'Telegram Bot Token' : 'Telegram Bot Token'}
                             </label>
                             <input
-                                type="text"
+                                type="password"
                                 value={telegramBotToken}
                                 onChange={(e) => setTelegramBotToken(e.target.value)}
                                 placeholder="e.g. 123456789:ABCdefGhIJKlmNoPQRsTUVwxyZ"
@@ -308,7 +308,7 @@ export default function SystemSettingsTab() {
                                 {language === 'th' ? 'Telegram Chat ID' : 'Telegram Chat ID'}
                             </label>
                             <input
-                                type="text"
+                                type="password"
                                 value={telegramChatId}
                                 onChange={(e) => setTelegramChatId(e.target.value)}
                                 placeholder="e.g. -100123456789"
