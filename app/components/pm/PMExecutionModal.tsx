@@ -644,12 +644,7 @@ export default function PMExecutionModal({ isOpen, onClose, plan, onSuccess }: P
                     telegramImageBase64 = await toJpeg(reportCardRef.current, {
                         quality: 0.85,
                         backgroundColor: "#0F172A",
-                        canvasWidth: 800 * 1.5,
-                        canvasHeight: reportCardRef.current.offsetHeight * 1.5,
-                        style: {
-                            transform: 'scale(1.5)',
-                            transformOrigin: 'top left',
-                        }
+                        pixelRatio: 1.5 // Native scaling without CSS transform bugs
                     });
                 } catch (imgError) {
                     console.error("Failed to generate report image:", imgError);
