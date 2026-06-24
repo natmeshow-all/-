@@ -25,6 +25,7 @@ export default function SystemSettingsTab() {
     const [loading, setLoading] = useState(true);
     const [saving, setSaving] = useState(false);
     const [exporting, setExporting] = useState(false);
+    const [testingTelegram, setTestingTelegram] = useState(false);
 
     // Local state for text inputs to avoid too many writes
     const [announcementMsg, setAnnouncementMsg] = useState("");
@@ -186,6 +187,41 @@ export default function SystemSettingsTab() {
         }
     };
 
+    const handleTestTelegram = async () => {
+        if (!telegramBotToken || !telegramChatId) {
+            showToast('error', language === 'th' ? 'กรุณากรอกข้อมูลให้ครบถ้วนก่อนทดสอบ' : 'Please fill in all API keys before testing');
+            return;
+        }
+        
+        try {
+            setTestingTelegram(true);
+            const response = await fetch('/api/telegram', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                    message: "🧪 <b>ทดสอบระบบแจ้งเตือน</b>\n\nการเชื่อมต่อ Telegram API สำเร็จ!",
+                    parseMode: 'HTML',
+                    botToken: telegramBotToken,
+                    chatId: telegramChatId
+                }),
+            });
+            
+            const data = await response.json();
+            
+            if (!response.ok) {
+                console.error("Test Telegram failed:", data);
+                showToast('error', `Error: ${data.description || data.error || 'Failed to send'}`);
+            } else {
+                showToast('success', language === 'th' ? 'ส่งข้อความทดสอบสำเร็จ!' : 'Test message sent successfully!');
+            }
+        } catch (error: any) {
+            console.error("Error testing Telegram:", error);
+            showToast('error', `Error: ${error.message || 'Unknown error'}`);
+        } finally {
+            setTestingTelegram(false);
+        }
+    };
+
     const handleAnnouncementToggle = async () => {
         if (!settings) return;
         try {
@@ -315,10 +351,17 @@ export default function SystemSettingsTab() {
                                 className="w-full bg-bg-tertiary border border-white/10 rounded-lg px-3 py-2 text-sm text-text-primary focus:outline-none focus:border-accent-cyan"
                             />
                         </div>
-                        <div className="flex justify-end pt-1">
+                        <div className="flex justify-end pt-1 gap-2">
+                            <button
+                                onClick={handleTestTelegram}
+                                disabled={saving || testingTelegram}
+                                className="px-4 py-1.5 bg-bg-tertiary hover:bg-white/5 text-text-secondary rounded-md text-sm font-medium transition-colors border border-white/10 disabled:opacity-50"
+                            >
+                                {testingTelegram ? (language === 'th' ? 'กำลังทดสอบ...' : 'Testing...') : (language === 'th' ? 'ทดสอบส่งข้อความ' : 'Test Connection')}
+                            </button>
                             <button
                                 onClick={handleSaveTelegramKeys}
-                                disabled={saving}
+                                disabled={saving || testingTelegram}
                                 className="px-4 py-1.5 bg-accent-cyan/10 hover:bg-accent-cyan/20 text-accent-cyan rounded-md text-sm font-medium transition-colors border border-accent-cyan/20 disabled:opacity-50"
                             >
                                 {language === 'th' ? 'บันทึกข้อมูล API' : 'Save API Keys'}
