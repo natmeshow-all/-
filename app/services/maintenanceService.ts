@@ -525,7 +525,8 @@ export async function deletePMPlan(id: string): Promise<void> {
 
 export const completePMTask = async (
     planId: string,
-    record: Omit<MaintenanceRecord, "id" | "createdAt" | "updatedAt">
+    record: Omit<MaintenanceRecord, "id" | "createdAt" | "updatedAt">,
+    telegramImageBase64?: string
 ): Promise<void> => {
     try {
         // Add Maintenance Record
@@ -626,7 +627,7 @@ export const completePMTask = async (
                 }
                 
                 if (telegramEnabled) {
-                    await telegramService.sendPMCompletionNotification(finalRecord);
+                    await telegramService.sendPMCompletionNotification(finalRecord, telegramImageBase64);
                 }
             } catch (notifyError) {
                 console.error("Failed to send notification, but record was saved:", notifyError);

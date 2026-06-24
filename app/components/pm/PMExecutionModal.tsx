@@ -8,6 +8,8 @@ import { PMPlan } from "../../types";
 import { CheckCircleIcon, ActivityIcon, FileTextIcon, ClockIcon } from "../ui/Icons";
 import { completePMTask, addMaintenanceRecord } from "../../lib/firebaseService";
 import { useToast } from "../../contexts/ToastContext";
+import html2canvas from "html2canvas";
+import { PMReportCard } from "./PMReportCard";
 
 interface PMExecutionModalProps {
     isOpen: boolean;
@@ -573,6 +575,7 @@ export default function PMExecutionModal({ isOpen, onClose, plan, onSuccess }: P
     );
     const [pendingReplacements, setPendingReplacements] = useState<string[]>([]);
     const [loading, setLoading] = useState(false);
+    const reportCardRef = React.useRef<HTMLDivElement>(null);
 
     useEffect(() => {
         if (isOpen) {
@@ -631,6 +634,21 @@ export default function PMExecutionModal({ isOpen, onClose, plan, onSuccess }: P
                 completed: checklistResults[index]?.completed || false,
                 value: checklistResults[index]?.value || "",
             }));
+
+            // Generate Report Image Base64
+            let telegramImageBase64 = undefined;
+            if (reportCardRef.current) {
+                try {
+                    const canvas = await html2canvas(reportCardRef.current, {
+                        scale: 2, // high resolution
+                        backgroundColor: "#0F172A",
+                    });
+                    telegramImageBase64 = canvas.toDataURL("image/png");
+                } catch (imgError) {
+                    console.error("Failed to generate report image:", imgError);
+                }
+            }
+
             await completePMTask(plan.id, {
                 machineId: plan.machineId,
                 machineName: plan.machineName,
@@ -643,7 +661,7 @@ export default function PMExecutionModal({ isOpen, onClose, plan, onSuccess }: P
                 details,
                 checklist: structuredChecklist,
                 Location: plan.customLocation || "",
-            });
+            }, telegramImageBase64);
 
             // Create pending replacements
             if (pendingReplacements.length > 0) {
@@ -822,6 +840,35 @@ export default function PMExecutionModal({ isOpen, onClose, plan, onSuccess }: P
                         />
                     </div>
                 </form>
+            </div>
+            
+            {/* Hidden Report Card for Telegram Export */}
+            <div className="absolute top-[-9999px] left-[-9999px] opacity-0 pointer-events-none">
+                {isOpen && (
+                    <PMReportCard 
+                        ref={reportCardRef}
+                        record={{
+                            machineId: plan.machineId,
+                            machineName: plan.machineName,
+                            description: `PM: ${plan.taskName}`,
+                            type: "preventive",
+                            priority: "normal",
+                            status: "completed",
+                            date: new Date(),
+                            technician: technician || defaultTechnician || "Technician",
+                            Location: plan.customLocation || "",
+                            id: "dummy",
+                            createdAt: new Date(),
+                            updatedAt: new Date()
+                        } as any}
+                        completedChecklist={plan.checklistItems?.map((item, index) => ({
+                            item,
+                            completed: checklistResults[index]?.completed || false,
+                            value: checklistResults[index]?.value || "",
+                        })).filter(c => c.completed) || []}
+                        machineCode={"ID: " + plan.machineId.substring(0,6)}
+                    />
+                )}
             </div>
         </Modal>
     );

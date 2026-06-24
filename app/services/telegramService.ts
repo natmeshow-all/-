@@ -7,15 +7,18 @@ import { decodeSecret } from "../lib/obfuscate";
  */
 export const telegramService = {
     /**
-     * Send a beautiful HTML formatted message when a PM task is completed
+     * Send a beautiful HTML formatted message or Image when a PM task is completed
      */
-    async sendPMCompletionNotification(record: MaintenanceRecord) {
+    async sendPMCompletionNotification(record: MaintenanceRecord, imageBase64?: string) {
         try {
             const settings = await getSystemSettings();
             const botToken = decodeSecret(settings?.telegramBotToken || "");
             const chatId = decodeSecret(settings?.telegramChatId || "");
 
-            const htmlMessage = this.createPMHtmlMessage(record);
+            // If image is provided, we send a short caption instead of the full HTML
+            const htmlMessage = imageBase64 
+                ? `<b>🔹 รหัสเครื่อง:</b> ${record.machineCode || '-'}\n<b>🔹 ชื่อเครื่องจักร:</b> ${record.machineName}` 
+                : this.createPMHtmlMessage(record);
 
             const response = await fetch('/api/telegram', {
                 method: 'POST',
@@ -24,6 +27,7 @@ export const telegramService = {
                 },
                 body: JSON.stringify({
                     message: htmlMessage,
+                    image: imageBase64,
                     parseMode: 'HTML',
                     botToken,
                     chatId
