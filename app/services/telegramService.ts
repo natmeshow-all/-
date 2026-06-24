@@ -59,30 +59,31 @@ export const telegramService = {
         let checklistText = '<i>ไม่มีรายการตรวจสอบ</i>';
         if (record.checklist && record.checklist.length > 0) {
             checklistText = record.checklist
-                .map(item => `${item.completed ? '✅' : '❌'} ${item.item}${item.value ? ': <code>' + item.value + '</code>' : ''}`)
+                .map(item => `${item.completed ? '✅' : '❌'} <b>${item.item}</b>${item.value ? ': <code>' + item.value + '</code>' : ''}`)
                 .join('\n');
         }
 
-        // Determine maintenance type label
-        const maintenanceType = record.type === 'preventive' ? 'บำรุงรักษาเชิงป้องกัน' :
-            record.type === 'corrective' ? 'ซ่อมบำรุงแก้ไข' :
-                'การบำรุงรักษา';
-
         const locationText = record.Location || record.location || 'ไม่ระบุ';
 
-        // Build the HTML message
+        // Build the modern HTML message
         return `
-<b>🔧 แจ้งเตือนปิดงาน PM 🔧</b>
+✨ <b>รายงานผลการปิดงาน PM</b>
+━━━━━━━━━━━━━━━━━━━━
 
-<b>🏭 เครื่องจักร:</b> <code>${record.machineName}</code>
-<b>📝 ชื่องาน:</b> ${record.description || "PM Maintenance"}
-<b>👤 ช่าง:</b> ${record.technician}
-<b>📅 วันที่:</b> ${dateStr}
+<b>🏢 ข้อมูลเครื่องจักร:</b>
+<blockquote><b>รหัส/ชื่อ:</b> <code>${record.machineName}</code>
+<b>ชื่องาน:</b> ${record.description || "PM Maintenance"}
+<b>สถานที่:</b> ${locationText}</blockquote>
 
-<b>📋 รายการตรวจสอบ:</b>
-${checklistText}
+<b>👨‍🔧 ข้อมูลการปฏิบัติงาน:</b>
+<blockquote><b>ผู้ตรวจสอบ:</b> ${record.technician}
+<b>วันที่ดำเนินการ:</b> ${dateStr}</blockquote>
 
-📍 <b>Location:</b> ${locationText}
+<b>📝 สรุปรายการตรวจสอบ:</b>
+<blockquote>${checklistText}</blockquote>
+
+━━━━━━━━━━━━━━━━━━━━
+✅ <b>สถานะ:</b> บันทึกข้อมูลเข้าระบบเรียบร้อย
         `.trim();
     }
 };
