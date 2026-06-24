@@ -15,6 +15,7 @@ import {
     BoxIcon,
     InfoIcon
 } from "../ui/Icons";
+import { encodeSecret, decodeSecret } from "../../lib/obfuscate";
 
 export default function SystemSettingsTab() {
     const { language } = useLanguage();
@@ -29,6 +30,8 @@ export default function SystemSettingsTab() {
     const [announcementMsg, setAnnouncementMsg] = useState("");
     const [announcementMsgEn, setAnnouncementMsgEn] = useState("");
     const [retentionDays, setRetentionDays] = useState(365);
+    const [telegramBotToken, setTelegramBotToken] = useState("");
+    const [telegramChatId, setTelegramChatId] = useState("");
 
     useEffect(() => {
         fetchSettings();
@@ -39,6 +42,8 @@ export default function SystemSettingsTab() {
             setAnnouncementMsg(settings.announcement?.message || "");
             setAnnouncementMsgEn(settings.announcement?.messageEn || "");
             setRetentionDays(settings.dataRetentionDays || 365);
+            setTelegramBotToken(decodeSecret(settings.telegramBotToken || ""));
+            setTelegramChatId(decodeSecret(settings.telegramChatId || ""));
         }
     }, [settings]);
 
@@ -159,6 +164,28 @@ export default function SystemSettingsTab() {
         }
     };
 
+    const handleSaveTelegramKeys = async () => {
+        if (!settings) return;
+        try {
+            setSaving(true);
+            const obfuscatedToken = encodeSecret(telegramBotToken);
+            const obfuscatedChatId = encodeSecret(telegramChatId);
+            
+            await updateSystemSettings({ 
+                telegramBotToken: obfuscatedToken,
+                telegramChatId: obfuscatedChatId
+            });
+            
+            setSettings(prev => prev ? { ...prev, telegramBotToken: obfuscatedToken, telegramChatId: obfuscatedChatId } : prev);
+            showToast('success', language === 'th' ? 'บันทึกข้อมูล Telegram แล้ว' : 'Telegram keys saved');
+        } catch (error) {
+            console.error("Error saving Telegram keys:", error);
+            showToast('error', language === 'th' ? 'เกิดข้อผิดพลาด' : 'Error occurred');
+        } finally {
+            setSaving(false);
+        }
+    };
+
     const handleAnnouncementToggle = async () => {
         if (!settings) return;
         try {
@@ -247,14 +274,59 @@ export default function SystemSettingsTab() {
                     />
 
                     <SettingToggle
+                        label={language === 'th' ? 'เปิดการแจ้งเตือน LINE' : 'Enable LINE Notifications'}
+                        description={language === 'th' ? 'แจ้งเตือนเมื่อปิดงาน PM ผ่าน LINE OA' : 'Notify via LINE OA on PM completion'}
+                        checked={settings?.lineNotificationsEnabled ?? true}
+                        onChange={() => handleToggle('lineNotificationsEnabled')}
+                        disabled={saving}
+                    />
+
+                    <SettingToggle
                         label={language === 'th' ? 'เปิดการแจ้งเตือน Telegram' : 'Enable Telegram Notifications'}
-                        description={language === 'th' ? 'แจ้งเตือนเมื่อปิดงาน PM เข้า Telegram' : 'Notify via Telegram on PM completion'}
+                        description={language === 'th' ? 'แจ้งเตือนเมื่อปิดงาน PM ผ่าน Telegram' : 'Notify via Telegram on PM completion'}
                         checked={settings?.telegramNotificationsEnabled ?? false}
                         onChange={() => handleToggle('telegramNotificationsEnabled')}
                         disabled={saving}
                     />
 
-                    <div className="pt-2 border-t border-white/5 space-y-2">
+                    {/* Telegram API Settings */}
+                    <div className="pt-2 border-t border-white/5 space-y-3">
+                        <div>
+                            <label className="text-sm font-medium text-text-primary block mb-1">
+                                {language === 'th' ? 'Telegram Bot Token' : 'Telegram Bot Token'}
+                            </label>
+                            <input
+                                type="text"
+                                value={telegramBotToken}
+                                onChange={(e) => setTelegramBotToken(e.target.value)}
+                                placeholder="e.g. 123456789:ABCdefGhIJKlmNoPQRsTUVwxyZ"
+                                className="w-full bg-bg-tertiary border border-white/10 rounded-lg px-3 py-2 text-sm text-text-primary focus:outline-none focus:border-accent-cyan"
+                            />
+                        </div>
+                        <div>
+                            <label className="text-sm font-medium text-text-primary block mb-1">
+                                {language === 'th' ? 'Telegram Chat ID' : 'Telegram Chat ID'}
+                            </label>
+                            <input
+                                type="text"
+                                value={telegramChatId}
+                                onChange={(e) => setTelegramChatId(e.target.value)}
+                                placeholder="e.g. -100123456789"
+                                className="w-full bg-bg-tertiary border border-white/10 rounded-lg px-3 py-2 text-sm text-text-primary focus:outline-none focus:border-accent-cyan"
+                            />
+                        </div>
+                        <div className="flex justify-end pt-1">
+                            <button
+                                onClick={handleSaveTelegramKeys}
+                                disabled={saving}
+                                className="px-4 py-1.5 bg-accent-cyan/10 hover:bg-accent-cyan/20 text-accent-cyan rounded-md text-sm font-medium transition-colors border border-accent-cyan/20 disabled:opacity-50"
+                            >
+                                {language === 'th' ? 'บันทึกข้อมูล API' : 'Save API Keys'}
+                            </button>
+                        </div>
+                    </div>
+
+                    <div className="pt-4 border-t border-white/5 space-y-2">
                         <label className="text-sm font-medium text-text-primary block">
                             {language === 'th' ? 'เก็บข้อมูลย้อนหลัง (วัน)' : 'Data Retention (Days)'}
                         </label>

@@ -612,7 +612,7 @@ export const completePMTask = async (
                 } as MaintenanceRecord;
 
                 const settings = await getSystemSettings();
-                const lineEnabled = settings?.notificationsEnabled ?? true; // Default true if not set
+                const lineEnabled = settings?.lineNotificationsEnabled ?? true; // Default true if not set
                 const telegramEnabled = settings?.telegramNotificationsEnabled ?? false;
 
                 if (lineEnabled) {

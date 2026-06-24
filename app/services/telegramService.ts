@@ -1,4 +1,6 @@
 import { MaintenanceRecord } from "../types";
+import { getSystemSettings } from "./systemService";
+import { decodeSecret } from "../lib/obfuscate";
 
 /**
  * Telegram Service for sending notifications via Telegram Bot API
@@ -9,6 +11,15 @@ export const telegramService = {
      */
     async sendPMCompletionNotification(record: MaintenanceRecord) {
         try {
+            const settings = await getSystemSettings();
+            const botToken = decodeSecret(settings?.telegramBotToken || "");
+            const chatId = decodeSecret(settings?.telegramChatId || "");
+
+            if (!botToken || !chatId) {
+                console.warn('Telegram API keys not configured in System Settings.');
+                return;
+            }
+
             const htmlMessage = this.createPMHtmlMessage(record);
 
             const response = await fetch('/api/telegram', {
@@ -18,7 +29,9 @@ export const telegramService = {
                 },
                 body: JSON.stringify({
                     message: htmlMessage,
-                    parseMode: 'HTML'
+                    parseMode: 'HTML',
+                    botToken,
+                    chatId
                 }),
             });
 

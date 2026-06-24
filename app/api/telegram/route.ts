@@ -3,10 +3,10 @@ import { NextResponse } from 'next/server';
 export async function POST(request: Request) {
     try {
         const body = await request.json();
-        const { message, parseMode = 'HTML' } = body;
+        const { message, parseMode = 'HTML', botToken, chatId } = body;
 
-        const telegramBotToken = process.env.TELEGRAM_BOT_TOKEN;
-        const targetChatId = process.env.TELEGRAM_CHAT_ID;
+        const telegramBotToken = botToken || process.env.TELEGRAM_BOT_TOKEN;
+        const targetChatId = chatId || process.env.TELEGRAM_CHAT_ID;
 
         if (!telegramBotToken || !targetChatId) {
             console.error('Missing Telegram credentials');
