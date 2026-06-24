@@ -9,6 +9,7 @@ import { BoxIcon, MapPinIcon, SettingsIcon, WrenchIcon, AlertTriangleIcon, Searc
 import Lightbox from "@/app/components/ui/Lightbox";
 import Image from "next/image";
 import PMConfigModal from "../pm/PMConfigModal";
+import PartReplacementPlanModal from "../pm/PartReplacementPlanModal";
 
 interface MachineDetailsModalProps {
     isOpen: boolean;
@@ -39,6 +40,7 @@ export default function MachineDetailsModal({
     const [lightboxOpen, setLightboxOpen] = useState(false);
     const [selectedLocation, setSelectedLocation] = useState<string>("All");
     const [pmConfigOpen, setPmConfigOpen] = useState(false);
+    const [replacementPlanOpen, setReplacementPlanOpen] = useState(false);
     const [partImageErrors, setPartImageErrors] = useState<Record<string, boolean>>({});
 
     // Fetch data when modal opens
@@ -142,6 +144,15 @@ export default function MachineDetailsModal({
                                             {t("actionPMSettings")}
                                         </button>
                                     )}
+                                    {(machine?.id || machineId) && (
+                                        <button
+                                            onClick={() => setReplacementPlanOpen(true)}
+                                            className="flex items-center gap-2 px-2 py-1 rounded bg-orange-500/20 text-orange-300 text-[10px] font-bold hover:bg-orange-500/30 transition-all border border-orange-500/30 shadow-lg active:scale-95"
+                                        >
+                                            <WrenchIcon size={12} />
+                                            แผนเปลี่ยนอะไหล่
+                                        </button>
+                                    )}
                                 </div>
                             </div>
                         </div>
@@ -176,6 +187,17 @@ export default function MachineDetailsModal({
                             createdAt: new Date(),
                             updatedAt: new Date()
                         }}
+                    />
+                )}
+
+                {/* Part Replacement Plan Modal */}
+                {replacementPlanOpen && (
+                    <PartReplacementPlanModal
+                        isOpen={replacementPlanOpen}
+                        onClose={() => setReplacementPlanOpen(false)}
+                        machineId={machine?.id || machineId}
+                        machineName={machine?.name || machineName}
+                        onViewHistory={() => { window.location.href = "/maintenance"; }}
                     />
                 )}
 

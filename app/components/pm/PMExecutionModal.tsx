@@ -879,6 +879,7 @@ export default function PMExecutionModal({ isOpen, onClose, plan, onSuccess }: P
                     machineId={plan.machineId}
                     machineName={plan.machineName}
                     onViewHistory={() => {}}
+                    fromPMHistory={true}
                 />
             )}
         </Modal>
