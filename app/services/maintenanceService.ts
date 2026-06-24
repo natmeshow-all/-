@@ -222,6 +222,7 @@ export async function addMaintenanceRecord(record: Omit<MaintenanceRecord, "id" 
         await set(newRecordRef, {
             ...cleanRecord,
             id: newRecordRef.key!,
+            date: record.date instanceof Date ? record.date.toISOString() : record.date,
             createdAt: now.toISOString(), // Ensure ISO string for better reliability
             updatedAt: now.toISOString(),
         });
