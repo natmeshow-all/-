@@ -705,47 +705,54 @@ export default function MaintenancePage() {
                                                 </div>
                                             )}
 
-                                            {/* Section 3: Checklist - Compact List */}
+                                            {/* Section 3: Checklist - Grid List */}
                                             {record.checklist && record.checklist.length > 0 && (
-                                                <div className="bg-white/5 p-2 rounded-lg border border-white/5">
-                                                    <h4 className="text-[11px] font-bold text-accent-yellow mb-1 pb-1 border-b border-white/10 flex items-center gap-1.5 opacity-80">
-                                                        <CheckIcon size={10} />
-                                                        รายการตรวจสอบ
+                                                <div className="bg-white/5 p-4 rounded-xl border border-white/5 mt-4">
+                                                    <h4 className="text-sm font-bold text-white mb-3 flex items-center gap-2">
+                                                        <span className="text-accent-cyan">📋</span> รายการตรวจสอบ ({record.checklist.length} รายการ)
                                                     </h4>
-                                                    <div className="space-y-0.5">
+                                                    <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
                                                         {record.checklist.map((item, idx) => {
-                                                            // Check if value is JSON (specifically vibration data)
+                                                            let valueColor = "text-accent-cyan font-semibold";
+                                                            let bgColor = "bg-accent-cyan/10 border-accent-cyan/20";
+                                                            
+                                                            const val = item.value || "";
+                                                            if (val.includes("สมบูรณ์") || val.includes("ปกติ") || val.includes("เรียบร้อย")) {
+                                                                valueColor = "text-accent-green font-bold";
+                                                                bgColor = "bg-accent-green/10 border-accent-green/20";
+                                                            } else if (val.includes("พอใช้") || val.includes("เฝ้าระวัง") || val.includes("ต่ำ") || val.includes("เติมเพิ่ม")) {
+                                                                valueColor = "text-accent-yellow font-bold";
+                                                                bgColor = "bg-accent-yellow/10 border-accent-yellow/20";
+                                                            } else if (val.includes("เปลี่ยน") || val.includes("ผิดปกติ") || val.includes("ต้องเติม") || val.includes("ไม่มี")) {
+                                                                valueColor = "text-accent-red font-bold";
+                                                                bgColor = "bg-accent-red/10 border-accent-red/20";
+                                                            }
+
                                                             let isVibrationData = false;
                                                             let vibrationObj: any = null;
-
-                                                            if (item.value && item.value.startsWith('{') && item.value.includes('"x":')) {
+                                                            if (val.startsWith('{') && val.includes('"x":')) {
                                                                 try {
-                                                                    vibrationObj = JSON.parse(item.value);
+                                                                    vibrationObj = JSON.parse(val);
                                                                     isVibrationData = true;
                                                                 } catch (e) { }
                                                             }
 
                                                             return (
-                                                                <div key={idx} className="flex items-center justify-between text-[11px] py-0.5 hover:bg-white/5 px-1 rounded transition-colors border-b border-white/5 last:border-0">
-                                                                    <span className="text-text-secondary truncate flex-1 mr-2 opacity-90">{item.item}</span>
-                                                                    <div className="flex items-center gap-2 flex-shrink-0">
-                                                                        {isVibrationData && vibrationObj ? (
-                                                                            <div className="flex gap-1">
-                                                                                {['x', 'y', 'z'].map((axis) => vibrationObj[axis] && (
-                                                                                    <span key={axis} className={`px-1 rounded text-[9px] ${vibrationObj[axis].status === 'warning' ? 'text-accent-yellow bg-accent-yellow/10' : vibrationObj[axis].status === 'danger' ? 'text-accent-red bg-accent-red/10' : 'text-accent-green bg-accent-green/10'}`}>
-                                                                                        {axis.toUpperCase()}:{vibrationObj[axis].value}
-                                                                                    </span>
-                                                                                ))}
-                                                                            </div>
-                                                                        ) : item.value && (
-                                                                            <span className="text-accent-cyan font-mono text-[10px]">{item.value}</span>
-                                                                        )}
-                                                                        {item.completed ? (
-                                                                            <CheckIcon size={12} className="text-accent-green" />
-                                                                        ) : (
-                                                                            <span className="text-accent-red text-[10px] font-bold">✕</span>
-                                                                        )}
-                                                                    </div>
+                                                                <div key={idx} className="flex flex-col bg-bg-tertiary p-3 rounded-lg border border-white/5">
+                                                                    <div className="text-xs text-text-muted mb-2 font-medium">{item.item}</div>
+                                                                    {isVibrationData && vibrationObj ? (
+                                                                        <div className="flex gap-1 flex-wrap">
+                                                                            {['x', 'y', 'z'].map((axis) => vibrationObj[axis] && (
+                                                                                <span key={axis} className={`px-2 py-1 rounded text-xs font-semibold border ${vibrationObj[axis].status === 'warning' ? 'text-accent-yellow bg-accent-yellow/10 border-accent-yellow/20' : vibrationObj[axis].status === 'danger' ? 'text-accent-red bg-accent-red/10 border-accent-red/20' : 'text-accent-green bg-accent-green/10 border-accent-green/20'}`}>
+                                                                                    {axis.toUpperCase()}:{vibrationObj[axis].value}
+                                                                                </span>
+                                                                            ))}
+                                                                        </div>
+                                                                    ) : (
+                                                                        <div className={`text-xs px-2.5 py-1 rounded border ${bgColor} ${valueColor} w-fit`}>
+                                                                            {val || (item.completed ? "✓" : "-")}
+                                                                        </div>
+                                                                    )}
                                                                 </div>
                                                             );
                                                         })}
@@ -755,21 +762,21 @@ export default function MaintenancePage() {
 
                                             {/* Section 5: Details & Notes */}
                                             {(record.details || record.notes) && (
-                                                <div className="bg-white/5 p-2 rounded-lg border border-white/5">
-                                                    {record.details && !record.details.includes('{') && (
+                                                <div className="bg-white/5 p-4 rounded-xl border border-white/5 mt-4">
+                                                    {record.details && !record.details.includes('{') && (!record.checklist || record.checklist.length === 0) && (
                                                         <div className="mb-2 last:mb-0">
-                                                            <h4 className="text-[11px] font-bold text-text-secondary mb-0.5 flex items-center gap-1.5 opacity-80">
-                                                                <FileTextIcon size={10} /> รายละเอียด
+                                                            <h4 className="text-sm font-bold text-white mb-2 flex items-center gap-2">
+                                                                <FileTextIcon size={14} className="text-accent-cyan" /> รายละเอียด
                                                             </h4>
-                                                            <p className="text-[11px] text-text-muted leading-snug">{record.details}</p>
+                                                            <p className="text-sm text-text-muted leading-relaxed">{record.details}</p>
                                                         </div>
                                                     )}
                                                     {record.notes && (
-                                                        <div className="pt-2 border-t border-white/10 first:pt-0 first:border-0">
-                                                            <h4 className="text-[11px] font-bold text-text-secondary mb-0.5 flex items-center gap-1.5 opacity-80">
-                                                                <FileTextIcon size={10} /> หมายเหตุ
+                                                        <div className={`pt-2 ${record.details && (!record.checklist || record.checklist.length === 0) ? 'border-t border-white/10 mt-3 pt-3' : ''}`}>
+                                                            <h4 className="text-sm font-bold text-white mb-2 flex items-center gap-2">
+                                                                <FileTextIcon size={14} className="text-accent-cyan" /> หมายเหตุ
                                                             </h4>
-                                                            <p className="text-[11px] text-text-muted italic leading-snug">{record.notes}</p>
+                                                            <p className="text-sm text-accent-yellow/90 italic leading-relaxed">{record.notes}</p>
                                                         </div>
                                                     )}
                                                 </div>
