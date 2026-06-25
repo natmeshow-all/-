@@ -509,12 +509,11 @@ export default function MaintenancePage() {
                                 const v = val.toLowerCase();
                                 if (v.includes('ถึงกำหนดเปลี่ยน')) return 10;
                                 if (v.includes('ผิดปกติ')) return 15;
-                                if (v.includes('ไม่มี')) return 20;
                                 if (v.includes('ต้องเติม')) return 30;
                                 if (v.includes('เฝ้าระวัง')) return 50;
                                 if (v.includes('พอใช้')) return 65;
                                 if (v.includes('เหมาะสม')) return 80;
-                                if (v.includes('สมบูรณ์') || v.includes('ปกติ') || v.includes('เรียบร้อย') || v.includes('ไม่มีรอย')) return 100;
+                                if (v.includes('สมบูรณ์') || v.includes('ปกติ') || v.includes('เรียบร้อย') || v.includes('ไม่มีรอย') || v.includes('ไม่มี')) return 100;
                                 if (val !== '') return 75; // has a numeric/custom value → generally OK
                                 return 0; // empty = not assessed
                             };
