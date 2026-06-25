@@ -626,9 +626,16 @@ export default function MaintenancePage() {
 
                                                 {/* Right Data: Status + Date */}
                                                 <div className="flex flex-col items-end gap-1 flex-shrink-0">
-                                                    <span className={`badge text-[10px] py-0.5 px-2 font-bold uppercase tracking-wider ${getStatusColor(record.status)}`}>
-                                                        {getStatusText(record.status)}
-                                                    </span>
+                                                    <div className="flex items-center gap-1.5 flex-wrap justify-end">
+                                                        {(record as any).fromPM && (
+                                                            <span className="text-[9px] font-bold px-1.5 py-0.5 rounded-full bg-orange-500/20 text-orange-300 border border-orange-500/30 whitespace-nowrap">
+                                                                🏷️ PM
+                                                            </span>
+                                                        )}
+                                                        <span className={`badge text-[10px] py-0.5 px-2 font-bold uppercase tracking-wider ${getStatusColor(record.status)}`}>
+                                                            {getStatusText(record.status)}
+                                                        </span>
+                                                    </div>
                                                     <div className="flex items-center text-[10px] text-text-muted gap-1">
                                                         <CalendarIcon size={10} />
                                                         <span>{mounted ? formatDateThai(record.date) : '--/--'}</span>

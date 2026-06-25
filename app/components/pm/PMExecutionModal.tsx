@@ -1,12 +1,12 @@
 "use client";
 
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useCallback } from "react";
 import Modal from "../ui/Modal";
 import { useLanguage } from "../../contexts/LanguageContext";
 import { useAuth } from "../../contexts/AuthContext";
-import { PMPlan } from "../../types";
-import { CheckCircleIcon, ActivityIcon, FileTextIcon, ClockIcon } from "../ui/Icons";
-import { completePMTask, addMaintenanceRecord } from "../../lib/firebaseService";
+import { PMPlan, Part } from "../../types";
+import { CheckCircleIcon, ActivityIcon, FileTextIcon, ClockIcon, AlertTriangleIcon, BoxIcon, PlusIcon, XIcon } from "../ui/Icons";
+import { completePMTask, addMaintenanceRecord, getPartsByMachine } from "../../lib/firebaseService";
 import { useToast } from "../../contexts/ToastContext";
 import PartReplacementPlanModal from "./PartReplacementPlanModal";
 import { toJpeg } from "html-to-image";
@@ -22,6 +22,15 @@ interface PMExecutionModalProps {
 interface ChecklistItemResult {
     completed: boolean;
     value: string;
+}
+
+// Due part entry created when "ถึงกำหนดเปลี่ยน" is selected
+interface DuePart {
+    checklistIndex: number;
+    checklistLabel: string;  // original checklist item text
+    partName: string;        // ชื่ออะไหล่ที่จะเปลี่ยน
+    notes: string;
+    confirmed: boolean;      // user confirmed adding to plan
 }
 
 // ===== Smart Input Type Detection =====
@@ -436,16 +445,6 @@ function SmartChecklistInput({ item, value, onChange, onQueueReplacement, isQueu
                     allowCustom
                     customPlaceholder="รายละเอียดเพิ่มเติม..."
                 />
-                {value.includes("ถึงกำหนดเปลี่ยน") && onQueueReplacement && (
-                    <button
-                        type="button"
-                        onClick={onQueueReplacement}
-                        className="text-[11px] px-3 py-1.5 rounded-md flex items-center gap-1.5 transition-colors border w-fit bg-red-500/10 text-red-400 border-red-500/30 hover:bg-red-500/20 cursor-pointer"
-                    >
-                        <ActivityIcon size={12} />
-                        เปิดหน้าแผนเปลี่ยนอะไหล่
-                    </button>
-                )}
             </div>
         );
     }
@@ -569,7 +568,8 @@ export default function PMExecutionModal({ isOpen, onClose, plan, onSuccess }: P
     const [checklistResults, setChecklistResults] = useState<ChecklistItemResult[]>(
         plan.checklistItems?.map(() => ({ completed: false, value: "" })) || []
     );
-    const [pendingReplacements, setPendingReplacements] = useState<string[]>([]);
+    const [dueParts, setDueParts] = useState<DuePart[]>([]);
+    const [machineParts, setMachineParts] = useState<Part[]>([]);
     const [loading, setLoading] = useState(false);
     const [isReplacementPlanModalOpen, setIsReplacementPlanModalOpen] = useState(false);
     const reportCardRef = React.useRef<HTMLDivElement>(null);
@@ -579,24 +579,57 @@ export default function PMExecutionModal({ isOpen, onClose, plan, onSuccess }: P
             setTechnician(defaultTechnician);
             setAdditionalNotes("");
             setChecklistResults(plan.checklistItems?.map(() => ({ completed: false, value: "" })) || []);
-            setPendingReplacements([]);
+            setDueParts([]);
             setLoading(false);
+            // Load parts for this machine
+            if (plan.machineId) {
+                getPartsByMachine(plan.machineId)
+                    .then(setMachineParts)
+                    .catch(() => setMachineParts([]));
+            }
         }
     }, [isOpen, plan, defaultTechnician]);
 
-    const handleChecklistChange = (index: number, completed: boolean, value?: string) => {
+    // When a checklist item gets value "ถึงกำหนดเปลี่ยน", auto-add a DuePart draft
+    const handleChecklistChange = useCallback((index: number, completed: boolean, value?: string) => {
         setChecklistResults(prev => {
             const newResults = [...prev];
             const currentValue = newResults[index]?.value || "";
 
-            // Auto-fill default when checking an item that has no value yet
             let finalValue = value !== undefined ? value : currentValue;
             if (completed && !currentValue && value === undefined) {
                 finalValue = getDefaultValue(plan.checklistItems?.[index] || "");
             }
-
             newResults[index] = { completed, value: finalValue };
+
+            // Auto-add a DuePart draft when "ถึงกำหนดเปลี่ยน" is selected
+            const isDue = finalValue.includes("ถึงกำหนดเปลี่ยน");
+            const label = plan.checklistItems?.[index] || "";
+            setDueParts(prev2 => {
+                const exists = prev2.find(d => d.checklistIndex === index);
+                if (isDue && !exists) {
+                    return [...prev2, { checklistIndex: index, checklistLabel: label, partName: "", notes: "", confirmed: false }];
+                } else if (!isDue && exists) {
+                    return prev2.filter(d => d.checklistIndex !== index);
+                }
+                return prev2;
+            });
+
             return newResults;
+        });
+    }, [plan.checklistItems]);
+
+    const updateDuePart = (index: number, patch: Partial<DuePart>) => {
+        setDueParts(prev => prev.map(d => d.checklistIndex === index ? { ...d, ...patch } : d));
+    };
+
+    const removeDuePart = (index: number) => {
+        setDueParts(prev => prev.filter(d => d.checklistIndex !== index));
+        // Reset checklist value so badge goes away
+        setChecklistResults(prev => {
+            const next = [...prev];
+            if (next[index]) next[index] = { ...next[index], value: "" };
+            return next;
         });
     };
 
@@ -636,18 +669,15 @@ export default function PMExecutionModal({ isOpen, onClose, plan, onSuccess }: P
             let telegramImageBase64 = undefined;
             if (reportCardRef.current) {
                 try {
-                    // Slight delay to ensure DOM is fully painted
                     await new Promise(r => setTimeout(r, 150));
                     telegramImageBase64 = await toJpeg(reportCardRef.current, {
                         quality: 0.85,
                         backgroundColor: "#0F172A",
-                        pixelRatio: 1.5 // Native scaling without CSS transform bugs
+                        pixelRatio: 1.5
                     });
                 } catch (imgError) {
                     console.error("Failed to generate report image:", imgError);
                 }
-            } else {
-                console.warn("reportCardRef is null, cannot generate image");
             }
 
             await completePMTask(plan.id, {
@@ -664,24 +694,29 @@ export default function PMExecutionModal({ isOpen, onClose, plan, onSuccess }: P
                 Location: plan.customLocation || "",
             }, telegramImageBase64);
 
-            // Create pending replacements
-            if (pendingReplacements.length > 0) {
-                for (const item of pendingReplacements) {
-                    await addMaintenanceRecord({
-                        machineId: plan.machineId,
-                        machineName: plan.machineName,
-                        description: `[จากแผน PM] เปลี่ยนอะไหล่: ${item}`,
-                        type: "partReplacement",
-                        priority: "high",
-                        status: "pending",
-                        date: new Date(),
-                        technician: technician || "Technician",
-                        Location: plan.customLocation || "",
-                    });
-                }
+            // Auto-create part replacement plans for confirmed due parts
+            const confirmedParts = dueParts.filter(d => d.confirmed && d.partName.trim());
+            for (const dp of confirmedParts) {
+                await addMaintenanceRecord({
+                    machineId: plan.machineId,
+                    machineName: plan.machineName,
+                    description: `[แผน PM] เปลี่ยนอะไหล่: ${dp.partName}`,
+                    type: "partReplacement",
+                    priority: "high",
+                    status: "pending",
+                    date: new Date(),
+                    technician: technician || "Technician",
+                    Location: plan.customLocation || "",
+                    fromPM: true,
+                    pmTaskName: plan.taskName,
+                    pmPlanId: plan.id,
+                    checklistItemLabel: dp.checklistLabel,
+                    partName: dp.partName,
+                    notes: dp.notes || undefined,
+                } as any);
             }
 
-            success(t("msgSaveSuccess") || "บันทึกข้อมูลสำเร็จ", plan.taskName);
+            success(t("msgSaveSuccess") || "บันทึกข้อมูลสำเร็จ", confirmedParts.length > 0 ? `สร้างแผนเปลี่ยนอะไหล่ ${confirmedParts.length} รายการ` : plan.taskName);
             onSuccess?.();
             onClose();
         } catch (err: any) {
@@ -775,36 +810,50 @@ export default function PMExecutionModal({ isOpen, onClose, plan, onSuccess }: P
                                     const fieldType = detectInputType(item);
                                     const isMultiField = fieldType === "voltage" || fieldType === "vibration" || fieldType === "oil_change";
                                     const completed = checklistResults[index]?.completed;
+                                    const currentValue = checklistResults[index]?.value || "";
+                                    const isDue = currentValue.includes("ถึงกำหนดเปลี่ยน");
+                                    const duePart = dueParts.find(d => d.checklistIndex === index);
 
                                     return (
                                         <div
                                             key={index}
-                                            className={`flex flex-col gap-2 p-3 rounded-lg border transition-all ${completed
-                                                ? "bg-white/5 border-accent-blue/30"
-                                                : "bg-white/5 border-white/10 hover:border-white/20"
-                                                }`}
+                                            className={`flex flex-col gap-2 p-3 rounded-lg border transition-all ${
+                                                isDue
+                                                    ? "bg-red-500/5 border-red-500/40"
+                                                    : completed
+                                                        ? "bg-white/5 border-accent-blue/30"
+                                                        : "bg-white/5 border-white/10 hover:border-white/20"
+                                            }`}
                                         >
                                             {/* Row: checkbox + label + hint badge */}
                                             <div className="flex items-start gap-3">
                                                 <button
                                                     type="button"
                                                     onClick={() => handleChecklistChange(index, !completed)}
-                                                    className={`mt-0.5 flex-shrink-0 w-5 h-5 rounded border flex items-center justify-center transition-colors ${completed
-                                                        ? "bg-accent-blue border-accent-blue text-white"
-                                                        : "border-white/20 hover:border-accent-blue/50"
-                                                        }`}
+                                                    className={`mt-0.5 flex-shrink-0 w-5 h-5 rounded border flex items-center justify-center transition-colors ${
+                                                        isDue
+                                                            ? "bg-red-500 border-red-500 text-white"
+                                                            : completed
+                                                                ? "bg-accent-blue border-accent-blue text-white"
+                                                                : "border-white/20 hover:border-accent-blue/50"
+                                                    }`}
                                                 >
-                                                    {completed && <CheckCircleIcon size={12} />}
+                                                    {isDue ? <AlertTriangleIcon size={11} /> : completed ? <CheckCircleIcon size={12} /> : null}
                                                 </button>
                                                 <div className="flex-1 flex flex-wrap items-center gap-2 min-w-0">
                                                     <span
-                                                        className={`text-sm cursor-pointer ${completed ? "text-text-muted" : "text-white"}`}
+                                                        className={`text-sm cursor-pointer ${isDue ? "text-red-300" : completed ? "text-text-muted" : "text-white"}`}
                                                         onClick={() => handleChecklistChange(index, !completed)}
                                                     >
                                                         {item}
                                                     </span>
                                                     {/* Show hint badge only when not yet checked */}
                                                     {!completed && <TypeHintBadge type={fieldType} />}
+                                                    {isDue && (
+                                                        <span className="text-[10px] font-bold px-1.5 py-0.5 rounded-md bg-red-500/20 text-red-400 border border-red-500/30 animate-pulse">
+                                                            ⚠️ ถึงกำหนดเปลี่ยน
+                                                        </span>
+                                                    )}
                                                 </div>
                                             </div>
 
@@ -813,11 +862,96 @@ export default function PMExecutionModal({ isOpen, onClose, plan, onSuccess }: P
                                                 <div className={`animate-in fade-in slide-in-from-top-1 duration-200 ${isMultiField ? "pl-1" : "pl-8"}`}>
                                                     <SmartChecklistInput
                                                         item={item}
-                                                        value={checklistResults[index]?.value || ""}
+                                                        value={currentValue}
                                                         onChange={(val) => handleChecklistChange(index, true, val)}
-                                                        onQueueReplacement={() => setIsReplacementPlanModalOpen(true)}
                                                         isQueued={false}
                                                     />
+                                                </div>
+                                            )}
+
+                                            {/* ♥ Inline DuePart form — appears when "ถึงกำหนดเปลี่ยน" is picked */}
+                                            {isDue && duePart && (
+                                                <div className="ml-8 mt-1 p-3 bg-gradient-to-r from-orange-500/10 to-red-500/10 border border-orange-500/30 rounded-xl space-y-2.5 animate-in fade-in duration-300">
+                                                    {/* Header */}
+                                                    <div className="flex items-center justify-between">
+                                                        <div className="flex items-center gap-2">
+                                                            <BoxIcon size={13} className="text-orange-400" />
+                                                            <span className="text-[11px] font-bold text-orange-300 uppercase tracking-wider">สร้างแผนเปลี่ยนอะไหล่</span>
+                                                        </div>
+                                                        <button
+                                                            type="button"
+                                                            onClick={() => removeDuePart(index)}
+                                                            className="text-white/30 hover:text-white/70 transition-colors"
+                                                        >
+                                                            <XIcon size={14} />
+                                                        </button>
+                                                    </div>
+
+                                                    {/* Part name: dropdown from machine parts OR free text */}
+                                                    <div>
+                                                        <label className="text-[10px] text-orange-300/70 mb-1 block">ชื่ออะไหล่ / ชิ้นส่วนที่ถึงกำหนด *</label>
+                                                        {machineParts.length > 0 ? (
+                                                            <select
+                                                                className="input-field w-full text-xs h-8 bg-black/30"
+                                                                value={duePart.partName}
+                                                                onChange={e => updateDuePart(index, { partName: e.target.value })}
+                                                            >
+                                                                <option value="">-- เลือกอะไหล่ --</option>
+                                                                {machineParts.map(p => (
+                                                                    <option key={p.id} value={p.partName}>{p.partName} {p.brand ? `(${p.brand})` : ''}</option>
+                                                                ))}
+                                                                <option value="__custom__">➕ ระบุชื่อเอง...</option>
+                                                            </select>
+                                                        ) : (
+                                                            <input
+                                                                type="text"
+                                                                placeholder="ชื่ออะไหล่ / ชิ้นส่วน..."
+                                                                className="input-field w-full text-xs h-8 bg-black/30"
+                                                                value={duePart.partName}
+                                                                onChange={e => updateDuePart(index, { partName: e.target.value })}
+                                                            />
+                                                        )}
+                                                        {/* Free-text when custom selected */}
+                                                        {duePart.partName === "__custom__" && (
+                                                            <input
+                                                                type="text"
+                                                                placeholder="พิมพ์ชื่ออะไหล่..."
+                                                                className="input-field w-full text-xs h-8 bg-black/30 mt-1.5"
+                                                                autoFocus
+                                                                onChange={e => updateDuePart(index, { partName: e.target.value })}
+                                                            />
+                                                        )}
+                                                    </div>
+
+                                                    {/* Notes */}
+                                                    <div>
+                                                        <label className="text-[10px] text-orange-300/70 mb-1 block">หมายเหตุ (ไม่บังคับ)</label>
+                                                        <input
+                                                            type="text"
+                                                            placeholder="รายละเอียดเพิ่มเติม..."
+                                                            className="input-field w-full text-xs h-8 bg-black/30"
+                                                            value={duePart.notes}
+                                                            onChange={e => updateDuePart(index, { notes: e.target.value })}
+                                                        />
+                                                    </div>
+
+                                                    {/* Confirm toggle */}
+                                                    <button
+                                                        type="button"
+                                                        disabled={!duePart.partName.trim() || duePart.partName === "__custom__"}
+                                                        onClick={() => updateDuePart(index, { confirmed: !duePart.confirmed })}
+                                                        className={`w-full py-1.5 rounded-lg text-xs font-bold flex items-center justify-center gap-2 transition-all border ${
+                                                            duePart.confirmed
+                                                                ? "bg-green-500/20 border-green-500/40 text-green-400"
+                                                                : "bg-orange-500/20 border-orange-500/40 text-orange-300 hover:bg-orange-500/30"
+                                                        } disabled:opacity-40 disabled:cursor-not-allowed`}
+                                                    >
+                                                        {duePart.confirmed ? (
+                                                            <><CheckCircleIcon size={13} /> เพิ่มในแผนเปลี่ยนแล้ว ✔</>
+                                                        ) : (
+                                                            <><PlusIcon size={13} /> เพิ่มในแผนเปลี่ยนอะไหล่</>
+                                                        )}
+                                                    </button>
                                                 </div>
                                             )}
                                         </div>
@@ -840,6 +974,30 @@ export default function PMExecutionModal({ isOpen, onClose, plan, onSuccess }: P
                             onChange={(e) => setAdditionalNotes(e.target.value)}
                         />
                     </div>
+
+                    {/* ♥ Part Replacement Plans Summary (only if any confirmed) */}
+                    {dueParts.some(d => d.confirmed) && (
+                        <div className="rounded-xl border border-orange-500/30 bg-gradient-to-r from-orange-500/10 to-amber-500/5 p-3 space-y-2">
+                            <div className="flex items-center gap-2">
+                                <AlertTriangleIcon size={14} className="text-orange-400" />
+                                <span className="text-xs font-bold text-orange-300">แผนเปลี่ยนอะไหล่ที่จะสร้างอัตโนมัติ ({dueParts.filter(d => d.confirmed).length} รายการ)</span>
+                            </div>
+                            <div className="space-y-1">
+                                {dueParts.filter(d => d.confirmed).map((dp, i) => (
+                                    <div key={i} className="flex items-center gap-2 text-xs text-white/80">
+                                        <span className="text-orange-400">•</span>
+                                        <BoxIcon size={11} className="text-orange-400/70" />
+                                        <span className="font-medium">{dp.partName}</span>
+                                        <span className="text-white/30">|</span>
+                                        <span className="text-white/50 truncate">{dp.checklistLabel}</span>
+                                    </div>
+                                ))}
+                            </div>
+                            <p className="text-[10px] text-orange-300/60 italic">
+                                ⚠️ เมื่อกด "ยืนยัน" ระบบจะสร้างแผนเปลี่ยนอะไหล่และบันทึกไว้ในระบบอัตโนมัติ พร้อมป้าย "มาจาก PM"
+                            </p>
+                        </div>
+                    )}
                 </form>
             </div>
             

@@ -171,6 +171,11 @@ export interface MaintenanceRecord {
     cost?: number;
     supplier?: string;
 
+    // PM Origin fields
+    fromPM?: boolean;          // true = สร้างอัตโนมัติจาก PM checklist
+    pmTaskName?: string;       // ชื่องาน PM ต้นทาง
+    checklistItemLabel?: string; // ชื่อ checklist item ที่ trigger
+
     createdAt: Date;
     updatedAt: Date;
 }
