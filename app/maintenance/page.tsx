@@ -851,13 +851,13 @@ export default function MaintenancePage() {
                                                             let bgColor = "bg-accent-cyan/10 border-accent-cyan/20";
                                                             
                                                             const val = item.value || "";
-                                                            if (val.includes("สมบูรณ์") || val.includes("ปกติ") || val.includes("เรียบร้อย")) {
+                                                            if (val.includes("สมบูรณ์") || val.includes("ปกติ") || val.includes("เรียบร้อย") || val.includes("ไม่มี")) {
                                                                 valueColor = "text-accent-green font-bold";
                                                                 bgColor = "bg-accent-green/10 border-accent-green/20";
                                                             } else if (val.includes("พอใช้") || val.includes("เฝ้าระวัง") || val.includes("ต่ำ") || val.includes("เติมเพิ่ม")) {
                                                                 valueColor = "text-accent-yellow font-bold";
                                                                 bgColor = "bg-accent-yellow/10 border-accent-yellow/20";
-                                                            } else if (val.includes("เปลี่ยน") || val.includes("ผิดปกติ") || val.includes("ต้องเติม") || val.includes("ไม่มี")) {
+                                                            } else if (val.includes("เปลี่ยน") || val.includes("ผิดปกติ") || val.includes("ต้องเติม")) {
                                                                 valueColor = "text-accent-red font-bold";
                                                                 bgColor = "bg-accent-red/10 border-accent-red/20";
                                                             }

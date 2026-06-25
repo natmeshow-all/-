@@ -68,13 +68,13 @@ export const PMReportCard = forwardRef<HTMLDivElement, PMReportCardProps>(({ rec
                             let valueColor = "text-[#00d4ff] font-semibold";
                             let bgColor = "bg-[#00d4ff]/10 border-[#00d4ff]/20";
                             
-                            if (item.value?.includes("สมบูรณ์") || item.value?.includes("ปกติ") || item.value?.includes("เรียบร้อย")) {
+                            if (item.value?.includes("สมบูรณ์") || item.value?.includes("ปกติ") || item.value?.includes("เรียบร้อย") || item.value?.includes("ไม่มี")) {
                                 valueColor = "text-[#10b981] font-bold";
                                 bgColor = "bg-[#10b981]/10 border-[#10b981]/20";
                             } else if (item.value?.includes("พอใช้") || item.value?.includes("เฝ้าระวัง") || item.value?.includes("ต่ำ") || item.value?.includes("เติมเพิ่ม")) {
                                 valueColor = "text-[#fbbf24] font-bold";
                                 bgColor = "bg-[#fbbf24]/10 border-[#fbbf24]/20";
-                            } else if (item.value?.includes("เปลี่ยน") || item.value?.includes("ผิดปกติ") || item.value?.includes("ต้องเติม") || item.value?.includes("ไม่มี")) {
+                            } else if (item.value?.includes("เปลี่ยน") || item.value?.includes("ผิดปกติ") || item.value?.includes("ต้องเติม")) {
                                 valueColor = "text-[#f87171] font-bold";
                                 bgColor = "bg-[#f87171]/10 border-[#f87171]/20";
                             }
