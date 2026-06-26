@@ -1005,6 +1005,10 @@ export default function MaintenancePage() {
                 isOpen={!!selectedRecord}
                 onClose={() => setSelectedRecord(null)}
                 record={selectedRecord}
+                onRecordUpdated={(updated) => {
+                    setRecords(prev => prev.map(r => r.id === updated.id ? updated : r));
+                    setSelectedRecord(updated);
+                }}
             />
 
             <ConfirmModal
