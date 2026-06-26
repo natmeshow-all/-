@@ -4,7 +4,7 @@ import React, { useState, useEffect, useMemo } from "react";
 import Modal from "../ui/Modal";
 import { useLanguage } from "../../contexts/LanguageContext";
 import { Part, MaintenanceRecord, Machine } from "../../types";
-import { getParts, addMaintenanceRecord, updatePart, getMachines, getMaintenanceRecordsByMachine } from "../../lib/firebaseService";
+import { getParts, addMaintenanceRecord, updateMaintenanceRecord, updatePart, getMachines, getMaintenanceRecordsByMachine } from "../../lib/firebaseService";
 import { BoxIcon, CalendarIcon, ClockIcon, AlertTriangleIcon, ActivityIcon, CheckCircleIcon, HistoryIcon, RefreshCwIcon, SettingsIcon, FileTextIcon } from "../ui/Icons";
 import { useAuth } from "../../contexts/AuthContext";
 import { useToast } from "../../contexts/ToastContext";
@@ -140,26 +140,17 @@ export default function PartReplacementPlanModal({ isOpen, onClose, machineId: i
                 });
             }
 
-            // 2. Create a completed maintenance record
-            await addMaintenanceRecord({
-                machineId: plan.machineId,
-                machineName: plan.machineName,
-                description: `เปลี่ยนอะไหล่: ${partNameStr}`,
-                type: "partReplacement",
-                priority: "normal",
+            // 2. Update the existing pending record to completed status
+            //    This ensures the record disappears from the "pending" section immediately
+            await updateMaintenanceRecord(plan.id, {
                 status: "completed",
                 date: replacedDate,
+                description: `เปลี่ยนอะไหล่: ${partNameStr}`,
                 technician: user?.displayName || "Technician",
                 details: `[จากแผน PM: ${(plan as any).pmTaskName || ""}] เปลี่ยนอะไหล่ ${partNameStr} และเริ่มนับอายุการใช้งานใหม่`,
                 Location: plan.Location || currentMachine?.Location || "",
-                fromPM: true,
-                pmTaskName: (plan as any).pmTaskName,
-                pmPlanId: plan.pmPlanId,
             } as any);
 
-            // 3. Mark the pending plan as completed (update status via addMaintenanceRecord replacement is not ideal;
-            //    we update the record status by re-adding; ideally updateMaintenanceRecord exists)
-            //    For now we just reload; the pending plan will be superseded by the completed record
             success(`บันทึกวันที่เปลี่ยน ${partNameStr} สำเร็จ เริ่มนับอายุการใช้งานแล้ว`);
             await loadData();
         } catch (error) {

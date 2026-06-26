@@ -54,6 +54,7 @@ export default function MaintenancePage() {
     const [selectedMonth, setSelectedMonth] = useState("all");
     const [activeQuickFilter, setActiveQuickFilter] = useState<'all' | 'thisMonth' | 'thisWeek' | 'yearly'>('all');
     const [isFilterExpanded, setIsFilterExpanded] = useState(false);
+    const [activeTaskTypeFilter, setActiveTaskTypeFilter] = useState<'all' | 'preventive' | 'corrective' | 'partReplacement' | 'fromPM'>('all');
     const [allMachines, setAllMachines] = useState<Machine[]>([]);
     const [allRecordsForStats, setAllRecordsForStats] = useState<MaintenanceRecord[]>([]);
 
@@ -113,10 +114,7 @@ export default function MaintenancePage() {
             setAllFetchedRecords(newRecords);
             setAllRecordsForStats(newRecords);
 
-            // Only show preventive maintenance records as the primary list on this page
-            // Note: This filters from the currently fetched batch. 
-            // Users may need to "Load More" to see older preventive records if the recent batch is full of other types.
-            const preventiveData = newRecords.filter(r => r.type === 'preventive');
+            const preventiveData = newRecords;
             setRecords(preventiveData);
 
             setCursor(nextCursor);
@@ -139,7 +137,7 @@ export default function MaintenancePage() {
             setAllFetchedRecords(prev => [...prev, ...newRecords]);
             setAllRecordsForStats(prev => [...prev, ...newRecords]);
 
-            const newPreventiveData = newRecords.filter(r => r.type === 'preventive');
+            const newPreventiveData = newRecords;
             setRecords(prev => [...prev, ...newPreventiveData]);
 
             setCursor(nextCursor);
@@ -231,7 +229,19 @@ export default function MaintenancePage() {
             matchesTime = selectedMonth === "all" || recordMonth === selectedMonth;
         }
 
-        return matchesSearch && matchesMachine && matchesLocation && matchesTime;
+        // Task Type filter
+        let matchesTaskType = true;
+        if (activeTaskTypeFilter === 'preventive') {
+            matchesTaskType = record.type === 'preventive' || record.type === 'inspection' || record.type === 'oilChange';
+        } else if (activeTaskTypeFilter === 'corrective') {
+            matchesTaskType = record.type === 'corrective';
+        } else if (activeTaskTypeFilter === 'partReplacement') {
+            matchesTaskType = record.type === 'partReplacement';
+        } else if (activeTaskTypeFilter === 'fromPM') {
+            matchesTaskType = record.type === 'partReplacement' && (record as any).fromPM === true;
+        }
+
+        return matchesSearch && matchesMachine && matchesLocation && matchesTime && matchesTaskType;
     });
 
     const getMonthOptions = () => uniqueMonths;
@@ -467,6 +477,43 @@ export default function MaintenancePage() {
                                         </span>
                                     </button>
                                 ))}
+                            </div>
+
+                            {/* Task Type Filter Buttons */}
+                            <div className="flex flex-wrap gap-2 pt-2 border-t border-border-light/10">
+                                <span className="text-[10px] text-text-muted self-center mr-1 font-semibold tracking-wide uppercase">ประเภทงาน:</span>
+                                {[
+                                    { id: 'all', label: 'ทั้งหมด', color: 'accent-blue', emoji: '📋' },
+                                    { id: 'preventive', label: 'PM / ตรวจเช็ค', color: 'accent-cyan', emoji: '🔧' },
+                                    { id: 'corrective', label: 'ซ่อมทั่วไป', color: 'accent-yellow', emoji: '⚡' },
+                                    { id: 'partReplacement', label: 'เปลี่ยนอะไหล่', color: 'accent-green', emoji: '🔩' },
+                                    { id: 'fromPM', label: 'เปลี่ยนจากแผน PM', color: 'accent-purple', emoji: '🏷️' },
+                                ].map((f) => {
+                                    const count = records.filter(r => {
+                                        if (f.id === 'all') return true;
+                                        if (f.id === 'preventive') return r.type === 'preventive' || r.type === 'inspection' || r.type === 'oilChange';
+                                        if (f.id === 'corrective') return r.type === 'corrective';
+                                        if (f.id === 'partReplacement') return r.type === 'partReplacement';
+                                        if (f.id === 'fromPM') return r.type === 'partReplacement' && (r as any).fromPM === true;
+                                        return false;
+                                    }).length;
+                                    return (
+                                        <button
+                                            key={f.id}
+                                            onClick={() => setActiveTaskTypeFilter(f.id as any)}
+                                            className={`px-3 py-1.5 rounded-lg text-[11px] font-bold transition-all border flex items-center gap-1.5
+                                                ${activeTaskTypeFilter === f.id
+                                                ? `bg-${f.color}/20 border-${f.color}/40 text-white shadow-lg`
+                                                : 'bg-bg-secondary/40 border-border-light/30 text-text-muted hover:bg-bg-secondary/60 hover:text-text-primary hover:border-border-light/50'}`}
+                                        >
+                                            <span>{f.emoji}</span>
+                                            {f.label}
+                                            <span className={`px-1 py-0.5 rounded text-[9px] ${activeTaskTypeFilter === f.id ? `bg-${f.color} text-white` : 'bg-bg-secondary/60 text-text-muted'}`}>
+                                                {count}
+                                            </span>
+                                        </button>
+                                    );
+                                })}
                             </div>
 
                             <div className="flex items-center justify-between text-[11px] text-text-muted mt-1">
