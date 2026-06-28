@@ -9,7 +9,7 @@ import { useLanguage } from "../contexts/LanguageContext";
 import { useAuth } from "../contexts/AuthContext";
 import { useToast } from "../contexts/ToastContext";
 import { formatDateThai } from "../lib/dateUtils";
-import { getMaintenanceRecordsPaginated, deleteMaintenanceRecord, getMachines } from "../lib/firebaseService";
+import { getMaintenanceRecordsPaginated, deleteMaintenanceRecord, getMachines, updateMaintenanceRecord } from "../lib/firebaseService";
 import { MaintenanceRecord, Machine } from "../types";
 import {
     WrenchIcon,
@@ -79,6 +79,112 @@ export default function MaintenancePage() {
     const [cursor, setCursor] = useState<{ date: string, key: string } | undefined>(undefined);
     const [hasMore, setHasMore] = useState(true);
     const PAGE_SIZE = 50;
+
+    // Admin Editing States
+    const [editingRecordId, setEditingRecordId] = useState<string | null>(null);
+    const [editingChecklist, setEditingChecklist] = useState<any[]>([]);
+    const [editingRecordStatus, setEditingRecordStatus] = useState<string | null>(null);
+    const [isSavingEdit, setIsSavingEdit] = useState(false);
+
+    const handleStartEditChecklist = (record: MaintenanceRecord) => {
+        setEditingRecordId(record.id);
+        setEditingChecklist(record.checklist ? JSON.parse(JSON.stringify(record.checklist)) : []);
+        setEditingRecordStatus(record.status);
+    };
+
+    const handleChecklistItemValueChange = (idx: number, newValue: string) => {
+        setEditingChecklist(prev => {
+            const next = [...prev];
+            next[idx] = { ...next[idx], value: newValue };
+            return next;
+        });
+    };
+
+    const handleChecklistItemCompletedChange = (idx: number, newCompleted: boolean) => {
+        setEditingChecklist(prev => {
+            const next = [...prev];
+            next[idx] = { ...next[idx], completed: newCompleted };
+            return next;
+        });
+    };
+
+    const handleSaveChecklist = async (recordId: string) => {
+        setIsSavingEdit(true);
+        try {
+            const updateData: any = {
+                checklist: editingChecklist,
+            };
+            if (editingRecordStatus) {
+                updateData.status = editingRecordStatus;
+            }
+            await updateMaintenanceRecord(recordId, updateData);
+            
+            // Optimistic update of local records state
+            setRecords(prev => prev.map(r => {
+                if (r.id === recordId) {
+                    return {
+                        ...r,
+                        checklist: editingChecklist,
+                        status: (editingRecordStatus as any) || r.status,
+                        updatedAt: new Date()
+                    };
+                }
+                return r;
+            }));
+            
+            setEditingRecordId(null);
+            success(t("msgSaveSuccess") || "บันทึกข้อมูลสำเร็จ");
+        } catch (err: any) {
+            console.error("Error saving checklist edits:", err);
+            error(t("msgSaveError") || "เกิดข้อผิดพลาดในการบันทึก");
+        } finally {
+            setIsSavingEdit(false);
+        }
+    };
+
+    const getOptionsByValue = (val: string, itemText: string) => {
+        const l = itemText.toLowerCase();
+        if (l.includes("ความตึง") || l.includes("tension")) {
+            return ["เหมาะสม", "ตึงไป", "หย่อนไป", "ต้องปรับ"];
+        }
+        if (l.includes("ทำความสะอาด") || l.includes("ล้าง") || l.includes("หล่อลื่น") || l.includes("clean") || l.includes("lubricate") || l.includes("calibrat") || l.includes("ฉีดสารหล่อลื่น") || l.includes("เช็ด")) {
+            return ["เรียบร้อย", "บางส่วน", "ยังไม่ได้ทำ"];
+        }
+        if (l.includes("ระดับ") || l.includes("level")) {
+            return ["ปกติ", "ต่ำ", "ต้องเติม"];
+        }
+        if (l.includes("รอยรั่ว") || l.includes("รอยแตก") || l.includes("รั่วซึม") || l.includes("leak") || l.includes("crack")) {
+            return ["ไม่มี", "มีเล็กน้อย", "มีมาก / ต้องซ่อม"];
+        }
+        if (l.includes("เสียง") || l.includes("sound") || l.includes("noise")) {
+            return ["ปกติ", "เสียงดัง", "ผิดปกติ / ต้องตรวจสอบ"];
+        }
+        if (l.includes("ตรวจ") || l.includes("สภาพ") || l.includes("check") || l.includes("inspect")) {
+            return ["สมบูรณ์", "พอใช้", "ถึงกำหนดเปลี่ยน"];
+        }
+        
+        // Fallback detection by current value
+        if (val.includes("สมบูรณ์") || val.includes("พอใช้") || val.includes("ถึงกำหนดเปลี่ยน")) {
+            return ["สมบูรณ์", "พอใช้", "ถึงกำหนดเปลี่ยน"];
+        }
+        if (val.includes("เรียบร้อย") || val.includes("บางส่วน") || val.includes("ยังไม่ได้ทำ")) {
+            return ["เรียบร้อย", "บางส่วน", "ยังไม่ได้ทำ"];
+        }
+        if (val.includes("เหมาะสม") || val.includes("ตึงไป") || val.includes("หย่อนไป") || val.includes("ต้องปรับ")) {
+            return ["เหมาะสม", "ตึงไป", "หย่อนไป", "ต้องปรับ"];
+        }
+        if (val.includes("ปกติ") || val.includes("เฝ้าระวัง") || val.includes("ผิดปกติ")) {
+            return ["ปกติ", "เฝ้าระวัง", "ผิดปกติ"];
+        }
+        if (val.includes("ปกติ") || val.includes("ต่ำ") || val.includes("ต้องเติม") || val.includes("ต้องตรวจสอบ")) {
+            return ["ปกติ", "ต่ำ", "ต้องเติม", "ต้องตรวจสอบ"];
+        }
+        if (val.includes("ไม่มี") || val.includes("เล็กน้อย") || val.includes("มาก")) {
+            return ["ไม่มี", "มีเล็กน้อย", "มีมาก / ต้องซ่อม"];
+        }
+        
+        return ["สมบูรณ์", "พอใช้", "ถึงกำหนดเปลี่ยน"];
+    };
 
     const toggleExpand = (id: string) => {
         setExpandedRecords(prev => {
@@ -630,10 +736,6 @@ export default function MaintenancePage() {
                                                 <span className="text-[8px] text-text-muted mt-0.5">ประสิทธิภาพ</span>
                                             </div>
                                         ) : (
-                                            <div className={`w-10 h-10 rounded-xl flex items-center justify-center flex-shrink-0 shadow-inner
-                                                ${record.type === 'preventive' ? 'bg-accent-blue/10 text-accent-blue' :
-                                                    record.type === 'corrective' ? 'bg-accent-red/10 text-accent-red' :
-                                                        'bg-accent-green/10 text-accent-green'}`}>
                                                 {record.type === 'preventive' ? <RefreshCwIcon size={20} /> :
                                                     record.type === 'corrective' ? <AlertTriangleIcon size={20} /> :
                                                         <WrenchIcon size={20} />}
@@ -678,15 +780,28 @@ export default function MaintenancePage() {
                                                                 🏷️ PM
                                                             </span>
                                                         )}
-                                                        <span className={`badge text-[10px] py-0.5 px-2 font-bold uppercase tracking-wider ${getStatusColor(record.status)}`}>
-                                                            {getStatusText(record.status)}
-                                                        </span>
-                                                    </div>
-                                                    <div className="flex items-center text-[10px] text-text-muted gap-1">
-                                                        <CalendarIcon size={10} />
-                                                        <span>{mounted ? formatDateThai(record.date) : '--/--'}</span>
-                                                    </div>
-                                                </div>
+                                                        {editingRecordId === record.id ? (
+                                                            <select
+                                                                value={editingRecordStatus || record.status}
+                                                                onClick={(e) => e.stopPropagation()}
+                                                                onChange={(e) => setEditingRecordStatus(e.target.value)}
+                                                                className="bg-bg-tertiary border border-white/10 text-white rounded px-2 py-0.5 text-[10px] font-bold outline-none focus:border-primary/50 transition-colors cursor-pointer"
+                                                            >
+                                                                <option value="pending">รอดำเนินการ</option>
+                                                                <option value="inProgress">กำลังทำ</option>
+                                                                <option value="completed">เสร็จสิ้น</option>
+                                                            </select>
+                                                        ) : (
+                                                            <span className={`badge text-[10px] py-0.5 px-2 font-bold uppercase tracking-wider ${getStatusColor(record.status)}`}>
+                                                                {getStatusText(record.status)}
+                                                            </span>
+                                                         )}
+                                                     </div>
+                                                     <div className="flex items-center text-[10px] text-text-muted gap-1">
+                                                         <CalendarIcon size={10} />
+                                                         <span>{mounted ? formatDateThai(record.date) : '--/--'}</span>
+                                                     </div>
+                                                 </div>
                                             </div>
 
                                             {/* Sub Info Row (Technician, Type, Expand Arrow) */}
@@ -888,11 +1003,39 @@ export default function MaintenancePage() {
                                             {/* Section 3: Checklist - Grid List */}
                                             {record.checklist && record.checklist.length > 0 && (
                                                 <div className="bg-white/5 p-4 rounded-xl border border-white/5 mt-4">
-                                                    <h4 className="text-sm font-bold text-white mb-3 flex items-center gap-2">
-                                                        <span className="text-accent-cyan">📋</span> รายการตรวจสอบ ({record.checklist.length} รายการ)
-                                                    </h4>
+                                                    <div className="flex items-center justify-between mb-3">
+                                                        <h4 className="text-sm font-bold text-white flex items-center gap-2">
+                                                            <span className="text-accent-cyan">📋</span> รายการตรวจสอบ ({record.checklist.length} รายการ)
+                                                        </h4>
+                                                        {isAdmin && editingRecordId !== record.id && (
+                                                            <button 
+                                                                onClick={(e) => { e.stopPropagation(); handleStartEditChecklist(record); }}
+                                                                className="px-3 py-1 rounded bg-accent-blue/20 text-accent-blue text-xs font-bold hover:bg-accent-blue hover:text-white transition-colors"
+                                                            >
+                                                                แก้ไขสถานะ
+                                                            </button>
+                                                        )}
+                                                        {editingRecordId === record.id && (
+                                                            <div className="flex gap-2">
+                                                                <button 
+                                                                    onClick={(e) => { e.stopPropagation(); setEditingRecordId(null); }}
+                                                                    className="px-3 py-1 rounded bg-white/10 text-white text-xs font-bold hover:bg-white/20 transition-colors"
+                                                                    disabled={isSavingEdit}
+                                                                >
+                                                                    ยกเลิก
+                                                                </button>
+                                                                <button 
+                                                                    onClick={(e) => { e.stopPropagation(); handleSaveChecklist(record.id); }}
+                                                                    className="px-3 py-1 rounded bg-accent-green text-white text-xs font-bold hover:bg-accent-green/80 transition-colors"
+                                                                    disabled={isSavingEdit}
+                                                                >
+                                                                    {isSavingEdit ? 'กำลังบันทึก...' : 'บันทึก'}
+                                                                </button>
+                                                            </div>
+                                                        )}
+                                                    </div>
                                                     <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
-                                                        {record.checklist.map((item, idx) => {
+                                                        {(editingRecordId === record.id ? editingChecklist : record.checklist).map((item, idx) => {
                                                             let valueColor = "text-accent-cyan font-semibold";
                                                             let bgColor = "bg-accent-cyan/10 border-accent-cyan/20";
                                                             
@@ -919,9 +1062,71 @@ export default function MaintenancePage() {
                                                                 } catch (e) { }
                                                             }
 
+                                                            // Calculate trend for efficiency check symbol
+                                                            const prevChecklistItem = prevRecord?.checklist?.find(c => c.item === item.item);
+                                                            let trendSymbol = null;
+                                                            if (prevChecklistItem && prevChecklistItem.value && item.value) {
+                                                                const curScore = scoreValue(item.value);
+                                                                const prevScore = scoreValue(prevChecklistItem.value);
+                                                                if (curScore > prevScore) trendSymbol = 'up';
+                                                                else if (curScore < prevScore) trendSymbol = 'down';
+                                                            }
+                                                            
+                                                            // IF IN EDIT MODE
+                                                            if (editingRecordId === record.id) {
+                                                                const options = getOptionsByValue(val, item.item);
+                                                                return (
+                                                                    <div key={idx} onClick={(e) => e.stopPropagation()} className="flex flex-col bg-bg-tertiary p-3 rounded-lg border border-primary/30">
+                                                                        <div className="text-xs text-text-primary mb-2 font-bold">{item.item}</div>
+                                                                        {isVibrationData ? (
+                                                                            <input
+                                                                                type="text"
+                                                                                value={val}
+                                                                                onChange={(e) => handleChecklistItemValueChange(idx, e.target.value)}
+                                                                                className="bg-bg-secondary border border-white/20 text-white rounded px-2 py-1.5 text-xs outline-none focus:border-primary/50 w-full"
+                                                                            />
+                                                                        ) : options.length > 0 && !options.includes('custom') ? (
+                                                                            <select
+                                                                                value={val}
+                                                                                onChange={(e) => handleChecklistItemValueChange(idx, e.target.value)}
+                                                                                className="bg-bg-secondary border border-white/20 text-white rounded px-2 py-1.5 text-xs outline-none focus:border-primary/50 w-full cursor-pointer"
+                                                                            >
+                                                                                <option value="">-- เลือกสถานะ --</option>
+                                                                                {options.map((opt, oIdx) => (
+                                                                                    <option key={oIdx} value={opt}>{opt}</option>
+                                                                                ))}
+                                                                            </select>
+                                                                        ) : (
+                                                                            <input
+                                                                                type="text"
+                                                                                value={val}
+                                                                                onChange={(e) => handleChecklistItemValueChange(idx, e.target.value)}
+                                                                                className="bg-bg-secondary border border-white/20 text-white rounded px-2 py-1.5 text-xs outline-none focus:border-primary/50 w-full"
+                                                                                placeholder="ระบุสถานะหรือค่า"
+                                                                            />
+                                                                        )}
+                                                                        <div className="flex items-center gap-2 mt-2">
+                                                                            <input
+                                                                                type="checkbox"
+                                                                                checked={item.completed || false}
+                                                                                onChange={(e) => handleChecklistItemCompletedChange(idx, e.target.checked)}
+                                                                                className="w-3.5 h-3.5 rounded border-white/20 bg-black/20 text-primary focus:ring-primary/50 focus:ring-offset-0 cursor-pointer"
+                                                                                id={`chk-${idx}`}
+                                                                            />
+                                                                            <label htmlFor={`chk-${idx}`} className="text-xs text-text-muted cursor-pointer">ตรวจสอบแล้ว</label>
+                                                                        </div>
+                                                                    </div>
+                                                                );
+                                                            }
+
+                                                            // IF IN VIEW MODE
                                                             return (
                                                                 <div key={idx} className={`flex flex-col bg-bg-tertiary p-3 rounded-lg border transition-all ${isDue ? 'border-accent-red/30 bg-accent-red/5' : 'border-white/5'}`}>
-                                                                    <div className="text-xs text-text-muted mb-2 font-medium">{item.item}</div>
+                                                                    <div className="flex items-center justify-between text-xs text-text-muted mb-2 font-medium">
+                                                                        <span>{item.item}</span>
+                                                                        {trendSymbol === 'up' && <span className="text-accent-green" title="ประสิทธิภาพดีขึ้น">▲</span>}
+                                                                        {trendSymbol === 'down' && <span className="text-accent-red" title="ประสิทธิภาพลดลง">▼</span>}
+                                                                    </div>
                                                                     {isVibrationData && vibrationObj ? (
                                                                         <div className="flex gap-1 flex-wrap">
                                                                             {['x', 'y', 'z'].map((axis) => vibrationObj[axis] && (
@@ -936,7 +1141,7 @@ export default function MaintenancePage() {
                                                                                 {val}
                                                                             </div>
                                                                             <button
-                                                                                onClick={() => openReplacementPlan(record.machineId, record.machineName)}
+                                                                                onClick={(e) => { e.stopPropagation(); openReplacementPlan(record.machineId, record.machineName); }}
                                                                                 className="text-[11px] px-2.5 py-1 rounded-md border border-accent-red/40 bg-accent-red/10 text-accent-red hover:bg-accent-red/20 transition-colors w-fit flex items-center gap-1.5 font-semibold"
                                                                             >
                                                                                 <ActivityIcon size={11} />
@@ -1005,10 +1210,6 @@ export default function MaintenancePage() {
                 isOpen={!!selectedRecord}
                 onClose={() => setSelectedRecord(null)}
                 record={selectedRecord}
-                onRecordUpdated={(updated) => {
-                    setRecords(prev => prev.map(r => r.id === updated.id ? updated : r));
-                    setSelectedRecord(updated);
-                }}
             />
 
             <ConfirmModal
