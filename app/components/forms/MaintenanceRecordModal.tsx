@@ -366,6 +366,7 @@ export default function MaintenanceRecordModal({
                 duration: parseInt(formData.duration) || 0,
                 technician: formData.technician,
                 status: formData.status,
+                description: formData.description,
                 details: formData.details,
                 notes: formData.notes,
 
@@ -615,6 +616,23 @@ export default function MaintenanceRecordModal({
                             <option value="urgent">{t("maintenancePriorityUrgent")}</option>
                         </select>
                     </div>
+                </div>
+
+                {/* Description / Task Name */}
+                <div className="mt-3">
+                    <label className="label" htmlFor="m-description-input">
+                        <FileTextIcon size={14} />
+                        ชื่องาน / รายละเอียดแบบย่อ (Description)
+                    </label>
+                    <input
+                        id="m-description-input"
+                        type="text"
+                        name="description"
+                        value={formData.description}
+                        onChange={handleInputChange}
+                        placeholder="เช่น เปลี่ยนลูกปืนสายพาน, ซ่อมมอเตอร์"
+                        className="input"
+                    />
                 </div>
 
                 {/* Section 2: Operation Details */}
