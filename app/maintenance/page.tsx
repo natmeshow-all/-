@@ -33,6 +33,7 @@ import {
     ActivityIcon,
     TargetIcon,
     ImageIcon,
+    EditIcon,
 } from "../components/ui/Icons";
 
 import RecordDetailsModal from "../components/pm/RecordDetailsModal";
@@ -84,6 +85,10 @@ export default function MaintenancePage() {
     const [editingRecordId, setEditingRecordId] = useState<string | null>(null);
     const [editingChecklist, setEditingChecklist] = useState<any[]>([]);
     const [editingRecordStatus, setEditingRecordStatus] = useState<string | null>(null);
+
+    // Edit description state
+    const [editingDescriptionId, setEditingDescriptionId] = useState<string | null>(null);
+    const [editingDescriptionText, setEditingDescriptionText] = useState<string>("");
     const [isSavingEdit, setIsSavingEdit] = useState(false);
 
     const handleStartEditChecklist = (record: MaintenanceRecord) => {
@@ -307,6 +312,23 @@ export default function MaintenancePage() {
             console.error("Error loading more records:", error);
         } finally {
             setLoadingMore(false);
+        }
+    };
+
+    const handleUpdateDescription = async (recordId: string) => {
+        if (!isAdmin) return;
+        try {
+            await updateMaintenanceRecord(recordId, { description: editingDescriptionText });
+            
+            // Optimistic update
+            setRecords(prev => prev.map(r => r.id === recordId ? { ...r, description: editingDescriptionText } : r));
+            setAllFetchedRecords(prev => prev.map(r => r.id === recordId ? { ...r, description: editingDescriptionText } : r));
+            success(t("msgSaveSuccess") || "บันทึกรายละเอียดสำเร็จ");
+        } catch (err: any) {
+            console.error("Error updating description:", err);
+            error(t("msgSaveError") || "เกิดข้อผิดพลาดในการบันทึก");
+        } finally {
+            setEditingDescriptionId(null);
         }
     };
 
@@ -787,15 +809,43 @@ export default function MaintenancePage() {
                                                 </div>
 
                                                 {/* Description & Location */}
-                                                <div className="flex items-center gap-2 text-xs text-text-muted mt-1">
+                                                <div className="flex items-center gap-2 text-xs text-text-muted mt-1 h-5">
                                                     {(record.location || machine?.location || machine?.Location) && (
                                                         <span className="font-bold text-[10px] uppercase opacity-80 bg-white/5 px-1 rounded border border-white/10 shrink-0">
                                                             {record.location || machine?.location || machine?.Location}
                                                         </span>
                                                     )}
-                                                    <p className="truncate opacity-70 max-w-[200px] sm:max-w-md">
-                                                        {record.description || record.type}
-                                                    </p>
+                                                    {editingDescriptionId === record.id ? (
+                                                        <input
+                                                            value={editingDescriptionText}
+                                                            onChange={(e) => setEditingDescriptionText(e.target.value)}
+                                                            onClick={(e) => e.stopPropagation()}
+                                                            onBlur={() => handleUpdateDescription(record.id)}
+                                                            onKeyDown={(e) => {
+                                                                if (e.key === 'Enter') handleUpdateDescription(record.id);
+                                                                if (e.key === 'Escape') setEditingDescriptionId(null);
+                                                            }}
+                                                            className="bg-bg-tertiary text-xs border border-primary/50 rounded px-2 outline-none text-white w-full max-w-[200px] sm:max-w-md h-5"
+                                                            autoFocus
+                                                        />
+                                                    ) : (
+                                                        <div 
+                                                            className={`flex items-center gap-2 group ${isAdmin ? 'cursor-pointer' : ''}`}
+                                                            onClick={(e) => {
+                                                                if (isAdmin) {
+                                                                    e.stopPropagation();
+                                                                    setEditingDescriptionId(record.id);
+                                                                    setEditingDescriptionText(record.description || record.type || '');
+                                                                }
+                                                            }}
+                                                            title={isAdmin ? "คลิกเพื่อแก้ไขรายละเอียด" : undefined}
+                                                        >
+                                                            <p className={`truncate opacity-70 max-w-[200px] sm:max-w-md ${isAdmin ? 'group-hover:text-primary group-hover:opacity-100 transition-colors' : ''}`}>
+                                                                {record.description || record.type}
+                                                            </p>
+                                                            {isAdmin && <span className="opacity-0 group-hover:opacity-100 text-primary transition-opacity"><EditIcon size={12} /></span>}
+                                                        </div>
+                                                    )}
                                                 </div>
                                                 </div>
                                                 {/* Right Data: Status + Date */}
