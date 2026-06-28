@@ -763,7 +763,7 @@ export default function MaintenancePage() {
                                     <div className="flex items-start gap-3 relative">
                                         {/* Left Side: Efficiency Ring or Icon Box */}
                                         {assessed.length > 0 ? (
-                                            <div className="flex flex-col items-center flex-shrink-0" title={`ประสิทธิภาพ: ${efficiencyPct}%`}>
+                                            <div className="flex flex-col items-center justify-center flex-shrink-0 w-12" title={`ประสิทธิภาพ: ${efficiencyPct}%`}>
                                                 <svg width="48" height="48" viewBox="0 0 60 60">
                                                     {/* Track */}
                                                     <circle cx="30" cy="30" r={radius} fill="none" stroke="rgba(255,255,255,0.06)" strokeWidth="5" />
@@ -788,7 +788,7 @@ export default function MaintenancePage() {
                                                         </text>
                                                     )}
                                                 </svg>
-                                                <span className="text-[8px] text-text-muted mt-0.5">ประสิทธิภาพ</span>
+                                                <span className="text-[7px] text-text-muted mt-0.5 tracking-tighter whitespace-nowrap">ประสิทธิภาพ</span>
                                             </div>
                                         ) : (
                                             <div className="w-12 h-12 rounded-full bg-white/5 flex flex-col items-center justify-center flex-shrink-0 text-text-muted">
