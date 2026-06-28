@@ -175,23 +175,35 @@ export default function PredictivePage() {
             if (riskScore >= 70) {
                  // Prioritize critical actions
                  if (overduePlans.length > 0) {
-                     potentialImpact = t("impactOverdue") || "Machine performance degradation, Warranty risk";
-                     recommendedAction = t("actionOverdue") || "Schedule PM immediately";
+                     const delayDays = Math.floor((Date.now() - new Date(overduePlans[0].nextDueDate).getTime()) / (1000 * 3600 * 24));
+                     potentialImpact = `ประสิทธิภาพเครื่องจักรมีความเสี่ยงสูง เนื่องจากแผน "${overduePlans[0].taskName}" ล่าช้ามาแล้ว ${delayDays} วัน`;
+                     recommendedAction = `ควรดำเนินการตามแผน "${overduePlans[0].taskName}" ทันที เพื่อป้องกันชิ้นส่วนเสื่อมสภาพรุนแรง`;
                  } else if (chronicIssues.length > 0) {
-                     potentialImpact = t("impactChronic") || "High risk of recurring breakdown";
-                     recommendedAction = t("actionChronic") || "Root cause analysis required";
+                     const issueName = chronicIssues[0][0];
+                     const count = chronicIssues[0][1];
+                     potentialImpact = `ความเสี่ยงสูงมากที่ปัญหา "${issueName}" จะเกิดขึ้นซ้ำ เนื่องจากพบประวัติการเสียเดิมถึง ${count} ครั้ง`;
+                     recommendedAction = `ควรระงับการใช้งานชั่วคราวเพื่อหาสาเหตุที่แท้จริง (Root Cause Analysis) ของปัญหา ${issueName}`;
                  } else {
-                     potentialImpact = t("impactCritical") || "Critical failure imminent";
-                     recommendedAction = t("actionCritical") || "Stop and inspect immediately";
+                     potentialImpact = t("impactCritical") || "มีความเสี่ยงที่เครื่องจักรจะเกิดการขัดข้องขั้นวิกฤต (Critical Failure)";
+                     recommendedAction = t("actionCritical") || "ควรตรวจสอบชิ้นส่วนสำคัญอย่างละเอียดทันที";
                  }
             } else {
                  // Warning level actions
                  if (hasMTBFData && timeSinceLastFail > avgFailTime * 0.8) {
-                      potentialImpact = t("impactMTBF") || "Unexpected breakdown likely";
-                      recommendedAction = t("actionMTBF") || "Inspect part condition, Prepare spares";
+                      const daysSinceFail = Math.floor(timeSinceLastFail / (1000 * 3600 * 24));
+                      const avgDays = Math.floor(avgFailTime / (1000 * 3600 * 24));
+                      potentialImpact = `เครื่องจักรทำงานมาแล้ว ${daysSinceFail} วัน ซึ่งใกล้เคียงกับรอบการเสียเฉลี่ย (${avgDays} วัน) อาจเกิดการหยุดทำงานกะทันหัน`;
+                      recommendedAction = `ตรวจสอบสภาพการทำงาน เตรียมพร้อมเบิกอะไหล่ล่วงหน้าหากใกล้ถึงรอบเสีย`;
+                 } else if (overduePlans.length > 0) {
+                      const delayDays = Math.floor((Date.now() - new Date(overduePlans[0].nextDueDate).getTime()) / (1000 * 3600 * 24));
+                      potentialImpact = `ความเสี่ยงเพิ่มขึ้นจากแผน PM "${overduePlans[0].taskName}" ที่ยังไม่ได้ดำเนินการ (ล่าช้า ${delayDays} วัน)`;
+                      recommendedAction = `เร่งดำเนินการจัดคิวงาน ${overduePlans[0].taskName} โดยเร็วที่สุด`;
+                 } else if (recentFailures.length > 0) {
+                      potentialImpact = `เครื่องจักรเพิ่งผ่านการซ่อมแซม ${recentFailures.length} ครั้งในช่วง 30 วันที่ผ่านมา อาจเกิดการสะดุดระหว่างทำงาน`;
+                      recommendedAction = `เฝ้าระวังอาการหลังการซ่อมอย่างใกล้ชิดในระยะแรก`;
                  } else {
-                      potentialImpact = t("impactWarning") || "Reduced efficiency";
-                      recommendedAction = t("actionWarning") || "Monitor closely";
+                      potentialImpact = t("impactWarning") || "ประสิทธิภาพของระบบอาจลดลงตามอายุการใช้งาน";
+                      recommendedAction = t("actionWarning") || "เฝ้าระวังอย่างใกล้ชิดและตรวจเช็คตามรอบปกติ";
                  }
             }
 
