@@ -59,14 +59,7 @@ export default function PartReplacementPlanModal({ isOpen, onClose, machineId: i
                 }
             }
 
-            // Load pending PM plans for this machine
-            if (machineIdToLoad) {
-                const records = await getMaintenanceRecordsByMachine(machineIdToLoad);
-                const pending = records.filter(
-                    r => r.type === "partReplacement" && r.status === "pending" && (r as any).fromPM === true
-                );
-                setPmPlans(pending);
-            }
+            // We will let the useEffect handle loading pmPlans when selectedMachineId changes
         } catch (error) {
             console.error("Error loading data:", error);
             showError("เกิดข้อผิดพลาดในการดึงข้อมูล", "Error");
@@ -74,6 +67,25 @@ export default function PartReplacementPlanModal({ isOpen, onClose, machineId: i
             setLoading(false);
         }
     };
+
+    useEffect(() => {
+        const fetchPmPlans = async () => {
+            if (selectedMachineId) {
+                try {
+                    const records = await getMaintenanceRecordsByMachine(selectedMachineId);
+                    const pending = records.filter(
+                        r => r.type === "partReplacement" && r.status === "pending" && (r as any).fromPM === true
+                    );
+                    setPmPlans(pending);
+                } catch (err) {
+                    console.error("Error fetching pm plans for machine:", err);
+                }
+            } else {
+                setPmPlans([]);
+            }
+        };
+        fetchPmPlans();
+    }, [selectedMachineId]);
 
     const displayedParts = useMemo(() => {
         if (!selectedMachineId) return [];
@@ -211,7 +223,7 @@ export default function PartReplacementPlanModal({ isOpen, onClose, machineId: i
                                     onChange={(e) => setSelectedMachineId(e.target.value)}
                                 >
                                     <option value="" disabled>-- เลือกเครื่องจักร --</option>
-                                    {machines.filter(m => allParts.some(p => p.machineId === m.id)).map(m => (
+                                    {machines.map(m => (
                                         <option key={m.id} value={m.id}>{m.name} {m.location ? `[${m.location}]` : ''}</option>
                                     ))}
                                 </select>
