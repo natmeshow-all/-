@@ -736,6 +736,7 @@ export default function MaintenancePage() {
                                                 <span className="text-[8px] text-text-muted mt-0.5">ประสิทธิภาพ</span>
                                             </div>
                                         ) : (
+                                            <div className="w-12 h-12 rounded-full bg-white/5 flex flex-col items-center justify-center flex-shrink-0 text-text-muted">
                                                 {record.type === 'preventive' ? <RefreshCwIcon size={20} /> :
                                                     record.type === 'corrective' ? <AlertTriangleIcon size={20} /> :
                                                         <WrenchIcon size={20} />}
