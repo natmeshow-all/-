@@ -9,8 +9,8 @@ import { useLanguage } from "../contexts/LanguageContext";
 import { useAuth } from "../contexts/AuthContext";
 import { useToast } from "../contexts/ToastContext";
 import { formatDateThai } from "../lib/dateUtils";
-import { getMaintenanceRecordsPaginated, deleteMaintenanceRecord, getMachines, updateMaintenanceRecord } from "../lib/firebaseService";
-import { MaintenanceRecord, Machine } from "../types";
+import { getMaintenanceRecordsPaginated, deleteMaintenanceRecord, getMachines, updateMaintenanceRecord, addMaintenanceRecord, getMaintenanceRecordsByMachine } from "../lib/firebaseService";
+import { MaintenanceRecord, Machine, ChecklistItemResult } from "../types";
 import {
     WrenchIcon,
     PlusIcon,
@@ -118,6 +118,44 @@ export default function MaintenancePage() {
                 updateData.status = editingRecordStatus;
             }
             await updateMaintenanceRecord(recordId, updateData);
+            
+            // Generate pending part replacement plans for items marked "ถึงกำหนดเปลี่ยน"
+            const currentRecord = records.find(r => r.id === recordId);
+            if (currentRecord) {
+                const dueItems = editingChecklist.filter(item => item.value?.includes("ถึงกำหนดเปลี่ยน"));
+                if (dueItems.length > 0) {
+                    const existingRecords = await getMaintenanceRecordsByMachine(currentRecord.machineId);
+                    
+                    for (const item of dueItems) {
+                        const isAlreadyPlanned = existingRecords.some(r => 
+                            r.type === "partReplacement" && 
+                            r.status === "pending" && 
+                            (r as any).fromPM === true && 
+                            (r as any).pmPlanId === recordId && 
+                            (r as any).checklistItemLabel === item.item
+                        );
+
+                        if (!isAlreadyPlanned) {
+                            await addMaintenanceRecord({
+                                machineId: currentRecord.machineId,
+                                machineName: currentRecord.machineName,
+                                description: `[แผน PM] เปลี่ยนอะไหล่: ${item.item}`,
+                                type: "partReplacement",
+                                priority: "high",
+                                status: "pending",
+                                date: new Date(),
+                                technician: "Admin",
+                                Location: currentRecord.Location || "",
+                                fromPM: true,
+                                pmTaskName: currentRecord.description || "PM Task",
+                                pmPlanId: recordId,
+                                checklistItemLabel: item.item,
+                                partName: item.item,
+                            } as any);
+                        }
+                    }
+                }
+            }
             
             // Optimistic update of local records state
             setRecords(prev => prev.map(r => {
