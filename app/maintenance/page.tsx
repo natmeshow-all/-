@@ -180,6 +180,23 @@ export default function MaintenancePage() {
         }
     };
 
+    const calculateLifespan = (dateString: string | Date | undefined) => {
+        if (!dateString) return null;
+        const past = new Date(dateString);
+        const now = new Date();
+        // If the date is in the future (e.g. they mistakenly selected tomorrow), just show 0 days
+        if (now.getTime() < past.getTime()) return { years: 0, months: 0, days: 0, totalDays: 0 };
+        
+        const diffTime = Math.abs(now.getTime() - past.getTime());
+        const diffDays = Math.floor(diffTime / (1000 * 60 * 60 * 24));
+        
+        const years = Math.floor(diffDays / 365);
+        const months = Math.floor((diffDays % 365) / 30);
+        const days = (diffDays % 365) % 30;
+        
+        return { years, months, days, totalDays: diffDays };
+    };
+
     const getOptionsByValue = (val: string, itemText: string) => {
         const l = itemText.toLowerCase();
         if (l.includes("ความตึง") || l.includes("tension")) {
@@ -1195,6 +1212,40 @@ export default function MaintenancePage() {
                                                                 </div>
                                                             );
                                                         })}
+                                                    </div>
+                                                </div>
+                                            )}
+
+                                            {/* Section 4.5: Part Replacement Info */}
+                                            {record.type === 'partReplacement' && (
+                                                <div className="bg-white/5 p-4 rounded-xl border border-white/5 mt-4">
+                                                    <h4 className="text-sm font-bold text-accent-green mb-3 flex items-center gap-2">
+                                                        <ClockIcon size={14} /> ข้อมูลอายุการใช้งานอะไหล่
+                                                    </h4>
+                                                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                                                        <div className="bg-black/20 p-3 rounded-lg border border-white/5">
+                                                            <div className="text-[10px] text-text-muted mb-1">วันที่เปลี่ยนอะไหล่</div>
+                                                            <div className="text-sm font-bold text-white flex items-center gap-2">
+                                                                <CalendarIcon size={14} className="text-accent-blue" />
+                                                                {formatDateThai(record.date)}
+                                                            </div>
+                                                        </div>
+                                                        
+                                                        <div className="bg-black/20 p-3 rounded-lg border border-white/5">
+                                                            <div className="text-[10px] text-text-muted mb-1">ใช้งานมาแล้ว (นับถึงปัจจุบัน)</div>
+                                                            <div className="text-sm font-bold text-accent-yellow flex items-center gap-2">
+                                                                <ActivityIcon size={14} />
+                                                                {(() => {
+                                                                    const lifespan = calculateLifespan(record.date);
+                                                                    if (!lifespan) return "-";
+                                                                    let parts = [];
+                                                                    if (lifespan.years > 0) parts.push(`${lifespan.years} ปี`);
+                                                                    if (lifespan.months > 0) parts.push(`${lifespan.months} เดือน`);
+                                                                    parts.push(`${lifespan.days} วัน`);
+                                                                    return parts.join(" ");
+                                                                })()}
+                                                            </div>
+                                                        </div>
                                                     </div>
                                                 </div>
                                             )}
