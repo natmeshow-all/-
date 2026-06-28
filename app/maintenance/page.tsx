@@ -809,28 +809,32 @@ export default function MaintenancePage() {
                                                 </div>
 
                                                 {/* Description & Location */}
-                                                <div className="flex items-center gap-2 text-xs text-text-muted mt-1 h-5">
+                                                <div className="flex items-start gap-2 text-xs text-text-muted mt-1">
                                                     {(record.location || machine?.location || machine?.Location) && (
-                                                        <span className="font-bold text-[10px] uppercase opacity-80 bg-white/5 px-1 rounded border border-white/10 shrink-0">
+                                                        <span className="font-bold text-[10px] uppercase opacity-80 bg-white/5 px-1 rounded border border-white/10 shrink-0 mt-0.5">
                                                             {record.location || machine?.location || machine?.Location}
                                                         </span>
                                                     )}
                                                     {editingDescriptionId === record.id ? (
-                                                        <input
+                                                        <textarea
                                                             value={editingDescriptionText}
                                                             onChange={(e) => setEditingDescriptionText(e.target.value)}
                                                             onClick={(e) => e.stopPropagation()}
                                                             onBlur={() => handleUpdateDescription(record.id)}
                                                             onKeyDown={(e) => {
-                                                                if (e.key === 'Enter') handleUpdateDescription(record.id);
+                                                                if (e.key === 'Enter' && !e.shiftKey) {
+                                                                    e.preventDefault();
+                                                                    handleUpdateDescription(record.id);
+                                                                }
                                                                 if (e.key === 'Escape') setEditingDescriptionId(null);
                                                             }}
-                                                            className="bg-bg-tertiary text-xs border border-primary/50 rounded px-2 outline-none text-white w-full max-w-[200px] sm:max-w-md h-5"
+                                                            className="bg-bg-tertiary text-xs border border-primary/50 rounded px-2 py-1 outline-none text-white w-full max-w-full resize-none"
+                                                            rows={2}
                                                             autoFocus
                                                         />
                                                     ) : (
                                                         <div 
-                                                            className={`flex items-center gap-2 group ${isAdmin ? 'cursor-pointer' : ''}`}
+                                                            className={`flex items-start gap-2 group ${isAdmin ? 'cursor-pointer' : ''} w-full`}
                                                             onClick={(e) => {
                                                                 if (isAdmin) {
                                                                     e.stopPropagation();
@@ -840,10 +844,10 @@ export default function MaintenancePage() {
                                                             }}
                                                             title={isAdmin ? "คลิกเพื่อแก้ไขรายละเอียด" : undefined}
                                                         >
-                                                            <p className={`truncate opacity-70 max-w-[200px] sm:max-w-md ${isAdmin ? 'group-hover:text-primary group-hover:opacity-100 transition-colors' : ''}`}>
+                                                            <p className={`line-clamp-3 opacity-70 w-full leading-relaxed ${isAdmin ? 'group-hover:text-primary group-hover:opacity-100 transition-colors' : ''}`}>
                                                                 {record.description || (record.partName ? `เปลี่ยนอะไหล่: ${record.partName}` : null) || (record.type === 'partReplacement' ? 'เปลี่ยนอะไหล่' : record.type === 'preventive' ? 'PM / ตรวจเช็ค' : record.type === 'corrective' ? 'ซ่อมทั่วไป' : record.type)}
                                                             </p>
-                                                            {isAdmin && <span className="text-primary opacity-50 group-hover:opacity-100 transition-opacity shrink-0"><EditIcon size={12} /></span>}
+                                                            {isAdmin && <span className="text-primary opacity-50 group-hover:opacity-100 transition-opacity shrink-0 mt-0.5"><EditIcon size={12} /></span>}
                                                         </div>
                                                     )}
                                                 </div>
