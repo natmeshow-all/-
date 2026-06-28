@@ -4,7 +4,7 @@ import React, { useState, useEffect, useMemo } from "react";
 import Modal from "../ui/Modal";
 import { useLanguage } from "../../contexts/LanguageContext";
 import { Part, MaintenanceRecord, Machine } from "../../types";
-import { getParts, addMaintenanceRecord, updateMaintenanceRecord, updatePart, getMachines, getMaintenanceRecordsByMachine } from "../../lib/firebaseService";
+import { getParts, addMaintenanceRecord, updateMaintenanceRecord, updatePart, getMachines, getMaintenanceRecordsByMachine, getMaintenanceRecordsByType } from "../../lib/firebaseService";
 import { BoxIcon, CalendarIcon, ClockIcon, AlertTriangleIcon, ActivityIcon, CheckCircleIcon, HistoryIcon, RefreshCwIcon, SettingsIcon, FileTextIcon } from "../ui/Icons";
 import { useAuth } from "../../contexts/AuthContext";
 import { useToast } from "../../contexts/ToastContext";
@@ -28,7 +28,9 @@ export default function PartReplacementPlanModal({ isOpen, onClose, machineId: i
     const [selectedMachineId, setSelectedMachineId] = useState<string>(initialMachineId || "");
     const [loading, setLoading] = useState(true);
     const [processingId, setProcessingId] = useState<string | null>(null);
-    // PM pending plans
+    // All pending part replacement plans across all machines
+    const [allPendingPlans, setAllPendingPlans] = useState<MaintenanceRecord[]>([]);
+    // PM pending plans for the currently selected machine
     const [pmPlans, setPmPlans] = useState<MaintenanceRecord[]>([]);
     // Confirm-replace date state: { recordId: isoString }
     const [replaceDates, setReplaceDates] = useState<Record<string, string>>({});
@@ -45,17 +47,24 @@ export default function PartReplacementPlanModal({ isOpen, onClose, machineId: i
         setLoading(true);
         try {
             const machineIdToLoad = initialMachineId;
-            const [partsData, machinesData] = await Promise.all([
+            const [partsData, machinesData, maintenanceData] = await Promise.all([
                 getParts(),
-                getMachines()
+                getMachines(),
+                getMaintenanceRecordsByType("partReplacement")
             ]);
             setAllParts(partsData);
             setMachines(machinesData);
 
+            const pendingPlans = maintenanceData.filter(r => r.status === "pending" && (r as any).fromPM === true);
+            setAllPendingPlans(pendingPlans);
+
             if (!initialMachineId && machinesData.length > 0) {
-                const machinesWithParts = machinesData.filter(m => partsData.some(p => p.machineId === m.id));
-                if (machinesWithParts.length > 0) {
-                    setSelectedMachineId(machinesWithParts[0].id);
+                const relevantMachines = machinesData.filter(m => 
+                    partsData.some(p => p.machineId === m.id) || 
+                    pendingPlans.some(r => r.machineId === m.id)
+                );
+                if (relevantMachines.length > 0) {
+                    setSelectedMachineId(relevantMachines[0].id);
                 }
             }
 
@@ -223,7 +232,10 @@ export default function PartReplacementPlanModal({ isOpen, onClose, machineId: i
                                     onChange={(e) => setSelectedMachineId(e.target.value)}
                                 >
                                     <option value="" disabled>-- เลือกเครื่องจักร --</option>
-                                    {machines.map(m => (
+                                    {machines.filter(m => 
+                                        allParts.some(p => p.machineId === m.id) || 
+                                        allPendingPlans.some(r => r.machineId === m.id)
+                                    ).map(m => (
                                         <option key={m.id} value={m.id}>{m.name} {m.location ? `[${m.location}]` : ''}</option>
                                     ))}
                                 </select>
