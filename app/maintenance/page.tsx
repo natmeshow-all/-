@@ -835,15 +835,15 @@ export default function MaintenancePage() {
                                                                 if (isAdmin) {
                                                                     e.stopPropagation();
                                                                     setEditingDescriptionId(record.id);
-                                                                    setEditingDescriptionText(record.description || record.type || '');
+                                                                    setEditingDescriptionText(record.description || (record.partName ? `เปลี่ยนอะไหล่: ${record.partName}` : ''));
                                                                 }
                                                             }}
                                                             title={isAdmin ? "คลิกเพื่อแก้ไขรายละเอียด" : undefined}
                                                         >
                                                             <p className={`truncate opacity-70 max-w-[200px] sm:max-w-md ${isAdmin ? 'group-hover:text-primary group-hover:opacity-100 transition-colors' : ''}`}>
-                                                                {record.description || record.type}
+                                                                {record.description || (record.partName ? `เปลี่ยนอะไหล่: ${record.partName}` : null) || (record.type === 'partReplacement' ? 'เปลี่ยนอะไหล่' : record.type === 'preventive' ? 'PM / ตรวจเช็ค' : record.type === 'corrective' ? 'ซ่อมทั่วไป' : record.type)}
                                                             </p>
-                                                            {isAdmin && <span className="opacity-0 group-hover:opacity-100 text-primary transition-opacity"><EditIcon size={12} /></span>}
+                                                            {isAdmin && <span className="text-primary opacity-50 group-hover:opacity-100 transition-opacity shrink-0"><EditIcon size={12} /></span>}
                                                         </div>
                                                     )}
                                                 </div>
