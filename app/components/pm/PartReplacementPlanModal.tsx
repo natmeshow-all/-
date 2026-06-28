@@ -28,8 +28,8 @@ export default function PartReplacementPlanModal({ isOpen, onClose, machineId: i
     const [selectedMachineId, setSelectedMachineId] = useState<string>(initialMachineId || "");
     const [loading, setLoading] = useState(true);
     const [processingId, setProcessingId] = useState<string | null>(null);
-    // All pending part replacement plans across all machines
-    const [allPendingPlans, setAllPendingPlans] = useState<MaintenanceRecord[]>([]);
+    // All part replacement records across all machines (both pending and completed)
+    const [allReplacementRecords, setAllReplacementRecords] = useState<MaintenanceRecord[]>([]);
     // PM pending plans for the currently selected machine
     const [pmPlans, setPmPlans] = useState<MaintenanceRecord[]>([]);
     // Confirm-replace date state: { recordId: isoString }
@@ -54,14 +54,12 @@ export default function PartReplacementPlanModal({ isOpen, onClose, machineId: i
             ]);
             setAllParts(partsData);
             setMachines(machinesData);
-
-            const pendingPlans = maintenanceData.filter(r => r.status === "pending" && (r as any).fromPM === true);
-            setAllPendingPlans(pendingPlans);
+            setAllReplacementRecords(maintenanceData);
 
             if (!initialMachineId && machinesData.length > 0) {
                 const relevantMachines = machinesData.filter(m => 
                     partsData.some(p => p.machineId === m.id) || 
-                    pendingPlans.some(r => r.machineId === m.id)
+                    maintenanceData.some(r => r.machineId === m.id)
                 );
                 if (relevantMachines.length > 0) {
                     setSelectedMachineId(relevantMachines[0].id);
@@ -234,7 +232,7 @@ export default function PartReplacementPlanModal({ isOpen, onClose, machineId: i
                                     <option value="" disabled>-- เลือกเครื่องจักร --</option>
                                     {machines.filter(m => 
                                         allParts.some(p => p.machineId === m.id) || 
-                                        allPendingPlans.some(r => r.machineId === m.id)
+                                        allReplacementRecords.some(r => r.machineId === m.id)
                                     ).map(m => (
                                         <option key={m.id} value={m.id}>{m.name} {m.location ? `[${m.location}]` : ''}</option>
                                     ))}
