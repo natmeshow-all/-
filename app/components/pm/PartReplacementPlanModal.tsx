@@ -495,9 +495,14 @@ export default function PartReplacementPlanModal({ isOpen, onClose, machineId: i
                         {/* Empty state */}
                         {pmPlans.length === 0 && displayedParts.length === 0 && (
                             <div className="bg-white/5 border border-white/5 rounded-xl py-12 flex flex-col items-center justify-center text-center">
-                                <BoxIcon size={40} className="text-white/20 mb-3" />
-                                <h3 className="text-white font-medium mb-1">ยังไม่มีรายการอะไหล่</h3>
-                                <p className="text-text-muted text-sm">เพิ่มอะไหล่ในเมนูจัดการอะไหล่และผูกกับเครื่องจักรนี้</p>
+                                <CheckCircleIcon size={40} className="text-white/20 mb-3" />
+                                <h3 className="text-white font-medium mb-1">ไม่มีแผนรอดำเนินการ</h3>
+                                <p className="text-text-muted text-sm max-w-xs mx-auto mb-4">
+                                    เครื่องจักรนี้ไม่มีแผนเปลี่ยนอะไหล่ค้างอยู่ และยังไม่มีรายการอะไหล่ในระบบ
+                                </p>
+                                <div className="bg-accent-yellow/10 border border-accent-yellow/20 rounded-lg p-3 text-xs text-accent-yellow/90 max-w-xs mx-auto">
+                                    💡 คุณสามารถกดปุ่ม <strong className="text-accent-yellow">"ดูประวัติงาน PM / เปลี่ยนอะไหล่"</strong> สีเหลืองด้านบนขวาเพื่อดูประวัติที่ผ่านมาได้ครับ
+                                </div>
                             </div>
                         )}
                     </div>
