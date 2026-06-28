@@ -760,74 +760,44 @@ export default function MaintenancePage() {
                                     style={{ animationDelay: `${index * 50}ms` }}
                                 >
                                     {/* Compact Header - Clickable Area */}
-                                    <div className="flex items-start gap-3 relative">
-                                        {/* Left Side: Efficiency Ring or Icon Box */}
-                                        {assessed.length > 0 ? (
-                                            <div className="flex flex-col items-center justify-center flex-shrink-0 w-12" title={`ประสิทธิภาพ: ${efficiencyPct}%`}>
-                                                <svg width="48" height="48" viewBox="0 0 60 60">
-                                                    {/* Track */}
-                                                    <circle cx="30" cy="30" r={radius} fill="none" stroke="rgba(255,255,255,0.06)" strokeWidth="5" />
-                                                    {/* Progress */}
-                                                    <circle
-                                                        cx="30" cy="30" r={radius}
-                                                        fill="none"
-                                                        stroke={ringColor}
-                                                        strokeWidth="5"
-                                                        strokeLinecap="round"
-                                                        strokeDasharray={circ}
-                                                        strokeDashoffset={strokeDashoffset}
-                                                        transform="rotate(-90 30 30)"
-                                                        style={{ transition: 'stroke-dashoffset 0.6s ease', filter: `drop-shadow(0 0 4px ${ringColor}80)` }}
-                                                    />
-                                                    <text x="30" y="27" textAnchor="middle" dominantBaseline="middle" fontSize="13" fontWeight="700" fill={ringColor}>
-                                                        {efficiencyPct}%
-                                                    </text>
-                                                    {trend !== null && (
-                                                        <text x="30" y="39" textAnchor="middle" dominantBaseline="middle" fontSize="9" fill={trend >= 0 ? '#10b981' : '#ef4444'}>
-                                                            {trend > 0 ? `+${trend}` : trend}
-                                                        </text>
+                                    {/* Compact Header - Clickable Area */}
+                                    <div className="flex flex-col gap-2 relative">
+                                        
+                                        {/* Top Row: Machine Name + Right Data */}
+                                        <div className="flex items-start justify-between gap-2">
+                                            <div className="min-w-0 flex-1">
+                                                <div className="flex items-center gap-2 mb-0.5">
+                                                    {assessed.length === 0 && (
+                                                        <span className="text-text-muted shrink-0">
+                                                            {record.type === 'preventive' ? <RefreshCwIcon size={14} /> :
+                                                                record.type === 'corrective' ? <AlertTriangleIcon size={14} /> :
+                                                                    <WrenchIcon size={14} />}
+                                                        </span>
                                                     )}
-                                                </svg>
-                                                <span className="text-[7px] text-text-muted mt-0.5 tracking-tighter whitespace-nowrap">ประสิทธิภาพ</span>
-                                            </div>
-                                        ) : (
-                                            <div className="w-12 h-12 rounded-full bg-white/5 flex flex-col items-center justify-center flex-shrink-0 text-text-muted">
-                                                {record.type === 'preventive' ? <RefreshCwIcon size={20} /> :
-                                                    record.type === 'corrective' ? <AlertTriangleIcon size={20} /> :
-                                                        <WrenchIcon size={20} />}
-                                            </div>
-                                        )}
-
-                                        {/* Main Content */}
-                                        <div className="flex-1 min-w-0 pt-0.5">
-                                            <div className="flex items-start justify-between gap-2">
-                                                <div className="min-w-0">
-                                                    <div className="flex items-center gap-2 mb-0.5">
-                                                        <h3 className={`font-bold text-sm truncate ${isExpanded ? 'text-primary' : 'text-text-primary'} flex items-baseline gap-1.5`}>
-                                                            <span>{record.machineName}</span>
-                                                            {machine?.code && (
-                                                                <span className="px-1.5 py-0.5 rounded-md text-[10px] font-mono font-semibold bg-accent-cyan/10 text-accent-cyan border border-accent-cyan/20 whitespace-nowrap shadow-sm">
-                                                                    {machine.code}
-                                                                </span>
-                                                            )}
-                                                        </h3>
-                                                        {/* Status Dot */}
-                                                        <span className={`w-2 h-2 rounded-full ${record.status === 'completed' ? 'bg-accent-green shadow-[0_0_8px_rgba(34,197,94,0.4)]' : 'bg-accent-yellow'}`}></span>
-                                                    </div>
-
-                                                    {/* Description & Location */}
-                                                    <div className="flex items-center gap-2 text-xs text-text-muted">
-                                                        {(record.location || machine?.location || machine?.Location) && (
-                                                            <span className="font-bold text-[10px] uppercase opacity-80 bg-white/5 px-1 rounded border border-white/10">
-                                                                {record.location || machine?.location || machine?.Location}
+                                                    <h3 className={`font-bold text-sm truncate ${isExpanded ? 'text-primary' : 'text-text-primary'} flex items-baseline gap-1.5`}>
+                                                        <span>{record.machineName}</span>
+                                                        {machine?.code && (
+                                                            <span className="px-1.5 py-0.5 rounded-md text-[10px] font-mono font-semibold bg-accent-cyan/10 text-accent-cyan border border-accent-cyan/20 whitespace-nowrap shadow-sm">
+                                                                {machine.code}
                                                             </span>
                                                         )}
-                                                        <p className="truncate opacity-70 max-w-[150px] sm:max-w-xs">
-                                                            {record.description || record.type}
-                                                        </p>
-                                                    </div>
+                                                    </h3>
+                                                    {/* Status Dot */}
+                                                    <span className={`w-2 h-2 rounded-full shrink-0 ${record.status === 'completed' ? 'bg-accent-green shadow-[0_0_8px_rgba(34,197,94,0.4)]' : 'bg-accent-yellow'}`}></span>
                                                 </div>
 
+                                                {/* Description & Location */}
+                                                <div className="flex items-center gap-2 text-xs text-text-muted mt-1">
+                                                    {(record.location || machine?.location || machine?.Location) && (
+                                                        <span className="font-bold text-[10px] uppercase opacity-80 bg-white/5 px-1 rounded border border-white/10 shrink-0">
+                                                            {record.location || machine?.location || machine?.Location}
+                                                        </span>
+                                                    )}
+                                                    <p className="truncate opacity-70 max-w-[200px] sm:max-w-md">
+                                                        {record.description || record.type}
+                                                    </p>
+                                                </div>
+                                                </div>
                                                 {/* Right Data: Status + Date */}
                                                 <div className="flex flex-col items-end gap-1 flex-shrink-0">
                                                     <div className="flex items-center gap-1.5 flex-wrap justify-end">
@@ -859,6 +829,34 @@ export default function MaintenancePage() {
                                                      </div>
                                                  </div>
                                             </div>
+
+                                            {/* Bottom Row: Efficiency Ring */}
+                                            {assessed.length > 0 && (
+                                                <div className="flex items-center gap-3 bg-white/5 pr-3 py-1 pl-1 rounded-full border border-white/10 w-fit mt-1">
+                                                    <div className="relative w-8 h-8 shrink-0">
+                                                        <svg width="32" height="32" viewBox="0 0 60 60" className="absolute top-0 left-0">
+                                                            <circle cx="30" cy="30" r={radius} fill="none" stroke="rgba(255,255,255,0.06)" strokeWidth="6" />
+                                                            <circle
+                                                                cx="30" cy="30" r={radius}
+                                                                fill="none" stroke={ringColor} strokeWidth="6" strokeLinecap="round"
+                                                                strokeDasharray={circ} strokeDashoffset={strokeDashoffset}
+                                                                transform="rotate(-90 30 30)"
+                                                            />
+                                                        </svg>
+                                                        <div className="absolute inset-0 flex items-center justify-center">
+                                                            <span className="text-[10px] font-bold" style={{color: ringColor}}>{efficiencyPct}</span>
+                                                        </div>
+                                                    </div>
+                                                    <div className="flex flex-col justify-center gap-0.5">
+                                                        <span className="text-[9px] text-text-muted leading-none">ประสิทธิภาพ</span>
+                                                        {trend !== null && (
+                                                            <span className={`text-[9px] font-bold leading-none ${trend >= 0 ? 'text-accent-green' : 'text-accent-red'}`}>
+                                                                {trend > 0 ? `▲ +${trend}%` : trend < 0 ? `▼ ${Math.abs(trend)}%` : `= 0%`}
+                                                            </span>
+                                                        )}
+                                                    </div>
+                                                </div>
+                                            )}
 
                                             {/* Sub Info Row (Technician, Type, Expand Arrow) */}
                                             <div className="flex items-center justify-between mt-2 pt-2 border-t border-dashed border-white/10">
@@ -896,8 +894,6 @@ export default function MaintenancePage() {
                                                 </div>
                                             </div>
                                         </div>
-
-                                    </div>
 
                                     {/* Expandable Details */}
                                     {/* Expandable Details */}
