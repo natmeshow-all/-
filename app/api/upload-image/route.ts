@@ -9,9 +9,12 @@ export async function POST(request: Request) {
             return NextResponse.json({ error: 'No image provided' }, { status: 400 });
         }
 
+        const arrayBuffer = await file.arrayBuffer();
+        const buffer = Buffer.from(arrayBuffer);
+
         const formData = new FormData();
         formData.append('reqtype', 'fileupload');
-        formData.append('fileToUpload', file);
+        formData.append('fileToUpload', new Blob([buffer], { type: 'image/jpeg' }), 'report.jpg');
 
         const response = await fetch('https://catbox.moe/user/api.php', {
             method: 'POST',
