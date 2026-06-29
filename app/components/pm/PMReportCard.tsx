@@ -48,9 +48,6 @@ export const PMReportCard = forwardRef<HTMLDivElement, PMReportCardProps>(({ rec
                         {record.machineName}
                     </h1>
                     <div className="flex items-center gap-4 text-sm text-[#888888]">
-                        <span className="flex items-center gap-1.5 bg-white/5 px-2.5 py-1 rounded-md">
-                            <span className="text-[#ff9d00]">งาน:</span> {record.description || "PM"}
-                        </span>
                         {scheduleText && (
                             <span className="flex items-center gap-1.5 bg-white/5 px-2.5 py-1 rounded-md">
                                 <span className="text-[#a855f7]">รอบ:</span> {scheduleText}
@@ -76,9 +73,13 @@ export const PMReportCard = forwardRef<HTMLDivElement, PMReportCardProps>(({ rec
                         </div>
                     </div>
                     <div className="text-xs text-[#888888] font-bold">ประสิทธิภาพ</div>
-                    {trend !== null && (
+                    {trend !== null ? (
                         <div className={`text-[10px] font-bold mt-0.5 px-1.5 rounded-full ${trend >= 0 ? 'bg-[#10b981]/20 text-[#10b981]' : 'bg-[#ef4444]/20 text-[#ef4444]'}`}>
                             {trend > 0 ? `▲ +${trend}%` : trend < 0 ? `▼ ${trend}%` : `= 0%`}
+                        </div>
+                    ) : (
+                        <div className="text-[10px] font-bold mt-0.5 px-1.5 rounded-full bg-white/10 text-white/50">
+                            (ไม่มีข้อมูลรอบก่อน)
                         </div>
                     )}
                 </div>
