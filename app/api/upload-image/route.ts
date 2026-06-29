@@ -13,20 +13,24 @@ export async function POST(request: Request) {
         const buffer = Buffer.from(arrayBuffer);
 
         const formData = new FormData();
-        formData.append('reqtype', 'fileupload');
-        formData.append('fileToUpload', new Blob([buffer], { type: 'image/jpeg' }), 'report.jpg');
+        formData.append('files[]', new Blob([buffer], { type: 'image/jpeg' }), 'report.jpg');
 
-        const response = await fetch('https://catbox.moe/user/api.php', {
+        const response = await fetch('https://uguu.se/upload.php', {
             method: 'POST',
             body: formData,
         });
 
         if (!response.ok) {
-            throw new Error('Image hosting upload failed');
+            throw new Error(`Image hosting upload failed: ${response.status}`);
         }
 
-        const url = await response.text();
-        return NextResponse.json({ url });
+        const data = await response.json();
+        if (data && data.success && data.files && data.files.length > 0) {
+            const url = data.files[0].url;
+            return NextResponse.json({ url });
+        } else {
+            throw new Error('Image hosting returned invalid response');
+        }
     } catch (error) {
         console.error('Image upload error:', error);
         return NextResponse.json({ error: 'Upload failed' }, { status: 500 });
