@@ -44,8 +44,11 @@ export const PMReportCard = forwardRef<HTMLDivElement, PMReportCardProps>(({ rec
                     <div className="text-[#00d4ff] font-bold text-sm tracking-wider uppercase mb-1">
                         AOB Maintenance Report
                     </div>
-                    <h1 className="text-3xl font-bold text-white mb-2">
-                        {record.machineName}
+                    <h1 className="text-3xl font-bold text-white mb-2 flex items-baseline gap-3">
+                        <span>{record.machineName}</span>
+                        {machineCode && (
+                            <span className="text-2xl text-[#00d4ff] font-medium opacity-90">({machineCode.replace('ID: ', '')})</span>
+                        )}
                     </h1>
                     <div className="flex items-center gap-4 text-sm text-[#888888]">
                         {scheduleText && (
