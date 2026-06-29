@@ -1066,6 +1066,7 @@ export default function PMExecutionModal({ isOpen, onClose, plan, onSuccess }: P
                         machineCode={"ID: " + plan.machineId.substring(0,6)}
                         efficiencyPct={currentEfficiency}
                         trend={trend}
+                        scheduleText={plan.scheduleType === "weekly" ? t("labelWeekly") : plan.scheduleType === "yearly" ? t("labelYearly") : `${t("labelEveryMonthly") || "ทุก"} ${plan.cycleMonths || 1} ${t("labelMonths") || "เดือน"}`}
                     />
                 )}
             </div>

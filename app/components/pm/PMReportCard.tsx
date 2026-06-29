@@ -7,9 +7,10 @@ interface PMReportCardProps {
     machineCode: string;
     efficiencyPct?: number;
     trend?: number | null;
+    scheduleText?: string;
 }
 
-export const PMReportCard = forwardRef<HTMLDivElement, PMReportCardProps>(({ record, completedChecklist, machineCode, efficiencyPct = 100, trend = null }, ref) => {
+export const PMReportCard = forwardRef<HTMLDivElement, PMReportCardProps>(({ record, completedChecklist, machineCode, efficiencyPct = 100, trend = null, scheduleText }, ref) => {
     const dateStr = record.date ? new Date(record.date).toLocaleDateString('th-TH', {
         day: '2-digit',
         month: 'short',
@@ -53,13 +54,18 @@ export const PMReportCard = forwardRef<HTMLDivElement, PMReportCardProps>(({ rec
                         <span className="flex items-center gap-1.5 bg-white/5 px-2.5 py-1 rounded-md">
                             <span className="text-[#ff9d00]">งาน:</span> {record.description || "PM"}
                         </span>
+                        {scheduleText && (
+                            <span className="flex items-center gap-1.5 bg-white/5 px-2.5 py-1 rounded-md">
+                                <span className="text-[#a855f7]">รอบ:</span> {scheduleText}
+                            </span>
+                        )}
                     </div>
                 </div>
                 
                 {/* Efficiency Circle (Middle-Right) */}
                 <div className="flex flex-col items-center justify-center mr-8 bg-white/5 p-3 rounded-2xl border border-white/10">
                     <div className="relative w-16 h-16 mb-1">
-                        <svg width="64" height="64" viewBox="0 0 64 64" className="absolute top-0 left-0">
+                        <svg xmlns="http://www.w3.org/2000/svg" width="64" height="64" viewBox="0 0 64 64" className="absolute top-0 left-0">
                             <circle cx="32" cy="32" r={radius} fill="none" stroke="rgba(255,255,255,0.06)" strokeWidth="6" />
                             <circle
                                 cx="32" cy="32" r={radius}
