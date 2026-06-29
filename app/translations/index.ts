@@ -115,7 +115,6 @@ export interface TranslationKeys {
     actionRecordPMResult: string;
     actionMaintenanceHistory: string;
     maintenancePageTitle: string;
-    maintenanceEvidencePhotos: string;
     actionExport: string;
     actionClearFilters: string;
     actionSave: string;
@@ -885,7 +884,6 @@ const th: TranslationKeys = {
     actionRecordPMResult: "บันทึกการบำรุงรักษา",
     actionMaintenanceHistory: "แผนเปลี่ยนอะไหล่",
     maintenancePageTitle: "ประวัติงานซ่อมบำรุง",
-    maintenanceEvidencePhotos: "ภาพถ่ายหลักฐาน",
     actionExport: "ส่งออก",
     actionClearFilters: "ล้างตัวกรอง",
     actionSave: "บันทึก",
@@ -1652,7 +1650,6 @@ const en: TranslationKeys = {
     actionRecordPMResult: "Record PM Result",
     actionMaintenanceHistory: "Part Replacement Plan",
     maintenancePageTitle: "Maintenance History",
-    maintenanceEvidencePhotos: "Evidence Photos",
     actionExport: "Export",
     actionClearFilters: "Clear Filters",
     actionSave: "Save",

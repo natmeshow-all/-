@@ -1,4 +1,6 @@
 import { MaintenanceRecord } from "../types";
+import { getSystemSettings } from "../lib/firebaseService";
+import { decodeSecret } from "../lib/obfuscate";
 
 /**
  * Line Service for sending notifications via Line OA
@@ -9,6 +11,16 @@ export const lineService = {
      */
     async sendPMCompletionNotification(record: MaintenanceRecord) {
         try {
+            // Get settings for dynamic tokens if available
+            const settings = await getSystemSettings();
+            let channelAccessToken = undefined;
+            let targetId = undefined;
+            
+            if (settings && settings.lineChannelAccessToken && settings.lineTargetId) {
+                channelAccessToken = decodeSecret(settings.lineChannelAccessToken);
+                targetId = decodeSecret(settings.lineTargetId);
+            }
+
             const flexMessage = this.createPMFlexMessage(record);
 
             const response = await fetch('/api/line', {
@@ -17,7 +29,9 @@ export const lineService = {
                     'Content-Type': 'application/json',
                 },
                 body: JSON.stringify({
-                    messages: [flexMessage]
+                    messages: [flexMessage],
+                    channelAccessToken,
+                    targetId
                 }),
             });
 
@@ -33,6 +47,39 @@ export const lineService = {
             }
         } catch (error) {
             console.error('Error in sendPMCompletionNotification:', error);
+        }
+    },
+
+    /**
+     * Test LINE Connection
+     */
+    async testConnection(channelAccessToken: string, targetId: string, message: string = "🧪 ทดสอบระบบแจ้งเตือนผ่าน LINE\nการเชื่อมต่อสำเร็จ!") {
+        try {
+            const textMessage = {
+                type: "text",
+                text: message
+            };
+
+            const response = await fetch('/api/line', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify({
+                    messages: [textMessage],
+                    channelAccessToken,
+                    targetId
+                }),
+            });
+
+            if (!response.ok) {
+                const errorData = await response.json();
+                throw new Error(errorData.message || errorData.error || 'Failed to send test message');
+            }
+            return true;
+        } catch (error) {
+            console.error('Error testing LINE connection:', error);
+            throw error;
         }
     },
 

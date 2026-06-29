@@ -1,12 +1,9 @@
 "use client";
 
-import React, { useState, useEffect } from "react";
+import React from "react";
 import Modal from "../ui/Modal";
 import { MaintenanceRecord } from "../../types";
 import { useLanguage } from "../../contexts/LanguageContext";
-import { useAuth } from "../../contexts/AuthContext";
-import { useToast } from "../../contexts/ToastContext";
-import { updateMaintenanceRecord } from "../../lib/firebaseService";
 import Image from "next/image";
 import {
     FileTextIcon,
@@ -15,104 +12,22 @@ import {
     ClockIcon,
     ActivityIcon,
     TargetIcon,
-    EditIcon,
-    SaveIcon,
-    XIcon,
 } from "../ui/Icons";
 
 interface RecordDetailsModalProps {
     isOpen: boolean;
     onClose: () => void;
     record: MaintenanceRecord | null;
-    onRecordUpdated?: (updated: MaintenanceRecord) => void;
 }
-
-// Checklist value presets
-const CHECKLIST_PRESETS = [
-    "สมบูรณ์", "ปกติ", "เรียบร้อย", "ไม่มีรอย", "ไม่มี",
-    "พอใช้", "เหมาะสม", "เฝ้าระวัง",
-    "ผิดปกติ", "ต้องเติม", "ถึงกำหนดเปลี่ยน",
-];
 
 export default function RecordDetailsModal({
     isOpen,
     onClose,
-    record,
-    onRecordUpdated,
+    record
 }: RecordDetailsModalProps) {
     const { t } = useLanguage();
-    const { isAdmin } = useAuth();
-    const { success, error: showError } = useToast();
-
-    const [isEditMode, setIsEditMode] = useState(false);
-    const [saving, setSaving] = useState(false);
-
-    // Editable fields
-    const [editStatus, setEditStatus] = useState<string>("");
-    const [editChecklist, setEditChecklist] = useState<{ item: string; completed: boolean; value?: string }[]>([]);
-    const [editDetails, setEditDetails] = useState<string>("");
-    const [editNotes, setEditNotes] = useState<string>("");
-
-    useEffect(() => {
-        if (record) {
-            setEditStatus(record.status);
-            setEditChecklist(record.checklist ? record.checklist.map(c => ({ ...c })) : []);
-            setEditDetails(record.details || "");
-            setEditNotes(record.notes || "");
-        }
-        setIsEditMode(false);
-    }, [record]);
 
     if (!record) return null;
-
-    const handleSave = async () => {
-        setSaving(true);
-        try {
-            const updates: Partial<MaintenanceRecord> = {
-                status: editStatus as any,
-                details: editDetails,
-                notes: editNotes,
-                checklist: editChecklist,
-            };
-            await updateMaintenanceRecord(record.id, updates);
-            success("บันทึกการแก้ไขเรียบร้อยแล้ว");
-            if (onRecordUpdated) {
-                onRecordUpdated({ ...record, ...updates });
-            }
-            setIsEditMode(false);
-        } catch (err) {
-            console.error(err);
-            showError("เกิดข้อผิดพลาดในการบันทึก", "Error");
-        } finally {
-            setSaving(false);
-        }
-    };
-
-    const handleCancel = () => {
-        // Reset to original
-        setEditStatus(record.status);
-        setEditChecklist(record.checklist ? record.checklist.map(c => ({ ...c })) : []);
-        setEditDetails(record.details || "");
-        setEditNotes(record.notes || "");
-        setIsEditMode(false);
-    };
-
-    const updateChecklistItem = (idx: number, field: "completed" | "value", val: any) => {
-        setEditChecklist(prev => {
-            const next = [...prev];
-            next[idx] = { ...next[idx], [field]: val };
-            return next;
-        });
-    };
-
-    const displayStatus = isEditMode ? editStatus : record.status;
-    const displayChecklist = isEditMode ? editChecklist : (record.checklist || []);
-
-    const statusOptions = [
-        { value: "completed", label: "เสร็จสิ้น", color: "text-accent-green" },
-        { value: "inProgress", label: "กำลังดำเนินการ", color: "text-accent-yellow" },
-        { value: "pending", label: "รอดำเนินการ", color: "text-accent-red" },
-    ];
 
     return (
         <Modal
@@ -121,91 +36,25 @@ export default function RecordDetailsModal({
             title={record.machineName}
             size="xl"
             footer={
-                <div className="flex gap-2">
-                    {isAdmin && isEditMode ? (
-                        <>
-                            <button
-                                onClick={handleCancel}
-                                disabled={saving}
-                                className="flex-1 py-2 rounded-lg bg-bg-tertiary text-text-muted font-bold hover:bg-white/10 transition-colors flex items-center justify-center gap-2"
-                            >
-                                <XIcon size={14} />
-                                ยกเลิก
-                            </button>
-                            <button
-                                onClick={handleSave}
-                                disabled={saving}
-                                className="flex-1 py-2 rounded-lg bg-accent-blue/20 border border-accent-blue/40 text-white font-bold hover:bg-accent-blue/30 transition-colors flex items-center justify-center gap-2 disabled:opacity-50"
-                            >
-                                {saving ? (
-                                    <span className="animate-spin rounded-full h-4 w-4 border-2 border-t-transparent border-white" />
-                                ) : (
-                                    <SaveIcon size={14} />
-                                )}
-                                บันทึกการแก้ไข
-                            </button>
-                        </>
-                    ) : (
-                        <>
-                            {isAdmin && (
-                                <button
-                                    onClick={() => setIsEditMode(true)}
-                                    className="py-2 px-4 rounded-lg bg-accent-yellow/10 border border-accent-yellow/30 text-accent-yellow font-bold hover:bg-accent-yellow/20 transition-colors flex items-center gap-2"
-                                >
-                                    <EditIcon size={14} />
-                                    แก้ไข
-                                </button>
-                            )}
-                            <button
-                                onClick={onClose}
-                                className="flex-1 py-2 rounded-lg bg-bg-tertiary text-text-primary font-bold hover:bg-white/10 transition-colors"
-                            >
-                                {t("actionCloseWindow")}
-                            </button>
-                        </>
-                    )}
-                </div>
+                <button
+                    onClick={onClose}
+                    className="w-full py-2 rounded-lg bg-bg-tertiary text-text-primary font-bold hover:bg-white/10 transition-colors"
+                >
+                    {t("actionCloseWindow")}
+                </button>
             }
         >
             <div className="space-y-6">
-                {/* Edit Mode Banner */}
-                {isEditMode && (
-                    <div className="flex items-center gap-2 bg-accent-yellow/10 border border-accent-yellow/30 rounded-xl px-4 py-2.5">
-                        <EditIcon size={14} className="text-accent-yellow" />
-                        <span className="text-accent-yellow text-xs font-bold">โหมดแก้ไข — การเปลี่ยนแปลงจะมีผลหลังกด "บันทึก"</span>
-                    </div>
-                )}
-
                 {/* Header Information */}
                 <div className="flex flex-wrap gap-4 items-center justify-between pb-4 border-b border-border-light">
                     <div>
                         <p className="text-sm text-text-muted">{t("maintenanceDescription")}</p>
                         <p className="font-semibold text-text-primary text-lg">{record.description}</p>
                     </div>
-                    <div className="flex gap-2 items-center">
-                        {isEditMode ? (
-                            <div className="flex items-center gap-2">
-                                <span className="text-xs text-text-muted">สถานะ:</span>
-                                <div className="flex gap-1.5">
-                                    {statusOptions.map(opt => (
-                                        <button
-                                            key={opt.value}
-                                            onClick={() => setEditStatus(opt.value)}
-                                            className={`px-3 py-1 rounded-lg text-xs font-bold border transition-all
-                                                ${editStatus === opt.value
-                                                    ? `bg-white/10 border-white/30 ${opt.color}`
-                                                    : 'border-white/10 text-text-muted hover:border-white/20'}`}
-                                        >
-                                            {opt.label}
-                                        </button>
-                                    ))}
-                                </div>
-                            </div>
-                        ) : (
-                            <span className={`badge ${displayStatus === 'completed' ? 'badge-success' : displayStatus === 'inProgress' ? 'badge-warning' : 'badge-primary'}`}>
-                                {t(`maintenanceStatus${displayStatus.charAt(0).toUpperCase() + displayStatus.slice(1)}` as any)}
-                            </span>
-                        )}
+                    <div className="flex gap-2">
+                        <span className={`badge ${record.status === 'completed' ? 'badge-success' : record.status === 'inProgress' ? 'badge-warning' : 'badge-primary'}`}>
+                            {t(`maintenanceStatus${record.status.charAt(0).toUpperCase() + record.status.slice(1)}` as any)}
+                        </span>
                         <span className="badge badge-primary">
                             {t(`type${record.type.charAt(0).toUpperCase() + record.type.slice(1)}` as any)}
                         </span>
@@ -220,38 +69,20 @@ export default function RecordDetailsModal({
                             <p className="text-xs font-bold text-text-muted uppercase mb-2 flex items-center gap-2">
                                 <FileTextIcon size={12} /> {t("labelWorkDetails")}
                             </p>
-                            {isEditMode ? (
-                                <textarea
-                                    className="input-field w-full text-sm resize-none min-h-[80px] bg-black/30"
-                                    value={editDetails}
-                                    onChange={e => setEditDetails(e.target.value)}
-                                    placeholder="รายละเอียดงาน..."
-                                />
-                            ) : (
-                                <div className="text-sm text-text-primary whitespace-pre-wrap leading-relaxed">
-                                    {record.details || "-"}
-                                </div>
-                            )}
+                            <div className="text-sm text-text-primary whitespace-pre-wrap leading-relaxed">
+                                {record.details || "-"}
+                            </div>
                         </div>
 
                         {/* Additional Notes */}
-                        {(record.notes || isEditMode) && (
+                        {record.notes && (
                             <div className="bg-black/20 p-4 rounded-xl border border-white/5">
                                 <p className="text-xs font-bold text-text-muted uppercase mb-2 flex items-center gap-2">
                                     <FileTextIcon size={12} /> {t("maintenanceAdditionalNotes")}
                                 </p>
-                                {isEditMode ? (
-                                    <textarea
-                                        className="input-field w-full text-sm resize-none min-h-[60px] bg-black/30"
-                                        value={editNotes}
-                                        onChange={e => setEditNotes(e.target.value)}
-                                        placeholder="หมายเหตุเพิ่มเติม..."
-                                    />
-                                ) : (
-                                    <div className="text-sm text-text-muted italic whitespace-pre-wrap leading-relaxed">
-                                        {record.notes}
-                                    </div>
-                                )}
+                                <div className="text-sm text-text-muted italic whitespace-pre-wrap leading-relaxed">
+                                    {record.notes}
+                                </div>
                             </div>
                         )}
                     </div>
@@ -332,6 +163,7 @@ export default function RecordDetailsModal({
                                 {/* Additional Technical Data Section */}
                                 {record.motorGearData && (
                                     <div className="grid grid-cols-1 gap-3">
+                                        {/* Motor & Gear Data Box */}
                                         {(record.motorGearData.motorSize || record.motorGearData.temperature || record.motorGearData.currentIdle || record.motorGearData.currentLoad || record.motorGearData.voltageL1 || record.motorGearData.voltageL2 || record.motorGearData.voltageL3) && (
                                             <div className="bg-bg-primary/40 p-3 rounded-xl border border-white/5">
                                                 <p className="text-[10px] font-bold text-text-muted uppercase mb-2 flex items-center gap-2">
@@ -374,6 +206,7 @@ export default function RecordDetailsModal({
                                             </div>
                                         )}
 
+                                        {/* Shaft & Dial Gauge Data Box */}
                                         {(record.motorGearData.shaftData?.shaftBend || record.motorGearData.shaftData?.dialGauge || record.motorGearData.vibrationX?.value || record.motorGearData.vibrationY?.value || record.motorGearData.vibrationZ?.value) && (
                                             <div className="bg-bg-primary/40 p-3 rounded-xl border border-white/5">
                                                 <p className="text-[10px] font-bold text-text-muted uppercase mb-2 flex items-center gap-2">
@@ -423,80 +256,22 @@ export default function RecordDetailsModal({
                         )}
 
                         {/* Checklist Audit Section */}
-                        {displayChecklist.length > 0 && (
+                        {record.checklist && record.checklist.length > 0 && (
                             <div className="space-y-2">
                                 <p className="text-xs font-bold text-text-muted uppercase flex items-center gap-2">
                                     <CheckCircleIcon size={12} className="text-accent-green" /> {t("labelAuditChecklist")}
-                                    {isEditMode && (
-                                        <span className="text-accent-yellow text-[10px] font-normal normal-case ml-1">(คลิกที่รายการเพื่อแก้ไข)</span>
-                                    )}
                                 </p>
                                 <div className="grid grid-cols-1 xl:grid-cols-2 gap-2">
-                                    {displayChecklist.map((item, idx) => (
-                                        <div
-                                            key={idx}
-                                            className={`flex flex-col p-2 rounded-lg border transition-all
-                                                ${isEditMode
-                                                    ? 'bg-white/5 border-accent-yellow/20 hover:border-accent-yellow/40'
-                                                    : 'bg-white/5 border-white/5'}`}
-                                        >
+                                    {record.checklist.map((item, idx) => (
+                                        <div key={idx} className="flex flex-col p-2 rounded-lg bg-white/5 border border-white/5">
                                             <div className="flex items-center justify-between gap-2">
                                                 <span className="text-[11px] text-text-secondary font-medium truncate">{item.item}</span>
-                                                {isEditMode ? (
-                                                    <button
-                                                        onClick={() => updateChecklistItem(idx, "completed", !item.completed)}
-                                                        className={`text-[10px] font-bold px-2 py-0.5 rounded border transition-all flex-shrink-0
-                                                            ${item.completed
-                                                                ? 'bg-accent-green/10 border-accent-green/30 text-accent-green hover:bg-accent-red/10 hover:border-accent-red/30 hover:text-accent-red'
-                                                                : 'bg-accent-red/10 border-accent-red/30 text-accent-red hover:bg-accent-green/10 hover:border-accent-green/30 hover:text-accent-green'}`}
-                                                    >
-                                                        {item.completed ? '✓ PASS' : '✗ FAIL'}
-                                                    </button>
-                                                ) : (
-                                                    <span className={`text-[10px] font-bold ${item.completed ? 'text-accent-green' : 'text-accent-red'}`}>
-                                                        {item.completed ? 'PASS' : 'FAIL'}
-                                                    </span>
-                                                )}
+                                                <span className={`text-[10px] font-bold ${item.completed ? 'text-accent-green' : 'text-accent-red'}`}>
+                                                    {item.completed ? 'PASS' : 'FAIL'}
+                                                </span>
                                             </div>
-
-                                            {/* Value display/edit */}
-                                            {isEditMode ? (
-                                                <div className="mt-1.5 flex gap-1 flex-wrap">
-                                                    <input
-                                                        type="text"
-                                                        value={item.value || ""}
-                                                        onChange={e => updateChecklistItem(idx, "value", e.target.value)}
-                                                        placeholder="ระบุค่า..."
-                                                        className="flex-1 min-w-0 bg-black/30 border border-white/10 rounded px-2 py-0.5 text-[11px] text-text-primary focus:outline-none focus:border-accent-yellow/40"
-                                                    />
-                                                    {/* Quick presets */}
-                                                    <div className="flex flex-wrap gap-1 mt-1 w-full">
-                                                        {CHECKLIST_PRESETS.map(preset => (
-                                                            <button
-                                                                key={preset}
-                                                                onClick={() => {
-                                                                    updateChecklistItem(idx, "value", preset);
-                                                                    // Auto-set completed based on preset
-                                                                    const isGood = ["สมบูรณ์", "ปกติ", "เรียบร้อย", "ไม่มีรอย", "ไม่มี", "พอใช้", "เหมาะสม"].includes(preset);
-                                                                    updateChecklistItem(idx, "completed", isGood);
-                                                                }}
-                                                                className={`text-[9px] px-1.5 py-0.5 rounded border transition-all
-                                                                    ${["สมบูรณ์", "ปกติ", "เรียบร้อย", "ไม่มีรอย", "ไม่มี", "เหมาะสม"].includes(preset)
-                                                                        ? 'border-accent-green/20 text-accent-green/80 hover:bg-accent-green/10'
-                                                                        : ["เฝ้าระวัง", "พอใช้"].includes(preset)
-                                                                            ? 'border-accent-yellow/20 text-accent-yellow/80 hover:bg-accent-yellow/10'
-                                                                            : 'border-accent-red/20 text-accent-red/80 hover:bg-accent-red/10'}
-                                                                    bg-black/20`}
-                                                            >
-                                                                {preset}
-                                                            </button>
-                                                        ))}
-                                                    </div>
-                                                </div>
-                                            ) : (
-                                                item.value && (
-                                                    <span className="text-[10px] text-white/40 mt-1 italic font-mono">Value: {item.value}</span>
-                                                )
+                                            {item.value && (
+                                                <span className="text-[10px] text-white/40 mt-1 italic font-mono">Value: {item.value}</span>
                                             )}
                                         </div>
                                     ))}
@@ -505,35 +280,7 @@ export default function RecordDetailsModal({
                         )}
                     </div>
                 </div>
-
-                {/* Evidence Photos */}
-                {record.evidencePhotos && record.evidencePhotos.length > 0 && (
-                    <div className="space-y-3">
-                        <p className="text-xs font-bold text-text-muted uppercase flex items-center gap-2">
-                            <CameraIcon size={12} className="text-accent-blue" /> {t("maintenanceEvidencePhotos")} ({record.evidencePhotos.length})
-                        </p>
-                        <div className="grid grid-cols-2 md:grid-cols-3 gap-3">
-                            {record.evidencePhotos.map((photo, idx) => (
-                                <div
-                                    key={idx}
-                                    className="relative aspect-video rounded-xl overflow-hidden border border-white/10 cursor-pointer hover:border-accent-blue/40 transition-all group"
-                                    onClick={() => window.open(photo, "_blank")}
-                                >
-                                    <Image
-                                        src={photo}
-                                        alt={`Evidence ${idx + 1}`}
-                                        fill
-                                        className="object-cover group-hover:scale-105 transition-transform duration-300"
-                                    />
-                                    <div className="absolute inset-0 bg-black/0 group-hover:bg-black/20 transition-all flex items-center justify-center">
-                                        <CameraIcon size={24} className="text-white opacity-0 group-hover:opacity-100 transition-opacity" />
-                                    </div>
-                                </div>
-                            ))}
-                        </div>
-                    </div>
-                )}
             </div>
         </Modal>
     );
-}
+} 

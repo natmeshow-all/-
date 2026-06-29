@@ -26,6 +26,7 @@ export default function SystemSettingsTab() {
     const [saving, setSaving] = useState(false);
     const [exporting, setExporting] = useState(false);
     const [testingTelegram, setTestingTelegram] = useState(false);
+    const [testingLine, setTestingLine] = useState(false);
 
     // Local state for text inputs to avoid too many writes
     const [announcementMsg, setAnnouncementMsg] = useState("");
@@ -33,6 +34,8 @@ export default function SystemSettingsTab() {
     const [retentionDays, setRetentionDays] = useState(365);
     const [telegramBotToken, setTelegramBotToken] = useState("");
     const [telegramChatId, setTelegramChatId] = useState("");
+    const [lineChannelAccessToken, setLineChannelAccessToken] = useState("");
+    const [lineTargetId, setLineTargetId] = useState("");
 
     useEffect(() => {
         fetchSettings();
@@ -45,6 +48,8 @@ export default function SystemSettingsTab() {
             setRetentionDays(settings.dataRetentionDays || 365);
             setTelegramBotToken(decodeSecret(settings.telegramBotToken || ""));
             setTelegramChatId(decodeSecret(settings.telegramChatId || ""));
+            setLineChannelAccessToken(decodeSecret(settings.lineChannelAccessToken || ""));
+            setLineTargetId(decodeSecret(settings.lineTargetId || ""));
         }
     }, [settings]);
 
@@ -222,6 +227,62 @@ export default function SystemSettingsTab() {
         }
     };
 
+    const handleSaveLineKeys = async () => {
+        if (!settings) return;
+        try {
+            setSaving(true);
+            const obfuscatedToken = encodeSecret(lineChannelAccessToken);
+            const obfuscatedTargetId = encodeSecret(lineTargetId);
+            
+            await updateSystemSettings({ 
+                lineChannelAccessToken: obfuscatedToken,
+                lineTargetId: obfuscatedTargetId
+            });
+            
+            setSettings(prev => prev ? { ...prev, lineChannelAccessToken: obfuscatedToken, lineTargetId: obfuscatedTargetId } : prev);
+            showToast('success', language === 'th' ? 'บันทึกข้อมูล LINE แล้ว' : 'LINE keys saved');
+        } catch (error) {
+            console.error("Error saving LINE keys:", error);
+            showToast('error', language === 'th' ? 'เกิดข้อผิดพลาด' : 'Error occurred');
+        } finally {
+            setSaving(false);
+        }
+    };
+
+    const handleTestLine = async () => {
+        if (!lineChannelAccessToken || !lineTargetId) {
+            showToast('error', language === 'th' ? 'กรุณากรอกข้อมูลให้ครบถ้วนก่อนทดสอบ' : 'Please fill in all API keys before testing');
+            return;
+        }
+        
+        try {
+            setTestingLine(true);
+            const response = await fetch('/api/line', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                    messages: [{ type: "text", text: "🧪 ทดสอบระบบแจ้งเตือนผ่าน LINE\nการเชื่อมต่อสำเร็จ!" }],
+                    channelAccessToken: lineChannelAccessToken,
+                    targetId: lineTargetId
+                }),
+            });
+            
+            const data = await response.json();
+            
+            if (!response.ok) {
+                console.error("Test LINE failed:", data);
+                showToast('error', `Error: ${data.message || data.error || 'Failed to send'}`);
+            } else {
+                showToast('success', language === 'th' ? 'ส่งข้อความทดสอบสำเร็จ!' : 'Test message sent successfully!');
+            }
+        } catch (error: any) {
+            console.error("Error testing LINE:", error);
+            showToast('error', `Error: ${error.message || 'Unknown error'}`);
+        } finally {
+            setTestingLine(false);
+        }
+    };
+
     const handleAnnouncementToggle = async () => {
         if (!settings) return;
         try {
@@ -316,6 +377,50 @@ export default function SystemSettingsTab() {
                         onChange={() => handleToggle('lineNotificationsEnabled')}
                         disabled={saving}
                     />
+
+                    {/* LINE API Settings */}
+                    <div className="pt-2 pb-4 border-b border-white/5 space-y-3">
+                        <div>
+                            <label className="text-sm font-medium text-text-primary block mb-1">
+                                {language === 'th' ? 'LINE Channel Access Token' : 'LINE Channel Access Token'}
+                            </label>
+                            <input
+                                type="password"
+                                value={lineChannelAccessToken}
+                                onChange={(e) => setLineChannelAccessToken(e.target.value)}
+                                placeholder="Long-lived channel access token"
+                                className="w-full bg-bg-tertiary border border-white/10 rounded-lg px-3 py-2 text-sm text-text-primary focus:outline-none focus:border-accent-green"
+                            />
+                        </div>
+                        <div>
+                            <label className="text-sm font-medium text-text-primary block mb-1">
+                                {language === 'th' ? 'LINE Target ID (Group ID หรือ User ID)' : 'LINE Target ID (Group or User ID)'}
+                            </label>
+                            <input
+                                type="password"
+                                value={lineTargetId}
+                                onChange={(e) => setLineTargetId(e.target.value)}
+                                placeholder="e.g. C1234567890abcdef..."
+                                className="w-full bg-bg-tertiary border border-white/10 rounded-lg px-3 py-2 text-sm text-text-primary focus:outline-none focus:border-accent-green"
+                            />
+                        </div>
+                        <div className="flex justify-end pt-1 gap-2">
+                            <button
+                                onClick={handleTestLine}
+                                disabled={saving || testingLine}
+                                className="px-4 py-1.5 bg-bg-tertiary hover:bg-white/5 text-text-secondary rounded-md text-sm font-medium transition-colors border border-white/10 disabled:opacity-50"
+                            >
+                                {testingLine ? (language === 'th' ? 'กำลังทดสอบ...' : 'Testing...') : (language === 'th' ? 'ทดสอบส่งข้อความ' : 'Test Connection')}
+                            </button>
+                            <button
+                                onClick={handleSaveLineKeys}
+                                disabled={saving || testingLine}
+                                className="px-4 py-1.5 bg-accent-green/10 hover:bg-accent-green/20 text-accent-green rounded-md text-sm font-medium transition-colors border border-accent-green/20 disabled:opacity-50"
+                            >
+                                {language === 'th' ? 'บันทึกข้อมูล LINE' : 'Save LINE Keys'}
+                            </button>
+                        </div>
+                    </div>
 
                     <SettingToggle
                         label={language === 'th' ? 'เปิดการแจ้งเตือน Telegram' : 'Enable Telegram Notifications'}

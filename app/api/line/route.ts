@@ -3,10 +3,10 @@ import { NextResponse } from 'next/server';
 export async function POST(request: Request) {
     try {
         const body = await request.json();
-        const { messages, to } = body;
+        const { messages, to, channelAccessToken, targetId } = body;
 
-        const lineAccessToken = process.env.LINE_CHANNEL_ACCESS_TOKEN;
-        const targetUserId = to || process.env.LINE_USER_ID;
+        const lineAccessToken = (channelAccessToken || process.env.LINE_CHANNEL_ACCESS_TOKEN)?.trim();
+        const targetUserId = (targetId || to || process.env.LINE_USER_ID)?.trim();
 
         if (!lineAccessToken || !targetUserId) {
             console.error('Missing Line credentials', { lineAccessToken: !!lineAccessToken, targetUserId: !!targetUserId });

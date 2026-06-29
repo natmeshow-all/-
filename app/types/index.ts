@@ -176,8 +176,6 @@ export interface MaintenanceRecord {
     pmTaskName?: string;       // ชื่องาน PM ต้นทาง
     checklistItemLabel?: string; // ชื่อ checklist item ที่ trigger
 
-    evidencePhotos?: string[];  // Evidence photos for PM records
-
     createdAt: Date;
     updatedAt: Date;
 }
@@ -449,6 +447,8 @@ export interface SystemSettings {
     dataRetentionDays: number;
     notificationsEnabled: boolean;
     lineNotificationsEnabled?: boolean;
+    lineChannelAccessToken?: string;
+    lineTargetId?: string;
     telegramNotificationsEnabled?: boolean;
     telegramBotToken?: string;
     telegramChatId?: string;
