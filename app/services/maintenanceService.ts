@@ -14,8 +14,7 @@ import {
     startAfter,
     limitToFirst
 } from "firebase/database";
-import { database, storage } from "../lib/firebase";
-import { ref as storageRef, uploadString, getDownloadURL } from "firebase/storage";
+import { database } from "../lib/firebase";
 import { MaintenanceRecord, MaintenanceSchedule, PMPlan, MaintenanceType } from "../types";
 import { syncTranslation } from "./translationService";
 import { COLLECTIONS } from "./constants";
@@ -626,9 +625,17 @@ export const completePMTask = async (
                 let uploadedImageUrl = undefined;
                 if (lineEnabled && telegramImageBase64) {
                     try {
-                        const sRef = storageRef(storage, `pm-reports/${finalRecord.id}_${Date.now()}.jpg`);
-                        await uploadString(sRef, telegramImageBase64, 'data_url');
-                        uploadedImageUrl = await getDownloadURL(sRef);
+                        const uploadRes = await fetch('/api/upload-image', {
+                            method: 'POST',
+                            headers: { 'Content-Type': 'application/json' },
+                            body: JSON.stringify({ base64Image: telegramImageBase64 })
+                        });
+                        if (uploadRes.ok) {
+                            const data = await uploadRes.json();
+                            uploadedImageUrl = data.url;
+                        } else {
+                            console.error("Failed to upload PM report image for LINE");
+                        }
                     } catch (e) {
                         console.error("Failed to upload PM report image for LINE:", e);
                     }
