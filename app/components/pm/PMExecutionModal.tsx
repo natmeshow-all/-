@@ -12,6 +12,7 @@ import PartReplacementPlanModal from "./PartReplacementPlanModal";
 import { toJpeg } from "html-to-image";
 import { PMReportCard } from "./PMReportCard";
 import { getMaintenanceRecordsByMachine } from "../../services/maintenanceService";
+import { getMachine } from "../../services/machineService";
 
 interface PMExecutionModalProps {
     isOpen: boolean;
@@ -577,6 +578,7 @@ export default function PMExecutionModal({ isOpen, onClose, plan, onSuccess }: P
     const [issuesFound, setIssuesFound] = useState<{description: string}[]>([]);
     const [showIssueForm, setShowIssueForm] = useState(false);
     const [newIssueText, setNewIssueText] = useState("");
+    const [realMachineCode, setRealMachineCode] = useState("");
     const reportCardRef = React.useRef<HTMLDivElement>(null);
 
     // Efficiency Score Calculator
@@ -608,6 +610,14 @@ export default function PMExecutionModal({ isOpen, onClose, plan, onSuccess }: P
                 getPartsByMachine(plan.machineId)
                     .then(setMachineParts)
                     .catch(() => setMachineParts([]));
+
+                // Load real machine code
+                getMachine(plan.machineId)
+                    .then(machine => {
+                        if (machine?.code) setRealMachineCode(machine.code);
+                        else setRealMachineCode("");
+                    })
+                    .catch(() => setRealMachineCode(""));
                 
                 // Load previous records for efficiency trend
                 getMaintenanceRecordsByMachine(plan.machineId)
@@ -1159,7 +1169,7 @@ export default function PMExecutionModal({ isOpen, onClose, plan, onSuccess }: P
                             completed: checklistResults[index]?.completed || false,
                             value: checklistResults[index]?.value || "",
                         })).filter(c => c.completed) || []}
-                        machineCode={"ID: " + plan.machineId.substring(0,6)}
+                        machineCode={realMachineCode || plan.machineId.substring(0,8)}
                         efficiencyPct={currentEfficiency}
                         trend={trend}
                         scheduleText={plan.scheduleType === "weekly" ? t("labelWeekly") : plan.scheduleType === "yearly" ? t("labelYearly") : `${t("labelEveryMonthly") || "ทุก"} ${plan.cycleMonths || 1} ${t("labelMonths") || "เดือน"}`}
