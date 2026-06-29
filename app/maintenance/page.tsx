@@ -833,21 +833,23 @@ export default function MaintenancePage() {
                                                             autoFocus
                                                         />
                                                     ) : (
-                                                        <div 
-                                                            className={`flex items-start gap-2 group ${isAdmin ? 'cursor-pointer' : ''} w-full`}
-                                                            onClick={(e) => {
-                                                                if (isAdmin) {
-                                                                    e.stopPropagation();
-                                                                    setEditingDescriptionId(record.id);
-                                                                    setEditingDescriptionText(record.description || (record.partName ? `เปลี่ยนอะไหล่: ${record.partName}` : ''));
-                                                                }
-                                                            }}
-                                                            title={isAdmin ? "คลิกเพื่อแก้ไขรายละเอียด" : undefined}
-                                                        >
-                                                            <p className={`line-clamp-3 opacity-70 w-full leading-relaxed ${isAdmin ? 'group-hover:text-primary group-hover:opacity-100 transition-colors' : ''}`}>
+                                                        <div className={`flex items-start gap-2 group w-full`}>
+                                                            <p className="line-clamp-3 opacity-70 w-full leading-relaxed">
                                                                 {record.description || (record.partName ? `เปลี่ยนอะไหล่: ${record.partName}` : null) || (record.type === 'partReplacement' ? 'เปลี่ยนอะไหล่' : record.type === 'preventive' ? 'PM / ตรวจเช็ค' : record.type === 'corrective' ? 'ซ่อมทั่วไป' : record.type)}
                                                             </p>
-                                                            {isAdmin && <span className="text-primary opacity-50 group-hover:opacity-100 transition-opacity shrink-0 mt-0.5"><EditIcon size={12} /></span>}
+                                                            {isAdmin && (
+                                                                <button 
+                                                                    className="text-primary opacity-50 hover:opacity-100 transition-all shrink-0 mt-0.5 p-1 -m-1 rounded-md hover:bg-primary/10 cursor-pointer"
+                                                                    onClick={(e) => {
+                                                                        e.stopPropagation();
+                                                                        setEditingDescriptionId(record.id);
+                                                                        setEditingDescriptionText(record.description || (record.partName ? `เปลี่ยนอะไหล่: ${record.partName}` : ''));
+                                                                    }}
+                                                                    title="คลิกเพื่อแก้ไขรายละเอียด"
+                                                                >
+                                                                    <EditIcon size={12} />
+                                                                </button>
+                                                            )}
                                                         </div>
                                                     )}
                                                 </div>
