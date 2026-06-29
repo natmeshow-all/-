@@ -2,20 +2,16 @@ import { NextResponse } from 'next/server';
 
 export async function POST(request: Request) {
     try {
-        const body = await request.json();
-        const { base64Image } = body;
+        const reqFormData = await request.formData();
+        const file = reqFormData.get('image') as File | null;
 
-        if (!base64Image) {
+        if (!file) {
             return NextResponse.json({ error: 'No image provided' }, { status: 400 });
         }
 
-        // Convert base64 data URL to buffer
-        const base64Data = base64Image.replace(/^data:image\/\w+;base64,/, '');
-        const buffer = Buffer.from(base64Data, 'base64');
-
         const formData = new FormData();
         formData.append('reqtype', 'fileupload');
-        formData.append('fileToUpload', new Blob([buffer], { type: 'image/jpeg' }), 'report.jpg');
+        formData.append('fileToUpload', file);
 
         const response = await fetch('https://catbox.moe/user/api.php', {
             method: 'POST',

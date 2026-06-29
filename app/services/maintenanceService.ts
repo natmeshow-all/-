@@ -625,10 +625,14 @@ export const completePMTask = async (
                 let uploadedImageUrl = undefined;
                 if (lineEnabled && telegramImageBase64) {
                     try {
+                        const fetchRes = await fetch(telegramImageBase64);
+                        const blob = await fetchRes.blob();
+                        const formData = new FormData();
+                        formData.append('image', blob, 'report.jpg');
+
                         const uploadRes = await fetch('/api/upload-image', {
                             method: 'POST',
-                            headers: { 'Content-Type': 'application/json' },
-                            body: JSON.stringify({ base64Image: telegramImageBase64 })
+                            body: formData
                         });
                         if (uploadRes.ok) {
                             const data = await uploadRes.json();

@@ -49,9 +49,6 @@ export const PMReportCard = forwardRef<HTMLDivElement, PMReportCardProps>(({ rec
                     </h1>
                     <div className="flex items-center gap-4 text-sm text-[#888888]">
                         <span className="flex items-center gap-1.5 bg-white/5 px-2.5 py-1 rounded-md">
-                            <span className="text-[#00d4ff]">ID:</span> {machineCode}
-                        </span>
-                        <span className="flex items-center gap-1.5 bg-white/5 px-2.5 py-1 rounded-md">
                             <span className="text-[#ff9d00]">งาน:</span> {record.description || "PM"}
                         </span>
                         {scheduleText && (
