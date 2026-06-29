@@ -527,7 +527,7 @@ export const completePMTask = async (
     planId: string,
     record: Omit<MaintenanceRecord, "id" | "createdAt" | "updatedAt">,
     telegramImageBase64?: string
-): Promise<void> => {
+): Promise<string> => {
     try {
         // Add Maintenance Record
         const recordRef = push(ref(database, COLLECTIONS.MAINTENANCE_RECORDS));
@@ -664,6 +664,8 @@ export const completePMTask = async (
                 console.error("Failed to send notification, but record was saved:", notifyError);
             }
         }
+        
+        return recordRef.key as string;
     } catch (error) {
         console.error("Error completing PM task:", error);
         throw error;

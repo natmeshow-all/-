@@ -112,6 +112,20 @@ export default function MaintenancePage() {
             return next;
         });
     };
+    const handleResolveIssue = async (recordId: string) => {
+        if (!confirm("ยืนยันว่าปัญหานี้ได้รับการแก้ไขแล้ว?")) return;
+        try {
+            await updateMaintenanceRecord(recordId, {
+                status: 'completed',
+                resolvedAt: new Date().toISOString()
+            });
+            success("อัพเดทสถานะสำเร็จ");
+            fetchInitialRecords();
+        } catch (err) {
+            console.error("Error resolving issue:", err);
+            error("เกิดข้อผิดพลาดในการอัพเดทสถานะ");
+        }
+    };
 
     const handleSaveChecklist = async (recordId: string) => {
         setIsSavingEdit(true);
@@ -750,20 +764,29 @@ export default function MaintenancePage() {
 
                             const checklistItems = record.checklist || [];
                             const assessed = checklistItems.filter(c => c.value && c.value.trim() !== '');
-                            const efficiencyPct = assessed.length > 0
-                                ? Math.round(assessed.reduce((sum, c) => sum + scoreValue(c.value || ''), 0) / assessed.length)
-                                : (record.status === 'completed' ? 100 : 0);
+                            
+                            // Find unresolved issues generated from this PM
+                            const pendingIssuesCount = allFetchedRecords.filter(r => r.parentPmRecordId === record.id && r.status === 'pending').length;
+                            
+                            const baseEff = record.baseEfficiency !== undefined 
+                                ? record.baseEfficiency 
+                                : (assessed.length > 0 ? Math.round(assessed.reduce((sum, c) => sum + scoreValue(c.value || ''), 0) / assessed.length) : (record.status === 'completed' ? 100 : 0));
+                            
+                            const efficiencyPct = Math.max(0, baseEff - (pendingIssuesCount * 5));
 
                             // Compare with previous record of same machine
                             const prevRecord = allFetchedRecords
                                 .filter(r => r.machineId === record.machineId && r.id !== record.id && (r.checklist?.length ?? 0) > 0)
                                 .sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime())[0];
                             let prevEfficiency: number | null = null;
-                            if (prevRecord?.checklist) {
-                                const prevAssessed = prevRecord.checklist.filter(c => c.value && c.value.trim() !== '');
-                                if (prevAssessed.length > 0) {
-                                    prevEfficiency = Math.round(prevAssessed.reduce((sum, c) => sum + scoreValue(c.value || ''), 0) / prevAssessed.length);
-                                }
+                            if (prevRecord) {
+                                const prevPendingIssuesCount = allFetchedRecords.filter(r => r.parentPmRecordId === prevRecord.id && r.status === 'pending').length;
+                                const prevBaseEff = prevRecord.baseEfficiency !== undefined
+                                    ? prevRecord.baseEfficiency
+                                    : (prevRecord.checklist && prevRecord.checklist.filter(c => c.value && c.value.trim() !== '').length > 0
+                                        ? Math.round(prevRecord.checklist.filter(c => c.value && c.value.trim() !== '').reduce((sum, c) => sum + scoreValue(c.value || ''), 0) / prevRecord.checklist.filter(c => c.value && c.value.trim() !== '').length)
+                                        : 100);
+                                prevEfficiency = Math.max(0, prevBaseEff - (prevPendingIssuesCount * 5));
                             }
                             const trend = prevEfficiency !== null ? efficiencyPct - prevEfficiency : null;
 
@@ -883,6 +906,12 @@ export default function MaintenancePage() {
                                                          <CalendarIcon size={10} />
                                                          <span>{mounted ? formatDateThai(record.date) : '--/--'}</span>
                                                      </div>
+                                                     {record.resolvedAt && (
+                                                         <div className="flex items-center text-[10px] text-accent-green gap-1">
+                                                             <CheckIcon size={12} />
+                                                             <span>{mounted ? formatDateThai(record.resolvedAt) : '--/--'}</span>
+                                                         </div>
+                                                     )}
                                                  </div>
                                             </div>
 
@@ -931,6 +960,19 @@ export default function MaintenancePage() {
 
                                                 {/* Right side: Admin Delete + Chevron */}
                                                 <div className="flex items-center gap-2">
+                                                    {(record as any).fromPM && record.type === 'corrective' && record.status === 'pending' && isAdmin && (
+                                                        <button
+                                                            onClick={(e) => {
+                                                                e.stopPropagation();
+                                                                handleResolveIssue(record.id);
+                                                            }}
+                                                            className="flex items-center gap-1.5 px-2 py-1 rounded bg-accent-green/20 text-accent-green font-bold text-[10px] hover:bg-accent-green hover:text-white transition-all border border-accent-green/30 shadow-[0_0_8px_rgba(16,185,129,0.2)]"
+                                                            title="บันทึกการแก้ไขปัญหา"
+                                                        >
+                                                            <CheckIcon size={12} />
+                                                            แก้ไขแล้ว
+                                                        </button>
+                                                    )}
                                                     {isAdmin && (
                                                         <button
                                                             onClick={(e) => {

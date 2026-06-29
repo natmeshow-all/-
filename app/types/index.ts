@@ -152,6 +152,11 @@ export interface MaintenanceRecord {
     startTime?: Date;
     endTime?: Date;
     period?: string;
+    
+    // PM Issues Tracking
+    baseEfficiency?: number; // Base score before issue penalties
+    parentPmRecordId?: string; // Links an issue back to the original PM record
+    resolvedAt?: string | Date; // When the issue was resolved
 
     // Part specific fields
     partId?: string;

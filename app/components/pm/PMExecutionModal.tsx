@@ -733,7 +733,7 @@ export default function PMExecutionModal({ isOpen, onClose, plan, onSuccess }: P
                 }
             }
 
-            await completePMTask(plan.id, {
+            const pmRecordId = await completePMTask(plan.id, {
                 machineId: plan.machineId,
                 machineName: plan.machineName,
                 description: `PM: ${plan.taskName}`,
@@ -745,6 +745,7 @@ export default function PMExecutionModal({ isOpen, onClose, plan, onSuccess }: P
                 details,
                 checklist: structuredChecklist,
                 Location: plan.customLocation || "",
+                baseEfficiency: baseEfficiency,
             }, telegramImageBase64);
 
             // Auto-create part replacement plans for confirmed due parts
@@ -784,6 +785,7 @@ export default function PMExecutionModal({ isOpen, onClose, plan, onSuccess }: P
                     fromPM: true,
                     pmTaskName: plan.taskName,
                     pmPlanId: plan.id,
+                    parentPmRecordId: pmRecordId,
                 } as any);
             }
 
