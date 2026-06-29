@@ -90,6 +90,10 @@ export default function MaintenancePage() {
     const [editingDescriptionId, setEditingDescriptionId] = useState<string | null>(null);
     const [editingDescriptionText, setEditingDescriptionText] = useState<string>("");
     const [isSavingEdit, setIsSavingEdit] = useState(false);
+    
+    // Resolve Issue State
+    const [resolveConfirmOpen, setResolveConfirmOpen] = useState(false);
+    const [recordToResolveId, setRecordToResolveId] = useState<string | null>(null);
 
     const handleStartEditChecklist = (record: MaintenanceRecord) => {
         setEditingRecordId(record.id);
@@ -112,10 +116,16 @@ export default function MaintenancePage() {
             return next;
         });
     };
-    const handleResolveIssue = async (recordId: string) => {
-        if (!confirm("ยืนยันว่าปัญหานี้ได้รับการแก้ไขแล้ว?")) return;
+    const handleResolveIssue = (recordId: string) => {
+        setRecordToResolveId(recordId);
+        setResolveConfirmOpen(true);
+    };
+
+    const handleConfirmResolve = async () => {
+        if (!recordToResolveId) return;
+        setResolveConfirmOpen(false);
         try {
-            await updateMaintenanceRecord(recordId, {
+            await updateMaintenanceRecord(recordToResolveId, {
                 status: 'completed',
                 resolvedAt: new Date().toISOString()
             });
@@ -125,6 +135,7 @@ export default function MaintenancePage() {
             console.error("Error resolving issue:", err);
             error("เกิดข้อผิดพลาดในการอัพเดทสถานะ");
         }
+        setRecordToResolveId(null);
     };
 
     const handleSaveChecklist = async (recordId: string) => {
@@ -1404,6 +1415,15 @@ export default function MaintenancePage() {
                 message={`${t("confirmDeleteMessage") || "คุณแน่ใจหรือไม่ว่าต้องการลบรายการนี้?"} ${recordToDelete ? `"${recordToDelete.machineName} - ${recordToDelete.description}"` : ""}`}
                 isDestructive={true}
                 confirmText={t("actionDelete") || "ลบ"}
+            />
+            
+            <ConfirmModal
+                isOpen={resolveConfirmOpen}
+                onClose={() => setResolveConfirmOpen(false)}
+                onConfirm={handleConfirmResolve}
+                title="ยืนยันการแก้ไขปัญหา"
+                message="คุณแน่ใจหรือไม่ว่าปัญหานี้ได้รับการแก้ไขเรียบร้อยแล้ว? (เมื่อยืนยันแล้ว คะแนนประสิทธิภาพเครื่องจักรจะถูกเพิ่มกลับอัตโนมัติ)"
+                confirmText="ยืนยันแก้ไขแล้ว"
             />
 
             <PartReplacementPlanModal
