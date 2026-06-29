@@ -5,9 +5,11 @@ interface PMReportCardProps {
     record: MaintenanceRecord;
     completedChecklist: ChecklistItemResult[];
     machineCode: string;
+    efficiencyPct?: number;
+    trend?: number | null;
 }
 
-export const PMReportCard = forwardRef<HTMLDivElement, PMReportCardProps>(({ record, completedChecklist, machineCode }, ref) => {
+export const PMReportCard = forwardRef<HTMLDivElement, PMReportCardProps>(({ record, completedChecklist, machineCode, efficiencyPct = 100, trend = null }, ref) => {
     const dateStr = record.date ? new Date(record.date).toLocaleDateString('th-TH', {
         day: '2-digit',
         month: 'short',
@@ -19,10 +21,17 @@ export const PMReportCard = forwardRef<HTMLDivElement, PMReportCardProps>(({ rec
 
     const locationText = record.Location || record.location || 'ไม่ระบุ';
 
+    // Efficiency ring logic
+    const radius = 26;
+    const circ = 2 * Math.PI * radius;
+    const pct = Math.min(100, Math.max(0, efficiencyPct));
+    const strokeDashoffset = circ * (1 - pct / 100);
+    const ringColor = pct >= 80 ? '#10b981' : pct >= 55 ? '#fbbf24' : '#ef4444';
+
     return (
         <div 
             ref={ref}
-            className="w-[800px] bg-[#0F172A] text-white p-8 font-sans border-t-8 border-t-[#00d4ff]"
+            className="w-[850px] bg-[#0F172A] text-white p-8 font-sans border-t-8 border-t-[#00d4ff] relative"
             style={{ 
                 fontFamily: "'Prompt', sans-serif",
                 boxShadow: "0 25px 50px -12px rgba(0, 0, 0, 0.5)",
@@ -46,7 +55,32 @@ export const PMReportCard = forwardRef<HTMLDivElement, PMReportCardProps>(({ rec
                         </span>
                     </div>
                 </div>
-                <div className="text-right">
+                
+                {/* Efficiency Circle (Middle-Right) */}
+                <div className="flex flex-col items-center justify-center mr-8 bg-white/5 p-3 rounded-2xl border border-white/10">
+                    <div className="relative w-16 h-16 mb-1">
+                        <svg width="64" height="64" viewBox="0 0 64 64" className="absolute top-0 left-0">
+                            <circle cx="32" cy="32" r={radius} fill="none" stroke="rgba(255,255,255,0.06)" strokeWidth="6" />
+                            <circle
+                                cx="32" cy="32" r={radius}
+                                fill="none" stroke={ringColor} strokeWidth="6" strokeLinecap="round"
+                                strokeDasharray={circ} strokeDashoffset={strokeDashoffset}
+                                transform="rotate(-90 32 32)"
+                            />
+                        </svg>
+                        <div className="absolute inset-0 flex items-center justify-center">
+                            <span className="text-sm font-bold" style={{color: ringColor}}>{efficiencyPct}%</span>
+                        </div>
+                    </div>
+                    <div className="text-xs text-[#888888] font-bold">ประสิทธิภาพ</div>
+                    {trend !== null && (
+                        <div className={`text-[10px] font-bold mt-0.5 px-1.5 rounded-full ${trend >= 0 ? 'bg-[#10b981]/20 text-[#10b981]' : 'bg-[#ef4444]/20 text-[#ef4444]'}`}>
+                            {trend > 0 ? `▲ +${trend}%` : trend < 0 ? `▼ ${trend}%` : `= 0%`}
+                        </div>
+                    )}
+                </div>
+
+                <div className="text-right flex-shrink-0">
                     <div className="text-xl font-bold text-white mb-1">{dateStr}</div>
                     <div className="text-sm text-[#888888]">ผู้ดำเนินการ: <span className="text-[#00d4ff]">{record.technician}</span></div>
                     <div className="text-sm text-[#888888]">สถานที่: {locationText}</div>

@@ -11,6 +11,7 @@ import { useToast } from "../../contexts/ToastContext";
 import PartReplacementPlanModal from "./PartReplacementPlanModal";
 import { toJpeg } from "html-to-image";
 import { PMReportCard } from "./PMReportCard";
+import { getMaintenanceRecordsByMachine } from "../../services/maintenanceService";
 
 interface PMExecutionModalProps {
     isOpen: boolean;
@@ -572,7 +573,22 @@ export default function PMExecutionModal({ isOpen, onClose, plan, onSuccess }: P
     const [machineParts, setMachineParts] = useState<Part[]>([]);
     const [loading, setLoading] = useState(false);
     const [isReplacementPlanModalOpen, setIsReplacementPlanModalOpen] = useState(false);
+    const [prevEfficiency, setPrevEfficiency] = useState<number | null>(null);
     const reportCardRef = React.useRef<HTMLDivElement>(null);
+
+    // Efficiency Score Calculator
+    const scoreValue = (val: string): number => {
+        const v = val.toLowerCase();
+        if (v.includes('ถึงกำหนดเปลี่ยน')) return 10;
+        if (v.includes('ผิดปกติ')) return 15;
+        if (v.includes('ต้องเติม')) return 30;
+        if (v.includes('เฝ้าระวัง')) return 50;
+        if (v.includes('พอใช้')) return 65;
+        if (v.includes('เหมาะสม')) return 80;
+        if (v.includes('สมบูรณ์') || v.includes('ปกติ') || v.includes('เรียบร้อย') || v.includes('ไม่มีรอย') || v.includes('ไม่มี')) return 100;
+        if (val !== '') return 75; 
+        return 0; 
+    };
 
     useEffect(() => {
         if (isOpen) {
@@ -586,6 +602,22 @@ export default function PMExecutionModal({ isOpen, onClose, plan, onSuccess }: P
                 getPartsByMachine(plan.machineId)
                     .then(setMachineParts)
                     .catch(() => setMachineParts([]));
+                
+                // Load previous records for efficiency trend
+                getMaintenanceRecordsByMachine(plan.machineId)
+                    .then(records => {
+                        const prevRecord = records
+                            .filter(r => (r.checklist?.length ?? 0) > 0)
+                            .sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime())[0];
+                        if (prevRecord?.checklist) {
+                            const prevAssessed = prevRecord.checklist.filter(c => c.value && c.value.trim() !== '');
+                            if (prevAssessed.length > 0) {
+                                const prevScore = Math.round(prevAssessed.reduce((sum, c) => sum + scoreValue(c.value || ''), 0) / prevAssessed.length);
+                                setPrevEfficiency(prevScore);
+                            } else setPrevEfficiency(null);
+                        } else setPrevEfficiency(null);
+                    })
+                    .catch(() => setPrevEfficiency(null));
             }
         }
     }, [isOpen, plan, defaultTechnician]);
@@ -730,6 +762,12 @@ export default function PMExecutionModal({ isOpen, onClose, plan, onSuccess }: P
     const hasChecklistItems = plan?.checklistItems && plan.checklistItems.length > 0;
     const completedCount = Object.values(checklistResults).filter(r => r.completed).length;
     const totalItems = plan?.checklistItems?.length || 0;
+
+    const assessed = checklistResults.filter(c => c.completed && c.value && c.value.trim() !== '');
+    const currentEfficiency = assessed.length > 0
+        ? Math.round(assessed.reduce((sum, c) => sum + scoreValue(c.value), 0) / assessed.length)
+        : 100;
+    const trend = prevEfficiency !== null ? currentEfficiency - prevEfficiency : null;
 
     const footerContent = (
         <button
@@ -1026,6 +1064,8 @@ export default function PMExecutionModal({ isOpen, onClose, plan, onSuccess }: P
                             value: checklistResults[index]?.value || "",
                         })).filter(c => c.completed) || []}
                         machineCode={"ID: " + plan.machineId.substring(0,6)}
+                        efficiencyPct={currentEfficiency}
+                        trend={trend}
                     />
                 )}
             </div>

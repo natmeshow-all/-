@@ -7,9 +7,9 @@ import { decodeSecret } from "../lib/obfuscate";
  */
 export const lineService = {
     /**
-     * Send a Line Flex Message Card when a PM task is completed
+     * Send a Line Flex Message or Image Message when a PM task is completed
      */
-    async sendPMCompletionNotification(record: MaintenanceRecord) {
+    async sendPMCompletionNotification(record: MaintenanceRecord, imageUrl?: string) {
         try {
             // Get settings for dynamic tokens if available
             const settings = await getSystemSettings();
@@ -21,7 +21,24 @@ export const lineService = {
                 targetId = decodeSecret(settings.lineTargetId);
             }
 
-            const flexMessage = this.createPMFlexMessage(record);
+            let messages = [];
+            if (imageUrl) {
+                // Like Telegram, send a short text + the screenshot image
+                messages = [
+                    {
+                        type: "text",
+                        text: `🔹 รหัสเครื่อง: ${record.machineCode || '-'}\n🔹 ชื่อเครื่องจักร: ${record.machineName}\n📝 ชื่องาน: ${record.description || "PM Maintenance"}`
+                    },
+                    {
+                        type: "image",
+                        originalContentUrl: imageUrl,
+                        previewImageUrl: imageUrl
+                    }
+                ];
+            } else {
+                // Fallback to Flex Message if no image
+                messages = [this.createPMFlexMessage(record)];
+            }
 
             const response = await fetch('/api/line', {
                 method: 'POST',
@@ -29,7 +46,7 @@ export const lineService = {
                     'Content-Type': 'application/json',
                 },
                 body: JSON.stringify({
-                    messages: [flexMessage],
+                    messages,
                     channelAccessToken,
                     targetId
                 }),

@@ -14,7 +14,8 @@ import {
     startAfter,
     limitToFirst
 } from "firebase/database";
-import { database } from "../lib/firebase";
+import { database, storage } from "../lib/firebase";
+import { ref as storageRef, uploadString, getDownloadURL } from "firebase/storage";
 import { MaintenanceRecord, MaintenanceSchedule, PMPlan, MaintenanceType } from "../types";
 import { syncTranslation } from "./translationService";
 import { COLLECTIONS } from "./constants";
@@ -622,8 +623,19 @@ export const completePMTask = async (
                 const lineEnabled = settings?.lineNotificationsEnabled ?? true; // Default true if not set
                 const telegramEnabled = settings?.telegramNotificationsEnabled ?? false;
 
+                let uploadedImageUrl = undefined;
+                if (lineEnabled && telegramImageBase64) {
+                    try {
+                        const sRef = storageRef(storage, `pm-reports/${finalRecord.id}_${Date.now()}.jpg`);
+                        await uploadString(sRef, telegramImageBase64, 'data_url');
+                        uploadedImageUrl = await getDownloadURL(sRef);
+                    } catch (e) {
+                        console.error("Failed to upload PM report image for LINE:", e);
+                    }
+                }
+
                 if (lineEnabled) {
-                    await lineService.sendPMCompletionNotification(finalRecord);
+                    await lineService.sendPMCompletionNotification(finalRecord, uploadedImageUrl);
                 }
                 
                 if (telegramEnabled) {
