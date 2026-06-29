@@ -8,9 +8,10 @@ interface PMReportCardProps {
     efficiencyPct?: number;
     trend?: number | null;
     scheduleText?: string;
+    issuesFound?: {description: string}[];
 }
 
-export const PMReportCard = forwardRef<HTMLDivElement, PMReportCardProps>(({ record, completedChecklist, machineCode, efficiencyPct = 100, trend = null, scheduleText }, ref) => {
+export const PMReportCard = forwardRef<HTMLDivElement, PMReportCardProps>(({ record, completedChecklist, machineCode, efficiencyPct = 100, trend = null, scheduleText, issuesFound = [] }, ref) => {
     const dateStr = record.date ? new Date(record.date).toLocaleDateString('th-TH', {
         day: '2-digit',
         month: 'short',
@@ -132,6 +133,26 @@ export const PMReportCard = forwardRef<HTMLDivElement, PMReportCardProps>(({ rec
                     </div>
                 )}
             </div>
+
+            {/* Issues Found Section */}
+            {issuesFound.length > 0 && (
+                <div className="mb-6">
+                    <h2 className="text-lg font-bold text-white mb-4 flex items-center gap-2">
+                        <span className="text-[#f87171]">⚠️</span> ปัญหาที่พบ ({issuesFound.length} รายการ)
+                    </h2>
+                    <div className="space-y-2">
+                        {issuesFound.map((issue, idx) => (
+                            <div key={idx} className="flex items-start gap-3 bg-[#1E293B] p-3 rounded-lg border border-[#f87171]/20">
+                                <span className="text-[#f87171] font-bold text-sm min-w-[20px]">{idx + 1}.</span>
+                                <span className="text-sm text-white/90">{issue.description}</span>
+                            </div>
+                        ))}
+                    </div>
+                    <div className="mt-2 text-xs text-[#f87171]/70 italic">
+                        รายการเหล่านี้ถูกบันทึกเป็น "สิ่งที่ต้องแก้ไขในอนาคต" แล้ว
+                    </div>
+                </div>
+            )}
 
             {/* Footer Section */}
             <div className="mt-8 pt-6 border-t border-white/10 flex justify-between items-center">

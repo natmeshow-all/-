@@ -574,6 +574,9 @@ export default function PMExecutionModal({ isOpen, onClose, plan, onSuccess }: P
     const [loading, setLoading] = useState(false);
     const [isReplacementPlanModalOpen, setIsReplacementPlanModalOpen] = useState(false);
     const [prevEfficiency, setPrevEfficiency] = useState<number | null>(null);
+    const [issuesFound, setIssuesFound] = useState<{description: string}[]>([]);
+    const [showIssueForm, setShowIssueForm] = useState(false);
+    const [newIssueText, setNewIssueText] = useState("");
     const reportCardRef = React.useRef<HTMLDivElement>(null);
 
     // Efficiency Score Calculator
@@ -596,6 +599,9 @@ export default function PMExecutionModal({ isOpen, onClose, plan, onSuccess }: P
             setAdditionalNotes("");
             setChecklistResults(plan.checklistItems?.map(() => ({ completed: false, value: "" })) || []);
             setDueParts([]);
+            setIssuesFound([]);
+            setShowIssueForm(false);
+            setNewIssueText("");
             setLoading(false);
             // Load parts for this machine
             if (plan.machineId) {
@@ -681,9 +687,14 @@ export default function PMExecutionModal({ isOpen, onClose, plan, onSuccess }: P
             return `${status} ${item}${value}`;
         }).join("\n");
 
-        return additionalNotes
-            ? `${cycleInfo}\n${itemDetails}\n\n[${t("labelAdditionalNotes")}]\n${additionalNotes}`
-            : `${cycleInfo}\n${itemDetails}`;
+        let result = `${cycleInfo}\n${itemDetails}`;
+        if (additionalNotes) {
+            result += `\n\n[${t("labelAdditionalNotes")}]\n${additionalNotes}`;
+        }
+        if (issuesFound.length > 0) {
+            result += `\n\n[⚠️ ปัญหาที่พบ]\n${issuesFound.map((iss, i) => `${i+1}. ${iss.description}`).join('\n')}`;
+        }
+        return result;
     };
 
     const handleSubmit = async (e: React.FormEvent) => {
@@ -748,7 +759,31 @@ export default function PMExecutionModal({ isOpen, onClose, plan, onSuccess }: P
                 } as any);
             }
 
-            success(t("msgSaveSuccess") || "บันทึกข้อมูลสำเร็จ", confirmedParts.length > 0 ? `สร้างแผนเปลี่ยนอะไหล่ ${confirmedParts.length} รายการ` : plan.taskName);
+            // Auto-create pending records for issues found
+            for (const issue of issuesFound) {
+                await addMaintenanceRecord({
+                    machineId: plan.machineId,
+                    machineName: plan.machineName,
+                    description: `[PM พบปัญหา] ${issue.description}`,
+                    type: "corrective",
+                    priority: "high",
+                    status: "pending",
+                    date: new Date(),
+                    technician: technician || "Technician",
+                    Location: plan.customLocation || "",
+                    fromPM: true,
+                    pmTaskName: plan.taskName,
+                    pmPlanId: plan.id,
+                } as any);
+            }
+
+            const issueCount = issuesFound.length;
+            const partCount = confirmedParts.length;
+            let successMsg = plan.taskName;
+            if (partCount > 0 && issueCount > 0) successMsg = `สร้างแผนเปลี่ยน ${partCount} รายการ + บันทึกปัญหา ${issueCount} รายการ`;
+            else if (partCount > 0) successMsg = `สร้างแผนเปลี่ยนอะไหล่ ${partCount} รายการ`;
+            else if (issueCount > 0) successMsg = `บันทึกปัญหาที่พบ ${issueCount} รายการ`;
+            success(t("msgSaveSuccess") || "บันทึกข้อมูลสำเร็จ", successMsg);
             onSuccess?.();
             onClose();
         } catch (err: any) {
@@ -1013,6 +1048,67 @@ export default function PMExecutionModal({ isOpen, onClose, plan, onSuccess }: P
                         />
                     </div>
 
+                    {/* Issues Found Section */}
+                    <div className="space-y-2">
+                        <button
+                            type="button"
+                            onClick={() => setShowIssueForm(!showIssueForm)}
+                            className={`flex items-center gap-2 text-xs font-semibold uppercase tracking-wider px-3 py-2 rounded-lg border transition-all ${
+                                issuesFound.length > 0
+                                    ? 'bg-red-500/20 border-red-500/40 text-red-300'
+                                    : 'bg-white/5 border-white/10 text-yellow-400 hover:bg-white/10'
+                            }`}
+                        >
+                            <AlertTriangleIcon size={14} />
+                            ⚠️ ปัญหาที่พบ {issuesFound.length > 0 && `(${issuesFound.length})`}
+                        </button>
+                        
+                        {showIssueForm && (
+                            <div className="space-y-3 bg-gradient-to-r from-red-500/10 to-orange-500/5 border border-red-500/20 rounded-xl p-4">
+                                {/* Existing issues */}
+                                {issuesFound.map((issue, idx) => (
+                                    <div key={idx} className="flex items-start gap-2 bg-black/20 p-2.5 rounded-lg border border-red-500/15">
+                                        <span className="text-red-400 text-xs font-bold mt-0.5">{idx + 1}.</span>
+                                        <span className="text-xs text-white/80 flex-1">{issue.description}</span>
+                                        <button
+                                            type="button"
+                                            onClick={() => setIssuesFound(prev => prev.filter((_, i) => i !== idx))}
+                                            className="text-white/30 hover:text-red-400 transition-colors"
+                                        >
+                                            <XIcon size={12} />
+                                        </button>
+                                    </div>
+                                ))}
+                                
+                                {/* Add new issue */}
+                                <div className="flex gap-2">
+                                    <textarea
+                                        placeholder="ระบุรายละเอียดปัญหาที่พบ..."
+                                        className="input-field flex-1 text-xs min-h-[60px]"
+                                        value={newIssueText}
+                                        onChange={e => setNewIssueText(e.target.value)}
+                                    />
+                                    <button
+                                        type="button"
+                                        disabled={!newIssueText.trim()}
+                                        onClick={() => {
+                                            if (newIssueText.trim()) {
+                                                setIssuesFound(prev => [...prev, { description: newIssueText.trim() }]);
+                                                setNewIssueText("");
+                                            }
+                                        }}
+                                        className="px-3 py-1 bg-red-500/30 border border-red-500/40 rounded-lg text-red-300 text-xs font-bold hover:bg-red-500/40 transition-colors disabled:opacity-40 disabled:cursor-not-allowed self-end"
+                                    >
+                                        <PlusIcon size={14} />
+                                    </button>
+                                </div>
+                                <p className="text-[10px] text-red-300/50 italic">
+                                    ⚠️ ปัญหาที่เพิ่มจะถูกบันทึกเป็น "สิ่งที่ต้องแก้ไข" ในระบบอัตโนมัติ และแสดงในรายงาน
+                                </p>
+                            </div>
+                        )}
+                    </div>
+
                     {/* ♥ Part Replacement Plans Summary (only if any confirmed) */}
                     {dueParts.some(d => d.confirmed) && (
                         <div className="rounded-xl border border-orange-500/30 bg-gradient-to-r from-orange-500/10 to-amber-500/5 p-3 space-y-2">
@@ -1067,6 +1163,7 @@ export default function PMExecutionModal({ isOpen, onClose, plan, onSuccess }: P
                         efficiencyPct={currentEfficiency}
                         trend={trend}
                         scheduleText={plan.scheduleType === "weekly" ? t("labelWeekly") : plan.scheduleType === "yearly" ? t("labelYearly") : `${t("labelEveryMonthly") || "ทุก"} ${plan.cycleMonths || 1} ${t("labelMonths") || "เดือน"}`}
+                        issuesFound={issuesFound}
                     />
                 )}
             </div>
