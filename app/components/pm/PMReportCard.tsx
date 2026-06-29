@@ -9,9 +9,10 @@ interface PMReportCardProps {
     trend?: number | null;
     scheduleText?: string;
     issuesFound?: {description: string}[];
+    recommendations?: string[];
 }
 
-export const PMReportCard = forwardRef<HTMLDivElement, PMReportCardProps>(({ record, completedChecklist, machineCode, efficiencyPct = 100, trend = null, scheduleText, issuesFound = [] }, ref) => {
+export const PMReportCard = forwardRef<HTMLDivElement, PMReportCardProps>(({ record, completedChecklist, machineCode, efficiencyPct = 100, trend = null, scheduleText, issuesFound = [], recommendations = [] }, ref) => {
     const dateStr = record.date ? new Date(record.date).toLocaleDateString('th-TH', {
         day: '2-digit',
         month: 'short',
@@ -150,6 +151,23 @@ export const PMReportCard = forwardRef<HTMLDivElement, PMReportCardProps>(({ rec
                     </div>
                     <div className="mt-2 text-xs text-[#f87171]/70 italic">
                         รายการเหล่านี้ถูกบันทึกเป็น "สิ่งที่ต้องแก้ไขในอนาคต" แล้ว
+                    </div>
+                </div>
+            )}
+
+            {/* Recommendations Section */}
+            {recommendations.length > 0 && (
+                <div className="mb-6">
+                    <h2 className="text-lg font-bold text-white mb-4 flex items-center gap-2">
+                        <span className="text-[#10b981]">💡</span> คำแนะนำเพิ่มประสิทธิภาพ
+                    </h2>
+                    <div className="space-y-1.5">
+                        {recommendations.map((rec, idx) => (
+                            <div key={idx} className="flex items-center gap-3 bg-[#1E293B] p-2.5 rounded-lg border border-[#10b981]/20">
+                                <span className="text-[#10b981] font-bold text-xs">↑</span>
+                                <span className="text-xs text-white/80">{rec}</span>
+                            </div>
+                        ))}
                     </div>
                 </div>
             )}

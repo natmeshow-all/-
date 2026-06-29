@@ -809,10 +809,28 @@ export default function PMExecutionModal({ isOpen, onClose, plan, onSuccess }: P
     const totalItems = plan?.checklistItems?.length || 0;
 
     const assessed = checklistResults.filter(c => c.completed && c.value && c.value.trim() !== '');
-    const currentEfficiency = assessed.length > 0
+    const ISSUE_PENALTY = 5; // Each issue reduces efficiency by 5%
+    const baseEfficiency = assessed.length > 0
         ? Math.round(assessed.reduce((sum, c) => sum + scoreValue(c.value), 0) / assessed.length)
         : 100;
+    const issuePenalty = issuesFound.length * ISSUE_PENALTY;
+    const currentEfficiency = Math.max(0, baseEfficiency - issuePenalty);
     const trend = prevEfficiency !== null ? currentEfficiency - prevEfficiency : null;
+
+    // Build recommendations for the report
+    const recommendations: string[] = [];
+    if (issuesFound.length > 0) {
+        issuesFound.forEach((issue, i) => {
+            recommendations.push(`แก้ไข: ${issue.description} → +${ISSUE_PENALTY}%`);
+        });
+    }
+    // Add recommendations for low-scoring checklist items
+    assessed.forEach(c => {
+        const score = scoreValue(c.value);
+        if (score <= 50) {
+            recommendations.push(`ปรับปรุงรายการที่คะแนนต่ำ → เพิ่มประสิทธิภาพได้`);
+        }
+    });
 
     const footerContent = (
         <button
@@ -1174,6 +1192,7 @@ export default function PMExecutionModal({ isOpen, onClose, plan, onSuccess }: P
                         trend={trend}
                         scheduleText={plan.scheduleType === "weekly" ? t("labelWeekly") : plan.scheduleType === "yearly" ? t("labelYearly") : `${t("labelEveryMonthly") || "ทุก"} ${plan.cycleMonths || 1} ${t("labelMonths") || "เดือน"}`}
                         issuesFound={issuesFound}
+                        recommendations={recommendations}
                     />
                 )}
             </div>
