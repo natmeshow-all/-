@@ -625,8 +625,11 @@ body {
   cursor: not-allowed;
 }
 
-/* Force dark background on <option> elements inside .input-field select */
-.input-field option {
+/* Force dark background on <option> elements inside selects */
+.input-field option,
+.input option,
+.select option,
+select option {
   background: var(--color-bg-secondary);
   color: var(--color-text-primary);
 }
