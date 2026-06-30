@@ -157,6 +157,7 @@ export interface MaintenanceRecord {
     baseEfficiency?: number; // Base score before issue penalties
     parentPmRecordId?: string; // Links an issue back to the original PM record
     resolvedAt?: string | Date; // When the issue was resolved
+    resolutionLevel?: 1 | 2 | 3; // 1: Clean/Adjust, 2: Replace minor, 3: Overhaul
 
     // Part specific fields
     partId?: string;

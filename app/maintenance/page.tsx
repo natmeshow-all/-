@@ -5,6 +5,7 @@ import Header from "../components/Header";
 import MobileNav from "../components/MobileNav";
 import MaintenanceRecordModal from "../components/forms/MaintenanceRecordModal";
 import ConfirmModal from "../components/ui/ConfirmModal";
+import Modal from "../components/ui/Modal";
 import { useLanguage } from "../contexts/LanguageContext";
 import { useAuth } from "../contexts/AuthContext";
 import { useToast } from "../contexts/ToastContext";
@@ -34,6 +35,10 @@ import {
     TargetIcon,
     ImageIcon,
     EditIcon,
+    SaveIcon,
+    XIcon,
+    LayersIcon,
+    CheckCircleIcon
 } from "../components/ui/Icons";
 
 import RecordDetailsModal from "../components/pm/RecordDetailsModal";
@@ -95,6 +100,9 @@ export default function MaintenancePage() {
     // Resolve Issue State
     const [resolveConfirmOpen, setResolveConfirmOpen] = useState(false);
     const [recordToResolveId, setRecordToResolveId] = useState<string | null>(null);
+    const [resolveDetails, setResolveDetails] = useState("");
+    const [resolveLevel, setResolveLevel] = useState<1 | 2 | 3>(1);
+    const [resolveProblemCount, setResolveProblemCount] = useState(1);
 
     // Demo Badge State
     const [showDemoBadge, setShowDemoBadge] = useState(true);
@@ -121,18 +129,29 @@ export default function MaintenancePage() {
             return next;
         });
     };
-    const handleResolveIssue = (recordId: string) => {
+    const handleResolveIssue = (recordId: string, count: number = 1) => {
         setRecordToResolveId(recordId);
+        setResolveProblemCount(count);
+        setResolveLevel(count >= 3 ? 3 : count === 2 ? 2 : 1);
+        setResolveDetails("");
         setResolveConfirmOpen(true);
     };
 
     const handleConfirmResolve = async () => {
         if (!recordToResolveId) return;
         setResolveConfirmOpen(false);
+        
+        if (recordToResolveId === 'demo') {
+            success("ทดลองแก้ไขปัญหาสำเร็จ! (ตัวอย่างไม่ถูกบันทึกลงฐานข้อมูล)");
+            return;
+        }
+
         try {
             await updateMaintenanceRecord(recordToResolveId, {
                 status: 'completed',
-                resolvedAt: new Date().toISOString()
+                resolvedAt: new Date().toISOString(),
+                details: resolveDetails,
+                resolutionLevel: resolveLevel
             });
             success("อัพเดทสถานะสำเร็จ");
             fetchInitialRecords();
@@ -771,6 +790,14 @@ export default function MaintenancePage() {
                                 <div className="text-[10px] font-bold px-2 py-0.5 rounded-full inline-flex items-center gap-1 w-fit mt-1 border bg-red-500/20 text-red-500 border-red-500/50 animate-alert-scale origin-left">
                                     ⚠️ พบปัญหานี้ซ้ำเป็นครั้งที่ 3 (ควรพิจารณาเปลี่ยนอะไหล่)
                                 </div>
+                                <div className="mt-3">
+                                    <button
+                                        onClick={() => handleResolveIssue('demo', 3)}
+                                        className="flex items-center gap-1.5 px-3 py-1.5 rounded bg-accent-green/20 text-accent-green font-bold text-xs hover:bg-accent-green hover:text-white transition-all border border-accent-green/30"
+                                    >
+                                        <CheckIcon size={14} /> ทดลองกดปุ่ม "แก้ไขแล้ว" (หน้าต่างใหม่)
+                                    </button>
+                                </div>
                             </div>
                         </div>
                     </div>
@@ -1043,7 +1070,7 @@ export default function MaintenancePage() {
                                                         <button
                                                             onClick={(e) => {
                                                                 e.stopPropagation();
-                                                                handleResolveIssue(record.id);
+                                                                handleResolveIssue(record.id, problemCount);
                                                             }}
                                                             className="flex items-center gap-1.5 px-2 py-1 rounded bg-accent-green/20 text-accent-green font-bold text-[10px] hover:bg-accent-green hover:text-white transition-all border border-accent-green/30 shadow-[0_0_8px_rgba(16,185,129,0.2)]"
                                                             title="บันทึกการแก้ไขปัญหา"
@@ -1440,23 +1467,49 @@ export default function MaintenancePage() {
                                                 </div>
                                             )}
 
-                                            {/* Section 5: Details & Notes */}
-                                            {(record.details || record.notes) && (
+                                            {/* Section 5: Details & Notes & Resolution Level */}
+                                            {(record.details || record.notes || record.resolutionLevel) && (
                                                 <div className="bg-white/5 p-4 rounded-xl border border-white/5 mt-4">
-                                                    {record.details && !record.details.includes('{') && (!record.checklist || record.checklist.length === 0) && (
-                                                        <div className="mb-2 last:mb-0">
+                                                    
+                                                    {record.resolutionLevel && (
+                                                        <div className="mb-3">
                                                             <h4 className="text-sm font-bold text-white mb-2 flex items-center gap-2">
-                                                                <FileTextIcon size={14} className="text-accent-cyan" /> รายละเอียด
+                                                                <LayersIcon size={14} className="text-accent-blue" /> ระดับการแก้ไขปัญหา
                                                             </h4>
-                                                            <p className="text-sm text-text-muted leading-relaxed">{record.details}</p>
+                                                            <div className="flex items-center gap-2">
+                                                                {record.resolutionLevel === 1 && (
+                                                                    <span className="px-2.5 py-1 rounded bg-accent-cyan/10 border border-accent-cyan/20 text-accent-cyan text-xs font-bold">
+                                                                        ระดับ 1: ปรับตั้งค่า / ทำความสะอาด
+                                                                    </span>
+                                                                )}
+                                                                {record.resolutionLevel === 2 && (
+                                                                    <span className="px-2.5 py-1 rounded bg-accent-yellow/10 border border-accent-yellow/20 text-accent-yellow text-xs font-bold">
+                                                                        ระดับ 2: เปลี่ยนชิ้นส่วนย่อย / ดัดแปลง
+                                                                    </span>
+                                                                )}
+                                                                {record.resolutionLevel === 3 && (
+                                                                    <span className="px-2.5 py-1 rounded bg-red-500/10 border border-red-500/20 text-red-500 text-xs font-bold">
+                                                                        ระดับ 3: ซ่อมใหญ่ / Overhaul
+                                                                    </span>
+                                                                )}
+                                                            </div>
+                                                        </div>
+                                                    )}
+
+                                                    {record.details && !record.details.includes('{') && (!record.checklist || record.checklist.length === 0 || record.resolutionLevel) && (
+                                                        <div className={`mb-2 last:mb-0 ${record.resolutionLevel ? 'border-t border-white/10 mt-3 pt-3' : ''}`}>
+                                                            <h4 className="text-sm font-bold text-white mb-2 flex items-center gap-2">
+                                                                <FileTextIcon size={14} className="text-accent-cyan" /> รายละเอียดการดำเนินการ
+                                                            </h4>
+                                                            <p className="text-sm text-text-muted leading-relaxed whitespace-pre-wrap">{record.details}</p>
                                                         </div>
                                                     )}
                                                     {record.notes && (
-                                                        <div className={`pt-2 ${record.details && (!record.checklist || record.checklist.length === 0) ? 'border-t border-white/10 mt-3 pt-3' : ''}`}>
+                                                        <div className={`pt-2 ${(record.details || record.resolutionLevel) ? 'border-t border-white/10 mt-3 pt-3' : ''}`}>
                                                             <h4 className="text-sm font-bold text-white mb-2 flex items-center gap-2">
                                                                 <FileTextIcon size={14} className="text-accent-cyan" /> หมายเหตุ
                                                             </h4>
-                                                            <p className="text-sm text-accent-yellow/90 italic leading-relaxed">{record.notes}</p>
+                                                            <p className="text-sm text-accent-yellow/90 italic leading-relaxed whitespace-pre-wrap">{record.notes}</p>
                                                         </div>
                                                     )}
                                                 </div>
@@ -1503,14 +1556,105 @@ export default function MaintenancePage() {
                 confirmText={t("actionDelete") || "ลบ"}
             />
             
-            <ConfirmModal
+            <Modal
                 isOpen={resolveConfirmOpen}
                 onClose={() => setResolveConfirmOpen(false)}
-                onConfirm={handleConfirmResolve}
                 title="ยืนยันการแก้ไขปัญหา"
-                message="คุณแน่ใจหรือไม่ว่าปัญหานี้ได้รับการแก้ไขเรียบร้อยแล้ว? (เมื่อยืนยันแล้ว คะแนนประสิทธิภาพเครื่องจักรจะถูกเพิ่มกลับอัตโนมัติ)"
-                confirmText="ยืนยันแก้ไขแล้ว"
-            />
+                titleIcon={<CheckCircleIcon size={24} className="text-accent-green" />}
+                size="md"
+                footer={
+                    <>
+                        <button onClick={() => setResolveConfirmOpen(false)} className="btn btn-outline border-white/20 text-white hover:bg-white/10">
+                            ยกเลิก
+                        </button>
+                        <button
+                            onClick={handleConfirmResolve}
+                            disabled={resolveLevel === 3 && resolveDetails.trim() === ""}
+                            className="btn bg-accent-green text-white font-bold hover:bg-accent-green/80 disabled:opacity-50 disabled:cursor-not-allowed border border-accent-green/30 shadow-[0_0_15px_rgba(16,185,129,0.3)]"
+                        >
+                            ยืนยันว่าแก้ไขแล้ว
+                        </button>
+                    </>
+                }
+            >
+                <div className="py-2 flex flex-col gap-5">
+                    <p className="text-sm text-text-muted">
+                        การยืนยันนี้จะเปลี่ยนสถานะงานเป็น <strong className="text-accent-green">เสร็จสิ้น</strong> พร้อมบันทึกรายละเอียดที่คุณระบุไว้
+                    </p>
+
+                    {/* Resolution Level Selector */}
+                    <div>
+                        <h4 className="text-sm font-bold text-white mb-3 flex items-center gap-2">
+                            <LayersIcon size={16} className="text-accent-blue" />
+                            เลือกระดับการแก้ไขปัญหา
+                        </h4>
+                        
+                        {resolveProblemCount >= 3 && (
+                            <div className="mb-3 p-3 bg-red-500/10 border border-red-500/30 rounded-lg flex items-start gap-3">
+                                <AlertTriangleIcon size={18} className="text-red-500 shrink-0 mt-0.5" />
+                                <div className="text-xs text-red-100">
+                                    <strong className="text-red-400 block mb-1">คำแนะนำจากระบบ: ปัญหาซ้ำซาก (เกิน 3 ครั้ง)</strong>
+                                    ควรพิจารณาเลือกระดับ 3 (ซ่อมใหญ่/เปลี่ยนอะไหล่หลัก) เพื่อแก้ปัญหาให้เด็ดขาด
+                                </div>
+                            </div>
+                        )}
+                        
+                        <div className="flex flex-col gap-2">
+                            <label className={`relative p-3 rounded-xl border cursor-pointer transition-all flex items-start gap-3 ${resolveLevel === 1 ? 'bg-accent-cyan/10 border-accent-cyan/50 shadow-[0_0_10px_rgba(6,182,212,0.2)]' : 'bg-black/20 border-white/10 hover:border-white/30 hover:bg-white/5'}`}>
+                                <div className={`w-4 h-4 rounded-full border-2 mt-0.5 flex-shrink-0 flex items-center justify-center ${resolveLevel === 1 ? 'border-accent-cyan' : 'border-text-muted'}`}>
+                                    {resolveLevel === 1 && <div className="w-2 h-2 rounded-full bg-accent-cyan" />}
+                                </div>
+                                <input type="radio" name="resolveLevel" className="hidden" checked={resolveLevel === 1} onChange={() => setResolveLevel(1)} />
+                                <div>
+                                    <div className={`font-bold text-sm ${resolveLevel === 1 ? 'text-accent-cyan' : 'text-text-primary'}`}>ระดับ 1: ปรับตั้งค่า / ทำความสะอาด</div>
+                                    <div className="text-xs text-text-muted mt-1">ขันแน่น, ทำความสะอาด, ปรับตั้งค่า (ไม่ต้องใช้เวลา/งบประมาณมาก)</div>
+                                </div>
+                            </label>
+                            
+                            <label className={`relative p-3 rounded-xl border cursor-pointer transition-all flex items-start gap-3 ${resolveLevel === 2 ? 'bg-accent-yellow/10 border-accent-yellow/50 shadow-[0_0_10px_rgba(234,179,8,0.2)]' : 'bg-black/20 border-white/10 hover:border-white/30 hover:bg-white/5'}`}>
+                                <div className={`w-4 h-4 rounded-full border-2 mt-0.5 flex-shrink-0 flex items-center justify-center ${resolveLevel === 2 ? 'border-accent-yellow' : 'border-text-muted'}`}>
+                                    {resolveLevel === 2 && <div className="w-2 h-2 rounded-full bg-accent-yellow" />}
+                                </div>
+                                <input type="radio" name="resolveLevel" className="hidden" checked={resolveLevel === 2} onChange={() => setResolveLevel(2)} />
+                                <div>
+                                    <div className={`font-bold text-sm ${resolveLevel === 2 ? 'text-accent-yellow' : 'text-text-primary'}`}>ระดับ 2: เปลี่ยนชิ้นส่วนย่อย / ดัดแปลง</div>
+                                    <div className="text-xs text-text-muted mt-1">เปลี่ยนอะไหล่สิ้นเปลือง, แก้ไขจุดเล็กน้อย (ไม่กระทบโครงสร้างหลัก)</div>
+                                </div>
+                            </label>
+
+                            <label className={`relative p-3 rounded-xl border cursor-pointer transition-all flex items-start gap-3 ${resolveLevel === 3 ? 'bg-red-500/10 border-red-500/50 shadow-[0_0_10px_rgba(239,68,68,0.2)]' : 'bg-black/20 border-white/10 hover:border-white/30 hover:bg-white/5'}`}>
+                                <div className={`w-4 h-4 rounded-full border-2 mt-0.5 flex-shrink-0 flex items-center justify-center ${resolveLevel === 3 ? 'border-red-500' : 'border-text-muted'}`}>
+                                    {resolveLevel === 3 && <div className="w-2 h-2 rounded-full bg-red-500" />}
+                                </div>
+                                <input type="radio" name="resolveLevel" className="hidden" checked={resolveLevel === 3} onChange={() => setResolveLevel(3)} />
+                                <div>
+                                    <div className={`font-bold text-sm ${resolveLevel === 3 ? 'text-red-500' : 'text-text-primary'}`}>ระดับ 3: ซ่อมใหญ่ / Overhaul</div>
+                                    <div className="text-xs text-text-muted mt-1">รื้อประกอบ, เปลี่ยนอะไหล่ชิ้นสำคัญ (จำเป็นต้องระบุรายละเอียด)</div>
+                                </div>
+                            </label>
+                        </div>
+                    </div>
+
+                    {/* Resolution Details */}
+                    <div>
+                        <h4 className="text-sm font-bold text-white mb-3 flex items-center gap-2">
+                            <FileTextIcon size={16} className="text-accent-cyan" />
+                            รายละเอียดการแก้ไข / อะไหล่ที่เปลี่ยน
+                            {resolveLevel === 3 && <span className="text-red-500 text-xs font-normal ml-1">(จำเป็นต้องระบุ)</span>}
+                        </h4>
+                        <textarea
+                            value={resolveDetails}
+                            onChange={(e) => setResolveDetails(e.target.value)}
+                            className={`w-full bg-bg-tertiary border text-white rounded-lg px-3 py-3 text-sm outline-none resize-none h-28 transition-colors ${
+                                resolveLevel === 3 && resolveDetails.trim() === "" 
+                                ? "border-red-500/50 focus:border-red-500" 
+                                : "border-white/20 focus:border-accent-cyan/50"
+                            }`}
+                            placeholder="ระบุว่าทำอะไรไปบ้าง เปลี่ยนอะไหล่ตัวไหน..."
+                        />
+                    </div>
+                </div>
+            </Modal>
 
             <PartReplacementPlanModal
                 isOpen={replacementPlanOpen}
