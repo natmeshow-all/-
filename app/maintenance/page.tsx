@@ -1013,7 +1013,6 @@ export default function MaintenancePage() {
                             };
 
                             const checklistItems = record.checklist || [];
-                            const assessed = checklistItems.filter(c => c.value && c.value.trim() !== '');
                             
                             // Find child records for this PM: primary match via parentPmRecordId,
                             // fallback for older records: same machine + fromPM + created within 30 days after this record
@@ -1034,20 +1033,58 @@ export default function MaintenancePage() {
                                 return false;
                             };
 
-                            // Find unresolved issues generated from this PM
-                            const pendingIssuesCount = allFetchedRecords.filter(r => isChildRecord(r) && r.status === 'pending').length;
+                            const childRecords = allFetchedRecords.filter(r => isChildRecord(r));
+                            const pendingIssuesCount = childRecords.filter(r => r.status === 'pending').length;
+                            const completedChildRecords = childRecords.filter(r => r.status === 'completed');
                             
-                            const baseEff = record.baseEfficiency !== undefined 
+                            const resolvedChecklistLabels = new Set<string>();
+                            const resolvedPartNames = new Set<string>();
+                            completedChildRecords.forEach(cr => {
+                                if ((cr as any).checklistItemLabel) {
+                                    resolvedChecklistLabels.add((cr as any).checklistItemLabel);
+                                }
+                                if (cr.type === 'partReplacement' && cr.partName) {
+                                    resolvedPartNames.add(cr.partName.toLowerCase());
+                                }
+                            });
+
+                            let hasResolvedItems = false;
+                            const assessed = checklistItems.filter(c => c.value && c.value.trim() !== '').map(c => {
+                                let isResolved = false;
+                                if (resolvedChecklistLabels.has(c.item)) {
+                                    isResolved = true;
+                                } else {
+                                    const itemNameLower = c.item.toLowerCase();
+                                    for (const pName of resolvedPartNames) {
+                                        if (itemNameLower.includes(pName) || pName.includes(itemNameLower)) {
+                                            isResolved = true;
+                                            break;
+                                        }
+                                    }
+                                }
+                                if (isResolved) {
+                                    hasResolvedItems = true;
+                                    return { ...c, originalValue: c.value, value: 'สมบูรณ์ (เปลี่ยนอะไหล่แล้ว)' };
+                                }
+                                return c;
+                            });
+                            
+                            const dynamicBaseEff = assessed.length > 0 ? Math.round(assessed.reduce((sum, c) => sum + scoreValue(c.value || ''), 0) / assessed.length) : (record.status === 'completed' ? 100 : 0);
+                            
+                            const baseEff = (record.baseEfficiency !== undefined && !hasResolvedItems)
                                 ? record.baseEfficiency 
-                                : (assessed.length > 0 ? Math.round(assessed.reduce((sum, c) => sum + scoreValue(c.value || ''), 0) / assessed.length) : (record.status === 'completed' ? 100 : 0));
+                                : dynamicBaseEff;
                             
                             const efficiencyPct = Math.max(0, baseEff - (pendingIssuesCount * 5));
 
                             // Resolved issues from this PM (gain indicator)
-                            const resolvedIssuesCount = allFetchedRecords.filter(r => isChildRecord(r) && r.status === 'completed').length;
+                            const resolvedIssuesCount = completedChildRecords.length;
                             const resolvedGain = resolvedIssuesCount * 5;
-                            const scoreBeforeResolved = Math.max(0, baseEff - ((pendingIssuesCount + resolvedIssuesCount) * 5));
-                            const showGain = resolvedGain > 0 && pendingIssuesCount === 0;
+                            const scoreBeforeResolved = record.baseEfficiency !== undefined 
+                                ? Math.max(0, record.baseEfficiency - ((pendingIssuesCount + resolvedIssuesCount) * 5))
+                                : Math.max(0, baseEff - ((pendingIssuesCount + resolvedIssuesCount) * 5));
+                            // Only show generic +gain indicator if we didn't just boost the base score from checklist directly
+                            const showGain = resolvedGain > 0 && pendingIssuesCount === 0 && !hasResolvedItems;
 
                             // Compare with previous record of same machine
                             const prevRecord = allFetchedRecords
