@@ -712,12 +712,17 @@ export default function PMExecutionModal({ isOpen, onClose, plan, onSuccess }: P
         setLoading(true);
         try {
             const details = buildDetailsString();
-            const structuredChecklist = plan.checklistItems?.map((item, index) => ({
-                item,
-                completed: checklistResults[index]?.completed || false,
-                value: checklistResults[index]?.value || "",
-                standard: plan.checklistStandards?.[item] || undefined
-            }));
+            const structuredChecklist = plan.checklistItems?.map((item, index) => {
+                const res: any = {
+                    item,
+                    completed: checklistResults[index]?.completed || false,
+                    value: checklistResults[index]?.value || ""
+                };
+                if (plan.checklistStandards?.[item]) {
+                    res.standard = plan.checklistStandards[item];
+                }
+                return res;
+            });
 
             // Generate Report Image Base64
             let telegramImageBase64 = undefined;
