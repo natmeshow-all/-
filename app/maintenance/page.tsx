@@ -1015,8 +1015,27 @@ export default function MaintenancePage() {
                             const checklistItems = record.checklist || [];
                             const assessed = checklistItems.filter(c => c.value && c.value.trim() !== '');
                             
+                            // Find child records for this PM: primary match via parentPmRecordId,
+                            // fallback for older records: same machine + fromPM + created within 30 days after this record
+                            const pmRecordDate = new Date(record.date).getTime();
+                            const isChildRecord = (r: MaintenanceRecord) => {
+                                if ((r as any).parentPmRecordId === record.id) return true;
+                                // Fallback: same machine, fromPM, no parentPmRecordId, created within 30 days of this PM
+                                if (
+                                    !(r as any).parentPmRecordId &&
+                                    (r as any).fromPM &&
+                                    (r.machineId === record.machineId || r.machineName === record.machineName) &&
+                                    (r as any).pmPlanId === (record as any).pmPlanId &&
+                                    (record as any).pmPlanId
+                                ) {
+                                    const rDate = new Date(r.date).getTime();
+                                    return Math.abs(rDate - pmRecordDate) < 30 * 24 * 60 * 60 * 1000;
+                                }
+                                return false;
+                            };
+
                             // Find unresolved issues generated from this PM
-                            const pendingIssuesCount = allFetchedRecords.filter(r => r.parentPmRecordId === record.id && r.status === 'pending').length;
+                            const pendingIssuesCount = allFetchedRecords.filter(r => isChildRecord(r) && r.status === 'pending').length;
                             
                             const baseEff = record.baseEfficiency !== undefined 
                                 ? record.baseEfficiency 
@@ -1025,7 +1044,7 @@ export default function MaintenancePage() {
                             const efficiencyPct = Math.max(0, baseEff - (pendingIssuesCount * 5));
 
                             // Resolved issues from this PM (gain indicator)
-                            const resolvedIssuesCount = allFetchedRecords.filter(r => r.parentPmRecordId === record.id && r.status === 'completed').length;
+                            const resolvedIssuesCount = allFetchedRecords.filter(r => isChildRecord(r) && r.status === 'completed').length;
                             const resolvedGain = resolvedIssuesCount * 5;
                             const scoreBeforeResolved = Math.max(0, baseEff - ((pendingIssuesCount + resolvedIssuesCount) * 5));
                             const showGain = resolvedGain > 0 && pendingIssuesCount === 0;
@@ -1036,7 +1055,22 @@ export default function MaintenancePage() {
                                 .sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime())[0];
                             let prevEfficiency: number | null = null;
                             if (prevRecord) {
-                                const prevPendingIssuesCount = allFetchedRecords.filter(r => r.parentPmRecordId === prevRecord.id && r.status === 'pending').length;
+                                const pmPrevDate = new Date(prevRecord.date).getTime();
+                                const isPrevChild = (r: MaintenanceRecord) => {
+                                    if ((r as any).parentPmRecordId === prevRecord.id) return true;
+                                    if (
+                                        !(r as any).parentPmRecordId &&
+                                        (r as any).fromPM &&
+                                        (r.machineId === prevRecord.machineId || r.machineName === prevRecord.machineName) &&
+                                        (r as any).pmPlanId === (prevRecord as any).pmPlanId &&
+                                        (prevRecord as any).pmPlanId
+                                    ) {
+                                        const rDate = new Date(r.date).getTime();
+                                        return Math.abs(rDate - pmPrevDate) < 30 * 24 * 60 * 60 * 1000;
+                                    }
+                                    return false;
+                                };
+                                const prevPendingIssuesCount = allFetchedRecords.filter(r => isPrevChild(r) && r.status === 'pending').length;
                                 const prevBaseEff = prevRecord.baseEfficiency !== undefined
                                     ? prevRecord.baseEfficiency
                                     : (prevRecord.checklist && prevRecord.checklist.filter(c => c.value && c.value.trim() !== '').length > 0

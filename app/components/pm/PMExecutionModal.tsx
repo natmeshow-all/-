@@ -764,6 +764,7 @@ export default function PMExecutionModal({ isOpen, onClose, plan, onSuccess }: P
                     fromPM: true,
                     pmTaskName: plan.taskName,
                     pmPlanId: plan.id,
+                    parentPmRecordId: pmRecordId,
                     checklistItemLabel: dp.checklistLabel,
                     partName: dp.partName,
                     notes: dp.notes || undefined,
