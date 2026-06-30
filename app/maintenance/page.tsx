@@ -1763,25 +1763,36 @@ export default function MaintenancePage() {
                                                                     } catch (e) { }
                                                                 } else {
                                                                     // Parse free text like "X:0.3, Y:3.5, Z:7.1" or "0.3, 3.5, 7.1"
+                                                                    vibrationObj = {};
+                                                                    let foundAny = false;
+                                                                    const axes = ['x', 'y', 'z'];
                                                                     const nums = val.match(/-?\d+(\.\d+)?/g);
-                                                                    if (nums && nums.length >= 1) {
-                                                                        vibrationObj = {};
-                                                                        const axes = ['x', 'y', 'z'];
-                                                                        nums.forEach((n: string, nIdx: number) => {
-                                                                            if (nIdx < 3) {
-                                                                                const numVal = parseFloat(n);
-                                                                                let status = 'normal';
-                                                                                // Use standard if available, otherwise fallback to user's 3, 7 thresholds
-                                                                                const max = item.standard?.max ?? 3;
-                                                                                const dangerThreshold = max + 4; // if max is 3, danger is 7
-                                                                                
-                                                                                if (numVal >= dangerThreshold) status = 'danger';
-                                                                                else if (numVal >= max) status = 'warning';
-                                                                                
-                                                                                vibrationObj[axes[nIdx]] = { value: numVal, status };
-                                                                            }
-                                                                        });
-                                                                    }
+                                                                    
+                                                                    axes.forEach((axis, nIdx) => {
+                                                                        const regex = new RegExp(`${axis}:\\s*(-?\\d+(\\.\\d+)?)`, 'i');
+                                                                        const match = val.match(regex);
+                                                                        let numValStr = null;
+                                                                        if (match) {
+                                                                            numValStr = match[1];
+                                                                        } else if (nums && nums.length > nIdx && !val.toLowerCase().includes('x:')) {
+                                                                            // Fallback to positional ONLY if no axis labels were found
+                                                                            numValStr = nums[nIdx];
+                                                                        }
+                                                                        
+                                                                        if (numValStr !== null) {
+                                                                            foundAny = true;
+                                                                            const numVal = parseFloat(numValStr);
+                                                                            let status = 'normal';
+                                                                            const max = item.standard?.max ?? 3;
+                                                                            const dangerThreshold = max + 4;
+                                                                            
+                                                                            if (numVal >= dangerThreshold) status = 'danger';
+                                                                            else if (numVal >= max) status = 'warning';
+                                                                            
+                                                                            vibrationObj[axis] = { value: numVal, status, raw: numValStr };
+                                                                        }
+                                                                    });
+                                                                    if (!foundAny) vibrationObj = null;
                                                                 }
                                                             } else if (val.startsWith('{') && val.includes('"x":')) {
                                                                 // Legacy fallback
@@ -1808,12 +1819,37 @@ export default function MaintenancePage() {
                                                                     <div key={idx} onClick={(e) => e.stopPropagation()} className="flex flex-col bg-bg-tertiary p-3 rounded-lg border border-primary/30">
                                                                         <div className="text-xs text-text-primary mb-2 font-bold">{item.item}</div>
                                                                         {isVibrationData ? (
-                                                                            <input
-                                                                                type="text"
-                                                                                value={val}
-                                                                                onChange={(e) => handleChecklistItemValueChange(idx, e.target.value)}
-                                                                                className="bg-bg-secondary border border-white/20 text-white rounded px-2 py-1.5 text-xs outline-none focus:border-primary/50 w-full"
-                                                                            />
+                                                                            <div className="grid grid-cols-3 gap-2">
+                                                                                {['x', 'y', 'z'].map((axis) => {
+                                                                                    const axisVal = vibrationObj?.[axis]?.raw ?? '';
+                                                                                    const status = vibrationObj?.[axis]?.status ?? 'normal';
+                                                                                    const colorClass = !axisVal ? 'text-white border-white/20' : status === 'danger' ? 'text-accent-red border-accent-red/50 focus:border-accent-red' : status === 'warning' ? 'text-accent-yellow border-accent-yellow/50 focus:border-accent-yellow' : 'text-accent-green border-accent-green/50 focus:border-accent-green';
+                                                                                    
+                                                                                    return (
+                                                                                        <div key={axis} className="flex items-center gap-1.5">
+                                                                                            <span className={`text-[10px] font-bold uppercase ${!axisVal ? 'text-text-muted' : colorClass.split(' ')[0]}`}>{axis}:</span>
+                                                                                            <input
+                                                                                                type="number"
+                                                                                                step="0.01"
+                                                                                                value={axisVal}
+                                                                                                onChange={(e) => {
+                                                                                                    const newNum = e.target.value;
+                                                                                                    const currentX = axis === 'x' ? newNum : (vibrationObj?.x?.raw || '');
+                                                                                                    const currentY = axis === 'y' ? newNum : (vibrationObj?.y?.raw || '');
+                                                                                                    const currentZ = axis === 'z' ? newNum : (vibrationObj?.z?.raw || '');
+                                                                                                    const parts = [];
+                                                                                                    if (currentX) parts.push(`X:${currentX}`);
+                                                                                                    if (currentY) parts.push(`Y:${currentY}`);
+                                                                                                    if (currentZ) parts.push(`Z:${currentZ}`);
+                                                                                                    handleChecklistItemValueChange(idx, parts.join(', '));
+                                                                                                }}
+                                                                                                className={`bg-bg-secondary border rounded px-2 py-1.5 text-xs outline-none w-full transition-colors ${colorClass}`}
+                                                                                                placeholder="0.00"
+                                                                                            />
+                                                                                        </div>
+                                                                                    );
+                                                                                })}
+                                                                            </div>
                                                                         ) : options.length > 0 && !options.includes('custom') ? (
                                                                             <select
                                                                                 value={val}
