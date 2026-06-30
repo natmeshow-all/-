@@ -10,8 +10,10 @@ import { useLanguage } from "../contexts/LanguageContext";
 import { useAuth } from "../contexts/AuthContext";
 import { useToast } from "../contexts/ToastContext";
 import { formatDateThai } from "../lib/dateUtils";
-import { getMaintenanceRecordsPaginated, deleteMaintenanceRecord, getMachines, updateMaintenanceRecord, addMaintenanceRecord, getMaintenanceRecordsByMachine } from "../lib/firebaseService";
+import { getMaintenanceRecordsPaginated, deleteMaintenanceRecord, getMachines, updateMaintenanceRecord, addMaintenanceRecord, getMaintenanceRecordsByMachine, getSystemSettings } from "../lib/firebaseService";
 import { MaintenanceRecord, Machine, ChecklistItemResult } from "../types";
+import { lineService } from "../services/lineService";
+import { telegramService } from "../services/telegramService";
 import {
     WrenchIcon,
     PlusIcon,
@@ -141,6 +143,8 @@ export default function MaintenancePage() {
         if (!recordToResolveId) return;
         setResolveConfirmOpen(false);
         
+        const recordToUpdate = records.find(r => r.id === recordToResolveId);
+        
         if (recordToResolveId === 'demo') {
             success("ทดลองแก้ไขปัญหาสำเร็จ! (ตัวอย่างไม่ถูกบันทึกลงฐานข้อมูล)");
             return;
@@ -154,6 +158,33 @@ export default function MaintenancePage() {
                 resolutionLevel: resolveLevel
             });
             success("อัพเดทสถานะสำเร็จ");
+            
+            // Send Line and Telegram notifications
+            if (recordToUpdate) {
+                try {
+                    const settings = await getSystemSettings();
+                    const lineEnabled = (settings as any)?.lineNotificationsEnabled ?? true;
+                    const telegramEnabled = (settings as any)?.telegramNotificationsEnabled ?? false;
+                    
+                    const fullRecord: MaintenanceRecord = {
+                        ...recordToUpdate,
+                        status: 'completed',
+                        resolvedAt: new Date().toISOString(),
+                        details: resolveDetails,
+                        resolutionLevel: resolveLevel
+                    };
+                    
+                    if (lineEnabled) {
+                        await lineService.sendResolutionNotification(fullRecord);
+                    }
+                    if (telegramEnabled) {
+                        await telegramService.sendResolutionNotification(fullRecord);
+                    }
+                } catch (notifyErr) {
+                    console.error("Failed to send resolution notification", notifyErr);
+                }
+            }
+
             fetchInitialRecords();
         } catch (err) {
             console.error("Error resolving issue:", err);

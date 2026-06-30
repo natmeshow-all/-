@@ -324,11 +324,247 @@ export const lineService = {
             }
         };
 
-
-
         return {
             type: "flex",
             altText: `PM เสร็จสิ้น: ${record.machineName}`,
+            contents: bubble
+        };
+    },
+
+    /**
+     * Send a Line Flex Message when an issue is resolved
+     */
+    async sendResolutionNotification(record: MaintenanceRecord, imageUrl?: string) {
+        try {
+            const settings = await getSystemSettings();
+            let channelAccessToken = undefined;
+            let targetId = undefined;
+            
+            if (settings && settings.lineChannelAccessToken && settings.lineTargetId) {
+                channelAccessToken = decodeSecret(settings.lineChannelAccessToken);
+                targetId = decodeSecret(settings.lineTargetId);
+            }
+
+            let messages = [];
+            if (imageUrl) {
+                messages = [
+                    {
+                        type: "text",
+                        text: `🔹 รหัสเครื่อง: ${record.machineCode || '-'}\n🔹 ชื่อเครื่องจักร: ${record.machineName}\n⚠️ แจ้งซ่อม: ${record.description || "พบปัญหา"}`
+                    },
+                    {
+                        type: "image",
+                        originalContentUrl: imageUrl,
+                        previewImageUrl: imageUrl
+                    }
+                ];
+            } else {
+                messages = [this.createResolutionFlexMessage(record)];
+            }
+
+            const response = await fetch('/api/line', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify({
+                    messages,
+                    channelAccessToken,
+                    targetId
+                }),
+            });
+
+            if (!response.ok) {
+                const errorData = await response.json();
+                console.error('Failed to send Line resolution notification:', errorData);
+            } else {
+                console.log('✅ Line resolution notification sent successfully!');
+            }
+        } catch (error) {
+            console.error('Error in sendResolutionNotification:', error);
+        }
+    },
+
+    /**
+     * Create a beautiful Flex Message Card for Issue Resolution
+     */
+    createResolutionFlexMessage(record: MaintenanceRecord) {
+        const dateStr = record.resolvedAt ? new Date(record.resolvedAt).toLocaleDateString('th-TH', {
+            day: '2-digit',
+            month: 'short',
+            year: 'numeric'
+        }) : '-';
+        const timeStr = record.resolvedAt ? new Date(record.resolvedAt).toLocaleTimeString('th-TH', {
+            hour: '2-digit',
+            minute: '2-digit'
+        }) : '-';
+
+        const levelText = record.resolutionLevel === 3 ? 'ระดับ 3: ซ่อมใหญ่ / Overhaul' :
+                          record.resolutionLevel === 2 ? 'ระดับ 2: เปลี่ยนชิ้นส่วนย่อย' :
+                          'ระดับ 1: ปรับตั้งค่า / ทำความสะอาด';
+        const levelColor = record.resolutionLevel === 3 ? '#ff4444' :
+                           record.resolutionLevel === 2 ? '#ffcc00' :
+                           '#00d4ff';
+
+        const bubble: Record<string, unknown> = {
+            type: "bubble",
+            size: "mega",
+            header: {
+                type: "box",
+                layout: "vertical",
+                backgroundColor: "#2e1a1a",
+                paddingAll: "15px",
+                contents: [
+                    {
+                        type: "box",
+                        layout: "horizontal",
+                        contents: [
+                            {
+                                type: "box",
+                                layout: "vertical",
+                                flex: 1,
+                                contents: [
+                                    {
+                                        type: "text",
+                                        text: record.machineName,
+                                        weight: "bold",
+                                        size: "lg",
+                                        color: "#ff8888",
+                                        wrap: true
+                                    },
+                                    {
+                                        type: "text",
+                                        text: record.description || "พบปัญหา",
+                                        size: "sm",
+                                        color: "#aaaaaa",
+                                        margin: "sm",
+                                        wrap: true
+                                    },
+                                    {
+                                        type: "text",
+                                        text: "👤 " + record.technician,
+                                        size: "sm",
+                                        color: "#888888",
+                                        margin: "sm"
+                                    }
+                                ]
+                            },
+                            {
+                                type: "box",
+                                layout: "vertical",
+                                contents: [
+                                    {
+                                        type: "text",
+                                        text: "แก้ไขแล้ว",
+                                        size: "sm",
+                                        color: "#00ff88",
+                                        align: "end"
+                                    },
+                                    {
+                                        type: "text",
+                                        text: "📅 " + dateStr,
+                                        size: "xs",
+                                        color: "#888888",
+                                        align: "end",
+                                        margin: "sm"
+                                    },
+                                    {
+                                        type: "text",
+                                        text: "🕒 " + timeStr,
+                                        size: "xs",
+                                        color: "#888888",
+                                        align: "end"
+                                    }
+                                ]
+                            }
+                        ]
+                    }
+                ]
+            },
+            body: {
+                type: "box",
+                layout: "vertical",
+                backgroundColor: "#1e2433",
+                paddingAll: "15px",
+                contents: [
+                    {
+                        type: "text",
+                        text: "📋 ข้อมูลการแก้ไขปัญหา",
+                        weight: "bold",
+                        size: "sm",
+                        color: "#ffcc00"
+                    },
+                    {
+                        type: "box",
+                        layout: "horizontal",
+                        margin: "md",
+                        contents: [
+                            {
+                                type: "text",
+                                text: "ระดับ:",
+                                size: "sm",
+                                color: "#888888",
+                                flex: 2
+                            },
+                            {
+                                type: "text",
+                                text: levelText,
+                                size: "sm",
+                                color: levelColor,
+                                flex: 5,
+                                wrap: true
+                            }
+                        ]
+                    },
+                    {
+                        type: "box",
+                        layout: "horizontal",
+                        margin: "sm",
+                        contents: [
+                            {
+                                type: "text",
+                                text: "ผู้แก้ไข:",
+                                size: "sm",
+                                color: "#888888",
+                                flex: 2
+                            },
+                            {
+                                type: "text",
+                                text: record.technician || "-",
+                                size: "sm",
+                                color: "#ffffff",
+                                flex: 5
+                            }
+                        ]
+                    },
+                    {
+                        type: "separator",
+                        margin: "lg",
+                        color: "#333344"
+                    },
+                    {
+                        type: "text",
+                        text: "📝 รายละเอียดการดำเนินการ",
+                        weight: "bold",
+                        size: "sm",
+                        color: "#00d4ff",
+                        margin: "lg"
+                    },
+                    {
+                        type: "text",
+                        text: record.details || "-",
+                        size: "sm",
+                        color: "#cccccc",
+                        margin: "md",
+                        wrap: true
+                    }
+                ]
+            }
+        };
+
+        return {
+            type: "flex",
+            altText: `แจ้งเตือนการซ่อมเสร็จสิ้น: ${record.machineName}`,
             contents: bubble
         };
     }
