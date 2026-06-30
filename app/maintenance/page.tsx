@@ -21,6 +21,7 @@ import {
     PlusIcon,
     CalendarIcon,
     UserIcon,
+    HistoryIcon,
     ClockIcon,
     CheckIcon,
     AlertTriangleIcon,
@@ -816,7 +817,7 @@ export default function MaintenancePage() {
             <main className="main-container px-4 py-6 sm:px-6">
                 {/* Page Header and Filters */}
                 <div className="mb-6 space-y-4">
-                    <div className="flex items-center justify-between">
+                    <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
                         <div className="flex items-center gap-3">
                             <div className="w-10 h-10 rounded-xl bg-accent-red/20 flex items-center justify-center">
                                 <SettingsIcon size={20} className="text-accent-red" />
@@ -825,6 +826,22 @@ export default function MaintenancePage() {
                                 <h1 className="text-xl font-bold text-text-primary">{t("maintenancePageTitle")}</h1>
                                 <p className="text-sm text-text-muted">{t("maintenanceHistoryTitle")}</p>
                             </div>
+                        </div>
+                        <div className="flex items-center gap-2">
+                            <button
+                                onClick={() => { if (checkAuth()) setMaintenanceModalOpen(true); }}
+                                className="flex-1 sm:flex-none min-w-[120px] btn btn-active bg-accent-yellow text-bg-primary hover:bg-accent-yellow/90 hover:scale-105 active:scale-95 border-none h-9 text-[11px] font-bold transition-all shadow-sm hover:shadow-accent-yellow/20"
+                            >
+                                <HistoryIcon size={14} className="mr-1" />
+                                {t("actionRecordMaintenance") || "เปลี่ยนอะไหล่/Overhaul"}
+                            </button>
+                            <button
+                                onClick={() => { if (checkAuth()) setReplacementPlanOpen(true); }}
+                                className="flex-1 sm:flex-none min-w-[120px] btn btn-active bg-accent-purple text-white hover:bg-accent-purple/90 hover:scale-105 active:scale-95 border-none h-9 text-[11px] font-bold transition-all shadow-sm hover:shadow-accent-purple/20"
+                            >
+                                <RefreshCwIcon size={14} className="mr-1" />
+                                {t("actionMaintenanceHistory") || "แผนเปลี่ยนอะไหล่"}
+                            </button>
                         </div>
                     </div>
 

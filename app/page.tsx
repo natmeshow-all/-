@@ -337,20 +337,6 @@ export default function Dashboard() {
               {t("actionAddPart")}
             </button>
             <button
-              onClick={() => { if (checkAuth()) setMaintenanceModalOpen(true); }}
-              className="flex-1 min-w-[120px] btn btn-active bg-accent-yellow text-bg-primary hover:bg-accent-yellow/90 hover:scale-105 active:scale-95 border-none h-8 text-[11px] font-bold transition-all shadow-sm hover:shadow-accent-yellow/20"
-            >
-              <HistoryIcon size={14} className="mr-1" />
-              {t("actionRecordMaintenance")}
-            </button>
-            <button
-              onClick={() => { if (checkAuth()) setHistoryModalOpen(true); }}
-              className="flex-1 min-w-[120px] btn btn-active bg-accent-purple text-white hover:bg-accent-purple/90 hover:scale-105 active:scale-95 border-none h-8 text-[11px] font-bold transition-all shadow-sm hover:shadow-accent-purple/20"
-            >
-              <RefreshIcon size={14} className="mr-1" />
-              {t("actionMaintenanceHistory")}
-            </button>
-            <button
               onClick={() => setHelpModalOpen(true)}
               className="flex-1 min-w-[120px] btn btn-active bg-primary/20 text-primary hover:bg-primary/30 hover:scale-105 active:scale-95 border border-primary/30 h-8 text-[11px] font-bold transition-all shadow-sm"
             >
