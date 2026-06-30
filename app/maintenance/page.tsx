@@ -752,8 +752,19 @@ export default function MaintenancePage() {
                 {!loading && (
                     <div className="space-y-4">
                         {/* Helper: calculate efficiency from checklist */}
-                        {filteredRecords.map((record, index) => {
-                            const isExpanded = expandedRecords.has(record.id);
+                        {(() => {
+                            const getProblemKey = (r: MaintenanceRecord): string | null => {
+                                if (r.type === 'preventive' && !(r as any).fromPM) return null;
+                                let text = r.description || '';
+                                if (r.partName) text = r.partName;
+                                if ((r as any).fromPM && (r as any).checklistItemLabel) {
+                                    text = (r as any).checklistItemLabel;
+                                }
+                                text = text.replace(/\[pm พบปัญหา\]/gi, '').replace(/เปลี่ยนอะไหล่:/gi, '').trim();
+                                return text.length > 0 ? text.toLowerCase() : null;
+                            };
+                            return filteredRecords.map((record, index) => {
+                                const isExpanded = expandedRecords.has(record.id);
                             const hasMotorData = record.motorGearData && (record.motorGearData.motorSize || record.motorGearData.temperature || record.motorGearData.currentIdle || record.motorGearData.currentLoad || record.motorGearData.voltageL1);
                             const hasShaftData = record.motorGearData?.shaftData && (record.motorGearData.shaftData.shaftBend || record.motorGearData.shaftData.dialGauge);
                             const hasVibrationData = record.motorGearData && (record.motorGearData.vibrationX?.value || record.motorGearData.vibrationY?.value || record.motorGearData.vibrationZ?.value);
@@ -807,6 +818,17 @@ export default function MaintenancePage() {
                             const pct = Math.min(100, Math.max(0, efficiencyPct));
                             const strokeDashoffset = circ * (1 - pct / 100);
                             const ringColor = pct >= 80 ? '#10b981' : pct >= 55 ? '#fbbf24' : '#ef4444';
+
+                            // Repeated problem count
+                            const problemKey = getProblemKey(record);
+                            let problemCount = 0;
+                            if (problemKey) {
+                                problemCount = allFetchedRecords.filter(r => 
+                                    (r.machineId === record.machineId || r.machineName === record.machineName) && 
+                                    getProblemKey(r) === problemKey && 
+                                    new Date(r.date) <= new Date(record.date)
+                                ).length;
+                            }
 
                             return (
                                 <div
@@ -868,9 +890,20 @@ export default function MaintenancePage() {
                                                         />
                                                     ) : (
                                                         <div className={`flex items-start gap-2 group w-full`}>
-                                                            <p className="line-clamp-3 opacity-70 w-full leading-relaxed">
-                                                                {record.description || (record.partName ? `เปลี่ยนอะไหล่: ${record.partName}` : null) || (record.type === 'partReplacement' ? 'เปลี่ยนอะไหล่' : record.type === 'preventive' ? 'PM / ตรวจเช็ค' : record.type === 'corrective' ? 'ซ่อมทั่วไป' : record.type)}
-                                                            </p>
+                                                            <div className="flex flex-col gap-1 w-full">
+                                                                <p className="line-clamp-3 opacity-70 w-full leading-relaxed">
+                                                                    {record.description || (record.partName ? `เปลี่ยนอะไหล่: ${record.partName}` : null) || (record.type === 'partReplacement' ? 'เปลี่ยนอะไหล่' : record.type === 'preventive' ? 'PM / ตรวจเช็ค' : record.type === 'corrective' ? 'ซ่อมทั่วไป' : record.type)}
+                                                                </p>
+                                                                {problemCount > 1 && (
+                                                                    <div className={`text-[10px] font-bold px-2 py-0.5 rounded-full inline-flex items-center gap-1 w-fit mt-1 border ${
+                                                                        problemCount >= 3 
+                                                                        ? (record.status === 'pending' || record.status === 'inProgress' ? 'bg-red-500/20 text-red-500 border-red-500/50 animate-alert-scale origin-left' : 'bg-red-500/10 text-red-400/80 border-red-500/20')
+                                                                        : 'bg-orange-500/10 text-orange-400 border-orange-500/30'
+                                                                    }`}>
+                                                                        ⚠️ {problemCount >= 3 ? `พบปัญหานี้ซ้ำเป็นครั้งที่ ${problemCount} (ควรพิจารณาเปลี่ยนอะไหล่)` : `พบปัญหาซ้ำครั้งที่ ${problemCount}`}
+                                                                    </div>
+                                                                )}
+                                                            </div>
                                                             {isAdmin && (
                                                                 <button 
                                                                     className="text-primary opacity-50 hover:opacity-100 transition-all shrink-0 mt-0.5 p-1 -m-1 rounded-md hover:bg-primary/10 cursor-pointer"
@@ -1380,7 +1413,8 @@ export default function MaintenancePage() {
                                     )}
                                 </div>
                             );
-                        })}
+                        });
+                        })()}
                     </div>
                 )}
 
