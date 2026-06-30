@@ -1595,7 +1595,7 @@ export default function MaintenancePage() {
                                                             <div className="text-[10px] text-text-muted mb-1">วันที่เปลี่ยนอะไหล่</div>
                                                             <div className="text-sm font-bold text-white flex items-center gap-2">
                                                                 <CalendarIcon size={14} className="text-accent-blue" />
-                                                                {formatDateThai(record.date)}
+                                                                {formatDateThai(record.resolvedAt || record.date)}
                                                             </div>
                                                         </div>
                                                         
@@ -1604,7 +1604,7 @@ export default function MaintenancePage() {
                                                             <div className="text-sm font-bold text-accent-yellow flex items-center gap-2">
                                                                 <ActivityIcon size={14} />
                                                                 {(() => {
-                                                                    const lifespan = calculateLifespan(record.date);
+                                                                    const lifespan = calculateLifespan(record.resolvedAt || record.date);
                                                                     if (!lifespan) return "-";
                                                                     let parts = [];
                                                                     if (lifespan.years > 0) parts.push(`${lifespan.years} ปี`);
