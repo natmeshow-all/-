@@ -349,13 +349,18 @@ export default function MaintenancePage() {
             if (editingRecordStatus) {
                 updateData.status = editingRecordStatus;
             }
+            const currentRecord = records.find(r => r.id === recordId);
             if (editingRecordDate) {
                 updateData.date = new Date(editingRecordDate);
+                // If it's a completed record, update resolvedAt as well so lifespan calculation reflects the edited date
+                const finalStatus = editingRecordStatus || (currentRecord ? currentRecord.status : undefined);
+                if (finalStatus === 'completed') {
+                    updateData.resolvedAt = new Date(editingRecordDate).toISOString();
+                }
             }
             await updateMaintenanceRecord(recordId, updateData);
             
             // Generate pending part replacement plans for items marked "ถึงกำหนดเปลี่ยน"
-            const currentRecord = records.find(r => r.id === recordId);
             if (currentRecord) {
                 const dueItems = editingChecklist.filter(item => item.value?.includes("ถึงกำหนดเปลี่ยน"));
                 if (dueItems.length > 0) {
@@ -395,12 +400,16 @@ export default function MaintenancePage() {
             // Optimistic update of local records state
             setRecords(prev => prev.map(r => {
                 if (r.id === recordId) {
+                    const newStatus = (editingRecordStatus as any) || r.status;
+                    const newDate = editingRecordDate ? new Date(editingRecordDate) : r.date;
+                    const newResolvedAt = (editingRecordDate && newStatus === 'completed') ? new Date(editingRecordDate).toISOString() : r.resolvedAt;
                     return {
                         ...r,
                         checklist: editingChecklist,
                         details: editingRecordDetails,
-                        status: (editingRecordStatus as any) || r.status,
-                        date: editingRecordDate ? new Date(editingRecordDate) : r.date,
+                        status: newStatus,
+                        date: newDate,
+                        resolvedAt: newResolvedAt,
                         updatedAt: new Date()
                     };
                 }
@@ -408,12 +417,16 @@ export default function MaintenancePage() {
             }));
             setAllFetchedRecords(prev => prev.map(r => {
                 if (r.id === recordId) {
+                    const newStatus = (editingRecordStatus as any) || r.status;
+                    const newDate = editingRecordDate ? new Date(editingRecordDate) : r.date;
+                    const newResolvedAt = (editingRecordDate && newStatus === 'completed') ? new Date(editingRecordDate).toISOString() : r.resolvedAt;
                     return {
                         ...r,
                         checklist: editingChecklist,
                         details: editingRecordDetails,
-                        status: (editingRecordStatus as any) || r.status,
-                        date: editingRecordDate ? new Date(editingRecordDate) : r.date,
+                        status: newStatus,
+                        date: newDate,
+                        resolvedAt: newResolvedAt,
                         updatedAt: new Date()
                     };
                 }
