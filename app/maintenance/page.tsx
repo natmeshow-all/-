@@ -114,8 +114,7 @@ export default function MaintenancePage() {
     const [useCustomLocation, setUseCustomLocation] = useState(false);
     const [resolvedDate, setResolvedDate] = useState("");
 
-    // Demo Badge State
-    const [showDemoBadge, setShowDemoBadge] = useState(true);
+
 
     const handleStartEditChecklist = (record: MaintenanceRecord) => {
         setEditingRecordId(record.id);
@@ -992,41 +991,6 @@ export default function MaintenancePage() {
                     </div>
                 </div>
 
-                {/* Demo Badge */}
-                {showDemoBadge && (
-                    <div className="bg-bg-secondary/40 border border-red-500/30 rounded-xl p-4 relative overflow-hidden mb-4">
-                        <div className="absolute top-2 right-2 flex gap-2">
-                            <button onClick={() => setShowDemoBadge(false)} className="text-text-muted hover:text-white p-1.5 bg-black/20 hover:bg-red-500/20 hover:text-red-400 rounded-lg transition-colors group" title="ซ่อนตัวอย่าง">
-                                <TrashIcon size={14} className="group-hover:scale-110 transition-transform" />
-                            </button>
-                        </div>
-                        <h3 className="text-sm font-bold text-white mb-2 flex items-center gap-2">
-                            <AlertTriangleIcon size={16} className="text-accent-red" />
-                            ตัวอย่างป้ายเตือน "พบปัญหาซ้ำ"
-                        </h3>
-                        <p className="text-xs text-text-muted mb-4">
-                            ป้ายเตือนแบบใหม่จะแสดงผล <b>ขยาย-ย่อ (Scale Pulse)</b> แบบนี้ เมื่อพบว่าเครื่องจักรมีปัญหาเดียวกันตั้งแต่ 3 ครั้งขึ้นไปและยัง <b>รอดำเนินการ</b> อยู่
-                        </p>
-                        <div className="card p-3 ring-1 ring-red-500/20 bg-black/10">
-                            <div className="flex flex-col gap-1 w-full">
-                                <p className="text-xs opacity-70 w-full leading-relaxed line-through decoration-white/20">
-                                    [PM พบปัญหา] ทดสอบระบบมอเตอร์สั่น
-                                </p>
-                                <div className="text-[10px] font-bold px-2 py-0.5 rounded-full inline-flex items-center gap-1 w-fit mt-1 border bg-red-500/20 text-red-500 border-red-500/50 animate-alert-scale origin-left">
-                                    ⚠️ พบปัญหานี้ซ้ำเป็นครั้งที่ 3 (ควรพิจารณาเปลี่ยนอะไหล่)
-                                </div>
-                                <div className="mt-3">
-                                    <button
-                                        onClick={() => handleResolveIssue('demo', 3)}
-                                        className="flex items-center gap-1.5 px-3 py-1.5 rounded bg-accent-green/20 text-accent-green font-bold text-xs hover:bg-accent-green hover:text-white transition-all border border-accent-green/30"
-                                    >
-                                        <CheckIcon size={14} /> ทดลองกดปุ่ม "แก้ไขแล้ว" (หน้าต่างใหม่)
-                                    </button>
-                                </div>
-                            </div>
-                        </div>
-                    </div>
-                )}
 
                 {/* Loading State */}
                 {loading && (
