@@ -53,7 +53,7 @@
         // ===== PM Plans =====
         "pm_plans": {
             ".read": "auth != null",
-            ".write": "auth != null && (root.child('users').child(auth.uid).child('role').val() == 'admin' || root.child('users').child(auth.uid).child('role').val() == 'supervisor')",
+            ".write": "auth != null && root.child('users').child(auth.uid).child('isApproved').val() == true && root.child('users').child(auth.uid).child('role').val() != 'viewer'",
             ".indexOn": [
                 "machineId",
                 "nextDueDate"
