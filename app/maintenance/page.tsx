@@ -110,6 +110,7 @@ export default function MaintenancePage() {
     const [resolveProblemCount, setResolveProblemCount] = useState(1);
     const [resolveLocation, setResolveLocation] = useState("");
     const [useCustomLocation, setUseCustomLocation] = useState(false);
+    const [resolveDate, setResolveDate] = useState("");
 
     // Demo Badge State
     const [showDemoBadge, setShowDemoBadge] = useState(true);
@@ -159,6 +160,11 @@ export default function MaintenancePage() {
         
         setResolveLocation(initialLoc);
         setUseCustomLocation(initialLoc ? !allLocations.includes(initialLoc) : false);
+        
+        const now = new Date();
+        const tzOffset = now.getTimezoneOffset() * 60000;
+        const localISOTime = (new Date(now.getTime() - tzOffset)).toISOString().slice(0, 16);
+        setResolveDate(localISOTime);
         
         setResolveConfirmOpen(true);
     };
@@ -226,6 +232,8 @@ export default function MaintenancePage() {
             }
         }
         
+        const finalResolvedAt = resolveDate ? new Date(resolveDate).toISOString() : new Date().toISOString();
+
         if (recordToResolveId === 'demo') {
             const demoRecord: MaintenanceRecord = {
                 id: 'demo',
@@ -240,7 +248,8 @@ export default function MaintenancePage() {
                 technician: 'คุณณัฐชนน (Demo)',
                 details: resolveDetails || 'นี่คือการทดสอบระบบส่งแจ้งเตือน',
                 resolutionLevel: resolveLevel,
-                resolvedAt: new Date().toISOString(),
+                Location: locationToSave,
+                resolvedAt: finalResolvedAt,
                 createdAt: new Date(),
                 updatedAt: new Date(),
             } as MaintenanceRecord;
@@ -266,7 +275,7 @@ export default function MaintenancePage() {
         try {
             await updateMaintenanceRecord(recordToResolveId, {
                 status: 'completed',
-                resolvedAt: new Date().toISOString(),
+                resolvedAt: finalResolvedAt,
                 details: resolveDetails,
                 resolutionLevel: resolveLevel,
                 Location: locationToSave
@@ -283,7 +292,7 @@ export default function MaintenancePage() {
                     const fullRecord: MaintenanceRecord = {
                         ...recordToUpdate,
                         status: 'completed',
-                        resolvedAt: new Date().toISOString(),
+                        resolvedAt: finalResolvedAt,
                         details: resolveDetails,
                         resolutionLevel: resolveLevel,
                         Location: locationToSave
@@ -1853,6 +1862,23 @@ export default function MaintenancePage() {
                         )}
                         <p className="text-xs text-text-muted mt-2 italic">
                             * สถานที่ที่ระบุจะถูกบันทึกไว้เป็นที่อยู่ล่าสุดของเครื่องจักรนี้
+                        </p>
+                    </div>
+
+                    {/* Resolution Date */}
+                    <div>
+                        <h4 className="text-sm font-bold text-white mb-3 flex items-center gap-2">
+                            <CalendarIcon size={16} className="text-accent-yellow" />
+                            วันที่และเวลาที่แก้ไขเสร็จ
+                        </h4>
+                        <input
+                            type="datetime-local"
+                            value={resolveDate}
+                            onChange={(e) => setResolveDate(e.target.value)}
+                            className="w-full bg-black/20 border border-white/10 text-white rounded-lg px-3 py-2 text-sm outline-none focus:border-accent-cyan/50 focus:bg-white/5 transition-colors"
+                        />
+                        <p className="text-xs text-text-muted mt-2 italic">
+                            * สามารถระบุเวลาย้อนหลังได้ในกรณีที่แก้ไขเสร็จไปก่อนหน้านี้แล้ว
                         </p>
                     </div>
                 </div>
