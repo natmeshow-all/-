@@ -1684,6 +1684,19 @@ export default function MaintenancePage() {
                                                             }
 
                                                             // IF IN VIEW MODE
+                                                            let isResolved = false;
+                                                            if (resolvedChecklistLabels.has(item.item)) {
+                                                                isResolved = true;
+                                                            } else {
+                                                                const itemNameLower = item.item.toLowerCase();
+                                                                for (const pName of resolvedPartNames) {
+                                                                    if (itemNameLower.includes(pName) || pName.includes(itemNameLower)) {
+                                                                        isResolved = true;
+                                                                        break;
+                                                                    }
+                                                                }
+                                                            }
+
                                                             return (
                                                                 <div key={idx} className={`flex flex-col bg-bg-tertiary p-3 rounded-lg border transition-all ${isDue ? 'border-accent-red/30 bg-accent-red/5' : 'border-white/5'}`}>
                                                                     <div className="flex items-center justify-between text-xs text-text-muted mb-2 font-medium">
@@ -1701,20 +1714,36 @@ export default function MaintenancePage() {
                                                                         </div>
                                                                     ) : isDue ? (
                                                                         <div className="flex flex-col gap-2">
-                                                                            <div className={`text-xs px-2.5 py-1 rounded border ${bgColor} ${valueColor} w-fit`}>
-                                                                                {val}
+                                                                            <div className="flex items-center gap-2">
+                                                                                <div className={`text-xs px-2.5 py-1 rounded border ${bgColor} ${valueColor} w-fit ${isResolved ? 'line-through opacity-70' : ''}`}>
+                                                                                    {val}
+                                                                                </div>
+                                                                                {isResolved && (
+                                                                                    <span className="text-[10px] font-bold px-2 py-0.5 rounded bg-accent-green/10 text-accent-green border border-accent-green/20 flex items-center gap-1">
+                                                                                        <span className="text-accent-green text-xs leading-none">✓</span> แก้ไขแล้ว
+                                                                                    </span>
+                                                                                )}
                                                                             </div>
-                                                                            <button
-                                                                                onClick={(e) => { e.stopPropagation(); openReplacementPlan(record.machineId, record.machineName); }}
-                                                                                className="text-[11px] px-2.5 py-1 rounded-md border border-accent-red/40 bg-accent-red/10 text-accent-red hover:bg-accent-red/20 transition-colors w-fit flex items-center gap-1.5 font-semibold"
-                                                                            >
-                                                                                <ActivityIcon size={11} />
-                                                                                📋 ดูแผนเปลี่ยนอะไหล่
-                                                                            </button>
+                                                                            {!isResolved && (
+                                                                                <button
+                                                                                    onClick={(e) => { e.stopPropagation(); openReplacementPlan(record.machineId, record.machineName); }}
+                                                                                    className="text-[11px] px-2.5 py-1 rounded-md border border-accent-red/40 bg-accent-red/10 text-accent-red hover:bg-accent-red/20 transition-colors w-fit flex items-center gap-1.5 font-semibold"
+                                                                                >
+                                                                                    <ActivityIcon size={11} />
+                                                                                    📋 ดูแผนเปลี่ยนอะไหล่
+                                                                                </button>
+                                                                            )}
                                                                         </div>
                                                                     ) : (
-                                                                        <div className={`text-xs px-2.5 py-1 rounded border ${bgColor} ${valueColor} w-fit`}>
-                                                                            {val || (item.completed ? "✓" : "-")}
+                                                                        <div className="flex items-center gap-2">
+                                                                            <div className={`text-xs px-2.5 py-1 rounded border ${bgColor} ${valueColor} w-fit ${isResolved && val && val.trim() !== '' && !val.includes('สมบูรณ์') && !val.includes('ปกติ') ? 'line-through opacity-70' : ''}`}>
+                                                                                {val || (item.completed ? "✓" : "-")}
+                                                                            </div>
+                                                                            {isResolved && val && val.trim() !== '' && !val.includes('สมบูรณ์') && !val.includes('ปกติ') && (
+                                                                                <span className="text-[10px] font-bold px-2 py-0.5 rounded bg-accent-green/10 text-accent-green border border-accent-green/20 flex items-center gap-1">
+                                                                                    <span className="text-accent-green text-xs leading-none">✓</span> แก้ไขแล้ว
+                                                                                </span>
+                                                                            )}
                                                                         </div>
                                                                     )}
                                                                 </div>
