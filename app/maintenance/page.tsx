@@ -10,7 +10,7 @@ import { useLanguage } from "../contexts/LanguageContext";
 import { useAuth } from "../contexts/AuthContext";
 import { useToast } from "../contexts/ToastContext";
 import { formatDateThai } from "../lib/dateUtils";
-import { getMaintenanceRecordsPaginated, deleteMaintenanceRecord, getMachines, updateMaintenanceRecord, addMaintenanceRecord, getMaintenanceRecordsByMachine, getSystemSettings, updateMachine } from "../lib/firebaseService";
+import { getMaintenanceRecordsPaginated, deleteMaintenanceRecord, getMachines, updateMaintenanceRecord, addMaintenanceRecord, getMaintenanceRecordsByMachine, getSystemSettings, updateMachine, getPMPlans, updatePMPlan } from "../lib/firebaseService";
 import { MaintenanceRecord, Machine, ChecklistItemResult, MaintenanceStatus } from "../types";
 import { lineService } from "../services/lineService";
 import { telegramService } from "../services/telegramService";
@@ -372,6 +372,32 @@ export default function MaintenancePage() {
                 updateData.resolvedAt = new Date().toISOString();
             }
             await updateMaintenanceRecord(recordId, updateData);
+            
+            // Also update PM Plan's checklistStandards if this is a PM record with a linked plan
+            if (currentRecord?.pmPlanId) {
+                try {
+                    const allPlans = await getPMPlans();
+                    const plan = allPlans.find(p => p.id === currentRecord.pmPlanId);
+                    if (plan) {
+                        const newStandards = { ...plan.checklistStandards };
+                        let hasChanges = false;
+                        editingChecklist.forEach(item => {
+                            if (item.standard && (item.standard.min !== undefined || item.standard.max !== undefined)) {
+                                newStandards[item.item] = {
+                                    ...newStandards[item.item],
+                                    ...item.standard
+                                };
+                                hasChanges = true;
+                            }
+                        });
+                        if (hasChanges) {
+                            await updatePMPlan(plan.id, { checklistStandards: newStandards });
+                        }
+                    }
+                } catch (e) {
+                    console.error("Error updating PM Plan standards:", e);
+                }
+            }
             
             // Generate pending part replacement plans for items marked "ถึงกำหนดเปลี่ยน"
             if (currentRecord) {
@@ -1022,15 +1048,42 @@ export default function MaintenancePage() {
                             const machine = allMachines.find(m => m.id === record.machineId || m.name === record.machineName);
 
                             // === Efficiency Calculation ===
-                            const scoreValue = (val: string): number => {
+                            const scoreValue = (val: string, itemLabel: string, standard?: {min?: number, max?: number}): number => {
                                 const v = val.toLowerCase();
+                                const label = itemLabel.toLowerCase();
+                                
                                 if (v.includes('ถึงกำหนดเปลี่ยน')) return 10;
                                 if (v.includes('ผิดปกติ')) return 15;
                                 if (v.includes('ต้องเติม')) return 30;
                                 if (v.includes('เฝ้าระวัง')) return 50;
                                 if (v.includes('พอใช้')) return 65;
                                 if (v.includes('เหมาะสม')) return 80;
-                                if (v.includes('สมบูรณ์') || v.includes('ปกติ') || v.includes('เรียบร้อย') || v.includes('ไม่มีรอย') || v.includes('ไม่มี')) return 100;
+                                if (v.includes('สมบูรณ์') || v.includes('ปกติ') || v.includes('เรียบร้อย') || v.includes('ไม่มีรอย') || v.includes('ไม่มี') || v.includes('ทำความสะอาด') || v.includes('เช็ด')) return 100;
+                                
+                                // Numeric / Measurement Parsing
+                                const numbers = val.match(/-?\d+(\.\d+)?/g);
+                                if (numbers && numbers.length > 0) {
+                                    let min = standard?.min;
+                                    let max = standard?.max;
+                                    
+                                    // Auto-infer if standard is missing
+                                    if (min === undefined && max === undefined) {
+                                        if (label.includes('amp') || label.includes('กระแส')) { min = 1; max = 15; }
+                                        else if (label.includes('volt') || label.includes('แรงดัน')) { min = 170; max = 420; }
+                                    }
+                                    
+                                    if (min !== undefined && max !== undefined) {
+                                        const outOfBounds = numbers.some(n => {
+                                            const num = parseFloat(n);
+                                            return num < min! || num > max!;
+                                        });
+                                        if (outOfBounds) return 15; // Penalty for out of standard
+                                        return 100; // Perfect score if within range
+                                    } else {
+                                        return 100; // It's a reading with no standard, don't penalize
+                                    }
+                                }
+                                
                                 if (val !== '') return 75; // has a numeric/custom value → generally OK
                                 return 0; // empty = not assessed
                             };
@@ -1092,7 +1145,7 @@ export default function MaintenancePage() {
                                 return c;
                             });
                             
-                            const dynamicBaseEff = assessed.length > 0 ? Math.round(assessed.reduce((sum, c) => sum + scoreValue(c.value || ''), 0) / assessed.length) : (record.status === 'completed' ? 100 : 0);
+                            const dynamicBaseEff = assessed.length > 0 ? Math.round(assessed.reduce((sum, c) => sum + scoreValue(c.value || '', c.item, c.standard), 0) / assessed.length) : (record.status === 'completed' ? 100 : 0);
                             
                             const baseEff = (record.baseEfficiency !== undefined && !hasResolvedItems)
                                 ? record.baseEfficiency 
@@ -1134,7 +1187,7 @@ export default function MaintenancePage() {
                                 const prevBaseEff = prevRecord.baseEfficiency !== undefined
                                     ? prevRecord.baseEfficiency
                                     : (prevRecord.checklist && prevRecord.checklist.filter(c => c.value && c.value.trim() !== '').length > 0
-                                        ? Math.round(prevRecord.checklist.filter(c => c.value && c.value.trim() !== '').reduce((sum, c) => sum + scoreValue(c.value || ''), 0) / prevRecord.checklist.filter(c => c.value && c.value.trim() !== '').length)
+                                        ? Math.round(prevRecord.checklist.filter(c => c.value && c.value.trim() !== '').reduce((sum, c) => sum + scoreValue(c.value || '', c.item, c.standard), 0) / prevRecord.checklist.filter(c => c.value && c.value.trim() !== '').length)
                                         : 100);
                                 prevEfficiency = Math.max(0, prevBaseEff - (prevPendingIssuesCount * 5));
                             }
@@ -1448,7 +1501,7 @@ export default function MaintenancePage() {
                                                         </div>
                                                     </div>
                                                                                                         {/* Problem items */}
-                                                    {assessed.filter(c => scoreValue(c.value || '') < 80).length > 0 && (
+                                                    {assessed.filter(c => scoreValue(c.value || '', c.item, c.standard) < 80).length > 0 && (
                                                         <div className="px-4 py-3 bg-black/20 border-t border-white/5">
                                                             <div className="flex items-center justify-between mb-2">
                                                                 <p className="text-[11px] text-text-muted font-semibold uppercase tracking-wider">⚠ รายการที่ดึงคะแนนลง</p>
@@ -1456,10 +1509,10 @@ export default function MaintenancePage() {
                                                             </div>
                                                             <div className="flex flex-col gap-2">
                                                                 {assessed
-                                                                    .filter(c => scoreValue(c.value || '') < 80)
-                                                                    .sort((a, b) => scoreValue(a.value || '') - scoreValue(b.value || ''))
+                                                                    .filter(c => scoreValue(c.value || '', c.item, c.standard) < 80)
+                                                                    .sort((a, b) => scoreValue(a.value || '', a.item, a.standard) - scoreValue(b.value || '', b.item, b.standard))
                                                                     .map((c, i) => {
-                                                                        const s = scoreValue(c.value || '');
+                                                                        const s = scoreValue(c.value || '', c.item, c.standard);
                                                                         const deduction = 100 - s;
                                                                         const impact = Math.round(deduction / assessed.length);
                                                                         const isCritical = s < 30;
@@ -1690,8 +1743,8 @@ export default function MaintenancePage() {
                                                             const prevChecklistItem = prevRecord?.checklist?.find(c => c.item === item.item);
                                                             let trendSymbol = null;
                                                             if (prevChecklistItem && prevChecklistItem.value && item.value) {
-                                                                const curScore = scoreValue(item.value);
-                                                                const prevScore = scoreValue(prevChecklistItem.value);
+                                                                const curScore = scoreValue(item.value || '', item.item, item.standard);
+                                                                const prevScore = scoreValue(prevChecklistItem.value || '', prevChecklistItem.item, prevChecklistItem.standard);
                                                                 if (curScore > prevScore) trendSymbol = 'up';
                                                                 else if (curScore < prevScore) trendSymbol = 'down';
                                                             }
@@ -1729,6 +1782,44 @@ export default function MaintenancePage() {
                                                                                 placeholder="ระบุสถานะหรือค่า"
                                                                             />
                                                                         )}
+                                                                        
+                                                                        {isAdmin && (
+                                                                            <div className="mt-2 pt-2 border-t border-white/10 flex items-center gap-2">
+                                                                                <span className="text-[10px] text-text-muted">เกณฑ์มาตรฐาน:</span>
+                                                                                <input 
+                                                                                    type="number" 
+                                                                                    placeholder="Min" 
+                                                                                    value={item.standard?.min ?? ''} 
+                                                                                    onChange={(e) => {
+                                                                                        const newChecklist = [...editingChecklist];
+                                                                                        const val = e.target.value;
+                                                                                        newChecklist[idx] = { 
+                                                                                            ...newChecklist[idx], 
+                                                                                            standard: { ...newChecklist[idx].standard, min: val ? Number(val) : undefined } 
+                                                                                        };
+                                                                                        setEditingChecklist(newChecklist);
+                                                                                    }}
+                                                                                    className="bg-bg-secondary border border-white/20 text-white rounded px-2 py-1 text-[10px] w-14 outline-none focus:border-accent-cyan"
+                                                                                />
+                                                                                <span className="text-[10px] text-text-muted">-</span>
+                                                                                <input 
+                                                                                    type="number" 
+                                                                                    placeholder="Max" 
+                                                                                    value={item.standard?.max ?? ''} 
+                                                                                    onChange={(e) => {
+                                                                                        const newChecklist = [...editingChecklist];
+                                                                                        const val = e.target.value;
+                                                                                        newChecklist[idx] = { 
+                                                                                            ...newChecklist[idx], 
+                                                                                            standard: { ...newChecklist[idx].standard, max: val ? Number(val) : undefined } 
+                                                                                        };
+                                                                                        setEditingChecklist(newChecklist);
+                                                                                    }}
+                                                                                    className="bg-bg-secondary border border-white/20 text-white rounded px-2 py-1 text-[10px] w-14 outline-none focus:border-accent-cyan"
+                                                                                />
+                                                                            </div>
+                                                                        )}
+
                                                                         <div className="flex items-center gap-2 mt-2">
                                                                             <input
                                                                                 type="checkbox"
@@ -1759,10 +1850,19 @@ export default function MaintenancePage() {
 
                                                             return (
                                                                 <div key={idx} className={`flex flex-col bg-bg-tertiary p-3 rounded-lg border transition-all ${isDue ? 'border-accent-red/30 bg-accent-red/5' : 'border-white/5'}`}>
-                                                                    <div className="flex items-center justify-between text-xs text-text-muted mb-2 font-medium">
-                                                                        <span>{item.item}</span>
-                                                                        {trendSymbol === 'up' && <span className="text-accent-green" title="ประสิทธิภาพดีขึ้น">▲</span>}
-                                                                        {trendSymbol === 'down' && <span className="text-accent-red" title="ประสิทธิภาพลดลง">▼</span>}
+                                                                    <div className="flex items-start justify-between text-xs text-text-muted mb-2 font-medium">
+                                                                        <div className="flex flex-col">
+                                                                            <span>{item.item}</span>
+                                                                            {item.standard && (item.standard.min !== undefined || item.standard.max !== undefined) && (
+                                                                                <span className="text-[10px] text-white/40 mt-0.5 font-normal">
+                                                                                    (มาตรฐาน: {item.standard.min ?? ''} - {item.standard.max ?? ''} {item.standard.unit ?? ''})
+                                                                                </span>
+                                                                            )}
+                                                                        </div>
+                                                                        <div>
+                                                                            {trendSymbol === 'up' && <span className="text-accent-green ml-2" title="ประสิทธิภาพดีขึ้น">▲</span>}
+                                                                            {trendSymbol === 'down' && <span className="text-accent-red ml-2" title="ประสิทธิภาพลดลง">▼</span>}
+                                                                        </div>
                                                                     </div>
                                                                     {isVibrationData && vibrationObj ? (
                                                                         <div className="flex gap-1 flex-wrap">

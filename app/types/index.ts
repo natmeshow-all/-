@@ -128,6 +128,7 @@ export interface ChecklistItemResult {
     item: string;
     completed: boolean;
     value?: string;
+    standard?: { min?: number; max?: number; unit?: string };
 }
 
 export interface MaintenanceRecord {
@@ -192,6 +193,7 @@ export interface PMPlan {
     machineName: string;
     taskName: string; // Creates the main header/description
     checklistItems?: string[]; // Flexible sub-tasks
+    checklistStandards?: Record<string, { min?: number; max?: number; unit?: string }>; // Standard reference values for checklist items
 
     // Scheduling
     cycleMonths?: number; // kept for backward compatibility or monthly usage

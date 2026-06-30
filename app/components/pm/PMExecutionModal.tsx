@@ -716,6 +716,7 @@ export default function PMExecutionModal({ isOpen, onClose, plan, onSuccess }: P
                 item,
                 completed: checklistResults[index]?.completed || false,
                 value: checklistResults[index]?.value || "",
+                standard: plan.checklistStandards?.[item] || undefined
             }));
 
             // Generate Report Image Base64
