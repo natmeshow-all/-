@@ -97,6 +97,7 @@ export default function MaintenancePage() {
     const [editingChecklist, setEditingChecklist] = useState<any[]>([]);
     const [editingRecordStatus, setEditingRecordStatus] = useState<string | null>(null);
     const [editingRecordDetails, setEditingRecordDetails] = useState<string>("");
+    const [editingRecordDate, setEditingRecordDate] = useState<string | null>(null);
 
     // Edit description state
     const [editingDescriptionId, setEditingDescriptionId] = useState<string | null>(null);
@@ -120,6 +121,16 @@ export default function MaintenancePage() {
         setEditingChecklist(record.checklist ? JSON.parse(JSON.stringify(record.checklist)) : []);
         setEditingRecordStatus(record.status);
         setEditingRecordDetails(record.details || "");
+        
+        // Format date for input type="date"
+        try {
+            const dateObj = new Date(record.date);
+            const offset = dateObj.getTimezoneOffset() * 60000;
+            const localISOTime = new Date(dateObj.getTime() - offset).toISOString().split('T')[0];
+            setEditingRecordDate(localISOTime);
+        } catch(e) {
+            setEditingRecordDate(null);
+        }
     };
 
     const handleChecklistItemValueChange = (idx: number, newValue: string) => {
@@ -337,6 +348,9 @@ export default function MaintenancePage() {
             };
             if (editingRecordStatus) {
                 updateData.status = editingRecordStatus;
+            }
+            if (editingRecordDate) {
+                updateData.date = new Date(editingRecordDate);
             }
             await updateMaintenanceRecord(recordId, updateData);
             
@@ -1252,7 +1266,32 @@ export default function MaintenancePage() {
                                                      </div>
                                                      <div className="flex items-center text-[10px] text-text-muted gap-1">
                                                          <CalendarIcon size={10} />
-                                                         <span>{mounted ? formatDateThai(record.date) : '--/--'}</span>
+                                                         {editingRecordId === record.id ? (
+                                                             <input
+                                                                 type="date"
+                                                                 value={editingRecordDate || ''}
+                                                                 onClick={(e) => e.stopPropagation()}
+                                                                 onChange={(e) => setEditingRecordDate(e.target.value)}
+                                                                 className="bg-bg-tertiary border border-white/10 text-white rounded px-1.5 py-0.5 text-[10px] outline-none focus:border-primary/50"
+                                                             />
+                                                         ) : (
+                                                             <span>{mounted ? formatDateThai(record.date) : '--/--'}</span>
+                                                         )}
+                                                         {isAdmin && editingRecordId !== record.id && (!record.checklist || record.checklist.length === 0) && (
+                                                             <button 
+                                                                 onClick={(e) => { e.stopPropagation(); handleStartEditChecklist(record); }}
+                                                                 className="text-primary opacity-50 hover:opacity-100 p-0.5 rounded hover:bg-primary/20 ml-1"
+                                                                 title="แก้ไขวันที่และสถานะ"
+                                                             >
+                                                                 <EditIcon size={10} />
+                                                             </button>
+                                                         )}
+                                                         {editingRecordId === record.id && (!record.checklist || record.checklist.length === 0) && (
+                                                             <div className="flex items-center gap-1 ml-1 border-l border-white/10 pl-1">
+                                                                 <button onClick={(e) => { e.stopPropagation(); handleSaveChecklist(record.id); }} className="text-accent-green bg-accent-green/10 px-1.5 py-0.5 rounded hover:bg-accent-green/20 font-bold transition-colors">บันทึก</button>
+                                                                 <button onClick={(e) => { e.stopPropagation(); setEditingRecordId(null); }} className="text-text-muted bg-white/5 px-1.5 py-0.5 rounded hover:bg-white/10 transition-colors">ยกเลิก</button>
+                                                             </div>
+                                                         )}
                                                      </div>
                                                      {record.resolvedAt && (
                                                          <div className="flex items-center text-[10px] text-accent-green gap-1">
