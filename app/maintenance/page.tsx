@@ -1211,7 +1211,7 @@ export default function MaintenancePage() {
 
                                                 {/* Right side: Admin Delete + Chevron */}
                                                 <div className="flex items-center gap-2">
-                                                    {(record as any).fromPM && record.type === 'corrective' && record.status === 'pending' && isAdmin && (
+                                                    {record.status === 'pending' && record.type !== 'preventive' && isAdmin && (
                                                         <button
                                                             onClick={(e) => {
                                                                 e.stopPropagation();
