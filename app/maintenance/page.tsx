@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState, useEffect, useMemo } from "react";
+import React, { useState, useEffect, useMemo, useRef } from "react";
 import Header from "../components/Header";
 import MobileNav from "../components/MobileNav";
 import MaintenanceRecordModal from "../components/forms/MaintenanceRecordModal";
@@ -11,9 +11,11 @@ import { useAuth } from "../contexts/AuthContext";
 import { useToast } from "../contexts/ToastContext";
 import { formatDateThai } from "../lib/dateUtils";
 import { getMaintenanceRecordsPaginated, deleteMaintenanceRecord, getMachines, updateMaintenanceRecord, addMaintenanceRecord, getMaintenanceRecordsByMachine, getSystemSettings } from "../lib/firebaseService";
-import { MaintenanceRecord, Machine, ChecklistItemResult } from "../types";
+import { MaintenanceRecord, Machine, ChecklistItemResult, MaintenanceStatus } from "../types";
 import { lineService } from "../services/lineService";
 import { telegramService } from "../services/telegramService";
+import { toJpeg } from "html-to-image";
+import { ResolutionReportCard } from "../components/ResolutionReportCard";
 import {
     WrenchIcon,
     PlusIcon,
@@ -69,6 +71,8 @@ export default function MaintenancePage() {
     // Delete Confirmation State
     const [deleteConfirmOpen, setDeleteConfirmOpen] = useState(false);
     const [recordToDelete, setRecordToDelete] = useState<MaintenanceRecord | null>(null);
+    const [resolveConfirmOpen, setResolveConfirmOpen] = useState(false);
+    const resolutionReportCardRef = useRef<HTMLDivElement>(null);
     const [mounted, setMounted] = useState(false);
 
     // Part Replacement Plan Modal State
@@ -100,7 +104,6 @@ export default function MaintenancePage() {
     const [isSavingEdit, setIsSavingEdit] = useState(false);
     
     // Resolve Issue State
-    const [resolveConfirmOpen, setResolveConfirmOpen] = useState(false);
     const [recordToResolveId, setRecordToResolveId] = useState<string | null>(null);
     const [resolveDetails, setResolveDetails] = useState("");
     const [resolveLevel, setResolveLevel] = useState<1 | 2 | 3>(1);
@@ -141,6 +144,48 @@ export default function MaintenancePage() {
 
     const handleConfirmResolve = async () => {
         if (!recordToResolveId) return;
+        
+        // Generate Report Image Base64 BEFORE closing the modal
+        let telegramImageBase64 = undefined;
+        let uploadedImageUrl = undefined;
+        
+        if (resolutionReportCardRef.current) {
+            try {
+                // Short wait to ensure rendering is complete
+                await new Promise(r => setTimeout(r, 150));
+                telegramImageBase64 = await toJpeg(resolutionReportCardRef.current, {
+                    quality: 0.85,
+                    backgroundColor: "#0F172A",
+                    pixelRatio: 1.5
+                });
+                
+                // Upload for Line
+                const arr = telegramImageBase64.split(',');
+                const mime = arr[0].match(/:(.*?);/)?.[1] || 'image/jpeg';
+                const bstr = atob(arr[1]);
+                let n = bstr.length;
+                const u8arr = new Uint8Array(n);
+                while(n--){
+                    u8arr[n] = bstr.charCodeAt(n);
+                }
+                const blob = new Blob([u8arr], {type: mime});
+                
+                const formData = new FormData();
+                formData.append('image', blob, 'resolution-report.jpg');
+
+                const uploadRes = await fetch('/api/upload-image', {
+                    method: 'POST',
+                    body: formData
+                });
+                if (uploadRes.ok) {
+                    const data = await uploadRes.json();
+                    uploadedImageUrl = data.url;
+                }
+            } catch (imgError) {
+                console.error("Failed to generate report image:", imgError);
+            }
+        }
+        
         setResolveConfirmOpen(false);
         
         const recordToUpdate = records.find(r => r.id === recordToResolveId);
@@ -169,10 +214,10 @@ export default function MaintenancePage() {
                 const lineEnabled = (settings as any)?.lineNotificationsEnabled ?? true;
                 const telegramEnabled = (settings as any)?.telegramNotificationsEnabled ?? false;
                 if (lineEnabled) {
-                    await lineService.sendResolutionNotification(demoRecord);
+                    await lineService.sendResolutionNotification(demoRecord, uploadedImageUrl);
                 }
                 if (telegramEnabled) {
-                    await telegramService.sendResolutionNotification(demoRecord);
+                    await telegramService.sendResolutionNotification(demoRecord, telegramImageBase64);
                 }
             } catch (err) {
                 console.error('Demo notify failed', err);
@@ -207,10 +252,10 @@ export default function MaintenancePage() {
                     };
                     
                     if (lineEnabled) {
-                        await lineService.sendResolutionNotification(fullRecord);
+                        await lineService.sendResolutionNotification(fullRecord, uploadedImageUrl);
                     }
                     if (telegramEnabled) {
-                        await telegramService.sendResolutionNotification(fullRecord);
+                        await telegramService.sendResolutionNotification(fullRecord, telegramImageBase64);
                     }
                 } catch (notifyErr) {
                     console.error("Failed to send resolution notification", notifyErr);
@@ -963,7 +1008,6 @@ export default function MaintenancePage() {
                                     style={{ animationDelay: `${index * 50}ms` }}
                                 >
                                     {/* Compact Header - Clickable Area */}
-                                    {/* Compact Header - Clickable Area */}
                                     <div className="flex flex-col gap-2 relative">
                                         
                                         {/* Top Row: Machine Name + Right Data */}
@@ -1162,7 +1206,6 @@ export default function MaintenancePage() {
                                             </div>
                                         </div>
 
-                                    {/* Expandable Details */}
                                     {/* Expandable Details */}
                                     {isExpanded && (
                                         <div className="mt-2 space-y-2 animate-fade-in bg-black/10 -mx-4 px-4 py-3 border-t border-white/5">
@@ -1718,6 +1761,42 @@ export default function MaintenancePage() {
                     </div>
                 </div>
             </Modal>
+            
+            {/* Hidden Report Card for Telegram/LINE Export */}
+            <div style={{ position: 'absolute', top: 0, left: 0, zIndex: -100, opacity: 0.01, pointerEvents: 'none' }}>
+                {resolveConfirmOpen && recordToResolveId && (
+                    <ResolutionReportCard 
+                        ref={resolutionReportCardRef}
+                        record={
+                            recordToResolveId === 'demo' ? {
+                                id: 'demo',
+                                machineId: 'demo-1',
+                                machineName: 'Rack oven No.1 (DEMO)',
+                                machineCode: 'HT02-DEMO',
+                                description: '[PM พบปัญหา] ทดสอบระบบมอเตอร์สั่น',
+                                type: 'corrective',
+                                priority: 'high',
+                                status: 'completed',
+                                date: new Date(),
+                                technician: 'คุณณัฐชนน (Demo)',
+                                details: resolveDetails || 'นี่คือการทดสอบระบบส่งแจ้งเตือน',
+                                resolutionLevel: resolveLevel,
+                                resolvedAt: new Date().toISOString(),
+                                createdAt: new Date(),
+                                updatedAt: new Date(),
+                            } as MaintenanceRecord : 
+                            {
+                                ...(records.find(r => r.id === recordToResolveId) || {}),
+                                status: 'completed',
+                                resolvedAt: new Date().toISOString(),
+                                details: resolveDetails,
+                                resolutionLevel: resolveLevel
+                            } as MaintenanceRecord
+                        }
+                        machineCode={recordToResolveId === 'demo' ? 'HT02-DEMO' : (records.find(r => r.id === recordToResolveId)?.machineCode || '-')}
+                    />
+                )}
+            </div>
 
             <PartReplacementPlanModal
                 isOpen={replacementPlanOpen}
