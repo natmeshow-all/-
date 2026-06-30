@@ -62,14 +62,29 @@ export default function DashboardStatsSection({ stats, statsLoading }: Dashboard
             <span className="text-[9px] uppercase tracking-wider font-bold px-2 py-0.5 bg-white/5 text-text-muted rounded-full border border-white/10 shadow-sm">Past</span>
           </div>
 
-          <div className="p-5 grid grid-cols-2 gap-2 relative z-10">
-            <div className="flex flex-col">
-              <span className="text-[10px] text-text-muted mb-1 truncate font-medium">{language === "th" ? "PM ทั้งหมด" : "Total PM"}</span>
-              <span className="text-2xl font-bold text-text-primary leading-none">{statsLoading ? "..." : stats.totalPM}</span>
+          <div className="p-4 grid grid-cols-2 gap-2 relative z-10">
+            <div className="flex flex-col justify-between">
+              <Link href="/maintenance?type=preventive" className="flex flex-col hover:bg-white/5 p-1 -ml-1 rounded transition-colors cursor-pointer group/link">
+                <span className="text-[10px] text-text-muted mb-1 truncate font-medium group-hover/link:text-text-primary transition-colors">{language === "th" ? "PM ทั้งหมด" : "Total PM"}</span>
+                <span className="text-2xl font-bold text-text-primary leading-none group-hover/link:text-accent-blue transition-colors">{statsLoading ? "..." : stats.totalPM}</span>
+              </Link>
+              
+              <div className="flex gap-4 mt-2">
+                <Link href="/maintenance?type=preventive&time=thisMonth" className="flex flex-col hover:bg-white/5 p-1 -ml-1 rounded transition-colors cursor-pointer group/link2">
+                  <span className="text-[9px] text-text-muted mb-0.5 truncate group-hover/link2:text-text-primary transition-colors">{language === "th" ? "เดือนนี้" : "This Month"}</span>
+                  <span className="text-sm font-bold text-accent-cyan group-hover/link2:text-accent-cyan/80 transition-colors">{statsLoading ? "..." : (stats.pmThisMonth || 0)}</span>
+                </Link>
+                <Link href="/maintenance?type=preventive&time=thisWeek" className="flex flex-col hover:bg-white/5 p-1 -ml-1 rounded transition-colors cursor-pointer group/link3">
+                  <span className="text-[9px] text-text-muted mb-0.5 truncate group-hover/link3:text-text-primary transition-colors">{language === "th" ? "สัปดาห์นี้" : "This Week"}</span>
+                  <span className="text-sm font-bold text-accent-green group-hover/link3:text-accent-green/80 transition-colors">{statsLoading ? "..." : (stats.pmThisWeek || 0)}</span>
+                </Link>
+              </div>
             </div>
-            <div className="flex flex-col border-l border-white/5 pl-3">
-              <span className="text-[10px] text-text-muted mb-1 truncate font-medium">{language === "th" ? "Overhaul ทั้งหมด" : "Total Overhaul"}</span>
-              <span className="text-2xl font-bold text-text-primary leading-none">{statsLoading ? "..." : stats.totalOverhaul}</span>
+            <div className="flex flex-col border-l border-white/5 pl-3 justify-start">
+              <Link href="/maintenance?type=partReplacement" className="flex flex-col hover:bg-white/5 p-1 -ml-1 rounded transition-colors cursor-pointer group/link4">
+                <span className="text-[10px] text-text-muted mb-1 truncate font-medium group-hover/link4:text-text-primary transition-colors">{language === "th" ? "Overhaul ทั้งหมด" : "Total Overhaul"}</span>
+                <span className="text-2xl font-bold text-text-primary leading-none group-hover/link4:text-accent-blue transition-colors">{statsLoading ? "..." : stats.totalOverhaul}</span>
+              </Link>
             </div>
           </div>
         </div>

@@ -41,7 +41,7 @@ export async function getDashboardStats(): Promise<DashboardStats> {
         const statsSnapshot = await get(statsRef);
         // Increase cache duration to 24 hours to prevent heavy re-fetching
         // We rely on incrementDashboardStat for real-time updates
-        const CACHE_DURATION = 24 * 60 * 60 * 1000; 
+        const CACHE_DURATION = 0;
 
         if (statsSnapshot.exists()) {
             const cachedStats = statsSnapshot.val() as DashboardStats;
@@ -69,12 +69,20 @@ export async function getDashboardStats(): Promise<DashboardStats> {
             const uniqueLocations = new Set(parts.map((p) => p.Location).filter(l => l && l.trim() !== '')).size;
             const pendingRecords = records.filter((r) => r.status !== "completed").length;
 
-            // Separate PM and Overhaul counts
-            const totalPM = records.filter(r =>
+            const pmRecords = records.filter(r =>
                 r.type === 'preventive' ||
                 r.type === 'oilChange' ||
                 r.type === 'inspection'
-            ).length;
+            );
+            const totalPM = pmRecords.length;
+
+            const today = new Date();
+            const startOfMonth = new Date(today.getFullYear(), today.getMonth(), 1).getTime();
+            const day = today.getDay() || 7; // Monday = 1, Sunday = 7
+            const startOfWeek = new Date(today.getFullYear(), today.getMonth(), today.getDate() - day + 1).getTime();
+
+            const pmThisMonth = pmRecords.filter(r => new Date(r.date).getTime() >= startOfMonth).length;
+            const pmThisWeek = pmRecords.filter(r => new Date(r.date).getTime() >= startOfWeek).length;
 
             const totalOverhaul = records.filter(r =>
                 r.type === 'partReplacement' ||
@@ -115,6 +123,8 @@ export async function getDashboardStats(): Promise<DashboardStats> {
                 pendingMaintenance: pendingRecords,
                 upcomingSchedule: 0,
                 totalSpareParts: spareParts.length,
+                pmThisMonth,
+                pmThisWeek,
                 lastUpdated: Date.now(),
                 locationCounts
             };

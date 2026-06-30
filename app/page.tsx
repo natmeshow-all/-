@@ -67,7 +67,7 @@ export default function Dashboard() {
   const [stats, setStats] = useState<DashboardStats>({
     totalParts: 0, totalMachines: 0, totalLocations: 0, maintenanceRecords: 0,
     totalPM: 0, totalOverhaul: 0, pendingMaintenance: 0, upcomingSchedule: 0,
-    totalSpareParts: 0, lastUpdated: 0,
+    totalSpareParts: 0, pmThisMonth: 0, pmThisWeek: 0, lastUpdated: 0,
     locationCounts: { ALL: 0, FZ: 0, RTE: 0, UT: 0 },
   });
   const [parts, setParts] = useState<Part[]>([]);

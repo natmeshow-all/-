@@ -247,6 +247,8 @@ export interface DashboardStats {
     pendingMaintenance: number;
     upcomingSchedule: number;
     totalSpareParts: number;
+    pmThisMonth?: number;
+    pmThisWeek?: number;
     lastUpdated: number;
     locationCounts: {
         ALL: number;
