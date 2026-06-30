@@ -1350,28 +1350,71 @@ export default function MaintenancePage() {
                                                             <span className="text-xs font-bold" style={{color: ringColor}}>{efficiencyPct}%</span>
                                                         </div>
                                                     </div>
-                                                    {/* Problem items */}
+                                                                                                        {/* Problem items */}
                                                     {assessed.filter(c => scoreValue(c.value || '') < 80).length > 0 && (
                                                         <div className="px-4 py-3 bg-black/20 border-t border-white/5">
-                                                            <p className="text-[11px] text-text-muted mb-2 font-semibold uppercase tracking-wider">⚠ รายการที่ต้องดูแล</p>
-                                                            <div className="flex flex-wrap gap-1.5">
+                                                            <div className="flex items-center justify-between mb-2">
+                                                                <p className="text-[11px] text-text-muted font-semibold uppercase tracking-wider">⚠ รายการที่ดึงคะแนนลง</p>
+                                                                <span className="text-[10px] text-text-muted">คะแนนเต็ม = 100/รายการ</span>
+                                                            </div>
+                                                            <div className="flex flex-col gap-2">
                                                                 {assessed
                                                                     .filter(c => scoreValue(c.value || '') < 80)
                                                                     .sort((a, b) => scoreValue(a.value || '') - scoreValue(b.value || ''))
                                                                     .map((c, i) => {
                                                                         const s = scoreValue(c.value || '');
-                                                                        const col = s < 30 ? 'bg-accent-red/15 text-accent-red border-accent-red/30' : s < 60 ? 'bg-accent-yellow/15 text-accent-yellow border-accent-yellow/30' : 'bg-accent-blue/15 text-accent-blue border-accent-blue/30';
+                                                                        const deduction = 100 - s;
+                                                                        const impact = Math.round(deduction / assessed.length);
+                                                                        const isCritical = s < 30;
+                                                                        const isWarning = s >= 30 && s < 60;
+                                                                        const barColor = isCritical ? '#ef4444' : isWarning ? '#fbbf24' : '#60a5fa';
+                                                                        const bgCls = isCritical ? 'bg-red-500/5 border-red-500/20' : isWarning ? 'bg-yellow-500/5 border-yellow-500/20' : 'bg-blue-500/5 border-blue-500/20';
+                                                                        const textCls = isCritical ? 'text-red-400' : isWarning ? 'text-yellow-400' : 'text-blue-400';
+                                                                        const tierLabel = isCritical ? '🔴 วิกฤต' : isWarning ? '🟡 เฝ้าระวัง' : '🔵 ดูแล';
                                                                         return (
-                                                                            <div key={i} className={`flex items-center gap-1.5 px-2 py-1 rounded-lg border text-[10px] font-medium ${col}`}>
-                                                                                <span className="max-w-[120px] truncate opacity-80">{c.item}</span>
-                                                                                <span className="font-bold shrink-0">{c.value}</span>
+                                                                            <div key={i} className={`rounded-lg border px-3 py-2 ${bgCls}`}>
+                                                                                <div className="flex items-start justify-between gap-2 mb-1.5">
+                                                                                    <div className="flex flex-col gap-0.5 min-w-0">
+                                                                                        <span className={`text-[9px] font-bold ${textCls}`}>{tierLabel}</span>
+                                                                                        <span className="text-[11px] text-white/90 font-medium leading-tight">{c.item}</span>
+                                                                                    </div>
+                                                                                    <div className="flex flex-col items-end gap-0.5 shrink-0">
+                                                                                        <span className={`text-[10px] font-bold ${textCls}`}>{c.value}</span>
+                                                                                        <div className="flex items-center gap-1">
+                                                                                            <span className="text-[9px] text-text-muted">{s}/100</span>
+                                                                                            <span className={`text-[9px] font-bold px-1 py-0.5 rounded ${isCritical ? 'bg-red-500/20 text-red-400' : isWarning ? 'bg-yellow-500/20 text-yellow-400' : 'bg-blue-500/20 text-blue-400'}`}>
+                                                                                                -{impact} ต่อคะแนนรวม
+                                                                                            </span>
+                                                                                        </div>
+                                                                                    </div>
+                                                                                </div>
+                                                                                <div className="w-full bg-white/5 rounded-full h-1.5 mt-1.5">
+                                                                                    <div className="h-1.5 rounded-full transition-all" style={{ width: `${s}%`, backgroundColor: barColor }} />
+                                                                                </div>
                                                                             </div>
                                                                         );
                                                                     })
                                                                 }
                                                             </div>
+                                                            <div className="mt-3 pt-2 border-t border-white/5 flex flex-col gap-1">
+                                                                <div className="flex items-center justify-between text-[10px]">
+                                                                    <span className="text-text-muted">คะแนนฐาน (ก่อนหักปัญหาค้าง)</span>
+                                                                    <span className="font-bold text-white">{baseEff}%</span>
+                                                                </div>
+                                                                {pendingIssuesCount > 0 && (
+                                                                    <div className="flex items-center justify-between text-[10px]">
+                                                                        <span className="text-accent-red opacity-90">หักคะแนนปัญหาค้าง (-5% x {pendingIssuesCount} ปัญหา)</span>
+                                                                        <span className="font-bold text-accent-red">-{pendingIssuesCount * 5}%</span>
+                                                                    </div>
+                                                                )}
+                                                                <div className="flex items-center justify-between text-[11px] mt-1 pt-1 border-t border-white/5">
+                                                                    <span className="text-text-muted font-medium">คะแนนประสิทธิภาพสุทธิ</span>
+                                                                    <span className="font-bold" style={{color: ringColor}}>{efficiencyPct}%</span>
+                                                                </div>
+                                                            </div>
                                                         </div>
                                                     )}
+
                                                 </div>
                                             )}
 
