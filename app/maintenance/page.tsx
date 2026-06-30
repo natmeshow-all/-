@@ -1783,7 +1783,13 @@ export default function MaintenancePage() {
                                                                             />
                                                                         )}
                                                                         
-                                                                        {isAdmin && (
+                                                                        {(() => {
+                                                                            const isNumericMeasurement = /(volt|amp|vibration|แรงดัน|กระแส|ความสั่นสะเทือน|อุณหภูมิ|temp|ความดัน|pressure|รอบ|rpm|ความเร็ว|speed)/i.test(item.item);
+                                                                            const showStandardInput = isAdmin && (isNumericMeasurement || item.standard?.min !== undefined || item.standard?.max !== undefined);
+                                                                            
+                                                                            if (!showStandardInput) return null;
+                                                                            
+                                                                            return (
                                                                             <div className="mt-2 pt-2 border-t border-white/10 flex items-center gap-2">
                                                                                 <span className="text-[10px] text-text-muted">เกณฑ์มาตรฐาน:</span>
                                                                                 <input 
@@ -1818,7 +1824,8 @@ export default function MaintenancePage() {
                                                                                     className="bg-bg-secondary border border-white/20 text-white rounded px-2 py-1 text-[10px] w-14 outline-none focus:border-accent-cyan"
                                                                                 />
                                                                             </div>
-                                                                        )}
+                                                                            );
+                                                                        })()}
 
                                                                         <div className="flex items-center gap-2 mt-2">
                                                                             <input
