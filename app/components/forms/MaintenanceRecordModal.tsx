@@ -501,7 +501,7 @@ export default function MaintenanceRecordModal({
                                 <option value="">{t("maintenanceSelectMachine")}</option>
                                 {filteredMachines.map(m => (
                                     <option key={m.id} value={m.id}>
-                                        {m.name} {m.location ? `[${m.location}]` : ''}
+                                        {m.code ? `[${m.code}] ` : ''}{m.name} {m.location ? `[${m.location}]` : ''}
                                     </option>
                                 ))}
                             </select>

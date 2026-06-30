@@ -272,7 +272,7 @@ export default function AddPartModal({ isOpen, onClose, onSuccess, partToEdit }:
                                 )
                                 .sort((a, b) => a.name.localeCompare(b.name))
                                 .map(m => (
-                                    <option key={m.id} value={m.id}>{m.name}</option>
+                                    <option key={m.id} value={m.id}>{m.code ? `[${m.code}] ` : ''}{m.name}</option>
                                 ))
                             }
                         </select>

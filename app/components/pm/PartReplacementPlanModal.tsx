@@ -234,7 +234,7 @@ export default function PartReplacementPlanModal({ isOpen, onClose, machineId: i
                                         allParts.some(p => p.machineId === m.id) || 
                                         allReplacementRecords.some(r => r.machineId === m.id)
                                     ).map(m => (
-                                        <option key={m.id} value={m.id}>{m.name} {m.location ? `[${m.location}]` : ''}</option>
+                                        <option key={m.id} value={m.id}>{m.code ? `[${m.code}] ` : ''}{m.name} {m.location ? `[${m.location}]` : ''}</option>
                                     ))}
                                 </select>
                             </div>

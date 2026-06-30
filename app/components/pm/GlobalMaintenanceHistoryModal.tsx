@@ -22,7 +22,7 @@ export default function GlobalMaintenanceHistoryModal({ isOpen, onClose }: Globa
     const [records, setRecords] = useState<MaintenanceRecord[]>([]);
     const [pmCount, setPmCount] = useState(0);
     const [overhaulCount, setOverhaulCount] = useState(0);
-    const [machines, setMachines] = useState<{ id: string, name: string, Location?: string, location?: string }[]>([]);
+    const [machines, setMachines] = useState<{ id: string, name: string, code?: string, Location?: string, location?: string }[]>([]);
     const [parts, setParts] = useState<{ id: string, partName: string, machineId: string }[]>([]);
     const [loading, setLoading] = useState(true);
     const [deleteId, setDeleteId] = useState<string | null>(null);
@@ -204,7 +204,7 @@ export default function GlobalMaintenanceHistoryModal({ isOpen, onClose }: Globa
                                         if (selectedLocation === 'UT') return loc === 'UT' || loc === 'UTILITY';
                                         return loc === selectedLocation;
                                     }).map(m => (
-                                        <option key={m.id} value={m.id}>{m.name}</option>
+                                        <option key={m.id} value={m.id}>{m.code ? `[${m.code}] ` : ''}{m.name}</option>
                                     ))}
                                 </select>
                             </div>

@@ -206,7 +206,7 @@ export default function StockActionModal({ isOpen, onClose, onSuccess, actionTyp
                                 >
                                     <option value="">-- {t("maintenanceSelectMachine")} --</option>
                                     {machines.map(m => (
-                                        <option key={m.id} value={m.id}>{m.name}</option>
+                                        <option key={m.id} value={m.id}>{m.code ? `[${m.code}] ` : ''}{m.name}</option>
                                     ))}
                                     <option value="other">{t("stockOtherGeneral")}</option>
                                 </select>

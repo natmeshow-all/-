@@ -908,7 +908,7 @@ export default function MaintenancePage() {
                                             if (selectedLocation === 'UT') return loc === 'UT' || loc === 'UTILITY';
                                             return loc === selectedLocation;
                                         }).map(m => (
-                                            <option key={m.id} value={m.id} className="bg-bg-secondary">{m.name}</option>
+                                            <option key={m.id} value={m.id} className="bg-bg-secondary">{m.code ? `[${m.code}] ` : ''}{m.name}</option>
                                         ))}
                                     </select>
                                     <ChevronDownIcon size={14} className="text-text-muted mr-1.5 pointer-events-none" />
