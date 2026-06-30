@@ -81,10 +81,24 @@ export default function MaintenancePage() {
         if (typeof window !== 'undefined') {
             const params = new URLSearchParams(window.location.search);
             const statusParam = params.get('status');
+            const typeParam = params.get('type');
+            const timeParam = params.get('time');
+            
+            let shouldExpand = false;
             if (statusParam === 'pending' || statusParam === 'completed' || statusParam === 'inProgress') {
                 setActiveStatusFilter(statusParam as any);
-                setIsFilterExpanded(true);
+                shouldExpand = true;
             }
+            if (typeParam === 'preventive' || typeParam === 'corrective' || typeParam === 'partReplacement' || typeParam === 'fromPM') {
+                setActiveTaskTypeFilter(typeParam as any);
+                shouldExpand = true;
+            }
+            if (timeParam === 'thisMonth' || timeParam === 'thisWeek' || timeParam === 'yearly') {
+                setActiveQuickFilter(timeParam as any);
+                shouldExpand = true;
+            }
+            
+            if (shouldExpand) setIsFilterExpanded(true);
         }
     }, []);
 
