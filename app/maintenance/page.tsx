@@ -85,6 +85,7 @@ export default function MaintenancePage() {
     const [editingRecordId, setEditingRecordId] = useState<string | null>(null);
     const [editingChecklist, setEditingChecklist] = useState<any[]>([]);
     const [editingRecordStatus, setEditingRecordStatus] = useState<string | null>(null);
+    const [editingRecordDetails, setEditingRecordDetails] = useState<string>("");
 
     // Edit description state
     const [editingDescriptionId, setEditingDescriptionId] = useState<string | null>(null);
@@ -102,6 +103,7 @@ export default function MaintenancePage() {
         setEditingRecordId(record.id);
         setEditingChecklist(record.checklist ? JSON.parse(JSON.stringify(record.checklist)) : []);
         setEditingRecordStatus(record.status);
+        setEditingRecordDetails(record.details || "");
     };
 
     const handleChecklistItemValueChange = (idx: number, newValue: string) => {
@@ -146,6 +148,7 @@ export default function MaintenancePage() {
         try {
             const updateData: any = {
                 checklist: editingChecklist,
+                details: editingRecordDetails,
             };
             if (editingRecordStatus) {
                 updateData.status = editingRecordStatus;
@@ -196,6 +199,7 @@ export default function MaintenancePage() {
                     return {
                         ...r,
                         checklist: editingChecklist,
+                        details: editingRecordDetails,
                         status: (editingRecordStatus as any) || r.status,
                         updatedAt: new Date()
                     };
@@ -1382,6 +1386,23 @@ export default function MaintenancePage() {
                                                             );
                                                         })}
                                                     </div>
+                                                    
+                                                    {/* Resolution Details Edit Field */}
+                                                    {editingRecordId === record.id && (
+                                                        <div className="mt-4 pt-4 border-t border-white/10">
+                                                            <h4 className="text-xs font-bold text-text-primary mb-2 flex items-center gap-1">
+                                                                <FileTextIcon size={12} className="text-accent-cyan" /> 
+                                                                ผลการแก้ไข / รายละเอียดการดำเนินการ
+                                                            </h4>
+                                                            <textarea
+                                                                value={editingRecordDetails}
+                                                                onChange={(e) => setEditingRecordDetails(e.target.value)}
+                                                                onClick={(e) => e.stopPropagation()}
+                                                                className="w-full bg-bg-tertiary border border-white/20 text-white rounded-lg px-3 py-2 text-xs outline-none focus:border-accent-cyan/50 resize-none h-20 transition-colors"
+                                                                placeholder="ระบุผลการแก้ไข หรือการดำเนินการที่ได้ทำไป..."
+                                                            />
+                                                        </div>
+                                                    )}
                                                 </div>
                                             )}
 
