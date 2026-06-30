@@ -98,6 +98,7 @@ export default function MaintenancePage() {
     const [editingRecordStatus, setEditingRecordStatus] = useState<string | null>(null);
     const [editingRecordDetails, setEditingRecordDetails] = useState<string>("");
     const [editingRecordDate, setEditingRecordDate] = useState<string | null>(null);
+    const [editingRecordResolvedDate, setEditingRecordResolvedDate] = useState<string | null>(null);
 
     // Edit description state
     const [editingDescriptionId, setEditingDescriptionId] = useState<string | null>(null);
@@ -130,6 +131,19 @@ export default function MaintenancePage() {
             setEditingRecordDate(localISOTime);
         } catch(e) {
             setEditingRecordDate(null);
+        }
+        
+        if (record.resolvedAt) {
+            try {
+                const rDateObj = new Date(record.resolvedAt);
+                const offset = rDateObj.getTimezoneOffset() * 60000;
+                const rLocalISOTime = new Date(rDateObj.getTime() - offset).toISOString().split('T')[0];
+                setEditingRecordResolvedDate(rLocalISOTime);
+            } catch(e) {
+                setEditingRecordResolvedDate(null);
+            }
+        } else {
+            setEditingRecordResolvedDate(null);
         }
     };
 
@@ -352,11 +366,11 @@ export default function MaintenancePage() {
             const currentRecord = records.find(r => r.id === recordId);
             if (editingRecordDate) {
                 updateData.date = new Date(editingRecordDate);
-                // If it's a completed record, update resolvedAt as well so lifespan calculation reflects the edited date
-                const finalStatus = editingRecordStatus || (currentRecord ? currentRecord.status : undefined);
-                if (finalStatus === 'completed') {
-                    updateData.resolvedAt = new Date(editingRecordDate).toISOString();
-                }
+            }
+            if (editingRecordResolvedDate) {
+                updateData.resolvedAt = new Date(editingRecordResolvedDate).toISOString();
+            } else if (editingRecordStatus === 'completed' && !currentRecord?.resolvedAt) {
+                updateData.resolvedAt = new Date().toISOString();
             }
             await updateMaintenanceRecord(recordId, updateData);
             
@@ -402,7 +416,9 @@ export default function MaintenancePage() {
                 if (r.id === recordId) {
                     const newStatus = (editingRecordStatus as any) || r.status;
                     const newDate = editingRecordDate ? new Date(editingRecordDate) : r.date;
-                    const newResolvedAt = (editingRecordDate && newStatus === 'completed') ? new Date(editingRecordDate).toISOString() : r.resolvedAt;
+                    const newResolvedAt = editingRecordResolvedDate 
+                        ? new Date(editingRecordResolvedDate).toISOString() 
+                        : (newStatus === 'completed' && !r.resolvedAt ? new Date().toISOString() : r.resolvedAt);
                     return {
                         ...r,
                         checklist: editingChecklist,
@@ -419,7 +435,9 @@ export default function MaintenancePage() {
                 if (r.id === recordId) {
                     const newStatus = (editingRecordStatus as any) || r.status;
                     const newDate = editingRecordDate ? new Date(editingRecordDate) : r.date;
-                    const newResolvedAt = (editingRecordDate && newStatus === 'completed') ? new Date(editingRecordDate).toISOString() : r.resolvedAt;
+                    const newResolvedAt = editingRecordResolvedDate 
+                        ? new Date(editingRecordResolvedDate).toISOString() 
+                        : (newStatus === 'completed' && !r.resolvedAt ? new Date().toISOString() : r.resolvedAt);
                     return {
                         ...r,
                         checklist: editingChecklist,
@@ -1292,6 +1310,7 @@ export default function MaintenancePage() {
                                                          )}
                                                      </div>
                                                      <div className="flex items-center text-[10px] text-text-muted gap-1">
+                                                         <span className="font-semibold text-white/50 mr-1">วันที่บันทึก:</span>
                                                          <CalendarIcon size={10} />
                                                          {editingRecordId === record.id ? (
                                                              <input
@@ -1320,10 +1339,21 @@ export default function MaintenancePage() {
                                                              </div>
                                                          )}
                                                      </div>
-                                                     {record.resolvedAt && (
-                                                         <div className="flex items-center text-[10px] text-accent-green gap-1">
+                                                     {(record.resolvedAt || (editingRecordId === record.id && (editingRecordStatus === 'completed' || record.status === 'completed'))) && (
+                                                         <div className="flex items-center text-[10px] text-accent-green gap-1 mt-0.5">
+                                                             <span className="font-semibold text-accent-green/70 mr-1">วันที่แก้ไข:</span>
                                                              <CheckIcon size={12} />
-                                                             <span>{mounted ? formatDateThai(record.resolvedAt) : '--/--'}</span>
+                                                             {editingRecordId === record.id ? (
+                                                                 <input
+                                                                     type="date"
+                                                                     value={editingRecordResolvedDate || ''}
+                                                                     onClick={(e) => e.stopPropagation()}
+                                                                     onChange={(e) => setEditingRecordResolvedDate(e.target.value)}
+                                                                     className="bg-bg-tertiary border border-accent-green/30 text-accent-green rounded px-1.5 py-0.5 text-[10px] outline-none focus:border-accent-green"
+                                                                 />
+                                                             ) : (
+                                                                 <span>{mounted ? formatDateThai(record.resolvedAt || '') : '--/--'}</span>
+                                                             )}
                                                          </div>
                                                      )}
                                                  </div>
