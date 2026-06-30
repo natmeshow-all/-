@@ -307,6 +307,19 @@ export default function MaintenancePage() {
                 }
             }
 
+            // Optimistic update: mark record as completed immediately so efficiency score re-renders right away
+            const resolvedIso = resolvedDate ? new Date(resolvedDate).toISOString() : new Date().toISOString();
+            setAllFetchedRecords(prev => prev.map(r =>
+                r.id === recordToResolveId
+                    ? { ...r, status: 'completed', resolvedAt: resolvedIso, details: resolveDetails, resolutionLevel: resolveLevel, Location: locationToSave }
+                    : r
+            ));
+            setRecords(prev => prev.map(r =>
+                r.id === recordToResolveId
+                    ? { ...r, status: 'completed', resolvedAt: resolvedIso, details: resolveDetails, resolutionLevel: resolveLevel, Location: locationToSave }
+                    : r
+            ));
+
             fetchInitialRecords();
         } catch (err) {
             console.error("Error resolving issue:", err);
