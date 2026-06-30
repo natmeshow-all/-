@@ -1024,6 +1024,12 @@ export default function MaintenancePage() {
                             
                             const efficiencyPct = Math.max(0, baseEff - (pendingIssuesCount * 5));
 
+                            // Resolved issues from this PM (gain indicator)
+                            const resolvedIssuesCount = allFetchedRecords.filter(r => r.parentPmRecordId === record.id && r.status === 'completed').length;
+                            const resolvedGain = resolvedIssuesCount * 5;
+                            const scoreBeforeResolved = Math.max(0, baseEff - ((pendingIssuesCount + resolvedIssuesCount) * 5));
+                            const showGain = resolvedGain > 0 && pendingIssuesCount === 0;
+
                             // Compare with previous record of same machine
                             const prevRecord = allFetchedRecords
                                 .filter(r => r.machineId === record.machineId && r.id !== record.id && (r.checklist?.length ?? 0) > 0)
@@ -1188,29 +1194,53 @@ export default function MaintenancePage() {
 
                                             {/* Bottom Row: Efficiency Ring */}
                                             {assessed.length > 0 && (
-                                                <div className="flex items-center gap-3 bg-white/5 pr-3 py-1 pl-1 rounded-full border border-white/10 w-fit mt-1">
-                                                    <div className="relative w-8 h-8 shrink-0">
-                                                        <svg width="32" height="32" viewBox="0 0 60 60" className="absolute top-0 left-0">
-                                                            <circle cx="30" cy="30" r={radius} fill="none" stroke="rgba(255,255,255,0.06)" strokeWidth="6" />
-                                                            <circle
-                                                                cx="30" cy="30" r={radius}
-                                                                fill="none" stroke={ringColor} strokeWidth="6" strokeLinecap="round"
-                                                                strokeDasharray={circ} strokeDashoffset={strokeDashoffset}
-                                                                transform="rotate(-90 30 30)"
-                                                            />
-                                                        </svg>
-                                                        <div className="absolute inset-0 flex items-center justify-center">
-                                                            <span className="text-[10px] font-bold" style={{color: ringColor}}>{efficiencyPct}</span>
+                                                <div className="flex items-start gap-3 mt-1 flex-wrap">
+                                                    <div className="flex items-center gap-2 bg-white/5 pr-3 py-1 pl-1 rounded-full border border-white/10">
+                                                        <div className="relative w-8 h-8 shrink-0">
+                                                            <svg width="32" height="32" viewBox="0 0 60 60" className="absolute top-0 left-0">
+                                                                <circle cx="30" cy="30" r={radius} fill="none" stroke="rgba(255,255,255,0.06)" strokeWidth="6" />
+                                                                <circle
+                                                                    cx="30" cy="30" r={radius}
+                                                                    fill="none" stroke={ringColor} strokeWidth="6" strokeLinecap="round"
+                                                                    strokeDasharray={circ} strokeDashoffset={strokeDashoffset}
+                                                                    transform="rotate(-90 30 30)"
+                                                                />
+                                                            </svg>
+                                                            <div className="absolute inset-0 flex items-center justify-center">
+                                                                <span className="text-[10px] font-bold" style={{color: ringColor}}>{efficiencyPct}</span>
+                                                            </div>
+                                                        </div>
+                                                        <div className="flex flex-col justify-center gap-0.5">
+                                                            <span className="text-[9px] text-text-muted leading-none">ประสิทธิภาพ</span>
+                                                            {trend !== null && (
+                                                                <span className={`text-[9px] font-bold leading-none ${trend >= 0 ? 'text-accent-green' : 'text-accent-red'}`}>
+                                                                    {trend > 0 ? `▲ +${trend}%` : trend < 0 ? `▼ ${Math.abs(trend)}%` : `= 0%`}
+                                                                </span>
+                                                            )}
                                                         </div>
                                                     </div>
-                                                    <div className="flex flex-col justify-center gap-0.5">
-                                                        <span className="text-[9px] text-text-muted leading-none">ประสิทธิภาพ</span>
-                                                        {trend !== null && (
-                                                            <span className={`text-[9px] font-bold leading-none ${trend >= 0 ? 'text-accent-green' : 'text-accent-red'}`}>
-                                                                {trend > 0 ? `▲ +${trend}%` : trend < 0 ? `▼ ${Math.abs(trend)}%` : `= 0%`}
-                                                            </span>
-                                                        )}
-                                                    </div>
+
+                                                    {/* Score gain from resolved issues */}
+                                                    {showGain && (
+                                                        <div className="flex items-center gap-1.5 bg-accent-green/10 border border-accent-green/25 rounded-full px-2.5 py-1 animate-fade-in">
+                                                            <span className="text-[9px] text-text-muted leading-none whitespace-nowrap">{scoreBeforeResolved}%</span>
+                                                            <span className="text-[9px] font-bold text-accent-green leading-none">+{resolvedGain}</span>
+                                                            <span className="text-[9px] text-text-muted leading-none">=</span>
+                                                            <span className="text-[9px] font-bold leading-none" style={{color: ringColor}}>{efficiencyPct}%</span>
+                                                            <span className="text-[8px] text-accent-green/70 leading-none whitespace-nowrap">(แก้ไขแล้ว)</span>
+                                                        </div>
+                                                    )}
+
+                                                    {/* Pending issues deduction warning */}
+                                                    {pendingIssuesCount > 0 && (
+                                                        <div className="flex items-center gap-1.5 bg-red-500/10 border border-red-500/20 rounded-full px-2.5 py-1">
+                                                            <span className="text-[9px] text-text-muted leading-none whitespace-nowrap">{baseEff}%</span>
+                                                            <span className="text-[9px] font-bold text-accent-red leading-none">-{pendingIssuesCount * 5}</span>
+                                                            <span className="text-[9px] text-text-muted leading-none">=</span>
+                                                            <span className="text-[9px] font-bold text-accent-red leading-none">{efficiencyPct}%</span>
+                                                            <span className="text-[8px] text-accent-red/70 leading-none whitespace-nowrap">({pendingIssuesCount} ปัญหาค้าง)</span>
+                                                        </div>
+                                                    )}
                                                 </div>
                                             )}
 
