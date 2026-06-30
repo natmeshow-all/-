@@ -1053,12 +1053,14 @@ export default function MaintenancePage() {
                         {(() => {
                             const getProblemKey = (r: MaintenanceRecord): string | null => {
                                 if (r.type === 'preventive' && !(r as any).fromPM) return null;
-                                let text = r.description || '';
-                                if (r.partName) text = r.partName;
-                                if ((r as any).fromPM && (r as any).checklistItemLabel) {
+                                
+                                let text = r.partName ? r.partName : (r.description || '');
+                                text = text.replace(/\[pm พบปัญหา\]/gi, '').replace(/เปลี่ยนอะไหล่:/gi, '').trim();
+                                
+                                if (!text && (r as any).fromPM && (r as any).checklistItemLabel) {
                                     text = (r as any).checklistItemLabel;
                                 }
-                                text = text.replace(/\[pm พบปัญหา\]/gi, '').replace(/เปลี่ยนอะไหล่:/gi, '').trim();
+                                
                                 return text.length > 0 ? text.toLowerCase() : null;
                             };
                             return filteredRecords.map((record, index) => {
