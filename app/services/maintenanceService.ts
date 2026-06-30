@@ -309,6 +309,13 @@ export async function updateMaintenanceRecord(
 
         const recordRef = ref(database, `${COLLECTIONS.MAINTENANCE_RECORDS}/${id}`);
 
+        // Get old record to track status changes for stats
+        const snapshot = await get(recordRef);
+        let oldStatus = "completed";
+        if (snapshot.exists()) {
+            oldStatus = snapshot.val().status || "completed";
+        }
+
         const updateData: any = {
             ...data,
             updatedAt: new Date().toISOString(),
@@ -319,6 +326,13 @@ export async function updateMaintenanceRecord(
         }
 
         await update(recordRef, updateData);
+
+        // Update pendingMaintenance stat if status changed
+        if (data.status && oldStatus !== "completed" && data.status === "completed") {
+            incrementDashboardStat("pendingMaintenance", -1);
+        } else if (data.status && oldStatus === "completed" && data.status !== "completed") {
+            incrementDashboardStat("pendingMaintenance", 1);
+        }
 
         if (data.description) syncTranslation(data.description);
         if (data.technician) syncTranslation(data.technician);
