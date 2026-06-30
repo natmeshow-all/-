@@ -146,7 +146,39 @@ export default function MaintenancePage() {
         const recordToUpdate = records.find(r => r.id === recordToResolveId);
         
         if (recordToResolveId === 'demo') {
-            success("ทดลองแก้ไขปัญหาสำเร็จ! (ตัวอย่างไม่ถูกบันทึกลงฐานข้อมูล)");
+            const demoRecord: MaintenanceRecord = {
+                id: 'demo',
+                machineId: 'demo-1',
+                machineName: 'Rack oven No.1 (DEMO)',
+                machineCode: 'HT02-DEMO',
+                description: '[PM พบปัญหา] ทดสอบระบบมอเตอร์สั่น',
+                type: 'corrective',
+                priority: 'high',
+                status: 'completed',
+                date: new Date(),
+                technician: 'คุณณัฐชนน (Demo)',
+                details: resolveDetails || 'นี่คือการทดสอบระบบส่งแจ้งเตือน',
+                resolutionLevel: resolveLevel,
+                resolvedAt: new Date().toISOString(),
+                createdAt: new Date(),
+                updatedAt: new Date(),
+            } as MaintenanceRecord;
+            
+            try {
+                const settings = await getSystemSettings();
+                const lineEnabled = (settings as any)?.lineNotificationsEnabled ?? true;
+                const telegramEnabled = (settings as any)?.telegramNotificationsEnabled ?? false;
+                if (lineEnabled) {
+                    await lineService.sendResolutionNotification(demoRecord);
+                }
+                if (telegramEnabled) {
+                    await telegramService.sendResolutionNotification(demoRecord);
+                }
+            } catch (err) {
+                console.error('Demo notify failed', err);
+            }
+            
+            success("ทดลองส่งแจ้งเตือนตัวอย่างสำเร็จ! (ตรวจสอบได้ที่ Line / Telegram)");
             return;
         }
 
