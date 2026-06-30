@@ -50,7 +50,10 @@ export async function getDashboardStats(): Promise<DashboardStats> {
             // Return cached stats immediately if they exist, 
             // only force recalculate if they are extremely old or missing
             if (cachedStats.lastUpdated && (now - cachedStats.lastUpdated < CACHE_DURATION)) {
-                return cachedStats;
+                if (cachedStats.pmThisMonth !== undefined && cachedStats.pmThisWeek !== undefined) {
+                    return cachedStats;
+                }
+                console.log("Forcing stats recalculation due to missing PM fields");
             }
             
             // If cache exists but is old, we can still return it if recalculation fails.

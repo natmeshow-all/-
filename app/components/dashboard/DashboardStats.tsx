@@ -69,14 +69,14 @@ export default function DashboardStatsSection({ stats, statsLoading }: Dashboard
                 <span className="text-2xl font-bold text-text-primary leading-none group-hover/link:text-accent-blue transition-colors">{statsLoading ? "..." : stats.totalPM}</span>
               </Link>
               
-              <div className="flex gap-4 mt-2">
-                <Link href="/maintenance?type=preventive&time=thisMonth" className="flex flex-col hover:bg-white/5 p-1 -ml-1 rounded transition-colors cursor-pointer group/link2">
-                  <span className="text-[9px] text-text-muted mb-0.5 truncate group-hover/link2:text-text-primary transition-colors">{language === "th" ? "เดือนนี้" : "This Month"}</span>
-                  <span className="text-sm font-bold text-accent-cyan group-hover/link2:text-accent-cyan/80 transition-colors">{statsLoading ? "..." : (stats.pmThisMonth || 0)}</span>
+              <div className="flex gap-2 mt-3">
+                <Link href="/maintenance?type=preventive&time=thisMonth" className="flex-1 flex flex-col items-center justify-center bg-bg-secondary/40 hover:bg-bg-secondary/80 border border-white/5 rounded-lg p-2 transition-all cursor-pointer group/link2">
+                  <span className="text-[9px] text-text-muted mb-1 truncate group-hover/link2:text-text-primary transition-colors uppercase tracking-wider">{language === "th" ? "เดือนนี้" : "This Month"}</span>
+                  <span className="text-base font-extrabold text-accent-cyan group-hover/link2:text-accent-cyan/80 transition-colors">{statsLoading ? "..." : (stats.pmThisMonth || 0)}</span>
                 </Link>
-                <Link href="/maintenance?type=preventive&time=thisWeek" className="flex flex-col hover:bg-white/5 p-1 -ml-1 rounded transition-colors cursor-pointer group/link3">
-                  <span className="text-[9px] text-text-muted mb-0.5 truncate group-hover/link3:text-text-primary transition-colors">{language === "th" ? "สัปดาห์นี้" : "This Week"}</span>
-                  <span className="text-sm font-bold text-accent-green group-hover/link3:text-accent-green/80 transition-colors">{statsLoading ? "..." : (stats.pmThisWeek || 0)}</span>
+                <Link href="/maintenance?type=preventive&time=thisWeek" className="flex-1 flex flex-col items-center justify-center bg-bg-secondary/40 hover:bg-bg-secondary/80 border border-white/5 rounded-lg p-2 transition-all cursor-pointer group/link3">
+                  <span className="text-[9px] text-text-muted mb-1 truncate group-hover/link3:text-text-primary transition-colors uppercase tracking-wider">{language === "th" ? "สัปดาห์นี้" : "This Week"}</span>
+                  <span className="text-base font-extrabold text-accent-green group-hover/link3:text-accent-green/80 transition-colors">{statsLoading ? "..." : (stats.pmThisWeek || 0)}</span>
                 </Link>
               </div>
             </div>
