@@ -400,6 +400,20 @@ export default function MaintenancePage() {
                         checklist: editingChecklist,
                         details: editingRecordDetails,
                         status: (editingRecordStatus as any) || r.status,
+                        date: editingRecordDate ? new Date(editingRecordDate) : r.date,
+                        updatedAt: new Date()
+                    };
+                }
+                return r;
+            }));
+            setAllFetchedRecords(prev => prev.map(r => {
+                if (r.id === recordId) {
+                    return {
+                        ...r,
+                        checklist: editingChecklist,
+                        details: editingRecordDetails,
+                        status: (editingRecordStatus as any) || r.status,
+                        date: editingRecordDate ? new Date(editingRecordDate) : r.date,
                         updatedAt: new Date()
                     };
                 }
