@@ -118,7 +118,28 @@ export default function MaintenancePage() {
 
     const handleStartEditChecklist = (record: MaintenanceRecord) => {
         setEditingRecordId(record.id);
-        setEditingChecklist(record.checklist ? JSON.parse(JSON.stringify(record.checklist)) : []);
+        let initialChecklist = record.checklist ? JSON.parse(JSON.stringify(record.checklist)) : [];
+        
+        // Auto-populate default standards for measurement items if missing
+        initialChecklist = initialChecklist.map((c: any) => {
+            if (!c.standard) {
+                const label = c.item.toLowerCase();
+                const isNumericMeasurement = /(volt|amp|vibration|แรงดัน|กระแส|ความสั่นสะเทือน|อุณหภูมิ|temp|ความดัน|pressure|รอบ|rpm|ความเร็ว|speed)/i.test(label);
+                
+                if (isNumericMeasurement) {
+                    if (label.includes('amp') || label.includes('กระแส')) {
+                        c.standard = { min: 1, max: 15, unit: 'A' };
+                    } else if (label.includes('volt') || label.includes('แรงดัน')) {
+                        c.standard = { min: 170, max: 420, unit: 'V' };
+                    } else if (label.includes('vibration') || label.includes('สั่นสะเทือน')) {
+                        c.standard = { min: 0, max: 3, unit: 'mm/s' };
+                    }
+                }
+            }
+            return c;
+        });
+        
+        setEditingChecklist(initialChecklist);
         setEditingRecordStatus(record.status);
         setEditingRecordDetails(record.details || "");
         
@@ -1732,7 +1753,38 @@ export default function MaintenancePage() {
 
                                                             let isVibrationData = false;
                                                             let vibrationObj: any = null;
-                                                            if (val.startsWith('{') && val.includes('"x":')) {
+                                                            
+                                                            const itemLabelLower = item.item.toLowerCase();
+                                                            if (itemLabelLower.includes('สั่นสะเทือน') || itemLabelLower.includes('vibration')) {
+                                                                isVibrationData = true;
+                                                                if (val.startsWith('{') && val.includes('"x":')) {
+                                                                    try {
+                                                                        vibrationObj = JSON.parse(val);
+                                                                    } catch (e) { }
+                                                                } else {
+                                                                    // Parse free text like "X:0.3, Y:3.5, Z:7.1" or "0.3, 3.5, 7.1"
+                                                                    const nums = val.match(/-?\d+(\.\d+)?/g);
+                                                                    if (nums && nums.length >= 1) {
+                                                                        vibrationObj = {};
+                                                                        const axes = ['x', 'y', 'z'];
+                                                                        nums.forEach((n: string, nIdx: number) => {
+                                                                            if (nIdx < 3) {
+                                                                                const numVal = parseFloat(n);
+                                                                                let status = 'normal';
+                                                                                // Use standard if available, otherwise fallback to user's 3, 7 thresholds
+                                                                                const max = item.standard?.max ?? 3;
+                                                                                const dangerThreshold = max + 4; // if max is 3, danger is 7
+                                                                                
+                                                                                if (numVal >= dangerThreshold) status = 'danger';
+                                                                                else if (numVal >= max) status = 'warning';
+                                                                                
+                                                                                vibrationObj[axes[nIdx]] = { value: numVal, status };
+                                                                            }
+                                                                        });
+                                                                    }
+                                                                }
+                                                            } else if (val.startsWith('{') && val.includes('"x":')) {
+                                                                // Legacy fallback
                                                                 try {
                                                                     vibrationObj = JSON.parse(val);
                                                                     isVibrationData = true;
@@ -1872,10 +1924,10 @@ export default function MaintenancePage() {
                                                                         </div>
                                                                     </div>
                                                                     {isVibrationData && vibrationObj ? (
-                                                                        <div className="flex gap-1 flex-wrap">
+                                                                        <div className="flex items-center gap-2 flex-wrap mt-1">
                                                                             {['x', 'y', 'z'].map((axis) => vibrationObj[axis] && (
                                                                                 <span key={axis} className={`px-2 py-1 rounded text-xs font-semibold border ${vibrationObj[axis].status === 'warning' ? 'text-accent-yellow bg-accent-yellow/10 border-accent-yellow/20' : vibrationObj[axis].status === 'danger' ? 'text-accent-red bg-accent-red/10 border-accent-red/20' : 'text-accent-green bg-accent-green/10 border-accent-green/20'}`}>
-                                                                                    {axis.toUpperCase()}:{vibrationObj[axis].value}
+                                                                                    {axis.toUpperCase()}: {vibrationObj[axis].value} {item.standard?.unit || 'mm/s'}
                                                                                 </span>
                                                                             ))}
                                                                         </div>
