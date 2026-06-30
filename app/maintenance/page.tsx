@@ -10,7 +10,7 @@ import { useLanguage } from "../contexts/LanguageContext";
 import { useAuth } from "../contexts/AuthContext";
 import { useToast } from "../contexts/ToastContext";
 import { formatDateThai } from "../lib/dateUtils";
-import { getMaintenanceRecordsPaginated, deleteMaintenanceRecord, getMachines, updateMaintenanceRecord, addMaintenanceRecord, getMaintenanceRecordsByMachine, getSystemSettings } from "../lib/firebaseService";
+import { getMaintenanceRecordsPaginated, deleteMaintenanceRecord, getMachines, updateMaintenanceRecord, addMaintenanceRecord, getMaintenanceRecordsByMachine, getSystemSettings, updateMachine } from "../lib/firebaseService";
 import { MaintenanceRecord, Machine, ChecklistItemResult, MaintenanceStatus } from "../types";
 import { lineService } from "../services/lineService";
 import { telegramService } from "../services/telegramService";
@@ -108,6 +108,8 @@ export default function MaintenancePage() {
     const [resolveDetails, setResolveDetails] = useState("");
     const [resolveLevel, setResolveLevel] = useState<1 | 2 | 3>(1);
     const [resolveProblemCount, setResolveProblemCount] = useState(1);
+    const [resolveLocation, setResolveLocation] = useState("");
+    const [useCustomLocation, setUseCustomLocation] = useState(false);
 
     // Demo Badge State
     const [showDemoBadge, setShowDemoBadge] = useState(true);
@@ -134,11 +136,30 @@ export default function MaintenancePage() {
             return next;
         });
     };
+    const allLocations = useMemo(() => {
+        return Array.from(new Set(allMachines.map(m => m.Location || m.location).filter(Boolean))).sort();
+    }, [allMachines]);
+
     const handleResolveIssue = (recordId: string, count: number = 1) => {
         setRecordToResolveId(recordId);
         setResolveProblemCount(count);
         setResolveLevel(count >= 3 ? 3 : count === 2 ? 2 : 1);
         setResolveDetails("");
+        
+        let initialLoc = "";
+        if (recordId === 'demo') {
+            initialLoc = "เครน AS/RS (Demo)";
+        } else {
+            const record = records.find(r => r.id === recordId);
+            if (record) {
+                const machine = allMachines.find(m => m.id === record.machineId || m.name === record.machineName);
+                initialLoc = record.Location || record.location || machine?.Location || machine?.location || "";
+            }
+        }
+        
+        setResolveLocation(initialLoc);
+        setUseCustomLocation(initialLoc ? !allLocations.includes(initialLoc) : false);
+        
         setResolveConfirmOpen(true);
     };
 
@@ -189,6 +210,21 @@ export default function MaintenancePage() {
         setResolveConfirmOpen(false);
         
         const recordToUpdate = records.find(r => r.id === recordToResolveId);
+        const locationToSave = useCustomLocation ? resolveLocation : resolveLocation;
+        
+        // Update machine location if we have a real record and a valid machine
+        if (recordToUpdate && locationToSave) {
+            const machine = allMachines.find(m => m.id === recordToUpdate.machineId || m.name === recordToUpdate.machineName);
+            if (machine && machine.id && machine.Location !== locationToSave) {
+                try {
+                    await updateMachine(machine.id, { Location: locationToSave });
+                    // Refresh machines softly in the background to get updated location
+                    getMachines().then(res => setAllMachines(res));
+                } catch (e) {
+                    console.error("Failed to update machine location:", e);
+                }
+            }
+        }
         
         if (recordToResolveId === 'demo') {
             const demoRecord: MaintenanceRecord = {
@@ -232,7 +268,8 @@ export default function MaintenancePage() {
                 status: 'completed',
                 resolvedAt: new Date().toISOString(),
                 details: resolveDetails,
-                resolutionLevel: resolveLevel
+                resolutionLevel: resolveLevel,
+                Location: locationToSave
             });
             success("อัพเดทสถานะสำเร็จ");
             
@@ -248,7 +285,8 @@ export default function MaintenancePage() {
                         status: 'completed',
                         resolvedAt: new Date().toISOString(),
                         details: resolveDetails,
-                        resolutionLevel: resolveLevel
+                        resolutionLevel: resolveLevel,
+                        Location: locationToSave
                     };
                     
                     if (lineEnabled) {
@@ -1758,6 +1796,64 @@ export default function MaintenancePage() {
                             }`}
                             placeholder="ระบุว่าทำอะไรไปบ้าง เปลี่ยนอะไหล่ตัวไหน..."
                         />
+                    </div>
+
+                    {/* Location Selector */}
+                    <div>
+                        <h4 className="text-sm font-bold text-white mb-3 flex items-center gap-2">
+                            <MapPinIcon size={16} className="text-accent-blue" />
+                            สถานที่ดำเนินการ
+                        </h4>
+                        
+                        <div className="flex gap-4 mb-3">
+                            <label className="flex items-center gap-2 cursor-pointer">
+                                <input 
+                                    type="radio" 
+                                    className="accent-accent-cyan"
+                                    checked={!useCustomLocation} 
+                                    onChange={() => setUseCustomLocation(false)} 
+                                />
+                                <span className="text-sm text-white/90">เลือกจากรายการ</span>
+                            </label>
+                            <label className="flex items-center gap-2 cursor-pointer">
+                                <input 
+                                    type="radio" 
+                                    className="accent-accent-cyan"
+                                    checked={useCustomLocation} 
+                                    onChange={() => {
+                                        setUseCustomLocation(true);
+                                        if (allLocations.includes(resolveLocation)) {
+                                            setResolveLocation("");
+                                        }
+                                    }} 
+                                />
+                                <span className="text-sm text-white/90">ระบุสถานที่ใหม่</span>
+                            </label>
+                        </div>
+                        
+                        {!useCustomLocation ? (
+                            <select
+                                value={allLocations.includes(resolveLocation) ? resolveLocation : ""}
+                                onChange={(e) => setResolveLocation(e.target.value)}
+                                className="w-full bg-black/20 border border-white/10 text-white rounded-lg px-3 py-2 text-sm outline-none focus:border-accent-cyan/50 focus:bg-white/5 transition-colors"
+                            >
+                                <option value="">-- ไม่ระบุ --</option>
+                                {allLocations.map(loc => (
+                                    <option key={loc} value={loc}>{loc}</option>
+                                ))}
+                            </select>
+                        ) : (
+                            <input
+                                type="text"
+                                value={resolveLocation}
+                                onChange={(e) => setResolveLocation(e.target.value)}
+                                className="w-full bg-black/20 border border-white/10 text-white rounded-lg px-3 py-2 text-sm outline-none focus:border-accent-cyan/50 focus:bg-white/5 transition-colors"
+                                placeholder="ระบุสถานที่ใหม่ เช่น ไลน์ผลิต 2, คลังสินค้า..."
+                            />
+                        )}
+                        <p className="text-xs text-text-muted mt-2 italic">
+                            * สถานที่ที่ระบุจะถูกบันทึกไว้เป็นที่อยู่ล่าสุดของเครื่องจักรนี้
+                        </p>
                     </div>
                 </div>
             </Modal>
