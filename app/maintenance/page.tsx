@@ -1054,14 +1054,24 @@ export default function MaintenancePage() {
                             const getProblemKey = (r: MaintenanceRecord): string | null => {
                                 if (r.type === 'preventive' && !(r as any).fromPM) return null;
                                 
-                                let text = r.partName ? r.partName : (r.description || '');
-                                text = text.replace(/\[pm พบปัญหา\]/gi, '').replace(/เปลี่ยนอะไหล่:/gi, '').trim();
+                                const pName = (r.partName || '').trim().toLowerCase();
+                                const desc = (r.description || '').replace(/\[pm พบปัญหา\]/gi, '').replace(/เปลี่ยนอะไหล่:/gi, '').trim().toLowerCase();
                                 
-                                if (!text && (r as any).fromPM && (r as any).checklistItemLabel) {
-                                    text = (r as any).checklistItemLabel;
+                                let key = '';
+                                if (pName && desc) {
+                                    // Combine them so that same generic partName but different descriptions don't group together
+                                    key = pName + '|' + desc;
+                                } else if (pName) {
+                                    key = pName;
+                                } else if (desc) {
+                                    key = desc;
                                 }
                                 
-                                return text.length > 0 ? text.toLowerCase() : null;
+                                if (!key && (r as any).fromPM && (r as any).checklistItemLabel) {
+                                    key = (r as any).checklistItemLabel.toLowerCase().trim();
+                                }
+                                
+                                return key.length > 0 ? key : null;
                             };
                             return filteredRecords.map((record, index) => {
                                 const isExpanded = expandedRecords.has(record.id);
