@@ -66,6 +66,7 @@ export default function MaintenancePage() {
     const [activeQuickFilter, setActiveQuickFilter] = useState<'all' | 'thisMonth' | 'thisWeek' | 'yearly'>('all');
     const [isFilterExpanded, setIsFilterExpanded] = useState(false);
     const [activeTaskTypeFilter, setActiveTaskTypeFilter] = useState<'all' | 'preventive' | 'corrective' | 'partReplacement' | 'fromPM'>('all');
+    const [activeStatusFilter, setActiveStatusFilter] = useState<'all' | 'pending' | 'inProgress' | 'completed'>('all');
     const [allMachines, setAllMachines] = useState<Machine[]>([]);
     const [allRecordsForStats, setAllRecordsForStats] = useState<MaintenanceRecord[]>([]);
 
@@ -75,6 +76,17 @@ export default function MaintenancePage() {
     const [resolveConfirmOpen, setResolveConfirmOpen] = useState(false);
     const resolutionReportCardRef = useRef<HTMLDivElement>(null);
     const [mounted, setMounted] = useState(false);
+
+    useEffect(() => {
+        if (typeof window !== 'undefined') {
+            const params = new URLSearchParams(window.location.search);
+            const statusParam = params.get('status');
+            if (statusParam === 'pending' || statusParam === 'completed' || statusParam === 'inProgress') {
+                setActiveStatusFilter(statusParam as any);
+                setIsFilterExpanded(true);
+            }
+        }
+    }, []);
 
     // Part Replacement Plan Modal State
     const [replacementPlanOpen, setReplacementPlanOpen] = useState(false);
@@ -747,7 +759,13 @@ export default function MaintenancePage() {
             matchesTaskType = record.type === 'partReplacement' && (record as any).fromPM === true;
         }
 
-        return matchesSearch && matchesMachine && matchesLocation && matchesTime && matchesTaskType;
+        // Status filter
+        let matchesStatus = true;
+        if (activeStatusFilter !== 'all') {
+            matchesStatus = record.status === activeStatusFilter;
+        }
+
+        return matchesSearch && matchesMachine && matchesLocation && matchesTime && matchesTaskType && matchesStatus;
     });
 
     const getMonthOptions = () => uniqueMonths;
@@ -1031,6 +1049,37 @@ export default function MaintenancePage() {
                                             <span>{f.emoji}</span>
                                             {f.label}
                                             <span className={`px-1 py-0.5 rounded text-[9px] ${activeTaskTypeFilter === f.id ? `bg-${f.color} text-white` : 'bg-bg-secondary/60 text-text-muted'}`}>
+                                                {count}
+                                            </span>
+                                        </button>
+                                    );
+                                })}
+                            </div>
+
+                            {/* Status Filter Buttons */}
+                            <div className="flex flex-wrap gap-2 pt-2 border-t border-border-light/10">
+                                <span className="text-[10px] text-text-muted self-center mr-1 font-semibold tracking-wide uppercase">สถานะ:</span>
+                                {[
+                                    { id: 'all', label: 'ทั้งหมด', color: 'accent-blue' },
+                                    { id: 'pending', label: 'รอดำเนินการ', color: 'accent-yellow' },
+                                    { id: 'inProgress', label: 'กำลังดำเนินการ', color: 'accent-purple' },
+                                    { id: 'completed', label: 'เสร็จสิ้น', color: 'accent-green' },
+                                ].map((f) => {
+                                    const count = records.filter(r => {
+                                        if (f.id === 'all') return true;
+                                        return r.status === f.id;
+                                    }).length;
+                                    return (
+                                        <button
+                                            key={f.id}
+                                            onClick={() => setActiveStatusFilter(f.id as any)}
+                                            className={`px-3 py-1.5 rounded-lg text-[11px] font-bold transition-all border flex items-center gap-1.5
+                                                ${activeStatusFilter === f.id
+                                                ? `bg-${f.color}/20 border-${f.color}/40 text-white shadow-lg`
+                                                : 'bg-bg-secondary/40 border-border-light/30 text-text-muted hover:bg-bg-secondary/60 hover:text-text-primary hover:border-border-light/50'}`}
+                                        >
+                                            {f.label}
+                                            <span className={`px-1 py-0.5 rounded text-[9px] ${activeStatusFilter === f.id ? `bg-${f.color} text-white` : 'bg-bg-secondary/60 text-text-muted'}`}>
                                                 {count}
                                             </span>
                                         </button>

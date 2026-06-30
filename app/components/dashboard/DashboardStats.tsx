@@ -8,6 +8,7 @@ import {
   AlertTriangleIcon,
 } from "../ui/Icons";
 import { DashboardStats } from "../../types";
+import Link from "next/link";
 
 interface DashboardStatsProps {
   stats: DashboardStats;
@@ -88,14 +89,14 @@ export default function DashboardStatsSection({ stats, statsLoading }: Dashboard
           <div className="p-5 grid grid-cols-2 gap-2 relative z-10">
             <div className="flex flex-col">
               <span className="text-[10px] text-text-muted mb-1 truncate font-medium">{language === "th" ? "งานรอดำเนินการ" : "Pending Tasks"}</span>
-              <div className="flex items-center gap-2">
-                <span className={`text-2xl font-bold leading-none ${!statsLoading && stats.pendingMaintenance > 0 ? "text-accent-red" : "text-text-primary"}`}>
+              <Link href="/maintenance?status=pending" className="flex items-center gap-2 hover:bg-white/5 p-1 -ml-1 rounded transition-colors cursor-pointer group/link">
+                <span className={`text-2xl font-bold leading-none ${!statsLoading && stats.pendingMaintenance > 0 ? "text-accent-red group-hover/link:text-accent-red/80" : "text-text-primary group-hover/link:text-text-primary/80"}`}>
                   {statsLoading ? "..." : stats.pendingMaintenance}
                 </span>
                 {!statsLoading && stats.pendingMaintenance > 0 && (
                   <span className="text-[9px] bg-accent-red/20 text-accent-red px-1.5 py-0.5 rounded font-bold animate-pulse border border-accent-red/20 shadow-sm">{language === "th" ? "ด่วน" : "Urgent"}</span>
                 )}
-              </div>
+              </Link>
             </div>
             <div className="flex flex-col border-l border-white/5 pl-3">
               <span className="text-[10px] text-text-muted mb-1 truncate font-medium">{language === "th" ? "กำหนดการเร็วๆนี้" : "Upcoming Schedule"}</span>

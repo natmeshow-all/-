@@ -41,7 +41,7 @@ export async function getDashboardStats(): Promise<DashboardStats> {
         const statsSnapshot = await get(statsRef);
         // Increase cache duration to 24 hours to prevent heavy re-fetching
         // We rely on incrementDashboardStat for real-time updates
-        const CACHE_DURATION = 0; 
+        const CACHE_DURATION = 24 * 60 * 60 * 1000; 
 
         if (statsSnapshot.exists()) {
             const cachedStats = statsSnapshot.val() as DashboardStats;
