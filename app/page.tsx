@@ -95,35 +95,13 @@ export default function Dashboard() {
     setConfirmModalOpen(true);
   }, [checkAuth]);
 
-  const confirmDeletePart = useCallback(async () => {
-    if (!partToDelete) return;
-    try {
-      await deletePart(partToDelete.id);
-      success(t("msgDeleteSuccess") || "Deleted", "Part deleted successfully");
-      fetchData();
-    } catch (error: any) {
-      console.error("Failed to delete part", error);
-      showError(t("msgDeleteError") || "Delete Failed", error.message || "Failed to delete part");
-    } finally {
-      setConfirmModalOpen(false);
-      setPartToDelete(null);
-    }
-  }, [partToDelete, success, t, fetchData, showError]);
-
-  const openMachineDetails = useCallback((part: Part) => {
-    setViewMachineId(part.machineId);
-    setViewMachineName(part.machineName);
-    setTriggerPart(part);
-    setMachineModalOpen(true);
-  }, []);
-
   // ─── Data Fetching ─────────────────────────────────────────
   async function withTimeout<T>(promise: Promise<T>, ms: number = 45000): Promise<T> {
     const timeout = new Promise<T>((_, reject) => setTimeout(() => reject(new Error("Request timed out")), ms));
     return Promise.race([promise, timeout]);
   }
 
-  const fetchData = async () => {
+  const fetchData = useCallback(async () => {
     if (authLoading) return;
     if (!user) {
       setStats({ totalParts: 0, totalMachines: 0, totalLocations: 0, maintenanceRecords: 0, totalPM: 0, totalOverhaul: 0, pendingMaintenance: 0, upcomingSchedule: 0, totalSpareParts: 0, lastUpdated: 0, locationCounts: { ALL: 0, FZ: 0, RTE: 0, UT: 0 } });
@@ -164,7 +142,32 @@ export default function Dashboard() {
     } finally {
       setStatsLoading(false);
     }
-  };
+  }, [authLoading, user, t, success, showError]);
+
+  const confirmDeletePart = useCallback(async () => {
+    if (!partToDelete) return;
+    try {
+      await deletePart(partToDelete.id);
+      success(t("msgDeleteSuccess") || "Deleted", "Part deleted successfully");
+      fetchData();
+    } catch (error: any) {
+      console.error("Failed to delete part", error);
+      showError(t("msgDeleteError") || "Delete Failed", error.message || "Failed to delete part");
+    } finally {
+      setConfirmModalOpen(false);
+      setPartToDelete(null);
+    }
+  }, [partToDelete, success, t, fetchData, showError]);
+
+  const openMachineDetails = useCallback((part: Part) => {
+    setViewMachineId(part.machineId);
+    setViewMachineName(part.machineName);
+    setTriggerPart(part);
+    setMachineModalOpen(true);
+  }, []);
+
+  // ─── Data Fetching ─────────────────────────────────────────
+
 
   useEffect(() => {
     fetchData();

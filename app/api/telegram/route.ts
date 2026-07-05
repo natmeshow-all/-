@@ -3,7 +3,7 @@ import { NextResponse } from 'next/server';
 export async function POST(request: Request) {
     try {
         const body = await request.json();
-        const { message, image, parseMode = 'HTML', botToken, chatId } = body;
+        const { message, image, document, filename = 'report.xlsx', parseMode = 'HTML', botToken, chatId } = body;
 
         const telegramBotToken = (botToken || process.env.TELEGRAM_BOT_TOKEN)?.trim();
         const targetChatId = (chatId || process.env.TELEGRAM_CHAT_ID)?.trim();
@@ -16,7 +16,24 @@ export async function POST(request: Request) {
         let telegramUrl = `https://api.telegram.org/bot${telegramBotToken}/sendMessage`;
         let options: RequestInit = {};
 
-        if (image) {
+        if (document) {
+            telegramUrl = `https://api.telegram.org/bot${telegramBotToken}/sendDocument`;
+            const formData = new FormData();
+            formData.append('chat_id', targetChatId);
+            if (message) formData.append('caption', message);
+            formData.append('parse_mode', parseMode);
+            
+            // document format: base64 string
+            const base64Data = document.replace(/^data:.*?;base64,/, '');
+            const buffer = Buffer.from(base64Data, 'base64');
+            const blob = new Blob([buffer], { type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet' });
+            formData.append('document', blob, filename);
+
+            options = {
+                method: 'POST',
+                body: formData,
+            };
+        } else if (image) {
             telegramUrl = `https://api.telegram.org/bot${telegramBotToken}/sendPhoto`;
             const formData = new FormData();
             formData.append('chat_id', targetChatId);

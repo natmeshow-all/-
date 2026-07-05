@@ -173,4 +173,4 @@ export default React.memo(function DesktopPartTable({
       </div>
     </div>
   );
-}
+});

@@ -179,4 +179,4 @@ export default React.memo(function MobilePartCards({
       })}
     </>
   );
-}
+});

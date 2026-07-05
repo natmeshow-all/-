@@ -50,6 +50,47 @@ export const telegramService = {
     },
 
     /**
+     * Send an Excel document
+     */
+    async sendExcelDocument(base64Data: string, filename: string, caption?: string) {
+        try {
+            const settings = await getSystemSettings();
+            const botToken = decodeSecret(settings?.telegramBotToken || "");
+            const chatId = decodeSecret(settings?.telegramChatId || "");
+
+            if (!botToken || !chatId) {
+                console.warn('Telegram settings missing. Cannot send document.');
+                return { success: false, error: 'Telegram setup incomplete' };
+            }
+
+            const response = await fetch('/api/telegram', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                    document: base64Data,
+                    filename,
+                    message: caption,
+                    parseMode: 'HTML',
+                    botToken,
+                    chatId
+                }),
+            });
+
+            if (!response.ok) {
+                const errorData = await response.json();
+                console.error('Failed to send Telegram document:', errorData);
+                return { success: false, error: errorData };
+            }
+
+            console.log('✅ Telegram document sent successfully!');
+            return { success: true };
+        } catch (error) {
+            console.error('Error in Telegram sendExcelDocument:', error);
+            return { success: false, error };
+        }
+    },
+
+    /**
      * Create an HTML formatted string for PM completion
      */
     createPMHtmlMessage(record: MaintenanceRecord): string {

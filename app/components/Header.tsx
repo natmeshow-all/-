@@ -5,10 +5,13 @@ import { useLanguage } from "../contexts/LanguageContext";
 import { FlaskIcon, ShieldCheckIcon, UserIcon } from "./ui/Icons";
 import Link from "next/link";
 import VersionDisplay from "./ui/VersionDisplay";
-
+import dynamic from "next/dynamic";
 import { useAuth } from "../contexts/AuthContext";
 import LoginButton from "./auth/LoginButton";
 import NotificationBell from "./ui/NotificationBell";
+import { DownloadIcon } from "./ui/Icons";
+
+const ExportExcelModal = dynamic(() => import("./forms/ExportExcelModal"));
 
 interface HeaderProps {
     className?: string;
@@ -18,6 +21,7 @@ export default function Header({ className = "" }: HeaderProps) {
     const { language, setLanguage, t } = useLanguage();
     const { user, userProfile, signOut, isAdmin, isPending } = useAuth();
     const [showProfileMenu, setShowProfileMenu] = React.useState(false);
+    const [exportModalOpen, setExportModalOpen] = React.useState(false);
 
     // Get display name from userProfile first, fallback to user
     const displayName = userProfile?.displayName || userProfile?.nickname || user?.displayName || "User";
@@ -52,6 +56,19 @@ export default function Header({ className = "" }: HeaderProps) {
                     <div className="flex items-center gap-1.5 sm:gap-3">
                         {/* Notifications */}
                         <div className="flex items-center gap-1 sm:gap-2">
+                            {(userProfile?.role === "admin" || userProfile?.role === "supervisor") && (
+                                <button
+                                    onClick={() => setExportModalOpen(true)}
+                                    className="px-2 py-0.5 sm:px-2.5 sm:py-1 bg-accent-cyan/10 hover:bg-accent-cyan/20 border border-accent-cyan/30 text-accent-cyan rounded-md transition-all active:scale-95 min-w-[44px] min-h-[44px] sm:min-w-[32px] sm:min-h-0 flex items-center justify-center group"
+                                    title="Export Data"
+                                >
+                                    <DownloadIcon size={14} className="sm:hidden" />
+                                    <span className="hidden sm:flex items-center gap-1.5 text-[10px] sm:text-xs font-bold uppercase">
+                                        <DownloadIcon size={12} />
+                                        Export
+                                    </span>
+                                </button>
+                            )}
                             <NotificationBell />
                         </div>
 
@@ -150,8 +167,13 @@ export default function Header({ className = "" }: HeaderProps) {
                 </div>
             </div>
 
-
+            {/* Export Modal */}
+            {(userProfile?.role === "admin" || userProfile?.role === "supervisor") && (
+                <ExportExcelModal 
+                    isOpen={exportModalOpen}
+                    onClose={() => setExportModalOpen(false)}
+                />
+            )}
         </header>
     );
 }
-

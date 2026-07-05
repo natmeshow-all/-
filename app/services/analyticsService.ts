@@ -153,10 +153,6 @@ async function recalculateAndSaveStats(): Promise<DashboardStats> {
         throw recalcError;
     }
 }
-        console.error("Error getting dashboard stats:", error);
-        throw error;
-    }
-}
 
 // ==================== ADMIN & ANALYTICS ====================
 
