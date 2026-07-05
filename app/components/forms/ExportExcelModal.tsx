@@ -100,7 +100,7 @@ export default function ExportExcelModal({ isOpen, onClose }: ExportExcelModalPr
                              r.type === "corrective" ? "ซ่อมแซมแก้ไข" : r.type,
                 "ผู้ดำเนินการ": r.technician || "-",
                 "สถานะ": r.status === "completed" ? "เสร็จสิ้น" : r.status === "inProgress" ? "กำลังดำเนินการ" : "รอดำเนินการ",
-                "รายละเอียด": r.details || "-",
+                "รายละเอียด": [r.description, r.details].filter(Boolean).join("\n") || "-",
                 "รายการตรวจสอบ": r.checklist ? r.checklist.filter(c => c.completed).length + "/" + r.checklist.length : "-",
             }));
             
