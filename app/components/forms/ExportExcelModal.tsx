@@ -23,6 +23,7 @@ export default function ExportExcelModal({ isOpen, onClose }: ExportExcelModalPr
     const [startDate, setStartDate] = useState<string>("");
     const [endDate, setEndDate] = useState<string>("");
     const [isExporting, setIsExporting] = useState(false);
+    const [locationFilter, setLocationFilter] = useState<string>("all");
     
     const [machines, setMachines] = useState<any[]>([]);
 
@@ -48,7 +49,7 @@ export default function ExportExcelModal({ isOpen, onClose }: ExportExcelModalPr
         }
     };
 
-    const generateExcelData = async () => {
+    const generateExcelData = async (ignoreDateFilter: boolean = false) => {
         let rawData: any[] = [];
         let headers: string[] = [];
         let sheetName = "Sheet1";
@@ -71,7 +72,7 @@ export default function ExportExcelModal({ isOpen, onClose }: ExportExcelModalPr
             }
 
             // Filter by Date
-            if (startDate) {
+            if (startDate && !ignoreDateFilter) {
                 let sStr = startDate;
                 const sYear = parseInt(sStr.split('-')[0]);
                 if (sYear > 2400) sStr = `${sYear - 543}-${sStr.split('-').slice(1).join('-')}`;
@@ -79,7 +80,7 @@ export default function ExportExcelModal({ isOpen, onClose }: ExportExcelModalPr
                 const sDate = new Date(sStr).getTime();
                 records = records.filter(r => new Date(r.date).getTime() >= sDate);
             }
-            if (endDate) {
+            if (endDate && !ignoreDateFilter) {
                 let eStr = endDate;
                 const eYear = parseInt(eStr.split('-')[0]);
                 if (eYear > 2400) eStr = `${eYear - 543}-${eStr.split('-').slice(1).join('-')}`;
@@ -142,12 +143,25 @@ export default function ExportExcelModal({ isOpen, onClose }: ExportExcelModalPr
             setIsExporting(true);
             info("เตรียมข้อมูล...", "กำลังรวบรวมข้อมูลตามที่เลือก");
             
-            const { rawData, sheetName } = await generateExcelData();
+            let { rawData, sheetName } = await generateExcelData();
             
             if (rawData.length === 0) {
-                error("ไม่พบข้อมูล", "ไม่มีข้อมูลในช่วงเวลาหรือเงื่อนไขที่เลือก");
-                setIsExporting(false);
-                return;
+                if ((exportType === "pm" || exportType === "replacement") && (startDate || endDate)) {
+                    // Try again without date filter to see if we have ANY data
+                    const fallback = await generateExcelData(true);
+                    if (fallback.rawData.length > 0) {
+                        info("ปรับวันที่อัตโนมัติ", "ไม่พบข้อมูลในวันที่เลือก ระบบจึงดึงข้อมูลทั้งหมดที่มีมาให้แทน");
+                        rawData = fallback.rawData;
+                    } else {
+                        error("ไม่พบข้อมูล", "ไม่มีข้อมูลตามเงื่อนไขที่เลือกเลย");
+                        setIsExporting(false);
+                        return;
+                    }
+                } else {
+                    error("ไม่พบข้อมูล", "ไม่มีข้อมูลในช่วงเวลาหรือเงื่อนไขที่เลือก");
+                    setIsExporting(false);
+                    return;
+                }
             }
 
             // Create workbook
@@ -221,23 +235,44 @@ export default function ExportExcelModal({ isOpen, onClose }: ExportExcelModalPr
                     </select>
                 </div>
 
-                {/* Machine Filter (Hidden for machines list) */}
+                {/* Location Filter & Machine Filter */}
                 {exportType !== "machines" && (
-                    <div>
-                        <label className="block text-sm font-medium text-white mb-2 flex items-center gap-2">
-                            <SettingsIcon size={16} className="text-text-muted" />
-                            เลือกเครื่องจักร (Machine)
-                        </label>
-                        <select
-                            value={machineId}
-                            onChange={(e) => setMachineId(e.target.value)}
-                            className="w-full bg-black/20 border border-white/10 text-white rounded-lg px-3 py-2 outline-none focus:border-accent-cyan/50 focus:bg-white/5"
-                        >
-                            <option value="all">-- ทุกเครื่องจักร --</option>
-                            {machines.map(m => (
-                                <option key={m.id} value={m.id}>{m.code ? `[${m.code}] ` : ""}{m.name}</option>
-                            ))}
-                        </select>
+                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                        <div>
+                            <label className="block text-sm font-medium text-white mb-2 flex items-center gap-2">
+                                <SettingsIcon size={16} className="text-text-muted" />
+                                เลือกโซน (Location)
+                            </label>
+                            <select
+                                value={locationFilter}
+                                onChange={(e) => {
+                                    setLocationFilter(e.target.value);
+                                    setMachineId("all");
+                                }}
+                                className="w-full bg-black/20 border border-white/10 text-white rounded-lg px-3 py-2 outline-none focus:border-accent-cyan/50 focus:bg-white/5"
+                            >
+                                <option value="all">-- ทุกโซน --</option>
+                                {Array.from(new Set(machines.map(m => m.location || m.Location).filter(Boolean))).sort().map(loc => (
+                                    <option key={loc as string} value={loc as string}>{loc as string}</option>
+                                ))}
+                            </select>
+                        </div>
+                        <div>
+                            <label className="block text-sm font-medium text-white mb-2 flex items-center gap-2">
+                                <SettingsIcon size={16} className="text-text-muted" />
+                                เลือกเครื่องจักร (Machine)
+                            </label>
+                            <select
+                                value={machineId}
+                                onChange={(e) => setMachineId(e.target.value)}
+                                className="w-full bg-black/20 border border-white/10 text-white rounded-lg px-3 py-2 outline-none focus:border-accent-cyan/50 focus:bg-white/5"
+                            >
+                                <option value="all">-- ทุกเครื่องจักร --</option>
+                                {machines.filter(m => locationFilter === "all" || (m.location || m.Location) === locationFilter).map(m => (
+                                    <option key={m.id} value={m.id}>{m.code ? `[${m.code}] ` : ""}{m.name}</option>
+                                ))}
+                            </select>
+                        </div>
                     </div>
                 )}
 
