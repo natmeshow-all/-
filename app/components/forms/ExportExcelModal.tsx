@@ -101,7 +101,8 @@ export default function ExportExcelModal({ isOpen, onClose }: ExportExcelModalPr
                 "ผู้ดำเนินการ": r.technician || "-",
                 "สถานะ": r.status === "completed" ? "เสร็จสิ้น" : r.status === "inProgress" ? "กำลังดำเนินการ" : "รอดำเนินการ",
                 "รายละเอียด": [r.description, r.details].filter(Boolean).join("\n") || "-",
-                "รายการตรวจสอบ": r.checklist ? r.checklist.filter(c => c.completed).length + "/" + r.checklist.length : "-",
+                "สรุปการตรวจสอบ": r.checklist ? r.checklist.filter(c => c.completed).length + "/" + r.checklist.length : "-",
+                "รายการตรวจสอบ": r.checklist ? r.checklist.map(c => `[${c.completed ? '✓' : '✗'}] ${c.item}${c.value ? ` (${c.value})` : ''}`).join('\n') : "-",
             }));
             
         } else if (exportType === "inventory") {
