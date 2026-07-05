@@ -47,21 +47,28 @@ export async function getDashboardStats(): Promise<DashboardStats> {
             const cachedStats = statsSnapshot.val() as DashboardStats;
             const now = Date.now();
             
-            // Return cached stats immediately if they exist, 
-            // only force recalculate if they are extremely old or missing
-            if (cachedStats.lastUpdated && (now - cachedStats.lastUpdated < CACHE_DURATION)) {
-                if (cachedStats.pmThisMonth !== undefined && cachedStats.pmThisWeek !== undefined) {
-                    return cachedStats;
+            // Stale-While-Revalidate pattern
+            // Return cached stats immediately if they exist to keep UI fast
+            if (cachedStats.pmThisMonth !== undefined && cachedStats.pmThisWeek !== undefined) {
+                // If cache is older than 5 minutes (300,000 ms), recalculate in background
+                if (!cachedStats.lastUpdated || (now - cachedStats.lastUpdated > 5 * 60 * 1000)) {
+                    // Do NOT await this, let it run in the background
+                    recalculateAndSaveStats().catch(e => console.error("Background stats recalc failed", e));
                 }
-                console.log("Forcing stats recalculation due to missing PM fields");
+                return cachedStats;
             }
-            
-            // If cache exists but is old, we can still return it if recalculation fails.
-            // But let's try to recalculate first.
         }
 
-        // 2. Calculate if cache missing or expired
-        try {
+        // 2. Calculate if cache missing or incomplete
+        return await recalculateAndSaveStats();
+    } catch (error) {
+        console.error("Error fetching dashboard stats:", error);
+        throw error;
+    }
+}
+
+async function recalculateAndSaveStats(): Promise<DashboardStats> {
+    try {
             const [parts, machines, records, spareParts] = await Promise.all([
                 getParts(),
                 getMachines(),
@@ -134,24 +141,18 @@ export async function getDashboardStats(): Promise<DashboardStats> {
 
             // 3. Update cache (Best effort - ignore if permission denied)
             try {
+                const statsRef = ref(database, COLLECTIONS.SYSTEM_STATS);
                 await set(statsRef, newStats);
             } catch (cacheError) {
                 console.warn("Could not update dashboard cache (likely permission issue):", cacheError);
             }
 
             return newStats;
-        } catch (recalcError) {
-            console.error("Error recalculating dashboard stats:", recalcError);
-            
-            // Fallback: If recalculation failed but we have stale cache, return it!
-            if (statsSnapshot.exists()) {
-                console.warn("Returning stale dashboard stats due to recalculation error.");
-                return statsSnapshot.val() as DashboardStats;
-            }
-            
-            throw recalcError;
-        }
-    } catch (error) {
+    } catch (recalcError) {
+        console.error("Error recalculating dashboard stats:", recalcError);
+        throw recalcError;
+    }
+}
         console.error("Error getting dashboard stats:", error);
         throw error;
     }

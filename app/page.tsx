@@ -1,26 +1,28 @@
 "use client";
 
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useCallback } from "react";
 import Header from "./components/Header";
 import MobileNav from "./components/MobileNav";
 import DashboardStatsSection from "./components/dashboard/DashboardStats";
 import PartsFilter from "./components/dashboard/PartsFilter";
 import DesktopPartTable from "./components/dashboard/DesktopPartTable";
 import MobilePartCards from "./components/dashboard/MobilePartCard";
-import AddPartModal from "./components/forms/AddPartModal";
-import MaintenanceRecordModal from "./components/forms/MaintenanceRecordModal";
-import ConfirmModal from "./components/ui/ConfirmModal";
+import dynamic from "next/dynamic";
 import { useLanguage } from "./contexts/LanguageContext";
 import { useAuth } from "./contexts/AuthContext";
 import { useToast } from "./contexts/ToastContext";
 import { getDashboardStats, deletePart, getMachines, getPartsPaginated, getPartsByMachineName, getPartsByLocation } from "./lib/firebaseService";
-import MachineDetailsModal from "./components/machines/MachineDetailsModal";
-import PartReplacementPlanModal from "./components/pm/PartReplacementPlanModal";
-import HelpModal from "./components/ui/HelpModal";
-import PriorityPMAlert from "./components/ui/PriorityPMAlert";
 import PageLoadingOverlay from "./components/ui/PageLoadingOverlay";
-import WelcomeGuide from "./components/onboarding/WelcomeGuide";
-import Lightbox from "./components/ui/Lightbox";
+
+const AddPartModal = dynamic(() => import("./components/forms/AddPartModal"));
+const MaintenanceRecordModal = dynamic(() => import("./components/forms/MaintenanceRecordModal"));
+const ConfirmModal = dynamic(() => import("./components/ui/ConfirmModal"));
+const MachineDetailsModal = dynamic(() => import("./components/machines/MachineDetailsModal"));
+const PartReplacementPlanModal = dynamic(() => import("./components/pm/PartReplacementPlanModal"));
+const HelpModal = dynamic(() => import("./components/ui/HelpModal"));
+const Lightbox = dynamic(() => import("./components/ui/Lightbox"));
+const WelcomeGuide = dynamic(() => import("./components/onboarding/WelcomeGuide"));
+const PriorityPMAlert = dynamic(() => import("./components/ui/PriorityPMAlert"));
 import {
   PlusIcon,
   HistoryIcon,
@@ -75,25 +77,25 @@ export default function Dashboard() {
   const [allMachines, setAllMachines] = useState<any[]>([]);
 
   // ─── Handlers ──────────────────────────────────────────────
-  const handleEditPart = (part: Part) => {
+  const handleEditPart = useCallback((part: Part) => {
     if (!checkAuth()) return;
     setSelectedPart(part);
     setAddPartModalOpen(true);
-  };
+  }, [checkAuth]);
 
-  const handleMaintenancePart = (part: Part) => {
+  const handleMaintenancePart = useCallback((part: Part) => {
     if (!checkAuth()) return;
     setTriggerPart(part);
     setMaintenanceModalOpen(true);
-  };
+  }, [checkAuth]);
 
-  const handleDeleteClick = (part: Part) => {
+  const handleDeleteClick = useCallback((part: Part) => {
     if (!checkAuth()) return;
     setPartToDelete(part);
     setConfirmModalOpen(true);
-  };
+  }, [checkAuth]);
 
-  const confirmDeletePart = async () => {
+  const confirmDeletePart = useCallback(async () => {
     if (!partToDelete) return;
     try {
       await deletePart(partToDelete.id);
@@ -106,14 +108,14 @@ export default function Dashboard() {
       setConfirmModalOpen(false);
       setPartToDelete(null);
     }
-  };
+  }, [partToDelete, success, t, fetchData, showError]);
 
-  const openMachineDetails = (part: Part) => {
+  const openMachineDetails = useCallback((part: Part) => {
     setViewMachineId(part.machineId);
     setViewMachineName(part.machineName);
     setTriggerPart(part);
     setMachineModalOpen(true);
-  };
+  }, []);
 
   // ─── Data Fetching ─────────────────────────────────────────
   async function withTimeout<T>(promise: Promise<T>, ms: number = 45000): Promise<T> {

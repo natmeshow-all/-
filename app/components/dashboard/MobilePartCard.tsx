@@ -29,7 +29,7 @@ interface MobilePartCardProps {
   onDeletePart: (part: Part) => void;
 }
 
-export default function MobilePartCards({
+export default React.memo(function MobilePartCards({
   parts,
   partsLoading,
   onEditPart,

@@ -3,9 +3,10 @@
 import React, { useState, useEffect, useMemo, useRef } from "react";
 import Header from "../components/Header";
 import MobileNav from "../components/MobileNav";
-import MaintenanceRecordModal from "../components/forms/MaintenanceRecordModal";
-import ConfirmModal from "../components/ui/ConfirmModal";
-import Modal from "../components/ui/Modal";
+import dynamic from "next/dynamic";
+const MaintenanceRecordModal = dynamic(() => import("../components/forms/MaintenanceRecordModal"));
+const ConfirmModal = dynamic(() => import("../components/ui/ConfirmModal"));
+const Modal = dynamic(() => import("../components/ui/Modal"));
 import { useLanguage } from "../contexts/LanguageContext";
 import { useAuth } from "../contexts/AuthContext";
 import { useToast } from "../contexts/ToastContext";
@@ -46,8 +47,8 @@ import {
     CheckCircleIcon
 } from "../components/ui/Icons";
 
-import RecordDetailsModal from "../components/pm/RecordDetailsModal";
-import PartReplacementPlanModal from "../components/pm/PartReplacementPlanModal";
+const RecordDetailsModal = dynamic(() => import("../components/pm/RecordDetailsModal"));
+const PartReplacementPlanModal = dynamic(() => import("../components/pm/PartReplacementPlanModal"));
 
 export default function MaintenancePage() {
     const { t } = useLanguage();

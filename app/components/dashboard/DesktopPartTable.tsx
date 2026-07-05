@@ -33,7 +33,7 @@ interface DesktopPartTableProps {
   onOpenMachine: (part: Part) => void;
 }
 
-export default function DesktopPartTable({
+export default React.memo(function DesktopPartTable({
   parts,
   partsLoading,
   isFullscreen,
