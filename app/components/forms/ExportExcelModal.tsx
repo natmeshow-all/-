@@ -72,11 +72,19 @@ export default function ExportExcelModal({ isOpen, onClose }: ExportExcelModalPr
 
             // Filter by Date
             if (startDate) {
-                const sDate = new Date(startDate).getTime();
+                let sStr = startDate;
+                const sYear = parseInt(sStr.split('-')[0]);
+                if (sYear > 2400) sStr = `${sYear - 543}-${sStr.split('-').slice(1).join('-')}`;
+                
+                const sDate = new Date(sStr).getTime();
                 records = records.filter(r => new Date(r.date).getTime() >= sDate);
             }
             if (endDate) {
-                const eDate = new Date(endDate);
+                let eStr = endDate;
+                const eYear = parseInt(eStr.split('-')[0]);
+                if (eYear > 2400) eStr = `${eYear - 543}-${eStr.split('-').slice(1).join('-')}`;
+
+                const eDate = new Date(eStr);
                 eDate.setHours(23, 59, 59, 999);
                 records = records.filter(r => new Date(r.date).getTime() <= eDate.getTime());
             }
@@ -227,7 +235,7 @@ export default function ExportExcelModal({ isOpen, onClose }: ExportExcelModalPr
                         >
                             <option value="all">-- ทุกเครื่องจักร --</option>
                             {machines.map(m => (
-                                <option key={m.id} value={m.name}>{m.code ? `[${m.code}] ` : ""}{m.name}</option>
+                                <option key={m.id} value={m.id}>{m.code ? `[${m.code}] ` : ""}{m.name}</option>
                             ))}
                         </select>
                     </div>
