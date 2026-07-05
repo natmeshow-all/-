@@ -92,10 +92,14 @@ export default function ExportExcelModal({ isOpen, onClose }: ExportExcelModalPr
 
             // Map data
             rawData = records.map(r => {
+                const machine = machines.find(m => m.id === r.machineId || m.name === r.machineName);
+                const mCode = r.machineCode || (machine?.code) || "-";
+                const mName = r.machineName || (machine?.name) || "-";
+
                 const baseRow: any = {
                     "วันที่ดำเนินการ": new Date(r.date).toLocaleDateString('th-TH'),
-                    "รหัสเครื่องจักร": r.machineCode || "-",
-                    "ชื่อเครื่องจักร": r.machineName || "-",
+                    "รหัสเครื่องจักร": mCode,
+                    "ชื่อเครื่องจักร": mName,
                     "ประเภทงาน": r.type === "preventive" ? "ซ่อมบำรุงเชิงป้องกัน (PM)" : 
                                  r.type === "partReplacement" ? "เปลี่ยนอะไหล่" :
                                  r.type === "corrective" ? "ซ่อมแซมแก้ไข" : r.type,
