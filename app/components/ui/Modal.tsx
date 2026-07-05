@@ -1,6 +1,7 @@
 "use client";
 
 import React, { useEffect, useRef, useState } from "react";
+import { createPortal } from "react-dom";
 import { XIcon } from "./Icons";
 import { soundManager } from "../../lib/soundService";
 
@@ -41,6 +42,11 @@ export default function Modal({
     const [isVisible, setIsVisible] = useState(false);
     const [isExiting, setIsExiting] = useState(false);
     const [shouldRender, setShouldRender] = useState(false);
+    const [mounted, setMounted] = useState(false);
+
+    useEffect(() => {
+        setMounted(true);
+    }, []);
 
     // Handle lifecycle for animations
     // Handle lifecycle for animations
@@ -105,9 +111,9 @@ export default function Modal({
         }
     };
 
-    if (!shouldRender) return null;
+    if (!shouldRender || !mounted) return null;
 
-    return (
+    return createPortal(
         <div
             className={`
                 modal-overlay fixed inset-0 flex items-center justify-center p-4
@@ -166,6 +172,7 @@ export default function Modal({
                     </div>
                 )}
             </div>
-        </div>
+        </div>,
+        document.body
     );
 }
