@@ -91,19 +91,34 @@ export default function ExportExcelModal({ isOpen, onClose }: ExportExcelModalPr
             }
 
             // Map data
-            rawData = records.map(r => ({
-                "วันที่ดำเนินการ": new Date(r.date).toLocaleDateString('th-TH'),
-                "รหัสเครื่องจักร": r.machineCode || "-",
-                "ชื่อเครื่องจักร": r.machineName || "-",
-                "ประเภทงาน": r.type === "preventive" ? "ซ่อมบำรุงเชิงป้องกัน (PM)" : 
-                             r.type === "partReplacement" ? "เปลี่ยนอะไหล่" :
-                             r.type === "corrective" ? "ซ่อมแซมแก้ไข" : r.type,
-                "ผู้ดำเนินการ": r.technician || "-",
-                "สถานะ": r.status === "completed" ? "เสร็จสิ้น" : r.status === "inProgress" ? "กำลังดำเนินการ" : "รอดำเนินการ",
-                "รายละเอียด": [r.description, r.details].filter(Boolean).join("\n") || "-",
-                "สรุปการตรวจสอบ": r.checklist ? r.checklist.filter(c => c.completed).length + "/" + r.checklist.length : "-",
-                "รายการตรวจสอบ": r.checklist ? r.checklist.map(c => `[${c.completed ? '✓' : '✗'}] ${c.item}${c.value ? ` (${c.value})` : ''}`).join('\n') : "-",
-            }));
+            rawData = records.map(r => {
+                const baseRow: any = {
+                    "วันที่ดำเนินการ": new Date(r.date).toLocaleDateString('th-TH'),
+                    "รหัสเครื่องจักร": r.machineCode || "-",
+                    "ชื่อเครื่องจักร": r.machineName || "-",
+                    "ประเภทงาน": r.type === "preventive" ? "ซ่อมบำรุงเชิงป้องกัน (PM)" : 
+                                 r.type === "partReplacement" ? "เปลี่ยนอะไหล่" :
+                                 r.type === "corrective" ? "ซ่อมแซมแก้ไข" : r.type,
+                    "ผู้ดำเนินการ": r.technician || "-",
+                    "สถานะ": r.status === "completed" ? "เสร็จสิ้น" : r.status === "inProgress" ? "กำลังดำเนินการ" : "รอดำเนินการ",
+                    "รายละเอียด": [r.description, r.details].filter(Boolean).join("\n") || "-",
+                    "สรุปการตรวจสอบ": r.checklist ? r.checklist.filter(c => c.completed).length + "/" + r.checklist.length : "-",
+                };
+
+                // Split checklist into dynamic columns for easy sorting/filtering in Excel
+                if (r.checklist && r.checklist.length > 0) {
+                    r.checklist.forEach(c => {
+                        const colName = `[ตรวจ] ${c.item}`;
+                        let val = c.completed ? "✓ ผ่าน" : "✗ ไม่ผ่าน";
+                        if (c.value) {
+                            val += ` (ค่า: ${c.value})`;
+                        }
+                        baseRow[colName] = val;
+                    });
+                }
+
+                return baseRow;
+            });
             
         } else if (exportType === "inventory") {
             const parts = await getParts();
