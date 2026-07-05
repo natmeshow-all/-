@@ -251,6 +251,13 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
             setUserProfile(null);
             setIsPending(false);
             info("Signed Out", "See you again soon!");
+            
+            // Fix for mobile browsers (Safari/Chrome/In-App) where Firebase RTDB 
+            // websocket connection gets stuck or cached incorrectly after logout.
+            // Forcing a page reload ensures a clean state for the next login.
+            setTimeout(() => {
+                window.location.reload();
+            }, 800);
         } catch (error) {
             console.error("Error signing out:", error);
             throw error;
