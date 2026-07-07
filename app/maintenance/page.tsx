@@ -44,17 +44,20 @@ import {
     SaveIcon,
     XIcon,
     LayersIcon,
-    CheckCircleIcon
+    CheckCircleIcon,
+    DownloadIcon
 } from "../components/ui/Icons";
 
 const RecordDetailsModal = dynamic(() => import("../components/pm/RecordDetailsModal"));
 const PartReplacementPlanModal = dynamic(() => import("../components/pm/PartReplacementPlanModal"));
+const ExportExcelModal = dynamic(() => import("../components/forms/ExportExcelModal"));
 
 export default function MaintenancePage() {
     const { t } = useLanguage();
     const { checkAuth, isAdmin } = useAuth();
     const { success, error } = useToast();
     const [maintenanceModalOpen, setMaintenanceModalOpen] = useState(false);
+    const [exportModalOpen, setExportModalOpen] = useState(false);
     const [selectedRecord, setSelectedRecord] = useState<MaintenanceRecord | null>(null);
     const [expandedRecords, setExpandedRecords] = useState<Set<string>>(new Set());
 
@@ -875,6 +878,15 @@ export default function MaintenancePage() {
                                 <RefreshCwIcon size={14} className="mr-1" />
                                 {t("actionMaintenanceHistory") || "แผนเปลี่ยนอะไหล่"}
                             </button>
+                            {(isAdmin || (checkAuth() && false)) && ( // We don't have userProfile in page.tsx right now, just isAdmin check is fine or just add it
+                                <button
+                                    onClick={() => { if (checkAuth()) setExportModalOpen(true); }}
+                                    className="flex-1 sm:flex-none min-w-[120px] btn btn-active bg-accent-cyan text-white hover:bg-accent-cyan/90 hover:scale-105 active:scale-95 border-none h-9 text-[11px] font-bold transition-all shadow-sm hover:shadow-accent-cyan/20"
+                                >
+                                    <DownloadIcon size={14} className="mr-1" />
+                                    Export Excel
+                                </button>
+                            )}
                         </div>
                     </div>
 
@@ -2460,6 +2472,11 @@ export default function MaintenancePage() {
                 machineName={replacementPlanMachineName}
                 fromPMHistory={true}
                 onViewHistory={() => setReplacementPlanOpen(false)}
+            />
+
+            <ExportExcelModal 
+                isOpen={exportModalOpen}
+                onClose={() => setExportModalOpen(false)}
             />
         </div>
     );
