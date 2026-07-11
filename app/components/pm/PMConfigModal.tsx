@@ -321,14 +321,17 @@ export default function PMConfigModal({ isOpen, onClose, machine, plan, onSucces
             const isDuplicate = allPlans.some(p => {
                 if (p.machineId !== machine.id || p.id === plan?.id) return false;
                 
-                // Check if cycle matches exactly
-                if (p.scheduleType !== scheduleType) return false;
+                // Check if cycle matches exactly. Default old plans without scheduleType to 'monthly'
+                const pScheduleType = p.scheduleType || 'monthly';
+                if (pScheduleType !== scheduleType) return false;
                 
                 if (scheduleType === 'monthly') {
-                    return p.cycleMonths === cycleMonths;
+                    const pCycle = p.cycleMonths || 1;
+                    return Number(pCycle) === Number(cycleMonths);
                 }
                 if (scheduleType === 'weekly') {
-                    return p.weeklyDay === weeklyDay;
+                    const pDay = p.weeklyDay || 1;
+                    return Number(pDay) === Number(weeklyDay);
                 }
                 return true; // For yearly, just scheduleType matching is a duplicate
             });
