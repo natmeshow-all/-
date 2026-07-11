@@ -321,23 +321,19 @@ export default function PMConfigModal({ isOpen, onClose, machine, plan, onSucces
             const isDuplicate = allPlans.some(p => {
                 if (p.machineId !== machine.id || p.id === plan?.id) return false;
                 
-                // Check if cycle matches exactly. Default old plans without scheduleType to 'monthly'
+                // Check if the schedule type (monthly/weekly/yearly) is the same.
+                // We only allow ONE plan of each type per machine.
                 const pScheduleType = p.scheduleType || 'monthly';
-                if (pScheduleType !== scheduleType) return false;
+                if (pScheduleType === scheduleType) {
+                    return true;
+                }
                 
-                if (scheduleType === 'monthly') {
-                    const pCycle = p.cycleMonths || 1;
-                    return Number(pCycle) === Number(cycleMonths);
-                }
-                if (scheduleType === 'weekly') {
-                    const pDay = p.weeklyDay || 1;
-                    return Number(pDay) === Number(weeklyDay);
-                }
-                return true; // For yearly, just scheduleType matching is a duplicate
+                return false;
             });
 
             if (isDuplicate) {
-                showError(`มีแผนซ่อมบำรุงรอบเวลานี้อยู่แล้ว (เช่น รอบเดือน/สัปดาห์ตรงกัน) ไม่สามารถสร้างแผนซ้ำซ้อนได้`, "พบแผนซ้ำซ้อน");
+                const scheduleText = scheduleType === 'monthly' ? 'รายเดือน' : scheduleType === 'weekly' ? 'รายสัปดาห์' : 'รายปี';
+                showError(`เครื่องจักรนี้มีแผนซ่อมบำรุงแบบ "${scheduleText}" อยู่แล้ว กรุณาแก้ไขจากแผนเดิมแทนการสร้างใหม่`, "พบแผนซ้ำซ้อน");
                 setLoading(false);
                 return;
             }
