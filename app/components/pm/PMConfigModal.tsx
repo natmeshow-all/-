@@ -189,8 +189,6 @@ export default function PMConfigModal({ isOpen, onClose, machine, plan, onSucces
     const { error: showError } = useToast();
     const [loading, setLoading] = useState(false);
 
-    const [selectedMaintenanceType, setSelectedMaintenanceType] = useState(plan?.taskName || "");
-    const [customMaintenanceName, setCustomMaintenanceName] = useState("");
     const [checklistItems, setChecklistItems] = useState<string[]>(plan?.checklistItems || []);
     const [newItem, setNewItem] = useState("");
     const [selectedPartType, setSelectedPartType] = useState("");
@@ -283,8 +281,7 @@ export default function PMConfigModal({ isOpen, onClose, machine, plan, onSucces
     };
 
     const getTaskName = () => {
-        if (selectedMaintenanceType === t("labelOtherCustom") || selectedMaintenanceType === "อื่นๆ") return customMaintenanceName;
-        return selectedMaintenanceType;
+        return plan?.taskName || "Preventive Maintenance";
     };
 
     const getLocation = () => {
@@ -314,12 +311,11 @@ export default function PMConfigModal({ isOpen, onClose, machine, plan, onSucces
             const allPlans = await getPMPlans();
             const isDuplicate = allPlans.some(p => 
                 p.machineId === machine.id && 
-                p.taskName === taskName && 
                 p.id !== plan?.id
             );
 
             if (isDuplicate) {
-                showError(`มีแผนซ่อมบำรุง "${taskName}" สำหรับเครื่องจักรนี้อยู่แล้ว กรุณาระบุชื่ออื่นหรือแก้ไขแผนเดิม`, "พบแผนซ้ำซ้อน");
+                showError(`มีแผนซ่อมบำรุงสำหรับเครื่องจักรนี้อยู่แล้ว ไม่สามารถสร้างแผนซ้ำซ้อนได้`, "พบแผนซ้ำซ้อน");
                 setLoading(false);
                 return;
             }
@@ -382,48 +378,6 @@ export default function PMConfigModal({ isOpen, onClose, machine, plan, onSucces
                 </div>
 
                 <form onSubmit={handleSubmit} className="space-y-6">
-                    <div className="space-y-2">
-                        <label className="text-xs font-bold text-text-muted uppercase tracking-wider flex items-center gap-2">
-                            <ActivityIcon size={14} className="text-accent-blue" />
-                            {t("labelMaintenanceType")}
-                        </label>
-                        <div className="relative">
-                            <select
-                                className="input-field w-full text-lg font-semibold appearance-none cursor-pointer"
-                                value={selectedMaintenanceType}
-                                onChange={(e) => {
-                                    setSelectedMaintenanceType(e.target.value);
-                                    if (e.target.value !== t("labelOtherCustom") && e.target.value !== "อื่นๆ") {
-                                        setSelectedPartType(e.target.value);
-                                    }
-                                }}
-                            >
-                                <option value="">{t("placeholderSelectMaintenanceType")}</option>
-                                {allPartNames.map(name => (
-                                    <option key={name} value={name}>{name}</option>
-                                ))}
-                                <option value="อื่นๆ">{t("labelOtherCustom")}</option>
-                            </select>
-                            <div className="absolute right-3 top-1/2 -translate-y-1/2 pointer-events-none text-text-muted">
-                                <ChevronDownIcon size={16} />
-                            </div>
-                        </div>
-
-                        {(selectedMaintenanceType === "อื่นๆ" || selectedMaintenanceType === t("labelOtherCustom")) && (
-                            <input
-                                type="text"
-                                placeholder={t("placeholderSpecifyMaintenanceName")}
-                                className="input-field w-full mt-2 bg-accent-blue/5 border-accent-blue/30 focus:border-accent-blue"
-                                value={customMaintenanceName}
-                                onChange={(e) => {
-                                    setCustomMaintenanceName(e.target.value);
-                                    // Auto-sync typed name to selectedPartType so suggestions appear
-                                    setSelectedPartType(e.target.value);
-                                }}
-                                autoFocus
-                            />
-                        )}
-                    </div>
 
                     <div className="space-y-3 bg-bg-secondary/30 p-4 rounded-xl border border-white/5">
                         <label className="text-xs font-bold text-text-muted uppercase tracking-wider flex items-center justify-between">
