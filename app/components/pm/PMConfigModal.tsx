@@ -5,7 +5,7 @@ import Modal from "../ui/Modal";
 import { useLanguage } from "../../contexts/LanguageContext";
 import { Machine, PMPlan } from "../../types";
 import { CalendarIcon, ClockIcon, CheckCircleIcon, SettingsIcon, ActivityIcon, MapPinIcon, ChevronDownIcon, FileTextIcon } from "../ui/Icons";
-import { addPMPlan, updatePMPlan, getParts } from "../../lib/firebaseService";
+import { addPMPlan, updatePMPlan, getParts, getPMPlans } from "../../lib/firebaseService";
 import { useToast } from "../../contexts/ToastContext";
 
 interface PMConfigModalProps {
@@ -310,6 +310,20 @@ export default function PMConfigModal({ isOpen, onClose, machine, plan, onSucces
         setLoading(true);
 
         try {
+            // Check for duplicate plans
+            const allPlans = await getPMPlans();
+            const isDuplicate = allPlans.some(p => 
+                p.machineId === machine.id && 
+                p.taskName === taskName && 
+                p.id !== plan?.id
+            );
+
+            if (isDuplicate) {
+                showError(`มีแผนซ่อมบำรุง "${taskName}" สำหรับเครื่องจักรนี้อยู่แล้ว กรุณาระบุชื่ออื่นหรือแก้ไขแผนเดิม`, "พบแผนซ้ำซ้อน");
+                setLoading(false);
+                return;
+            }
+
             const start = new Date(startDate);
             const finalNextDueDate = new Date(startDate);
 
