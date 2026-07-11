@@ -59,8 +59,8 @@ export default function SchedulePage() {
     const [deleteModalOpen, setDeleteModalOpen] = useState(false);
     const [planToDelete, setPlanToDelete] = useState<PMPlan | null>(null);
 
-    const fetchData = async () => {
-        setLoading(true);
+    const fetchData = async (showSpinner = true) => {
+        if (showSpinner && plans.length === 0) setLoading(true);
         try {
             const [plansData, machinesData] = await Promise.all([
                 getPMPlans(),
@@ -77,7 +77,7 @@ export default function SchedulePage() {
 
     useEffect(() => {
         setMounted(true);
-        fetchData();
+        fetchData(true);
     }, []);
 
     const getStatusInfo = (nextDueDate: Date) => {
@@ -245,7 +245,7 @@ export default function SchedulePage() {
             success(t("msgDeleteSuccess"), t("msgDeleteSuccess"));
             setDeleteModalOpen(false);
             setPlanToDelete(null);
-            fetchData();
+            fetchData(false);
         } catch (error: any) {
             console.error("Error deleting PM plan:", error);
             showError(t("msgDeleteError"), error.message || t("msgError"));
