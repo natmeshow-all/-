@@ -228,7 +228,6 @@ export default function PMConfigModal({ isOpen, onClose, machine, plan, onSucces
 
     useEffect(() => {
         if (plan) {
-            setSelectedMaintenanceType(plan.taskName || "");
             setChecklistItems(plan.checklistItems || []);
             setSelectedLocation(plan.customLocation || machine.Location || "");
             setUseCustomLocation(plan.locationType === "custom");
@@ -281,7 +280,17 @@ export default function PMConfigModal({ isOpen, onClose, machine, plan, onSucces
     };
 
     const getTaskName = () => {
-        return plan?.taskName || "Preventive Maintenance";
+        if (plan?.taskName) return plan.taskName;
+        
+        if (scheduleType === 'monthly') {
+            return `PM: ${t("labelMonthly") || "Monthly"} (${cycleMonths} ${t("unitMonth") || "Months"})`;
+        } else if (scheduleType === 'weekly') {
+            const days = [t("daySun"), t("dayMon"), t("dayTue"), t("dayWed"), t("dayThu"), t("dayFri"), t("daySat")];
+            return `PM: ${t("labelWeekly") || "Weekly"} (${days[weeklyDay]})`;
+        } else if (scheduleType === 'yearly') {
+            return `PM: ${t("labelYearly") || "Yearly"}`;
+        }
+        return `PM`;
     };
 
     const getLocation = () => {
@@ -309,13 +318,23 @@ export default function PMConfigModal({ isOpen, onClose, machine, plan, onSucces
         try {
             // Check for duplicate plans
             const allPlans = await getPMPlans();
-            const isDuplicate = allPlans.some(p => 
-                p.machineId === machine.id && 
-                p.id !== plan?.id
-            );
+            const isDuplicate = allPlans.some(p => {
+                if (p.machineId !== machine.id || p.id === plan?.id) return false;
+                
+                // Check if cycle matches exactly
+                if (p.scheduleType !== scheduleType) return false;
+                
+                if (scheduleType === 'monthly') {
+                    return p.cycleMonths === cycleMonths;
+                }
+                if (scheduleType === 'weekly') {
+                    return p.weeklyDay === weeklyDay;
+                }
+                return true; // For yearly, just scheduleType matching is a duplicate
+            });
 
             if (isDuplicate) {
-                showError(`มีแผนซ่อมบำรุงสำหรับเครื่องจักรนี้อยู่แล้ว ไม่สามารถสร้างแผนซ้ำซ้อนได้`, "พบแผนซ้ำซ้อน");
+                showError(`มีแผนซ่อมบำรุงรอบเวลานี้อยู่แล้ว (เช่น รอบเดือน/สัปดาห์ตรงกัน) ไม่สามารถสร้างแผนซ้ำซ้อนได้`, "พบแผนซ้ำซ้อน");
                 setLoading(false);
                 return;
             }
@@ -399,10 +418,6 @@ export default function PMConfigModal({ isOpen, onClose, machine, plan, onSucces
                                     onChange={(e) => setSelectedPartType(e.target.value)}
                                 >
                                     <option value="">{t("placeholderSelectPartType")}</option>
-                                    {/* Show custom-typed name as first option when using อื่นๆ */}
-                                    {customMaintenanceName && !Object.keys(PART_CHECKLIST_MAP).includes(customMaintenanceName) && (
-                                        <option value={customMaintenanceName}>{customMaintenanceName} (ระบุเอง)</option>
-                                    )}
                                     {Object.keys(PART_CHECKLIST_MAP).map(partType => (
                                         <option key={partType} value={partType}>{partType}</option>
                                     ))}
