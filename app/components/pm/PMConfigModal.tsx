@@ -6,6 +6,7 @@ import { useLanguage } from "../../contexts/LanguageContext";
 import { Machine, PMPlan } from "../../types";
 import { CalendarIcon, ClockIcon, CheckCircleIcon, SettingsIcon, ActivityIcon, MapPinIcon, ChevronDownIcon, FileTextIcon } from "../ui/Icons";
 import { addPMPlan, updatePMPlan, getParts } from "../../lib/firebaseService";
+import { useToast } from "../../contexts/ToastContext";
 
 interface PMConfigModalProps {
     isOpen: boolean;
@@ -185,6 +186,7 @@ const PART_CHECKLIST_MAP: Record<string, string[]> = {
 
 export default function PMConfigModal({ isOpen, onClose, machine, plan, onSuccess }: PMConfigModalProps) {
     const { t } = useLanguage();
+    const { error: showError } = useToast();
     const [loading, setLoading] = useState(false);
 
     const [selectedMaintenanceType, setSelectedMaintenanceType] = useState(plan?.taskName || "");
@@ -293,7 +295,18 @@ export default function PMConfigModal({ isOpen, onClose, machine, plan, onSucces
     const handleSubmit = async (e: React.FormEvent) => {
         e.preventDefault();
         const taskName = getTaskName();
-        if (!taskName) return;
+        if (!taskName) {
+            showError("กรุณาระบุประเภทงานซ่อมบำรุง", "Validation Error");
+            return;
+        }
+        if (checklistItems.length === 0) {
+            showError("กรุณาเพิ่มรายการที่ต้องทำอย่างน้อย 1 รายการ", "Validation Error");
+            return;
+        }
+        if (!startDate) {
+            showError("กรุณาระบุวันที่เริ่มรอบแรก", "Validation Error");
+            return;
+        }
         setLoading(true);
 
         try {
@@ -362,7 +375,6 @@ export default function PMConfigModal({ isOpen, onClose, machine, plan, onSucces
                         </label>
                         <div className="relative">
                             <select
-                                required
                                 className="input-field w-full text-lg font-semibold appearance-none cursor-pointer"
                                 value={selectedMaintenanceType}
                                 onChange={(e) => {
@@ -386,7 +398,6 @@ export default function PMConfigModal({ isOpen, onClose, machine, plan, onSucces
                         {(selectedMaintenanceType === "อื่นๆ" || selectedMaintenanceType === t("labelOtherCustom")) && (
                             <input
                                 type="text"
-                                required
                                 placeholder={t("placeholderSpecifyMaintenanceName")}
                                 className="input-field w-full mt-2 bg-accent-blue/5 border-accent-blue/30 focus:border-accent-blue"
                                 value={customMaintenanceName}
@@ -580,7 +591,6 @@ export default function PMConfigModal({ isOpen, onClose, machine, plan, onSucces
                                 </label>
                                 <input
                                     type="date"
-                                    required
                                     className="input-field w-full"
                                     value={startDate}
                                     onChange={(e) => setStartDate(e.target.value)}
