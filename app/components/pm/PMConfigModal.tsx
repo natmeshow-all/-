@@ -318,13 +318,30 @@ export default function PMConfigModal({ isOpen, onClose, machine, plan, onSucces
         try {
             // Check for duplicate plans
             const allPlans = await getPMPlans();
+            let duplicateErrorMsg = "";
+
             const isDuplicate = allPlans.some(p => {
-                if (p.machineId !== machine.id || p.id === plan?.id) return false;
+                // If it's a different machine, or we are editing this exact plan, skip
+                if (String(p.machineId) !== String(machine.id) || p.id === plan?.id) return false;
                 
-                // Check if the schedule type (monthly/weekly/yearly) is the same.
+                // 1. Check for unclosed tasks (due or overdue)
+                // If nextDueDate is in the past or today, the task is still pending/overdue
+                const today = new Date();
+                today.setHours(0, 0, 0, 0);
+                const pDueDate = new Date(p.nextDueDate);
+                pDueDate.setHours(0, 0, 0, 0);
+                
+                if (pDueDate <= today) {
+                    duplicateErrorMsg = "เครื่องจักรนี้มีงาน PM ค้างอยู่ (ยังไม่ได้ปิดงาน) ไม่สามารถสร้างแผนใหม่ได้จนกว่าจะเคลียร์งานเก่า";
+                    return true;
+                }
+
+                // 2. Check if the schedule type (monthly/weekly/yearly) is the same.
                 // We only allow ONE plan of each type per machine.
                 const pScheduleType = p.scheduleType || 'monthly';
                 if (pScheduleType === scheduleType) {
+                    const scheduleText = scheduleType === 'monthly' ? 'รายเดือน' : scheduleType === 'weekly' ? 'รายสัปดาห์' : 'รายปี';
+                    duplicateErrorMsg = `เครื่องจักรนี้มีแผนซ่อมบำรุงแบบ "${scheduleText}" อยู่แล้ว กรุณาแก้ไขจากแผนเดิมแทนการสร้างใหม่`;
                     return true;
                 }
                 
@@ -332,8 +349,7 @@ export default function PMConfigModal({ isOpen, onClose, machine, plan, onSucces
             });
 
             if (isDuplicate) {
-                const scheduleText = scheduleType === 'monthly' ? 'รายเดือน' : scheduleType === 'weekly' ? 'รายสัปดาห์' : 'รายปี';
-                showError(`เครื่องจักรนี้มีแผนซ่อมบำรุงแบบ "${scheduleText}" อยู่แล้ว กรุณาแก้ไขจากแผนเดิมแทนการสร้างใหม่`, "พบแผนซ้ำซ้อน");
+                showError(duplicateErrorMsg, "ไม่สามารถสร้างแผนได้");
                 setLoading(false);
                 return;
             }
