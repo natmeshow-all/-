@@ -11,9 +11,34 @@ import { decodeSecret } from '../../../lib/obfuscate';
 
 export async function GET(request: Request) {
     try {
-        // 1. Fetch PM Plans and Settings
-        const allPlans = await getPMPlans();
-        const settings = await getSystemSettings();
+        const dbUrl = process.env.NEXT_PUBLIC_FIREBASE_DATABASE_URL;
+        const dbSecret = process.env.FIREBASE_DATABASE_SECRET;
+
+        if (!dbUrl || !dbSecret) {
+            return NextResponse.json({ error: "Missing FIREBASE_DATABASE_SECRET or URL in Vercel Env" }, { status: 500 });
+        }
+
+        // 1. Fetch PM Plans and Settings securely via REST API
+        const plansRes = await fetch(`${dbUrl}/pm_plans.json?auth=${dbSecret}`);
+        const settingsRes = await fetch(`${dbUrl}/system_settings.json?auth=${dbSecret}`);
+
+        if (!plansRes.ok || !settingsRes.ok) {
+            return NextResponse.json({ error: "Failed to fetch from Firebase REST API" }, { status: 500 });
+        }
+
+        const pmPlansData = await plansRes.json();
+        const settings = await settingsRes.json();
+
+        // Convert object to array
+        const allPlans: PMPlan[] = [];
+        if (pmPlansData) {
+            Object.keys(pmPlansData).forEach(key => {
+                allPlans.push({
+                    id: key,
+                    ...pmPlansData[key],
+                });
+            });
+        }
         
         // 2. Filter for today
         const today = new Date();
