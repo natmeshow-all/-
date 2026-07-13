@@ -40,13 +40,14 @@ export async function GET(request: Request) {
             });
         }
         
-        // 2. Filter for today
-        const today = new Date();
-        const startOfToday = new Date(today.getFullYear(), today.getMonth(), today.getDate()).getTime();
+        // 2. Filter for today (BKK Timezone)
+        const bkkDateString = new Date().toLocaleDateString('en-CA', { timeZone: 'Asia/Bangkok' }); // 'YYYY-MM-DD'
+        const startOfToday = new Date(bkkDateString).getTime(); // Parses as UTC midnight of the date
         const endOfToday = startOfToday + 24 * 60 * 60 * 1000 - 1;
 
         const plansToday = allPlans.filter(plan => {
             if (plan.status !== 'active') return false;
+            // plan.nextDueDate is typically "YYYY-MM-DD", which parses as UTC midnight
             const dueDate = new Date(plan.nextDueDate).getTime();
             return dueDate >= startOfToday && dueDate <= endOfToday;
         });
@@ -55,8 +56,9 @@ export async function GET(request: Request) {
         //     return NextResponse.json({ message: "No PM plans scheduled for today." });
         // }
 
-        // Format Date Thai
-        const dateText = today.toLocaleDateString('th-TH', {
+        // Format Date Thai (BKK Timezone)
+        const dateText = new Date().toLocaleDateString('th-TH', {
+            timeZone: 'Asia/Bangkok',
             year: 'numeric',
             month: 'long',
             day: 'numeric',
