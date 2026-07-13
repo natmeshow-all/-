@@ -121,7 +121,7 @@ export default function MaintenancePage() {
     const [loadingMore, setLoadingMore] = useState(false);
     const [cursor, setCursor] = useState<{ date: string, key: string } | undefined>(undefined);
     const [hasMore, setHasMore] = useState(true);
-    const PAGE_SIZE = 50;
+    const PAGE_SIZE = 300;
 
     // Admin Editing States
     const [editingRecordId, setEditingRecordId] = useState<string | null>(null);
@@ -1050,7 +1050,7 @@ export default function MaintenancePage() {
                             <div className="flex flex-wrap gap-2 pt-2 border-t border-border-light/10">
                                 <span className="text-[10px] text-text-muted self-center mr-1 font-semibold tracking-wide uppercase">ประเภทงาน:</span>
                                 {[
-                                    { id: 'all', label: 'ทั้งหมด', color: 'accent-blue', emoji: '📋' },
+                                    { id: 'all', label: 'ล่าสุด (โหลดแล้ว)', color: 'accent-blue', emoji: '📋' },
                                     { id: 'preventive', label: 'PM / ตรวจเช็ค', color: 'accent-cyan', emoji: '🔧' },
                                     { id: 'corrective', label: 'ซ่อมทั่วไป', color: 'accent-yellow', emoji: '⚡' },
                                     { id: 'partReplacement', label: 'เปลี่ยนอะไหล่', color: 'accent-green', emoji: '🔩' },
@@ -1087,7 +1087,7 @@ export default function MaintenancePage() {
                             <div className="flex flex-wrap gap-2 pt-2 border-t border-border-light/10">
                                 <span className="text-[10px] text-text-muted self-center mr-1 font-semibold tracking-wide uppercase">สถานะ:</span>
                                 {[
-                                    { id: 'all', label: 'ทั้งหมด', color: 'accent-blue' },
+                                    { id: 'all', label: 'ล่าสุด (โหลดแล้ว)', color: 'accent-blue' },
                                     { id: 'pending', label: 'รอดำเนินการ', color: 'accent-yellow' },
                                     { id: 'inProgress', label: 'กำลังดำเนินการ', color: 'accent-purple' },
                                     { id: 'completed', label: 'เสร็จสิ้น', color: 'accent-green' },
