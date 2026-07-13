@@ -1,7 +1,8 @@
 import { NextResponse } from 'next/server';
 import { ImageResponse } from 'next/og';
-import { getPMPlans } from '../../../lib/firebaseService';
+import { getPMPlans, getSystemSettings } from '../../../lib/firebaseService';
 import { PMPlan } from '../../../types';
+import { decodeSecret } from '../../../lib/obfuscate';
 
 // Must use edge runtime for ImageResponse to work easily without extra configuration in some cases,
 // but we need node runtime to use some fetch features, let's stick to default (nodejs) or edge.
@@ -10,8 +11,9 @@ import { PMPlan } from '../../../types';
 
 export async function GET(request: Request) {
     try {
-        // 1. Fetch PM Plans
+        // 1. Fetch PM Plans and Settings
         const allPlans = await getPMPlans();
+        const settings = await getSystemSettings();
         
         // 2. Filter for today
         const today = new Date();
@@ -158,34 +160,41 @@ export async function GET(request: Request) {
 
         const messageText = `แจ้งเตือนแผน PM ประจำวันที่ ${dateText}\nมีแผนที่ต้องดำเนินการทั้งหมด ${plansToday.length} รายการ`;
 
+        let telegramStatus: any = "Not configured";
         // 5. Send to Telegram
         try {
-            const telegramBotToken = process.env.TELEGRAM_BOT_TOKEN;
-            const telegramChatId = process.env.TELEGRAM_CHAT_ID;
+            const telegramBotToken = settings ? decodeSecret(settings.telegramBotToken || "") : "";
+            const telegramChatId = settings ? decodeSecret(settings.telegramChatId || "") : "";
+            const isTelegramEnabled = settings ? settings.telegramNotificationsEnabled : false;
             
-            if (telegramBotToken && telegramChatId) {
+            if (telegramBotToken && telegramChatId && isTelegramEnabled) {
                 const tgFormData = new FormData();
                 tgFormData.append('chat_id', telegramChatId);
                 tgFormData.append('caption', messageText);
                 tgFormData.append('photo', new Blob([buffer], { type: 'image/png' }), 'report.png');
 
-                await fetch(`https://api.telegram.org/bot${telegramBotToken}/sendPhoto`, {
+                const tgRes = await fetch(`https://api.telegram.org/bot${telegramBotToken}/sendPhoto`, {
                     method: 'POST',
                     body: tgFormData,
                 });
+                telegramStatus = await tgRes.json();
+            } else {
+                telegramStatus = "Not configured or disabled in settings";
             }
-        } catch (err) {
+        } catch (err: any) {
             console.error("Failed to send to Telegram:", err);
+            telegramStatus = { error: err.message };
         }
 
+        let lineStatus: any = "Not configured or no image URL";
         // 6. Send to LINE
         if (publicImageUrl) {
             try {
-                const lineAccessToken = process.env.LINE_CHANNEL_ACCESS_TOKEN;
-                const lineUserId = process.env.LINE_USER_ID;
+                const lineAccessToken = settings ? decodeSecret(settings.lineChannelAccessToken || "") : "";
+                const lineUserId = settings ? decodeSecret(settings.lineTargetId || "") : "";
                 
                 if (lineAccessToken && lineUserId) {
-                    await fetch('https://api.line.me/v2/bot/message/push', {
+                    const lineRes = await fetch('https://api.line.me/v2/bot/message/push', {
                         method: 'POST',
                         headers: {
                             'Content-Type': 'application/json',
@@ -202,16 +211,24 @@ export async function GET(request: Request) {
                             ],
                         }),
                     });
+                    
+                    const resText = await lineRes.text();
+                    lineStatus = { status: lineRes.status, response: resText || 'OK' };
+                } else {
+                    lineStatus = "Line credentials missing in system settings";
                 }
-            } catch (err) {
+            } catch (err: any) {
                 console.error("Failed to send to LINE:", err);
+                lineStatus = { error: err.message };
             }
         }
 
         return NextResponse.json({ 
             success: true, 
             plansCount: plansToday.length, 
-            imageUrl: publicImageUrl 
+            imageUrl: publicImageUrl,
+            telegram: telegramStatus,
+            line: lineStatus
         });
 
     } catch (error: any) {
