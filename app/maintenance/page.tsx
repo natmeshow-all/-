@@ -72,7 +72,8 @@ export default function MaintenancePage() {
     const [activeTaskTypeFilter, setActiveTaskTypeFilter] = useState<'all' | 'preventive' | 'corrective' | 'partReplacement' | 'fromPM'>('all');
     const [activeStatusFilter, setActiveStatusFilter] = useState<'all' | 'pending' | 'inProgress' | 'completed'>('all');
     const [allMachines, setAllMachines] = useState<Machine[]>([]);
-    const [allRecordsForStats, setAllRecordsForStats] = useState<MaintenanceRecord[]>([]);
+    const [allDatabaseRecords, setAllDatabaseRecords] = useState<MaintenanceRecord[]>([]);
+    const [showScrollTop, setShowScrollTop] = useState(false);
 
     // Delete Confirmation State
     const [deleteConfirmOpen, setDeleteConfirmOpen] = useState(false);
@@ -104,7 +105,20 @@ export default function MaintenancePage() {
             
             if (shouldExpand) setIsFilterExpanded(true);
         }
+        const handleScroll = () => {
+            if (window.scrollY > 300) {
+                setShowScrollTop(true);
+            } else {
+                setShowScrollTop(false);
+            }
+        };
+        window.addEventListener('scroll', handleScroll);
+        return () => window.removeEventListener('scroll', handleScroll);
     }, []);
+
+    const scrollToTop = () => {
+        window.scrollTo({ top: 0, behavior: 'smooth' });
+    };
 
     // Part Replacement Plan Modal State
     const [replacementPlanOpen, setReplacementPlanOpen] = useState(false);
@@ -121,7 +135,7 @@ export default function MaintenancePage() {
     const [loadingMore, setLoadingMore] = useState(false);
     const [cursor, setCursor] = useState<{ date: string, key: string } | undefined>(undefined);
     const [hasMore, setHasMore] = useState(true);
-    const PAGE_SIZE = 300;
+    const PAGE_SIZE = 50;
 
     // Admin Editing States
     const [editingRecordId, setEditingRecordId] = useState<string | null>(null);
@@ -623,15 +637,16 @@ export default function MaintenancePage() {
     const fetchInitialRecords = async () => {
         setLoading(true);
         try {
-            const [paginatedData, machinesData] = await Promise.all([
+            const [paginatedData, machinesData, allRecordsData] = await Promise.all([
                 getMaintenanceRecordsPaginated(PAGE_SIZE),
-                getMachines()
+                getMachines(),
+                import("../lib/firebaseService").then(m => m.getMaintenanceRecords())
             ]);
 
             const { records: newRecords, nextCursor } = paginatedData;
 
             setAllFetchedRecords(newRecords);
-            setAllRecordsForStats(newRecords);
+            setAllDatabaseRecords(allRecordsData);
 
             const preventiveData = newRecords;
             setRecords(preventiveData);
@@ -654,7 +669,6 @@ export default function MaintenancePage() {
             const { records: newRecords, nextCursor } = await getMaintenanceRecordsPaginated(PAGE_SIZE, cursor.date, cursor.key);
 
             setAllFetchedRecords(prev => [...prev, ...newRecords]);
-            setAllRecordsForStats(prev => [...prev, ...newRecords]);
 
             const newPreventiveData = newRecords;
             setRecords(prev => [...prev, ...newPreventiveData]);
@@ -1035,7 +1049,7 @@ export default function MaintenancePage() {
                                         {filter.label}
                                         <span className={`px-1 py-0.5 rounded text-[9px] ${activeQuickFilter === filter.id ? `bg-${filter.color} text-white` : 'bg-bg-secondary/60 text-text-muted'}`}>
                                             {/* Count Logic: Uses same frequency helper */}
-                                            {filter.id === 'all' ? records.length : records.filter(r => {
+                                            {filter.id === 'all' ? allDatabaseRecords.length : allDatabaseRecords.filter(r => {
                                                 if (filter.id === 'thisMonth') return getFrequencyType(r) === 'monthly';
                                                 if (filter.id === 'thisWeek') return getFrequencyType(r) === 'weekly';
                                                 if (filter.id === 'yearly') return getFrequencyType(r) === 'yearly';
@@ -1050,13 +1064,13 @@ export default function MaintenancePage() {
                             <div className="flex flex-wrap gap-2 pt-2 border-t border-border-light/10">
                                 <span className="text-[10px] text-text-muted self-center mr-1 font-semibold tracking-wide uppercase">ประเภทงาน:</span>
                                 {[
-                                    { id: 'all', label: 'ล่าสุด (โหลดแล้ว)', color: 'accent-blue', emoji: '📋' },
+                                    { id: 'all', label: 'ทั้งหมด', color: 'accent-blue', emoji: '📋' },
                                     { id: 'preventive', label: 'PM / ตรวจเช็ค', color: 'accent-cyan', emoji: '🔧' },
                                     { id: 'corrective', label: 'ซ่อมทั่วไป', color: 'accent-yellow', emoji: '⚡' },
                                     { id: 'partReplacement', label: 'เปลี่ยนอะไหล่', color: 'accent-green', emoji: '🔩' },
                                     { id: 'fromPM', label: 'เปลี่ยนจากแผน PM', color: 'accent-purple', emoji: '🏷️' },
                                 ].map((f) => {
-                                    const count = records.filter(r => {
+                                    const count = allDatabaseRecords.filter(r => {
                                         if (f.id === 'all') return true;
                                         if (f.id === 'preventive') return r.type === 'preventive' || r.type === 'inspection' || r.type === 'oilChange';
                                         if (f.id === 'corrective') return r.type === 'corrective';
@@ -1087,12 +1101,12 @@ export default function MaintenancePage() {
                             <div className="flex flex-wrap gap-2 pt-2 border-t border-border-light/10">
                                 <span className="text-[10px] text-text-muted self-center mr-1 font-semibold tracking-wide uppercase">สถานะ:</span>
                                 {[
-                                    { id: 'all', label: 'ล่าสุด (โหลดแล้ว)', color: 'accent-blue' },
+                                    { id: 'all', label: 'ทั้งหมด', color: 'accent-blue' },
                                     { id: 'pending', label: 'รอดำเนินการ', color: 'accent-yellow' },
                                     { id: 'inProgress', label: 'กำลังดำเนินการ', color: 'accent-purple' },
                                     { id: 'completed', label: 'เสร็จสิ้น', color: 'accent-green' },
                                 ].map((f) => {
-                                    const count = records.filter(r => {
+                                    const count = allDatabaseRecords.filter(r => {
                                         if (f.id === 'all') return true;
                                         return r.status === f.id;
                                     }).length;
@@ -1115,15 +1129,15 @@ export default function MaintenancePage() {
                             </div>
 
                             <div className="flex items-center justify-between text-[11px] text-text-muted mt-1">
-                                <p>{t("statFoundHistoryPrefix") || "พบประวัติทั้งหมด"} <span className="text-text-primary font-bold">{filteredRecords.length}</span> {t("statFoundHistorySuffix") || "รายการ"}</p>
+                                <p>{t("statFoundHistoryPrefix") || "แสดงข้อมูล"} <span className="text-text-primary font-bold">{filteredRecords.length}</span> {t("statFoundHistorySuffix") || "รายการ"} (ทั้งหมด {allDatabaseRecords.length})</p>
                                 <div className="flex items-center gap-3">
                                     <div className="flex items-center gap-1">
                                         <div className="w-2 h-2 rounded-full bg-accent-blue shadow-[0_0_5px_rgba(0,149,255,0.5)]" />
-                                        <span>PM: <span className="text-text-primary font-bold">{allRecordsForStats.filter(r => r.type === 'preventive').length}</span></span>
+                                        <span>PM รวม: <span className="text-text-primary font-bold">{allDatabaseRecords.filter(r => r.type === 'preventive').length}</span></span>
                                     </div>
                                     <div className="flex items-center gap-1">
                                         <div className="w-2 h-2 rounded-full bg-accent-green shadow-[0_0_5px_rgba(0,255,149,0.5)]" />
-                                        <span>Overhaul: <span className="text-text-primary font-bold">{allRecordsForStats.filter(r => r.type === 'partReplacement').length}</span></span>
+                                        <span>Overhaul รวม: <span className="text-text-primary font-bold">{allDatabaseRecords.filter(r => r.type === 'partReplacement').length}</span></span>
                                     </div>
                                 </div>
                             </div>
@@ -2220,6 +2234,29 @@ export default function MaintenancePage() {
                     </div>
                 )}
 
+                {/* Load More Button */}
+                {!loading && hasMore && (
+                    <div className="flex justify-center mt-6 mb-8">
+                        <button
+                            onClick={handleLoadMore}
+                            disabled={loadingMore}
+                            className="px-6 py-2.5 rounded-full bg-bg-tertiary border border-border-light/30 text-text-primary font-bold text-sm hover:bg-bg-secondary hover:border-primary/50 transition-all shadow-[0_4px_10px_rgba(0,0,0,0.3)] disabled:opacity-50 flex items-center gap-2"
+                        >
+                            {loadingMore ? (
+                                <>
+                                    <div className="animate-spin rounded-full h-4 w-4 border-2 border-primary border-t-transparent"></div>
+                                    กำลังโหลด...
+                                </>
+                            ) : (
+                                <>
+                                    <RefreshCwIcon size={16} className="text-primary" />
+                                    โหลดข้อมูลเพิ่มเติม (Load More)
+                                </>
+                            )}
+                        </button>
+                    </div>
+                )}
+
                 {!loading && filteredRecords.length === 0 && (
                     <div className="empty-state py-12">
                         <WrenchIcon size={48} className="text-text-muted mb-3" />
@@ -2478,6 +2515,17 @@ export default function MaintenancePage() {
                 isOpen={exportModalOpen}
                 onClose={() => setExportModalOpen(false)}
             />
+
+            {/* Scroll to Top Button */}
+            {showScrollTop && (
+                <button
+                    onClick={scrollToTop}
+                    className="fixed bottom-24 right-6 p-3 rounded-full bg-primary/20 text-primary border border-primary/40 hover:bg-primary hover:text-bg-dark transition-all shadow-[0_0_15px_rgba(0,255,255,0.3)] z-40 backdrop-blur-sm animate-fade-in"
+                    title="เลื่อนขึ้นบนสุด"
+                >
+                    <ChevronUpIcon size={24} />
+                </button>
+            )}
         </div>
     );
 }
