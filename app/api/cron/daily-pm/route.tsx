@@ -18,24 +18,31 @@ export async function GET(request: Request) {
             return NextResponse.json({ error: "Missing FIREBASE_DATABASE_SECRET or URL in Vercel Env" }, { status: 500 });
         }
 
-        // 1. Fetch PM Plans and Settings securely via REST API
+        // 1. Fetch PM Plans, Settings, and Machines securely via REST API
         const plansRes = await fetch(`${dbUrl}/pm_plans.json?auth=${dbSecret}`);
         const settingsRes = await fetch(`${dbUrl}/system_settings.json?auth=${dbSecret}`);
+        const machinesRes = await fetch(`${dbUrl}/machines.json?auth=${dbSecret}`);
 
-        if (!plansRes.ok || !settingsRes.ok) {
+        if (!plansRes.ok || !settingsRes.ok || !machinesRes.ok) {
             return NextResponse.json({ error: "Failed to fetch from Firebase REST API" }, { status: 500 });
         }
 
         const pmPlansData = await plansRes.json();
         const settings = await settingsRes.json();
+        const machinesData = await machinesRes.json();
 
         // Convert object to array
-        const allPlans: PMPlan[] = [];
+        const allPlans: (PMPlan & { machineCode?: string })[] = [];
         if (pmPlansData) {
             Object.keys(pmPlansData).forEach(key => {
+                const plan = pmPlansData[key];
+                const machine = machinesData ? machinesData[plan.machineId] : null;
+                const machineCode = machine?.code || machine?.internalCode || plan.machineId;
+                
                 allPlans.push({
                     id: key,
-                    ...pmPlansData[key],
+                    ...plan,
+                    machineCode
                 });
             });
         }
@@ -114,7 +121,7 @@ export async function GET(request: Request) {
                                                     {plan.machineName}
                                                 </span>
                                                 <span style={{ fontSize: '20px', color: '#38bdf8', marginTop: '4px' }}>
-                                                    รหัส: {plan.machineId || '-'}
+                                                    รหัส: {plan.machineCode || '-'}
                                                 </span>
                                             </div>
                                         </div>
