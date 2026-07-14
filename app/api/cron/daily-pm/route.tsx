@@ -8,6 +8,8 @@ import { decodeSecret } from '../../../lib/obfuscate';
 // but we need node runtime to use some fetch features, let's stick to default (nodejs) or edge.
 // Actually, ImageResponse works in both now.
 // Let's use edge if possible, or just default.
+export const dynamic = 'force-dynamic';
+export const revalidate = 0;
 
 export async function GET(request: Request) {
     try {
