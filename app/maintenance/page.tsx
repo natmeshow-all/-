@@ -1201,7 +1201,8 @@ export default function MaintenancePage() {
                                 if (v.includes('สมบูรณ์') || v.includes('ปกติ') || v.includes('เรียบร้อย') || v.includes('ไม่มีรอย') || v.includes('ไม่มี') || v.includes('ทำความสะอาด') || v.includes('เช็ด')) return 100;
                                 
                                 // Numeric / Measurement Parsing
-                                const numbers = val.match(/-?\d+(\.\d+)?/g);
+                                const cleanVal = val.replace(/[a-zA-Zก-ฮ]+\s*\d*\s*[:=]\s*/g, ''); // Removes prefixes like "L1:", "Phase 1:", "X="
+                                const numbers = cleanVal.match(/-?\d+(\.\d+)?/g);
                                 if (numbers && numbers.length > 0) {
                                     let min = standard?.min;
                                     let max = standard?.max;
