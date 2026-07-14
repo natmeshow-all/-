@@ -585,9 +585,9 @@ export default function PMExecutionModal({ isOpen, onClose, plan, onSuccess }: P
     const scoreValue = (val: string): number => {
         const v = val.toLowerCase();
         if (v.includes('ถึงกำหนดเปลี่ยน')) return 10;
-        if (v.includes('ผิดปกติ')) return 15;
+        if (v.includes('ผิดปกติ') || v.includes('มีมาก') || v.includes('ต้องซ่อม') || v.includes('ชำรุด') || v.includes('เสียหาย') || v.includes('แตก')) return 15;
         if (v.includes('ต้องเติม')) return 30;
-        if (v.includes('เฝ้าระวัง')) return 50;
+        if (v.includes('เฝ้าระวัง') || v.includes('มีเล็กน้อย') || v.includes('ควรเปลี่ยน') || v.includes('ควรซ่อม') || v.includes('ต่ำ')) return 50;
         if (v.includes('พอใช้')) return 65;
         if (v.includes('เหมาะสม')) return 80;
         if (v.includes('สมบูรณ์') || v.includes('ปกติ') || v.includes('เรียบร้อย') || v.includes('ไม่มีรอย') || v.includes('ไม่มี')) return 100;

@@ -1193,9 +1193,9 @@ export default function MaintenancePage() {
                                 const label = itemLabel.toLowerCase();
                                 
                                 if (v.includes('ถึงกำหนดเปลี่ยน')) return 10;
-                                if (v.includes('ผิดปกติ')) return 15;
+                                if (v.includes('ผิดปกติ') || v.includes('มีมาก') || v.includes('ต้องซ่อม') || v.includes('ชำรุด') || v.includes('เสียหาย') || v.includes('แตก')) return 15;
                                 if (v.includes('ต้องเติม')) return 30;
-                                if (v.includes('เฝ้าระวัง')) return 50;
+                                if (v.includes('เฝ้าระวัง') || v.includes('มีเล็กน้อย') || v.includes('ควรเปลี่ยน') || v.includes('ควรซ่อม') || v.includes('ต่ำ')) return 50;
                                 if (v.includes('พอใช้')) return 65;
                                 if (v.includes('เหมาะสม')) return 80;
                                 if (v.includes('สมบูรณ์') || v.includes('ปกติ') || v.includes('เรียบร้อย') || v.includes('ไม่มีรอย') || v.includes('ไม่มี') || v.includes('ทำความสะอาด') || v.includes('เช็ด')) return 100;
@@ -1860,10 +1860,10 @@ export default function MaintenancePage() {
                                                             if (val.includes("สมบูรณ์") || val.includes("ปกติ") || val.includes("เรียบร้อย") || val.includes("ไม่มี")) {
                                                                 valueColor = "text-accent-green font-bold";
                                                                 bgColor = "bg-accent-green/10 border-accent-green/20";
-                                                            } else if (val.includes("พอใช้") || val.includes("เฝ้าระวัง") || val.includes("ต่ำ") || val.includes("เติมเพิ่ม")) {
+                                                            } else if (val.includes("พอใช้") || val.includes("เฝ้าระวัง") || val.includes("ต่ำ") || val.includes("เติมเพิ่ม") || val.includes("มีเล็กน้อย") || val.includes("ควรซ่อม") || val.includes("ควรเปลี่ยน")) {
                                                                 valueColor = "text-accent-yellow font-bold";
                                                                 bgColor = "bg-accent-yellow/10 border-accent-yellow/20";
-                                                            } else if (val.includes("เปลี่ยน") || val.includes("ผิดปกติ") || val.includes("ต้องเติม")) {
+                                                            } else if (val.includes("เปลี่ยน") || val.includes("ผิดปกติ") || val.includes("ต้องเติม") || val.includes("มีมาก") || val.includes("ต้องซ่อม") || val.includes("ชำรุด") || val.includes("แตก") || val.includes("เสียหาย")) {
                                                                 valueColor = "text-accent-red font-bold";
                                                                 bgColor = "bg-accent-red/10 border-accent-red/20";
                                                             }
