@@ -1209,8 +1209,36 @@ export default function MaintenancePage() {
                                     
                                     // Auto-infer if standard is missing
                                     if (min === undefined && max === undefined) {
-                                        if (label.includes('amp') || label.includes('กระแส')) { min = 1; max = 15; }
-                                        else if (label.includes('volt') || label.includes('แรงดัน')) { min = 170; max = 420; }
+                                        if (label.includes('amp') || label.includes('กระแส')) {
+                                            let maxAmp = 15; // fallback
+                                            let hasPowerData = false;
+                                            if (machine) {
+                                                const powerStr = ((machine.powerRating || '') + ' ' + (machine.capacity || '')).toLowerCase();
+                                                const kwMatch = powerStr.match(/(\d+(\.\d+)?)\s*kw/);
+                                                const hpMatch = powerStr.match(/(\d+(\.\d+)?)\s*hp/);
+                                                if (kwMatch) {
+                                                    maxAmp = parseFloat(kwMatch[1]) * 2.5; // approx 2A per kW + 20% margin
+                                                    hasPowerData = true;
+                                                } else if (hpMatch) {
+                                                    maxAmp = parseFloat(hpMatch[1]) * 2.0; // approx 1.5A per HP + 20% margin
+                                                    hasPowerData = true;
+                                                }
+                                            }
+                                            min = 0.01;
+                                            max = hasPowerData ? maxAmp : 15;
+                                        }
+                                        else if (label.includes('volt') || label.includes('แรงดัน')) { 
+                                            if (label.includes('หม้อแปลง') || label.includes('transformer')) {
+                                                min = 5; max = 380;
+                                            } else {
+                                                const firstNum = parseFloat(numbers[0]);
+                                                if (firstNum < 300) {
+                                                    min = 170; max = 265; // 220V system
+                                                } else {
+                                                    min = 360; max = 420; // 380V system
+                                                }
+                                            }
+                                        }
                                     }
                                     
                                     if (min !== undefined && max !== undefined) {
@@ -1661,7 +1689,32 @@ export default function MaintenancePage() {
                                                                         const barColor = isCritical ? '#ef4444' : isWarning ? '#fbbf24' : '#60a5fa';
                                                                         const bgCls = isCritical ? 'bg-red-500/5 border-red-500/20' : isWarning ? 'bg-yellow-500/5 border-yellow-500/20' : 'bg-blue-500/5 border-blue-500/20';
                                                                         const textCls = isCritical ? 'text-red-400' : isWarning ? 'text-yellow-400' : 'text-blue-400';
-                                                                        const tierLabel = isCritical ? '🔴 วิกฤต' : isWarning ? '🟡 เฝ้าระวัง' : '🔵 ดูแล';
+                                                                        let customAlertLabel = "";
+                                                                        if (isCritical) {
+                                                                            const lbl = c.item.toLowerCase();
+                                                                            if (lbl.includes('volt') || lbl.includes('แรงดัน')) {
+                                                                                const cleanV = (c.value || '').replace(/[a-zA-Zก-ฮ]+\s*\d*\s*[:=]\s*/g, '');
+                                                                                const nums = cleanV.match(/-?\d+(\.\d+)?/g);
+                                                                                if (nums && nums.length > 0) {
+                                                                                    const num = parseFloat(nums[0]);
+                                                                                    if (lbl.includes('หม้อแปลง') || lbl.includes('transformer')) {
+                                                                                        if (num < 5) customAlertLabel = " (โวลต์ต่ำ)";
+                                                                                        else if (num > 380) customAlertLabel = " (โวลต์สูง)";
+                                                                                    } else {
+                                                                                        if (num < 300) {
+                                                                                            if (num < 170) customAlertLabel = " (โวลต์ต่ำ)";
+                                                                                            else if (num > 265) customAlertLabel = " (โวลต์สูง)";
+                                                                                        } else {
+                                                                                            if (num < 360) customAlertLabel = " (โวลต์ต่ำ)";
+                                                                                            else if (num > 420) customAlertLabel = " (โวลต์สูง)";
+                                                                                        }
+                                                                                    }
+                                                                                }
+                                                                            } else if (lbl.includes('amp') || lbl.includes('กระแส')) {
+                                                                                customAlertLabel = " (กระแสไฟเกิน)";
+                                                                            }
+                                                                        }
+                                                                        const tierLabel = (isCritical ? '🔴 วิกฤต' : isWarning ? '🟡 เฝ้าระวัง' : '🔵 ดูแล') + customAlertLabel;
                                                                         return (
                                                                             <div key={i} className={`rounded-lg border px-3 py-2 ${bgCls}`}>
                                                                                 <div className="flex items-start justify-between gap-2 mb-1.5">
