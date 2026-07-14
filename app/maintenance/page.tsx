@@ -1207,6 +1207,23 @@ export default function MaintenancePage() {
                                     let min = standard?.min;
                                     let max = standard?.max;
                                     
+                                    // Custom Vibration Logic (ISO 10816 Standard fallback)
+                                    if (label.includes('สั่นสะเทือน') || label.includes('vibration')) {
+                                        let vOut = false;
+                                        let vWarn = false;
+                                        const vMax = max !== undefined ? max : 7.1; // Default Unacceptable > 7.1 mm/s
+                                        const vWarnLimit = max !== undefined ? (min !== undefined ? min + (max-min)*0.5 : max * 0.4) : 2.8; // Default Unsatisfactory > 2.8 mm/s
+                                        
+                                        numbers.forEach(n => {
+                                            const num = parseFloat(n);
+                                            if (num > vMax) vOut = true;
+                                            else if (num > vWarnLimit) vWarn = true;
+                                        });
+                                        if (vOut) return 15;
+                                        if (vWarn) return 50;
+                                        return 100;
+                                    }
+                                    
                                     // Auto-infer if standard is missing
                                     if (min === undefined && max === undefined) {
                                         if (label.includes('amp') || label.includes('กระแส')) {
@@ -1690,7 +1707,7 @@ export default function MaintenancePage() {
                                                                         const bgCls = isCritical ? 'bg-red-500/5 border-red-500/20' : isWarning ? 'bg-yellow-500/5 border-yellow-500/20' : 'bg-blue-500/5 border-blue-500/20';
                                                                         const textCls = isCritical ? 'text-red-400' : isWarning ? 'text-yellow-400' : 'text-blue-400';
                                                                         let customAlertLabel = "";
-                                                                        if (isCritical) {
+                                                                        if (isCritical || isWarning) {
                                                                             const lbl = c.item.toLowerCase();
                                                                             if (lbl.includes('volt') || lbl.includes('แรงดัน')) {
                                                                                 const cleanV = (c.value || '').replace(/[a-zA-Zก-ฮ]+\s*\d*\s*[:=]\s*/g, '');
@@ -1712,6 +1729,8 @@ export default function MaintenancePage() {
                                                                                 }
                                                                             } else if (lbl.includes('amp') || lbl.includes('กระแส')) {
                                                                                 customAlertLabel = " (กระแสไฟเกิน)";
+                                                                            } else if (lbl.includes('สั่นสะเทือน') || lbl.includes('vibration')) {
+                                                                                customAlertLabel = isCritical ? " (อันตราย: เครื่องจักรอาจเสียหาย)" : " (ควรตรวจสอบ)";
                                                                             }
                                                                         }
                                                                         const tierLabel = (isCritical ? '🔴 วิกฤต' : isWarning ? '🟡 เฝ้าระวัง' : '🔵 ดูแล') + customAlertLabel;
