@@ -234,8 +234,47 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
         };
     }, []);
 
+    // --- Inactivity Auto-Logout Timer (15 minutes) ---
+    useEffect(() => {
+        if (!user) return; // Only track inactivity when logged in
+
+        let inactivityTimeout: NodeJS.Timeout;
+
+        const resetTimer = () => {
+            if (inactivityTimeout) clearTimeout(inactivityTimeout);
+            // 15 minutes = 15 * 60 * 1000 = 900000 ms
+            inactivityTimeout = setTimeout(() => {
+                firebaseSignOut(auth).then(() => {
+                    info("เซสชันหมดอายุ กรุณาเข้าสู่ระบบใหม่", "ล็อกเอาท์อัตโนมัติ (15 นาที)");
+                    // Optional: force reload to clear states
+                    // window.location.href = "/login";
+                });
+            }, 900000);
+        };
+
+        // Initialize timer
+        resetTimer();
+
+        // Listen for activity events
+        const events = ['mousemove', 'keydown', 'click', 'scroll', 'touchstart'];
+        events.forEach(event => {
+            window.addEventListener(event, resetTimer, { passive: true });
+        });
+
+        return () => {
+            if (inactivityTimeout) clearTimeout(inactivityTimeout);
+            events.forEach(event => {
+                window.removeEventListener(event, resetTimer);
+            });
+        };
+    }, [user, info]);
+
     const signInWithGoogle = async () => {
         try {
+            // Set session persistence before login
+            const { setPersistence, browserSessionPersistence } = await import("firebase/auth");
+            await setPersistence(auth, browserSessionPersistence);
+            
             const result = await signInWithPopup(auth, googleProvider);
             const userName = result.user.displayName || "User";
             success("Login Successful", `Welcome back, ${userName}!`);
