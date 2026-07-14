@@ -32,17 +32,23 @@ export async function GET(request: Request) {
         const machinesData = await machinesRes.json();
 
         // Convert object to array
-        const allPlans: (PMPlan & { machineCode?: string })[] = [];
+        const allPlans: (PMPlan & { machineCode?: string; displayLocation?: string })[] = [];
         if (pmPlansData) {
             Object.keys(pmPlansData).forEach(key => {
                 const plan = pmPlansData[key];
                 const machine = machinesData ? machinesData[plan.machineId] : null;
                 const machineCode = machine?.code || machine?.internalCode || plan.machineId;
                 
+                let displayLocation = plan.customLocation || machine?.Location || machine?.location || "ไม่ระบุสถานที่";
+                if (plan.locationType === 'machine_Location') {
+                    displayLocation = machine?.Location || machine?.location || "ไม่ระบุสถานที่";
+                }
+                
                 allPlans.push({
                     id: key,
                     ...plan,
-                    machineCode
+                    machineCode,
+                    displayLocation
                 });
             });
         }
@@ -120,9 +126,15 @@ export async function GET(request: Request) {
                                                 <span style={{ fontSize: '28px', fontWeight: 'bold', color: '#f8fafc' }}>
                                                     {plan.machineName}
                                                 </span>
-                                                <span style={{ fontSize: '20px', color: '#38bdf8', marginTop: '4px' }}>
-                                                    รหัส: {plan.machineCode || '-'}
-                                                </span>
+                                                <div style={{ display: 'flex', alignItems: 'center', gap: '10px', marginTop: '4px' }}>
+                                                    <span style={{ fontSize: '20px', color: '#38bdf8' }}>
+                                                        รหัส: {plan.machineCode || '-'}
+                                                    </span>
+                                                    <span style={{ fontSize: '20px', color: '#475569' }}>•</span>
+                                                    <span style={{ fontSize: '20px', color: '#94a3b8' }}>
+                                                        📍 {plan.displayLocation}
+                                                    </span>
+                                                </div>
                                             </div>
                                         </div>
                                         <div style={{ display: 'flex', padding: '8px 16px', backgroundColor: '#0284c7', borderRadius: '20px' }}>
