@@ -393,193 +393,102 @@ export default function PartsPage() {
                                         </div>
 
                                         {/* Grid */}
-                                        <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
-                                            {items.map(part => (
-                                                <div
-                                                    key={part.id}
-                                                    className="relative w-full rounded-2xl overflow-hidden shadow-xl border border-white/5 group active:scale-[0.99] transition-all duration-300 animate-fade-in flex flex-col bg-bg-tertiary"
-                                                >
-                                                    {(() => {
-                                                        const theme = getPartTheme(part.category || "");
-                                                        const stockPercent = part.minStockThreshold && part.minStockThreshold > 0 
-                                                            ? Math.min(100, Math.max(0, (part.quantity / part.minStockThreshold) * 100)) 
-                                                            : 100;
-                                                        const isLowStock = part.quantity <= part.minStockThreshold;
-                                                        const stockColor = isLowStock ? 'bg-error' : 'bg-primary';
+                                        <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+                                            {items.map(part => {
+                                                const theme = getPartTheme(part.category || "");
+                                                const isLowStock = part.quantity <= (part.minStockThreshold || 0);
+
+                                                return (
+                                                    <div
+                                                        key={part.id}
+                                                        className="relative w-full rounded-xl bg-bg-secondary p-3 border border-white/5 shadow-sm flex flex-col gap-2 animate-fade-in transition-colors cursor-pointer hover:bg-bg-tertiary"
+                                                        onClick={() => openDetailsModal(part)}
+                                                    >
+                                                        {/* Left Edge Indicator */}
+                                                        <div className={`absolute top-0 left-0 w-1 h-full ${isLowStock ? 'bg-error animate-pulse' : 'bg-primary'}`} />
                                                         
-                                                        return (
-                                                            <>
-                                                                {/* Top Section - Visual Tech Identity */}
-                                                                <div 
-                                                                    className="relative h-24 flex items-center justify-between px-5 overflow-hidden border-b border-white/5 bg-gradient-to-br from-bg-secondary to-bg-tertiary cursor-pointer"
-                                                                    onClick={() => openDetailsModal(part)}
-                                                                >
-                                                                    {/* CAD Technical blueprint grid pattern */}
-                                                                    <div className="absolute inset-0 bg-[linear-gradient(to_right,rgba(255,255,255,0.015)_1px,transparent_1px),linear-gradient(to_bottom,rgba(255,255,255,0.015)_1px,transparent_1px)] bg-[size:12px_20px]"></div>
-                                                                    
-                                                                    {/* Glowing ambient lights */}
-                                                                    <div className={`absolute -top-12 -left-12 w-32 h-32 rounded-full ${theme.glow} blur-3xl opacity-60 group-hover:opacity-100 transition-opacity duration-700`}></div>
-                                                                    
-                                                                    {isLowStock && (
-                                                                        <div className="absolute inset-0 bg-error/5 animate-pulse z-0 pointer-events-none"></div>
-                                                                    )}
-
-                                                                    <div className="relative z-10 flex items-center gap-4">
-                                                                        <div className="w-12 h-12 rounded-xl bg-gradient-to-b from-white/10 to-white/5 border border-white/15 flex items-center justify-center shadow-lg shadow-black/50 group-hover:scale-110 transition-transform">
-                                                                            <span className={`text-xl font-black ${theme.textColor}`}>
-                                                                                {part.name ? part.name.substring(0, 2).toUpperCase() : "PT"}
-                                                                            </span>
-                                                                        </div>
-                                                                        <div>
-                                                                            <h3 className="text-lg font-bold text-white drop-shadow-md leading-tight group-hover:text-primary-light transition-colors line-clamp-1">
-                                                                                {part.name}
-                                                                            </h3>
-                                                                            <span className="text-[10px] font-bold text-primary-light uppercase tracking-wider mt-0.5 opacity-80 block">
-                                                                                {part.category || "PART"}
-                                                                            </span>
-                                                                        </div>
-                                                                    </div>
-
-                                                                    <div className="relative z-10 flex flex-col items-end">
-                                                                        <span className={`text-2xl font-black ${isLowStock ? 'text-error' : 'text-primary'} drop-shadow-lg`}>
-                                                                            x{part.quantity}
+                                                        <div className="flex items-start justify-between pl-2">
+                                                            <div className="flex flex-col flex-1 min-w-0 pr-2">
+                                                                {/* Category & Title */}
+                                                                <div className="flex items-center gap-2 mb-1">
+                                                                    <span className={`px-1.5 py-0.5 rounded bg-white/5 border border-white/10 text-[8px] font-black uppercase whitespace-nowrap shrink-0 ${theme.textColor}`}>
+                                                                        {part.category || "PART"}
+                                                                    </span>
+                                                                    <h3 className="text-sm font-bold text-white truncate">{part.name}</h3>
+                                                                </div>
+                                                                
+                                                                {/* Specs Row */}
+                                                                <div className="flex flex-wrap items-center gap-x-2 gap-y-1 text-[10px] text-white/70 mt-0.5">
+                                                                    <span className={`font-bold px-1.5 py-0.5 rounded ${isLowStock ? 'bg-error/20 text-error' : 'bg-white/10 text-white'}`}>
+                                                                        x{part.quantity} {part.unit || "pcs"}
+                                                                    </span>
+                                                                    {(part.brand || part.model || part.description) && (
+                                                                        <span className="truncate max-w-[150px]">
+                                                                            {[part.brand, part.model || part.description].filter(Boolean).join(" ")}
                                                                         </span>
-                                                                        <span className="text-[9px] font-bold text-white/50 uppercase tracking-widest -mt-1">{part.unit || "pcs"}</span>
-                                                                    </div>
+                                                                    )}
+                                                                    {part.location && (
+                                                                        <span className="truncate text-accent-cyan bg-accent-cyan/10 px-1 rounded">{part.location}</span>
+                                                                    )}
+                                                                    {part.pricePerUnit && (
+                                                                        <span className="text-accent-orange font-bold">฿{Number(part.pricePerUnit).toLocaleString()}</span>
+                                                                    )}
                                                                 </div>
-
-                                                                {/* Bottom Section - Data & Specs */}
-                                                                <div className="relative p-5 flex flex-col gap-4 bg-gradient-to-br from-bg-secondary via-bg-tertiary to-bg-primary z-10">
-                                                                    {/* Stock Level Warning Bar */}
-                                                                    <div>
-                                                                        <div className="flex justify-between items-end mb-1.5">
-                                                                            <span className="text-[10px] font-bold text-text-muted uppercase tracking-wider flex items-center gap-1.5">
-                                                                                Stock Level 
-                                                                                {isLowStock && <span className="text-error font-black animate-pulse">(LOW)</span>}
-                                                                            </span>
-                                                                            <span className="text-[11px] font-bold text-white/90 font-mono">
-                                                                                {part.quantity} / {part.minStockThreshold} Min
-                                                                            </span>
-                                                                        </div>
-                                                                        <div className="h-1.5 w-full bg-white/10 rounded-full overflow-hidden shadow-inner relative">
-                                                                            <div 
-                                                                                className={`h-full ${stockColor} rounded-full transition-all duration-1000 ease-out relative`}
-                                                                                style={{ width: `${Math.min(100, stockPercent)}%` }}
-                                                                            >
-                                                                                {isLowStock && (
-                                                                                    <div className="absolute inset-0 bg-white/30 animate-pulse"></div>
-                                                                                )}
-                                                                            </div>
-                                                                        </div>
-                                                                    </div>
-
-                                                                    {/* Details Grid */}
-                                                                    <div className="grid grid-cols-2 gap-x-4 gap-y-3 bg-black/20 backdrop-blur-md rounded-xl p-3 border border-white/5">
-                                                                        <div className="flex flex-col">
-                                                                            <span className="text-[9px] text-white/40 font-bold uppercase tracking-wider">{t("tableModelSpec") || "Model"}</span>
-                                                                            <span className="text-xs text-white/90 font-medium truncate" title={part.model || part.description}>
-                                                                                {part.model || part.description || "-"}
-                                                                            </span>
-                                                                        </div>
-                                                                        <div className="flex flex-col">
-                                                                            <span className="text-[9px] text-white/40 font-bold uppercase tracking-wider">{t("tableBrand") || "Brand"}</span>
-                                                                            <span className="text-xs text-white/90 font-medium truncate">
-                                                                                {part.brand || "-"}
-                                                                            </span>
-                                                                        </div>
-                                                                        <div className="flex flex-col">
-                                                                            <span className="text-[9px] text-white/40 font-bold uppercase tracking-wider">{t("tableLocation") || "Location"}</span>
-                                                                            <span className="text-xs text-white/90 font-medium truncate">
-                                                                                {part.location || "-"}
-                                                                            </span>
-                                                                        </div>
-                                                                        <div className="flex flex-col">
-                                                                            <span className="text-[9px] text-white/40 font-bold uppercase tracking-wider">{t("tablePrice") || "Price"}</span>
-                                                                            <span className="text-xs text-accent-orange font-bold">
-                                                                                {part.pricePerUnit ? `฿${Number(part.pricePerUnit).toLocaleString()}` : "-"}
-                                                                            </span>
-                                                                        </div>
-                                                                    </div>
-                                                                    
-                                                                    {/* Action Buttons */}
-                                                                    <div className="flex justify-between items-center mt-1">
-                                                                        <div className="flex gap-2">
-                                                                            {/* Sub-parts Trigger */}
-                                                                            {subPartsMap[part.id] && (
-                                                                                <button
-                                                                                    onClick={(e) => { e.stopPropagation(); toggleExpand(part.id); }}
-                                                                                    className={`px-3 py-1.5 rounded-lg border flex items-center gap-2 text-xs font-bold transition-all shadow-md ${expandedParts[part.id] ? 'bg-primary border-primary text-white' : 'bg-white/5 border-white/10 text-white/80 hover:bg-white/10 hover:text-white'}`}
-                                                                                >
-                                                                                    <LayersIcon size={14} />
-                                                                                    {subPartsMap[part.id].length} Subs
-                                                                                    {expandedParts[part.id] ? <ChevronUpIcon size={14} /> : <ChevronDownIcon size={14} />}
-                                                                                </button>
-                                                                            )}
-                                                                        </div>
-                                                                        <div className="flex gap-2">
-                                                                            {/* Admin Delete */}
-                                                                            {isAdmin && (
-                                                                                <button
-                                                                                    onClick={(e) => {
-                                                                                        e.stopPropagation();
-                                                                                        handleDeleteClick(part);
-                                                                                    }}
-                                                                                    className="w-8 h-8 rounded-lg bg-white/5 hover:bg-error/20 border border-white/10 hover:border-error/30 text-white/50 hover:text-error flex items-center justify-center transition-all shadow-sm"
-                                                                                    title={t("actionDelete")}
-                                                                                >
-                                                                                    <TrashIcon size={14} />
-                                                                                </button>
-                                                                            )}
-                                                                        </div>
-                                                                    </div>
-                                                                </div>
-                                                            </>
-                                                        );
-                                                    })()}
-
-                                                    {/* Sub-Parts List (Expandable Overlay) */}
-                                                    {subPartsMap[part.id] && expandedParts[part.id] && (
-                                                        <div className="absolute inset-x-0 bottom-0 top-24 z-20 bg-bg-primary/95 backdrop-blur-lg flex flex-col p-4 animate-fade-in border-t border-white/10">
-                                                            <div className="flex items-center justify-between mb-4">
-                                                                <div className="flex items-center gap-2 text-xs font-bold text-text-muted uppercase tracking-widest">
-                                                                    <LayersIcon size={14} className="text-primary" />
-                                                                    {t("labelSubParts")} ({subPartsMap[part.id].length})
-                                                                </div>
-                                                                <button
-                                                                    onClick={() => toggleExpand(part.id)}
-                                                                    className="p-1 rounded-full bg-white/5 text-text-muted hover:text-white"
-                                                                >
-                                                                    <ChevronDownIcon size={18} />
-                                                                </button>
                                                             </div>
-                                                            <div className="flex-1 overflow-auto space-y-2 custom-scrollbar pr-1">
+                                                            
+                                                            {/* Action Buttons */}
+                                                            <div className="flex items-center gap-1 shrink-0 mt-1">
+                                                                {subPartsMap[part.id] && (
+                                                                    <button
+                                                                        onClick={(e) => { e.stopPropagation(); toggleExpand(part.id); }}
+                                                                        className={`px-2 h-8 rounded-lg flex items-center gap-1 text-[10px] font-bold transition-all shadow-sm ${expandedParts[part.id] ? 'bg-primary border border-primary text-white' : 'bg-white/5 border border-white/10 text-white/80 hover:bg-white/20'}`}
+                                                                    >
+                                                                        <LayersIcon size={12} />
+                                                                        {subPartsMap[part.id].length}
+                                                                        <ChevronDownIcon size={10} className={expandedParts[part.id] ? "rotate-180 transition-transform" : "transition-transform"} />
+                                                                    </button>
+                                                                )}
+                                                                {isAdmin && (
+                                                                    <button
+                                                                        onClick={(e) => {
+                                                                            e.stopPropagation();
+                                                                            handleDeleteClick(part);
+                                                                        }}
+                                                                        className="w-8 h-8 rounded-lg bg-error/10 text-error flex items-center justify-center hover:bg-error hover:text-white transition-colors"
+                                                                        title={t("actionDelete")}
+                                                                    >
+                                                                        <TrashIcon size={14} />
+                                                                    </button>
+                                                                )}
+                                                            </div>
+                                                        </div>
+
+                                                        {/* Sub-Parts List (Expandable Inline) */}
+                                                        {subPartsMap[part.id] && expandedParts[part.id] && (
+                                                            <div className="pl-2 mt-2 pt-2 border-t border-white/5 flex flex-col gap-1.5" onClick={(e) => e.stopPropagation()}>
                                                                 {subPartsMap[part.id].map(sub => (
                                                                     <div
                                                                         key={sub.id}
-                                                                        className="flex items-center justify-between p-2 rounded-lg bg-white/5 border border-white/5 hover:border-primary/30 transition-colors cursor-pointer group/sub"
+                                                                        className="flex items-center justify-between p-2 rounded-lg bg-bg-primary/50 border border-white/5 hover:border-primary/30 transition-colors cursor-pointer"
                                                                         onClick={() => openDetailsModal(sub)}
                                                                     >
-                                                                        <div className="flex items-center gap-3 overflow-hidden">
-                                                                            <div className="w-10 h-10 rounded-lg bg-bg-secondary shrink-0 flex items-center justify-center border border-white/5">
-                                                                                <BoxIcon size={16} className="text-text-muted/50" />
-                                                                            </div>
-                                                                            <div className="min-w-0">
-                                                                                <div className="text-xs font-bold text-text-primary truncate">{sub.name}</div>
-                                                                                <div className="text-[10px] text-text-muted truncate">{sub.description || sub.brand || "-"}</div>
+                                                                        <div className="flex items-center gap-2 overflow-hidden">
+                                                                            <BoxIcon size={14} className="text-text-muted/50 shrink-0" />
+                                                                            <div className="min-w-0 flex flex-col">
+                                                                                <span className="text-xs font-bold text-text-primary truncate leading-none">{sub.name}</span>
+                                                                                <span className="text-[9px] text-text-muted truncate mt-0.5">{sub.description || sub.brand || "-"}</span>
                                                                             </div>
                                                                         </div>
-                                                                        <div className="text-right shrink-0 ml-2">
-                                                                            <div className={`text-xs font-bold ${sub.quantity <= sub.minStockThreshold ? 'text-error' : 'text-primary'}`}>
-                                                                                x{sub.quantity} <span className="text-[9px] font-normal text-text-muted">{sub.unit}</span>
-                                                                            </div>
+                                                                        <div className={`text-[10px] font-bold shrink-0 ml-2 px-1.5 py-0.5 rounded ${sub.quantity <= (sub.minStockThreshold || 0) ? 'bg-error/10 text-error' : 'bg-white/5 text-primary'}`}>
+                                                                            x{sub.quantity} {sub.unit || "pcs"}
                                                                         </div>
                                                                     </div>
                                                                 ))}
                                                             </div>
-                                                        </div>
-                                                    )}
-                                                </div>
-                                            ))}
+                                                        )}
+                                                    </div>
+                                                );
+                                            })}
                                         </div>
                                     </div>
                                 ))}

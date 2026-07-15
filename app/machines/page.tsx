@@ -181,7 +181,7 @@ export default function MachinesPage() {
 
                 {/* Machine Grid */}
                 {!loading && (
-                    <div className="grid grid-cols-2 lg:grid-cols-3 gap-3 sm:gap-6">
+                    <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-3">
                         {filteredMachines.map((machine, index) => (
                             <MachineCard
                                 key={machine.id || index}
@@ -306,139 +306,77 @@ function MachineCard({ machine, index, onRefresh, onOpenSettings, onOpenDelete, 
     return (
         <div
             onClick={onOpenDetails}
-            className={`group relative h-80 rounded-2xl overflow-hidden shadow-lg hover:shadow-2xl ${styles.shadow} transition-all duration-500 animate-fade-in-up border ${styles.border} cursor-pointer flex flex-col bg-bg-tertiary`}
+            className={`group relative w-full rounded-xl bg-bg-secondary p-3 border border-white/5 shadow-sm flex flex-col gap-2 overflow-hidden animate-fade-in cursor-pointer hover:bg-bg-tertiary transition-colors`}
             style={{ animationDelay: `${index * 50}ms` }}
         >
-            {/* Top Section - Visual Tech Identity */}
-            <div className="relative h-32 flex items-center justify-center overflow-hidden border-b border-white/5 bg-gradient-to-br from-bg-secondary to-bg-tertiary">
-                {/* CAD Technical blueprint grid pattern */}
-                <div className="absolute inset-0 bg-[linear-gradient(to_right,rgba(255,255,255,0.02)_1px,transparent_1px),linear-gradient(to_bottom,rgba(255,255,255,0.02)_1px,transparent_1px)] bg-[size:14px_24px]"></div>
-                
-                {/* Glowing ambient lights */}
-                <div className={`absolute -top-12 -left-12 w-32 h-32 rounded-full ${styles.glow} blur-3xl opacity-60 group-hover:opacity-100 transition-opacity duration-700`}></div>
-                
-                {/* Technical Crosshairs */}
-                <div className="absolute top-3 left-3 w-1.5 h-1.5 border-t border-l border-white/20"></div>
-                <div className="absolute top-3 right-3 w-1.5 h-1.5 border-t border-r border-white/20"></div>
-                <div className="absolute bottom-3 left-3 w-1.5 h-1.5 border-b border-l border-white/20"></div>
-                <div className="absolute bottom-3 right-3 w-1.5 h-1.5 border-b border-r border-white/20"></div>
-
-                {/* Machine Code Badge (replaces image) */}
-                <div className="
-                    relative px-8 py-3 rounded-2xl 
-                    bg-gradient-to-b from-white/10 to-white/5 
-                    border border-white/15 
-                    flex items-center justify-center 
-                    shadow-[inset_0_2px_4px_rgba(255,255,255,0.05),0_10px_25px_rgba(0,0,0,0.5)] 
-                    group-hover:border-white/30 group-hover:scale-105
-                    transition-all duration-500
-                ">
-                    <div className={`absolute inset-x-2 top-0 h-px bg-gradient-to-r ${styles.borderLine} opacity-70`}></div>
-                    <span className={`
-                        text-3xl font-black tracking-widest text-white/90
-                        drop-shadow-[0_2px_8px_rgba(255,255,255,0.1)]
-                        group-hover:text-transparent group-hover:bg-clip-text
-                        group-hover:bg-gradient-to-r ${styles.textGradient}
-                        transition-all duration-300
-                    `}>
-                        {machine.code ? machine.code.toUpperCase() : machine.name.substring(0, 3).toUpperCase()}
-                    </span>
-                    <span className="absolute -bottom-2.5 px-3 py-0.5 rounded bg-bg-secondary border border-white/10 text-[9px] font-black text-text-muted tracking-widest uppercase shadow-sm">
-                        {machine.location || "SYS"}
-                    </span>
-                </div>
-            </div>
-
-            {/* Bottom Section - Data & Specs */}
-            <div className="relative flex-1 p-5 flex flex-col justify-between bg-gradient-to-br from-bg-secondary via-bg-tertiary to-bg-primary z-10">
+            {/* Left Edge Indicator */}
+            <div className={`absolute top-0 left-0 w-1 h-full ${healthColor}`} />
+            
+            <div className="flex items-start justify-between pl-2">
+              <div className="flex flex-col flex-1 min-w-0 pr-2">
                 {/* Header: Name and Status */}
-                <div>
-                    <div className="flex justify-between items-start mb-1">
-                        <h3 className="text-lg font-bold text-white tracking-tight drop-shadow-md truncate pr-2">
-                            {machine.name}
-                        </h3>
-                        <span className={`text-[10px] font-bold px-2 py-0.5 rounded uppercase tracking-wider backdrop-blur-sm border flex-shrink-0 ${machine.status === 'active' ? 'bg-green-500/20 border-green-500/30 text-green-400' : 'bg-white/10 border-white/20 text-text-muted'}`}>
-                            {machine.status === 'active' ? t("statusActive") : machine.status}
-                        </span>
-                    </div>
-                    
-                    {/* Brand & Model */}
-                    <div className="text-xs text-white/60 font-medium truncate mb-3">
-                        {(machine.brand || machine.model) ? (
-                            `${machine.brand || ''} ${machine.model || ''}`.trim()
-                        ) : machine.brandModel ? (
-                            machine.brandModel
-                        ) : "N/A"}
-                    </div>
+                <div className="flex items-center gap-2 mb-1">
+                  <h3 className="text-sm font-bold text-white truncate">{machine.name}</h3>
+                  <span className={`text-[9px] font-bold px-1.5 py-0.5 rounded uppercase tracking-wider flex-shrink-0 ${machine.status === 'active' ? 'bg-green-500/20 text-green-400' : 'bg-white/10 text-text-muted'}`}>
+                      {machine.status === 'active' ? t("statusActive") : machine.status}
+                  </span>
                 </div>
-
-                {/* Operating Hours Progress Bar */}
-                <div className="mb-4">
-                    <div className="flex justify-between items-end mb-1.5">
-                        <span className="text-[10px] font-bold text-text-muted uppercase tracking-wider">Health / Cycle</span>
-                        <span className="text-[11px] font-bold text-white/90 font-mono">
-                            {healthPercentage.toFixed(0)}%
-                        </span>
-                    </div>
-                    <div className="h-1.5 w-full bg-white/10 rounded-full overflow-hidden shadow-inner">
-                        <div 
-                            className={`h-full ${healthColor} rounded-full transition-all duration-1000 ease-out`}
-                            style={{ width: `${healthPercentage}%` }}
-                        />
-                    </div>
-                    <div className="flex justify-between mt-1.5">
-                        <span className="text-[9px] text-text-muted font-mono">{operatingHours} hrs</span>
-                        <span className="text-[9px] text-text-muted font-mono">{maxHours} hrs max</span>
-                    </div>
+                
+                {/* Brand & Model */}
+                <div className="text-[10px] text-text-muted mb-1 truncate flex items-center gap-1">
+                   <SettingsIcon size={10} className="shrink-0" />
+                   {(machine.brand || machine.model) ? (
+                       `${machine.brand || ''} ${machine.model || ''}`.trim()
+                   ) : machine.brandModel ? (
+                       machine.brandModel
+                   ) : "N/A"}
                 </div>
-
-                {/* Badges Grid */}
-                <div className="flex flex-wrap items-center gap-1.5">
-                    {machine.Location && machine.Location !== "No Zone" && (
-                        <span className="px-2 py-1 rounded-md bg-white/5 border border-white/10 text-[10px] font-medium text-white/80 backdrop-blur-sm">
-                            Zone: {machine.Location}
-                        </span>
-                    )}
-                    {machine.performance && (
-                        <span className="px-2 py-1 rounded-md bg-primary/10 border border-primary/20 text-[10px] font-medium text-primary-light backdrop-blur-sm">
-                            {machine.performance} kW
-                        </span>
-                    )}
-                    {machine.serialNumber && machine.serialNumber !== "-" && (
-                        <span className="px-2 py-1 rounded-md bg-accent-purple/10 border border-accent-purple/20 text-[10px] font-medium text-accent-purple backdrop-blur-sm">
-                            SN: {machine.serialNumber}
-                        </span>
-                    )}
-                    {machine.remark && (
-                        <span className="px-2 py-1 rounded-md bg-accent-yellow/10 border border-accent-yellow/20 text-[10px] font-bold text-accent-yellow backdrop-blur-sm">
-                            {t("labelClass")} {machine.remark}
-                        </span>
-                    )}
+                
+                {/* Tags */}
+                <div className="flex flex-wrap items-center gap-x-2 gap-y-1 text-[10px] text-white/70 mt-0.5">
+                   <span className={`px-1.5 py-0.5 rounded bg-white/5 border border-white/10 text-[8px] font-black uppercase ${styles.code}`}>
+                       {machine.code ? machine.code.toUpperCase() : machine.name.substring(0, 3).toUpperCase()}
+                   </span>
+                   {machine.location && (
+                       <span className="truncate px-1.5 py-0.5 rounded bg-white/10 text-white font-bold">{machine.location}</span>
+                   )}
+                   {machine.Location && machine.Location !== "No Zone" && (
+                       <span className="truncate text-accent-cyan bg-accent-cyan/10 px-1 rounded">{machine.Location}</span>
+                   )}
                 </div>
+              </div>
+              
+              {/* Action Buttons */}
+              <div className="flex items-center gap-1 shrink-0 mt-1">
+                  <button
+                      onClick={(e) => {
+                          e.stopPropagation();
+                          onOpenSettings();
+                      }}
+                      className="w-8 h-8 rounded-lg bg-white/5 text-white flex items-center justify-center hover:bg-white/20 transition-colors"
+                      title={t("labelMachineSettings")}
+                  >
+                      <SettingsIcon size={14} />
+                  </button>
+                  <button
+                      onClick={(e) => {
+                          e.stopPropagation();
+                          handleDelete();
+                      }}
+                      className="w-8 h-8 rounded-lg bg-accent-red/10 text-accent-red flex items-center justify-center hover:bg-accent-red hover:text-white transition-colors"
+                      title={t("actionDelete")}
+                  >
+                      <TrashIcon size={14} />
+                  </button>
+              </div>
             </div>
-
-            {/* Action Buttons - Absolute positioned at top right */}
-            <div className="absolute top-3 right-3 z-20 flex flex-col gap-2">
-                <button
-                    onClick={(e) => {
-                        e.stopPropagation();
-                        onOpenSettings();
-                    }}
-                    className="w-8 h-8 rounded-full bg-black/40 backdrop-blur-md border border-white/10 flex items-center justify-center text-white/70 hover:text-white hover:bg-primary hover:border-primary hover:scale-110 transition-all duration-300 shadow-lg"
-                    title={t("labelMachineSettings")}
-                >
-                    <SettingsIcon size={16} />
-                </button>
-                <button
-                    onClick={(e) => {
-                        e.stopPropagation();
-                        handleDelete();
-                    }}
-                    className="w-8 h-8 rounded-full bg-black/40 backdrop-blur-md border border-white/10 flex items-center justify-center text-white/70 hover:text-white hover:bg-accent-red hover:border-accent-red hover:scale-110 transition-all duration-300 shadow-lg"
-                    title={t("actionDelete")}
-                >
-                    <TrashIcon size={16} />
-                </button>
+            
+            {/* Health Bar (Optional, can be tiny) */}
+            <div className="pl-2 pr-1 mt-1 flex items-center gap-2">
+                <div className="flex-1 h-1 bg-white/10 rounded-full overflow-hidden">
+                    <div className={`h-full ${healthColor} rounded-full`} style={{ width: `${healthPercentage}%` }} />
+                </div>
+                <span className="text-[8px] text-text-muted font-mono whitespace-nowrap">{healthPercentage.toFixed(0)}% Health</span>
             </div>
         </div>
     );
