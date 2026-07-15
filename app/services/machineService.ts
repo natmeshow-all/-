@@ -55,12 +55,28 @@ export async function getMachines(): Promise<Machine[]> {
         const machinesRef = ref(database, COLLECTIONS.MACHINES);
         // Use server-side sorting by name
         const machinesQuery = query(machinesRef, orderByChild("name"));
-        const machinesSnapshot = await get(machinesQuery);
+        
+        // Fetch System Settings to check hideUtData flag
+        const [machinesSnapshot, settings] = await Promise.all([
+            get(machinesQuery),
+            import("./systemService").then(m => m.getSystemSettings())
+        ]);
+
+        const hideUT = settings?.hideUtData;
 
         if (machinesSnapshot.exists()) {
             machinesSnapshot.forEach((child) => {
                 const data = child.val();
                 const machine = mapMachineData(child.key!, data);
+                
+                if (hideUT) {
+                    const loc1 = (machine.location || "").toUpperCase();
+                    const loc2 = (machine.Location || "").toUpperCase();
+                    if (loc1 === "UT" || loc1 === "UTILITY" || loc2 === "UT" || loc2 === "UTILITY") {
+                        return; // Skip UT machines
+                    }
+                }
+                
                 machinesMap.set(machine.name, machine);
             });
         }
@@ -101,14 +117,28 @@ export async function getMachinesPaginated(
             );
         }
 
-        const snapshot = await get(machinesQuery);
+        const [snapshot, settings] = await Promise.all([
+            get(machinesQuery),
+            import("./systemService").then(m => m.getSystemSettings())
+        ]);
         if (!snapshot.exists()) return { machines: [], lastItem: null };
 
+        const hideUT = settings?.hideUtData;
         const machines: Machine[] = [];
         let newLastItem = null;
 
         snapshot.forEach((childSnapshot) => {
-            const machine = mapMachineData(childSnapshot.key!, childSnapshot.val());
+            const data = childSnapshot.val();
+            const machine = mapMachineData(childSnapshot.key!, data);
+            
+            if (hideUT) {
+                const loc1 = (machine.location || "").toUpperCase();
+                const loc2 = (machine.Location || "").toUpperCase();
+                if (loc1 === "UT" || loc1 === "UTILITY" || loc2 === "UT" || loc2 === "UTILITY") {
+                    return; // Skip UT machines
+                }
+            }
+            
             machines.push(machine);
             newLastItem = { name: machine.name, id: machine.id };
         });

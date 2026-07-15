@@ -363,6 +363,14 @@ export default function SystemSettingsTab() {
                     </h3>
 
                     <SettingToggle
+                        label={language === 'th' ? 'ซ่อนข้อมูลแผนก UT' : 'Hide UT Data'}
+                        description={language === 'th' ? 'ซ่อนข้อมูลเครื่องจักร อะไหล่ และงาน PM ของแผนก UT ทั้งหมด' : 'Hide all machines, parts, and PM tasks related to UT'}
+                        checked={settings?.hideUtData || false}
+                        onChange={() => handleToggle('hideUtData')}
+                        disabled={saving}
+                    />
+
+                    <SettingToggle
                         label={language === 'th' ? 'เปิดการแจ้งเตือน' : 'Enable Notifications'}
                         description={language === 'th' ? 'แจ้งเตือนเมื่อมีงาน PM ถึงกำหนด' : 'Notify when PM tasks are due'}
                         checked={settings?.notificationsEnabled || false}

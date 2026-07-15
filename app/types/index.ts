@@ -463,6 +463,7 @@ export interface SystemSettings {
     telegramBotToken?: string;
     telegramChatId?: string;
     lastBackupDate?: string;
+    hideUtData?: boolean;
     announcement?: {
         enabled: boolean;
         message: string;

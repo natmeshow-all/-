@@ -76,13 +76,19 @@ export async function getMaintenanceRecordsPaginated(
             );
         }
 
-        const snapshot = await get(recordsQuery);
+        const [snapshot, machines] = await Promise.all([
+            get(recordsQuery),
+            getMachines()
+        ]);
 
         if (!snapshot.exists()) return { records: [] };
 
+        const allowedMachineIds = new Set(machines.map(m => m.id));
         const records: MaintenanceRecord[] = [];
         snapshot.forEach((childSnapshot) => {
-            records.push(mapMaintenanceRecord(childSnapshot.key!, childSnapshot.val()));
+            const data = childSnapshot.val();
+            if (data.machineId && !allowedMachineIds.has(data.machineId)) return;
+            records.push(mapMaintenanceRecord(childSnapshot.key!, data));
         });
 
         // Sort descending (Newest first)
@@ -126,13 +132,19 @@ export async function getMaintenanceRecords(limit?: number): Promise<Maintenance
             recordsQuery = recordsRef;
         }
 
-        const snapshot = await get(recordsQuery);
+        const [snapshot, machines] = await Promise.all([
+            get(recordsQuery),
+            getMachines()
+        ]);
 
         if (!snapshot.exists()) return [];
 
+        const allowedMachineIds = new Set(machines.map(m => m.id));
         const records: MaintenanceRecord[] = [];
         snapshot.forEach((childSnapshot) => {
-            records.push(mapMaintenanceRecord(childSnapshot.key!, childSnapshot.val()));
+            const data = childSnapshot.val();
+            if (data.machineId && !allowedMachineIds.has(data.machineId)) return;
+            records.push(mapMaintenanceRecord(childSnapshot.key!, data));
         });
 
         // Sort by date desc (client-side)
@@ -147,13 +159,19 @@ export async function getMaintenanceRecordsByType(type: MaintenanceType): Promis
     try {
         const recordsRef = ref(database, COLLECTIONS.MAINTENANCE_RECORDS);
         const recordsQuery = query(recordsRef, orderByChild("type"), equalTo(type));
-        const snapshot = await get(recordsQuery);
+        const [snapshot, machines] = await Promise.all([
+            get(recordsQuery),
+            getMachines()
+        ]);
 
         if (!snapshot.exists()) return [];
 
+        const allowedMachineIds = new Set(machines.map(m => m.id));
         const records: MaintenanceRecord[] = [];
         snapshot.forEach((childSnapshot) => {
-            records.push(mapMaintenanceRecord(childSnapshot.key!, childSnapshot.val()));
+            const data = childSnapshot.val();
+            if (data.machineId && !allowedMachineIds.has(data.machineId)) return;
+            records.push(mapMaintenanceRecord(childSnapshot.key!, data));
         });
 
         return records.sort((a, b) => b.date.getTime() - a.date.getTime());
@@ -455,13 +473,19 @@ export async function upsertSchedule(
 export async function getPMPlans(): Promise<PMPlan[]> {
     try {
         const plansRef = ref(database, COLLECTIONS.PM_PLANS);
-        const snapshot = await get(plansRef);
+        const [snapshot, machines] = await Promise.all([
+            get(plansRef),
+            getMachines()
+        ]);
 
         if (!snapshot.exists()) return [];
 
+        const allowedMachineIds = new Set(machines.map(m => m.id));
         const plans: PMPlan[] = [];
         snapshot.forEach((child) => {
             const data = child.val();
+            if (!allowedMachineIds.has(data.machineId)) return;
+            
             plans.push({
                 id: child.key!,
                 ...data,

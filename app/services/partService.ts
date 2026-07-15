@@ -92,13 +92,28 @@ export async function getParts(limit?: number): Promise<Part[]> {
             partsQuery = partsRef;
         }
 
-        const snapshot = await get(partsQuery);
+        const [snapshot, settings] = await Promise.all([
+            get(partsQuery),
+            import("./systemService").then(m => m.getSystemSettings())
+        ]);
 
         if (!snapshot.exists()) return [];
 
+        const hideUT = settings?.hideUtData;
         const parts: Part[] = [];
         snapshot.forEach((childSnapshot) => {
-            parts.push(mapPartData(childSnapshot.key!, childSnapshot.val()));
+            const data = childSnapshot.val();
+            const part = mapPartData(childSnapshot.key!, data);
+            
+            if (hideUT) {
+                const loc1 = (part.location || "").toUpperCase();
+                const loc2 = (data.Location || "").toUpperCase();
+                if (loc1 === "UT" || loc1 === "UTILITY" || loc2 === "UT" || loc2 === "UTILITY") {
+                    return;
+                }
+            }
+            
+            parts.push(part);
         });
 
         // Sort by updatedAt desc (latest first)
@@ -138,12 +153,27 @@ export async function getPartsPaginated(
             );
         }
 
-        const snapshot = await get(partsQuery);
+        const [snapshot, settings] = await Promise.all([
+            get(partsQuery),
+            import("./systemService").then(m => m.getSystemSettings())
+        ]);
         if (!snapshot.exists()) return { parts: [], lastItem: null };
 
+        const hideUT = settings?.hideUtData;
         const parts: Part[] = [];
         snapshot.forEach((childSnapshot) => {
-            parts.push(mapPartData(childSnapshot.key!, childSnapshot.val()));
+            const data = childSnapshot.val();
+            const part = mapPartData(childSnapshot.key!, data);
+            
+            if (hideUT) {
+                const loc1 = (part.location || "").toUpperCase();
+                const loc2 = (data.Location || "").toUpperCase();
+                if (loc1 === "UT" || loc1 === "UTILITY" || loc2 === "UT" || loc2 === "UTILITY") {
+                    return;
+                }
+            }
+            
+            parts.push(part);
         });
 
         // Firebase returns ascending (oldest -> newest)
