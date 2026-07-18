@@ -237,13 +237,24 @@ export default function PMConfigModal({ isOpen, onClose, machine, plan, onSucces
     const fetchPartsData = async () => {
         setLoadingData(true);
         try {
-            const parts = await getParts();
+            const [parts, plans] = await Promise.all([
+                getParts(),
+                getPMPlans()
+            ]);
+            
             const uniquePartNames = Array.from(new Set(parts.map(p => p.partName).filter(Boolean))).sort();
             setAllPartNames(uniquePartNames);
-            const uniqueLocations = Array.from(new Set(parts.map(p => p.Location).filter(Boolean))).sort();
-            setAllLocations(uniqueLocations);
+            
+            // Extract unique locations from Parts
+            const partLocations = parts.map(p => p.Location).filter(Boolean);
+            // Extract unique custom locations from existing PM plans
+            const planLocations = plans.map(p => p.customLocation).filter(Boolean);
+            
+            // Merge both and remove duplicates
+            const uniqueLocations = Array.from(new Set([...partLocations, ...planLocations])).sort();
+            setAllLocations(uniqueLocations as string[]);
         } catch (error) {
-            console.error("Error fetching parts data:", error);
+            console.error("Error fetching parts and plans data:", error);
         } finally {
             setLoadingData(false);
         }
