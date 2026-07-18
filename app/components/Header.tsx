@@ -2,7 +2,8 @@
 
 import React from "react";
 import { useLanguage } from "../contexts/LanguageContext";
-import { FlaskIcon, ShieldCheckIcon, UserIcon } from "./ui/Icons";
+import { ShieldCheckIcon, UserIcon } from "./ui/Icons";
+import AnimatedLogo from "./ui/AnimatedLogo";
 import Link from "next/link";
 import VersionDisplay from "./ui/VersionDisplay";
 import dynamic from "next/dynamic";
@@ -32,23 +33,18 @@ export default function Header({ className = "" }: HeaderProps) {
             <div className="px-3 py-2 sm:px-6 sm:py-3">
                 <div className="flex items-center justify-between">
                     {/* Logo & Title */}
-                    <div className="flex items-center gap-2 sm:gap-3">
-                        <div className="relative shrink-0">
-                            <div className="w-8 h-8 sm:w-12 sm:h-12 rounded-lg sm:rounded-xl bg-gradient-to-br from-primary to-accent-purple flex items-center justify-center shadow-lg">
-                                <FlaskIcon className="text-white" size={18} />
-                            </div>
-                            {/* Glow effect */}
-                            <div className="absolute inset-0 rounded-lg sm:rounded-xl bg-primary/30 blur-lg -z-10" />
-                        </div>
+                    <Link href="/" className="flex items-center gap-2 sm:gap-3 group">
+                        <AnimatedLogo size={32} className="sm:hidden" />
+                        <AnimatedLogo size={48} className="hidden sm:block" />
                         <div className="flex flex-col min-w-0">
-                            <span className="text-sm sm:text-lg font-extrabold gradient-text leading-tight tracking-tight whitespace-nowrap sm:whitespace-normal">
+                            <span className="text-sm sm:text-lg font-extrabold gradient-text leading-tight tracking-tight whitespace-nowrap sm:whitespace-normal group-hover:opacity-90 transition-opacity">
                                 {t("appTitle")}
                             </span>
                             <p className="text-[10px] sm:text-xs text-text-muted mt-0.5 sm:mt-0 font-medium line-clamp-1 sm:line-clamp-none">
                                 {t("appSubtitle")}
                             </p>
                         </div>
-                    </div>
+                    </Link>
 
                     <div className="flex items-center gap-1.5 sm:gap-3">
                         {/* Notifications */}
