@@ -105,7 +105,7 @@ export default function MaintenancePage() {
             
             if (shouldExpand) setIsFilterExpanded(true);
         }
-
+    }, []);
 
     // Part Replacement Plan Modal State
     const [replacementPlanOpen, setReplacementPlanOpen] = useState(false);
