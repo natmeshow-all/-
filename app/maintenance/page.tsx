@@ -73,7 +73,7 @@ export default function MaintenancePage() {
     const [activeStatusFilter, setActiveStatusFilter] = useState<'all' | 'pending' | 'inProgress' | 'completed'>('all');
     const [allMachines, setAllMachines] = useState<Machine[]>([]);
     const [allDatabaseRecords, setAllDatabaseRecords] = useState<MaintenanceRecord[]>([]);
-    const [showScrollTop, setShowScrollTop] = useState(false);
+
 
     // Delete Confirmation State
     const [deleteConfirmOpen, setDeleteConfirmOpen] = useState(false);
@@ -105,20 +105,7 @@ export default function MaintenancePage() {
             
             if (shouldExpand) setIsFilterExpanded(true);
         }
-        const handleScroll = () => {
-            if (window.scrollY > 300) {
-                setShowScrollTop(true);
-            } else {
-                setShowScrollTop(false);
-            }
-        };
-        window.addEventListener('scroll', handleScroll);
-        return () => window.removeEventListener('scroll', handleScroll);
-    }, []);
 
-    const scrollToTop = () => {
-        window.scrollTo({ top: 0, behavior: 'smooth' });
-    };
 
     // Part Replacement Plan Modal State
     const [replacementPlanOpen, setReplacementPlanOpen] = useState(false);
@@ -2589,16 +2576,7 @@ export default function MaintenancePage() {
                 onClose={() => setExportModalOpen(false)}
             />
 
-            {/* Scroll to Top Button */}
-            {showScrollTop && (
-                <button
-                    onClick={scrollToTop}
-                    className="fixed bottom-24 right-6 p-3 rounded-full bg-primary/20 text-primary border border-primary/40 hover:bg-primary hover:text-bg-dark transition-all shadow-[0_0_15px_rgba(0,255,255,0.3)] z-40 backdrop-blur-sm animate-fade-in"
-                    title="เลื่อนขึ้นบนสุด"
-                >
-                    <ChevronUpIcon size={24} />
-                </button>
-            )}
+
         </div>
     );
 }
