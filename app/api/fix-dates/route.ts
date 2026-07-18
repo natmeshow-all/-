@@ -30,14 +30,24 @@ export async function GET(request: Request) {
                 logs.push(`Found plan: ${plan.machineName} (lastCompleted: ${plan.lastCompletedDate}, nextDue: ${plan.nextDueDate})`);
                 
                 // If it has a lastCompletedDate, or if the nextDueDate is <= startDate (meaning it was reset)
-                if (plan.lastCompletedDate) {
+                if (plan.lastCompletedDate || new Date(plan.nextDueDate) <= new Date(plan.startDate)) {
                     let newDueDate = new Date(plan.startDate);
+                    let lastCompleted = plan.lastCompletedDate ? new Date(plan.lastCompletedDate) : new Date(plan.startDate);
+                    
                     if (plan.scheduleType === 'monthly') {
-                        newDueDate = new Date(plan.lastCompletedDate);
-                        newDueDate.setMonth(newDueDate.getMonth() + (plan.cycleMonths || 1));
+                        const cycle = plan.cycleMonths || 1;
+                        // Keep adding cycle months to startDate until it surpasses lastCompleted
+                        while (newDueDate <= lastCompleted) {
+                            newDueDate.setMonth(newDueDate.getMonth() + cycle);
+                        }
                     } else if (plan.scheduleType === 'weekly') {
-                        newDueDate = new Date(plan.lastCompletedDate);
-                        newDueDate.setDate(newDueDate.getDate() + 7);
+                        while (newDueDate <= lastCompleted) {
+                            newDueDate.setDate(newDueDate.getDate() + 7);
+                        }
+                    } else if (plan.scheduleType === 'yearly') {
+                        while (newDueDate <= lastCompleted) {
+                            newDueDate.setFullYear(newDueDate.getFullYear() + 1);
+                        }
                     }
                     
                     updates[`${id}/nextDueDate`] = newDueDate.toISOString();
