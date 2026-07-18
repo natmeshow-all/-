@@ -24,13 +24,16 @@ export async function GET(request: Request) {
         const details: any = {};
         Object.keys(pmPlansData).forEach(id => {
             const plan = pmPlansData[id];
-            const mName = (plan.machineName || "").toLowerCase();
-
-            if (mName.includes("fm05") || mName.includes("dt18") || mName.includes("rondo") || mName.includes("metal")) {
-                details[id] = plan;
+            
+            // Fix dates if the plan is stuck in the past or its nextDue is before or equal to lastCompleted
+            if (plan.lastCompletedDate) {
+                const nextDue = new Date(plan.nextDueDate);
+                const lastComp = new Date(plan.lastCompletedDate);
                 
-                // Also fix dates just in case
-                if (plan.lastCompletedDate || new Date(plan.nextDueDate) <= new Date(plan.startDate)) {
+                // If it is in the past, or if we need to advance it past lastCompleted
+                if (nextDue <= lastComp || nextDue <= new Date(plan.startDate)) {
+                    details[id] = plan;
+                    
                     let newDueDate = new Date(plan.startDate);
                     let lastCompleted = plan.lastCompletedDate ? new Date(plan.lastCompletedDate) : new Date(plan.startDate);
                     
@@ -50,7 +53,7 @@ export async function GET(request: Request) {
                     }
                     
                     updates[`${id}/nextDueDate`] = newDueDate.toISOString();
-                    logs.push(`-> Set newDueDate to ${newDueDate.toISOString()}`);
+                    logs.push(`-> Set newDueDate to ${newDueDate.toISOString()} for ${plan.machineName}`);
                 }
             }
         });
