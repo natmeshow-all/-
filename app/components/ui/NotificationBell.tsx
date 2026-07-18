@@ -120,8 +120,8 @@ export default function NotificationBell() {
                 onClick={() => setIsOpen(!isOpen)}
                 className="relative p-2 rounded-xl text-text-muted hover:text-text-primary hover:bg-bg-tertiary transition-colors"
             >
-                <div className={overdueCount > 0 ? "animate-swing" : ""}>
-                    <BellIcon size={20} className={overdueCount > 0 ? "text-accent-yellow" : ""} />
+                <div className={overdueCount > 0 ? "animate-ring" : ""}>
+                    <BellIcon size={20} className={overdueCount > 0 ? "text-accent-yellow drop-shadow-[0_0_8px_rgba(234,179,8,0.5)]" : ""} />
                 </div>
 
                 {overdueCount > 0 ? (
