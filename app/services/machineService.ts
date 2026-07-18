@@ -77,7 +77,7 @@ export async function getMachines(): Promise<Machine[]> {
                     }
                 }
                 
-                machinesMap.set(machine.name, machine);
+                machinesMap.set(machine.id, machine);
             });
         }
 
