@@ -39,9 +39,9 @@ export default function SchedulePage() {
     const filteredMachines = allMachines.filter(machine => {
         // 1. Text Search Filter
         if (searchQuery) {
-            const query = searchQuery.toLowerCase();
-            const matchName = machine.name.toLowerCase().includes(query);
-            const matchCode = machine.code?.toLowerCase().includes(query);
+            const query = searchQuery.toLowerCase().replace(/\s+/g, '');
+            const matchName = machine.name.toLowerCase().replace(/\s+/g, '').includes(query);
+            const matchCode = machine.code?.toLowerCase().replace(/\s+/g, '').includes(query);
             if (!matchName && !matchCode) return false;
         }
 
