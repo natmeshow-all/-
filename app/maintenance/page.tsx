@@ -12,6 +12,7 @@ import { useAuth } from "../contexts/AuthContext";
 import { useToast } from "../contexts/ToastContext";
 import { formatDateThai } from "../lib/dateUtils";
 import { getMaintenanceRecordsPaginated, deleteMaintenanceRecord, getMachines, updateMaintenanceRecord, addMaintenanceRecord, getMaintenanceRecordsByMachine, getSystemSettings, updateMachine, getPMPlans, updatePMPlan } from "../lib/firebaseService";
+import MarqueeText from "../components/ui/MarqueeText";
 import { MaintenanceRecord, Machine, ChecklistItemResult, MaintenanceStatus } from "../types";
 import { lineService } from "../services/lineService";
 import { telegramService } from "../services/telegramService";
@@ -1405,14 +1406,16 @@ export default function MaintenancePage() {
                                                                     <WrenchIcon size={14} />}
                                                         </span>
                                                     )}
-                                                    <h3 className={`font-bold text-sm truncate ${isExpanded ? 'text-primary' : 'text-text-primary'} flex items-baseline gap-1.5`}>
-                                                        <span>{record.machineName}</span>
+                                                    <MarqueeText 
+                                                        text={record.machineName} 
+                                                        className={`font-bold text-sm w-full ${isExpanded ? 'text-primary' : 'text-text-primary'}`}
+                                                    >
                                                         {machine?.code && (
-                                                            <span className="px-1.5 py-0.5 rounded-md text-[10px] font-mono font-semibold bg-accent-cyan/10 text-accent-cyan border border-accent-cyan/20 whitespace-nowrap shadow-sm">
+                                                            <span className="px-1.5 py-0.5 rounded-md text-[10px] font-mono font-semibold bg-accent-cyan/10 text-accent-cyan border border-accent-cyan/20 whitespace-nowrap shadow-sm ml-1.5">
                                                                 {machine.code}
                                                             </span>
                                                         )}
-                                                    </h3>
+                                                    </MarqueeText>
                                                     {/* Status Dot */}
                                                     <span className={`w-2 h-2 rounded-full shrink-0 ${record.status === 'completed' ? 'bg-accent-green shadow-[0_0_8px_rgba(34,197,94,0.4)]' : 'bg-accent-yellow'}`}></span>
                                                 </div>

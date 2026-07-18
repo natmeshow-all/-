@@ -1530,6 +1530,18 @@ body.modal-open .mobile-nav {
 }
 
 /* ============================================
+   Marquee Text Animation
+   ============================================ */
+@keyframes marquee-text {
+  0% { transform: translateX(0); }
+  100% { transform: translateX(calc(-50% - 1rem)); }
+}
+
+.animate-marquee-text {
+  animation: marquee-text 8s linear infinite;
+}
+
+/* ============================================
    Accessibility: Reduced Motion
    ============================================ */
 @media (prefers-reduced-motion: reduce) {
