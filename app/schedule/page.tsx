@@ -331,10 +331,10 @@ export default function SchedulePage() {
                         const totalPlans = plans.length;
 
                         const summaryCards = [
-                            { label: language === 'th' ? "เกินกำหนด" : "Overdue", count: overdueItems.length, color: "accent-red", icon: <AlertTriangleIcon size={18} /> },
-                            { label: language === 'th' ? "ถึงกำหนด / ใกล้ถึง" : "Due Soon", count: dueSoonItems.length, color: "accent-yellow", icon: <ClockIcon size={18} /> },
-                            { label: language === 'th' ? "อีก ≤30 วัน" : "≤30 Days", count: upcomingItems.length, color: "accent-cyan", icon: <CalendarIcon size={18} /> },
-                            { label: language === 'th' ? "ตามกำหนด" : "On Track", count: laterItems.length, color: "accent-green", icon: <CheckCircleIcon size={18} /> },
+                            { id: 'section-overdue', label: language === 'th' ? "เกินกำหนด" : "Overdue", count: overdueItems.length, color: "accent-red", icon: <AlertTriangleIcon size={18} /> },
+                            { id: 'section-due-soon', label: language === 'th' ? "ถึงกำหนด / ใกล้ถึง" : "Due Soon", count: dueSoonItems.length, color: "accent-yellow", icon: <ClockIcon size={18} /> },
+                            { id: 'section-upcoming', label: language === 'th' ? "อีก ≤30 วัน" : "≤30 Days", count: upcomingItems.length, color: "accent-cyan", icon: <CalendarIcon size={18} /> },
+                            { id: 'section-on-track', label: language === 'th' ? "ตามกำหนด" : "On Track", count: laterItems.length, color: "accent-green", icon: <CheckCircleIcon size={18} /> },
                         ];
 
                         // -- Render a single plan card (reusable) --
@@ -533,7 +533,13 @@ export default function SchedulePage() {
                                     {summaryCards.map((card) => (
                                         <div
                                             key={card.label}
-                                            className={`relative p-3 rounded-xl bg-bg-secondary border border-white/5 flex items-center gap-3 overflow-hidden transition-all hover:border-${card.color}/30`}
+                                            onClick={() => {
+                                                const el = document.getElementById(card.id);
+                                                if (el) {
+                                                    el.scrollIntoView({ behavior: 'smooth', block: 'start' });
+                                                }
+                                            }}
+                                            className={`relative p-3 rounded-xl bg-bg-secondary border border-white/5 flex items-center gap-3 overflow-hidden transition-all cursor-pointer hover:border-${card.color}/30 hover:bg-white/5 active:scale-[0.98]`}
                                         >
                                             <div className={`absolute inset-0 bg-${card.color}/5 pointer-events-none`} />
                                             <div className={`relative shrink-0 w-9 h-9 rounded-lg bg-${card.color}/15 flex items-center justify-center text-${card.color}`}>
@@ -558,7 +564,7 @@ export default function SchedulePage() {
 
                                 {/* === SECTION: Overdue === */}
                                 {overdueItems.length > 0 && (
-                                    <div className="space-y-3">
+                                    <div id="section-overdue" className="space-y-3 scroll-mt-24">
                                         <SectionHeader
                                             icon={<AlertTriangleIcon size={16} />}
                                             title={language === 'th' ? 'เกินกำหนด — ต้องดำเนินการ' : 'Overdue — Action Required'}
@@ -574,7 +580,7 @@ export default function SchedulePage() {
 
                                 {/* === SECTION: Due Soon === */}
                                 {dueSoonItems.length > 0 && (
-                                    <div className="space-y-3">
+                                    <div id="section-due-soon" className="space-y-3 scroll-mt-24">
                                         <SectionHeader
                                             icon={<ClockIcon size={16} />}
                                             title={language === 'th' ? 'ถึงกำหนด / ใกล้ถึงกำหนด' : 'Due Today / Due Soon'}
@@ -590,7 +596,7 @@ export default function SchedulePage() {
 
                                 {/* === SECTION: Upcoming (≤30 days) === */}
                                 {upcomingItems.length > 0 && (
-                                    <div className="space-y-3">
+                                    <div id="section-upcoming" className="space-y-3 scroll-mt-24">
                                         <SectionHeader
                                             icon={<CalendarIcon size={16} />}
                                             title={language === 'th' ? 'กำลังจะถึงกำหนด (≤30 วัน)' : 'Upcoming (≤30 Days)'}
@@ -606,7 +612,7 @@ export default function SchedulePage() {
 
                                 {/* === SECTION: On Track (>30 days) === */}
                                 {laterItems.length > 0 && (
-                                    <div className="space-y-3">
+                                    <div id="section-on-track" className="space-y-3 scroll-mt-24">
                                         <SectionHeader
                                             icon={<CheckCircleIcon size={16} />}
                                             title={language === 'th' ? 'ตามกำหนด (>30 วัน)' : 'On Track (>30 Days)'}
