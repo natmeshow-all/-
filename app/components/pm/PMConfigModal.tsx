@@ -258,9 +258,39 @@ export default function PMConfigModal({ isOpen, onClose, machine, plan, onSucces
             // Extract unique custom locations from existing PM plans
             const planLocations = plans.map(p => p.customLocation).filter(Boolean);
             
-            // Merge both and remove duplicates
-            const uniqueLocations = Array.from(new Set([...partLocations, ...planLocations])).sort();
-            setAllLocations(uniqueLocations as string[]);
+            // Merge both and remove duplicates robustly
+            const rawLocations = [...partLocations, ...planLocations] as string[];
+            const normalizedMap = new Map<string, string>();
+            
+            rawLocations.forEach(loc => {
+                const trimmed = loc.trim().replace(/\s+/g, ' ');
+                if (!trimmed) return;
+                
+                // Key for deduplication: lowercase, no spaces
+                const key = trimmed.toLowerCase().replace(/\s+/g, '');
+                
+                if (!normalizedMap.has(key)) {
+                    normalizedMap.set(key, trimmed);
+                } else {
+                    const current = normalizedMap.get(key)!;
+                    // Prefer the one with spaces if the key stripped spaces
+                    const currentSpaces = (current.match(/\s/g) || []).length;
+                    const newSpaces = (trimmed.match(/\s/g) || []).length;
+                    
+                    // Prefer more capital letters if spaces are equal
+                    const currentCaps = (current.match(/[A-Z]/g) || []).length;
+                    const newCaps = (trimmed.match(/[A-Z]/g) || []).length;
+                    
+                    if (newSpaces > currentSpaces) {
+                        normalizedMap.set(key, trimmed);
+                    } else if (newSpaces === currentSpaces && newCaps > currentCaps) {
+                        normalizedMap.set(key, trimmed);
+                    }
+                }
+            });
+            
+            const uniqueLocations = Array.from(normalizedMap.values()).sort((a, b) => a.localeCompare(b, 'th'));
+            setAllLocations(uniqueLocations);
         } catch (error) {
             console.error("Error fetching parts and plans data:", error);
         } finally {
