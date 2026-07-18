@@ -693,7 +693,17 @@ export default function PMExecutionModal({ isOpen, onClose, plan, onSuccess }: P
         const itemDetails = plan.checklistItems.map((item, index) => {
             const result = checklistResults[index];
             const status = result?.completed ? "✓" : "○";
-            const value = result?.value ? `: ${result.value}` : "";
+            
+            let val = result?.value || "";
+            const dp = dueParts.find(d => d.checklistIndex === index);
+            if (dp && (dp.partName || dp.notes)) {
+                const extra = [dp.partName, dp.notes].filter(Boolean).join(" - ");
+                if (extra) {
+                    val += ` (${extra})`;
+                }
+            }
+            
+            const value = val ? `: ${val}` : "";
             return `${status} ${item}${value}`;
         }).join("\n");
 
@@ -713,10 +723,21 @@ export default function PMExecutionModal({ isOpen, onClose, plan, onSuccess }: P
         try {
             const details = buildDetailsString();
             const structuredChecklist = plan.checklistItems?.map((item, index) => {
+                let finalVal = checklistResults[index]?.value || "";
+                
+                // Append notes to the value so it shows up in reports and history
+                const dp = dueParts.find(d => d.checklistIndex === index);
+                if (dp && (dp.partName || dp.notes)) {
+                    const extra = [dp.partName, dp.notes].filter(Boolean).join(" - ");
+                    if (extra) {
+                        finalVal += ` (${extra})`;
+                    }
+                }
+
                 const res: any = {
                     item,
                     completed: checklistResults[index]?.completed || false,
-                    value: checklistResults[index]?.value || ""
+                    value: finalVal
                 };
                 if (plan.checklistStandards?.[item]) {
                     res.standard = plan.checklistStandards[item];
@@ -1191,11 +1212,21 @@ export default function PMExecutionModal({ isOpen, onClose, plan, onSuccess }: P
                             createdAt: new Date(),
                             updatedAt: new Date()
                         } as any}
-                        completedChecklist={plan.checklistItems?.map((item, index) => ({
-                            item,
-                            completed: checklistResults[index]?.completed || false,
-                            value: checklistResults[index]?.value || "",
-                        })).filter(c => c.completed) || []}
+                        completedChecklist={plan.checklistItems?.map((item, index) => {
+                            let val = checklistResults[index]?.value || "";
+                            const dp = dueParts.find(d => d.checklistIndex === index);
+                            if (dp && (dp.partName || dp.notes)) {
+                                const extra = [dp.partName, dp.notes].filter(Boolean).join(" - ");
+                                if (extra) {
+                                    val += ` (${extra})`;
+                                }
+                            }
+                            return {
+                                item,
+                                completed: checklistResults[index]?.completed || false,
+                                value: val,
+                            };
+                        }).filter(c => c.completed) || []}
                         machineCode={realMachineCode || plan.machineId.substring(0,8)}
                         efficiencyPct={currentEfficiency}
                         trend={trend}
