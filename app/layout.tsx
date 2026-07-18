@@ -7,6 +7,7 @@ import { AuthProvider } from "./contexts/AuthContext";
 import { ToastProvider } from "./contexts/ToastContext";
 import MaintenanceWrapper from "./components/MaintenanceWrapper";
 import { ErrorBoundary } from "./components/ErrorBoundary";
+import ScrollToTop from "./components/ui/ScrollToTop";
 
 const promptFont = Prompt({
   weight: ["300", "400", "500", "600", "700"],
@@ -54,6 +55,7 @@ export default async function RootLayout({
               <AuthProvider>
                 <MaintenanceWrapper>
                   {children}
+                  <ScrollToTop />
                 </MaintenanceWrapper>
               </AuthProvider>
             </ToastProvider>
