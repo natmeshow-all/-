@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useRef } from "react";
 import Modal from "../ui/Modal";
 import { useLanguage } from "../../contexts/LanguageContext";
 import { Machine, PMPlan } from "../../types";
@@ -192,6 +192,14 @@ export default function PMConfigModal({ isOpen, onClose, machine, plan, onSucces
     const [checklistItems, setChecklistItems] = useState<string[]>(plan?.checklistItems || []);
     const [newItem, setNewItem] = useState("");
     const [selectedPartType, setSelectedPartType] = useState("");
+    
+    const checklistEndRef = useRef<HTMLDivElement>(null);
+
+    useEffect(() => {
+        if (checklistEndRef.current) {
+            checklistEndRef.current.scrollIntoView({ behavior: "smooth" });
+        }
+    }, [checklistItems.length]);
 
     const [scheduleType, setScheduleType] = useState<"monthly" | "weekly" | "yearly" | "custom">(plan?.scheduleType || "monthly");
     const [cycleMonths, setCycleMonths] = useState<number>(plan?.cycleMonths || 1);
@@ -394,8 +402,9 @@ export default function PMConfigModal({ isOpen, onClose, machine, plan, onSucces
 
             onSuccess?.();
             onClose();
-        } catch (error) {
+        } catch (error: any) {
             console.error("Error saving PM plan:", error);
+            showError("เกิดข้อผิดพลาดในการบันทึกแผน: " + (error.message || "Unknown error"), "Error");
         } finally {
             setLoading(false);
         }
@@ -498,7 +507,7 @@ export default function PMConfigModal({ isOpen, onClose, machine, plan, onSucces
                             </button>
                         </div>
 
-                        <div className="space-y-2 max-h-40 overflow-y-auto custom-scrollbar">
+                        <div className="space-y-2 max-h-64 overflow-y-auto custom-scrollbar p-1">
                             {checklistItems.length === 0 && (
                                 <p className="text-center text-sm text-text-muted/50 py-2 italic">{t("msgNoItems")}</p>
                             )}
@@ -514,6 +523,7 @@ export default function PMConfigModal({ isOpen, onClose, machine, plan, onSucces
                                     </button>
                                 </div>
                             ))}
+                            <div ref={checklistEndRef} />
                         </div>
                     </div>
 
