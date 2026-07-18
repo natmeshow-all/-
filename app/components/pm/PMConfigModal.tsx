@@ -374,7 +374,15 @@ export default function PMConfigModal({ isOpen, onClose, machine, plan, onSucces
             }
 
             const start = new Date(startDate);
-            const finalNextDueDate = new Date(startDate);
+            let finalNextDueDate = new Date(startDate);
+            
+            // If editing an existing plan, preserve its nextDueDate 
+            // to avoid resetting the schedule progress back to the original start date
+            if (plan && plan.nextDueDate) {
+                // Only keep existing nextDueDate if they didn't fundamentally change the start date to a future date
+                // Actually, just keep it, because nextDueDate is what matters for the schedule.
+                finalNextDueDate = new Date(plan.nextDueDate);
+            }
 
             const planData: any = {
                 taskName,
