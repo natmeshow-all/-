@@ -13,6 +13,7 @@ interface PMConfigModalProps {
     onClose: () => void;
     machine: Machine;
     plan?: PMPlan;
+    existingMachinePlans?: PMPlan[];
     onSuccess?: () => void;
 }
 
@@ -184,9 +185,22 @@ const PART_CHECKLIST_MAP: Record<string, string[]> = {
     "Fire Extinguisher": ["ตรวจแรงดัน Gauge", "ตรวจสภาพถัง", "ตรวจวันหมดอายุ", "ตรวจสลักนิรภัย"],
 };
 
-export default function PMConfigModal({ isOpen, onClose, machine, plan, onSuccess }: PMConfigModalProps) {
+export default function PMConfigModal({ isOpen, onClose, machine, plan, existingMachinePlans = [], onSuccess }: PMConfigModalProps) {
     const { t } = useLanguage();
-    const { error: showError } = useToast();
+    const { success, error: showError } = useToast();
+
+    // Compute existing plans to disable duplicate schedule types
+    const existingMonthly = existingMachinePlans.some(p => p.scheduleType === 'monthly' && p.id !== plan?.id);
+    const existingWeekly = existingMachinePlans.some(p => p.scheduleType === 'weekly' && p.id !== plan?.id);
+    const existingYearly = existingMachinePlans.some(p => p.scheduleType === 'yearly' && p.id !== plan?.id);
+
+    // Initial default schedule type
+    let defaultSchedule = plan?.scheduleType || "monthly";
+    if (!plan) {
+        if (existingMonthly && !existingWeekly) defaultSchedule = "weekly";
+        else if (existingMonthly && existingWeekly && !existingYearly) defaultSchedule = "yearly";
+        else if (existingMonthly && existingWeekly && existingYearly) defaultSchedule = "monthly"; // All exist, fallback
+    }
     const [loading, setLoading] = useState(false);
 
     const [checklistItems, setChecklistItems] = useState<string[]>(plan?.checklistItems || []);
@@ -196,7 +210,7 @@ export default function PMConfigModal({ isOpen, onClose, machine, plan, onSucces
     const checklistEndRef = useRef<HTMLDivElement>(null);
 
 
-    const [scheduleType, setScheduleType] = useState<"monthly" | "weekly" | "yearly" | "custom">(plan?.scheduleType || "monthly");
+    const [scheduleType, setScheduleType] = useState<"monthly" | "weekly" | "yearly" | "custom">(defaultSchedule as any);
     const [cycleMonths, setCycleMonths] = useState<number>(plan?.cycleMonths || 1);
     const [weeklyDay, setWeeklyDay] = useState<number>(plan?.weeklyDay || 1);
 
@@ -575,22 +589,40 @@ export default function PMConfigModal({ isOpen, onClose, machine, plan, onSucces
                                 <div className="flex bg-bg-tertiary p-1 rounded-lg border border-white/5">
                                     <button
                                         type="button"
-                                        onClick={() => setScheduleType('monthly')}
-                                        className={`flex-1 py-1.5 text-sm font-bold rounded-md transition-all ${scheduleType === 'monthly' ? 'bg-accent-blue text-white shadow-md' : 'text-text-muted hover:text-white'}`}
+                                        onClick={() => !existingMonthly && setScheduleType('monthly')}
+                                        disabled={existingMonthly}
+                                        title={existingMonthly ? "เครื่องนี้มีแผนรอบเดือนแล้ว" : ""}
+                                        className={`flex-1 py-1.5 text-sm font-bold rounded-md transition-all ${
+                                            existingMonthly 
+                                                ? 'opacity-40 cursor-not-allowed bg-black/20 text-white/30' 
+                                                : scheduleType === 'monthly' ? 'bg-accent-blue text-white shadow-md' : 'text-text-muted hover:text-white'
+                                        }`}
                                     >
                                         {t("labelMonthly")}
                                     </button>
                                     <button
                                         type="button"
-                                        onClick={() => setScheduleType('weekly')}
-                                        className={`flex-1 py-1.5 text-sm font-bold rounded-md transition-all ${scheduleType === 'weekly' ? 'bg-accent-blue text-white shadow-md' : 'text-text-muted hover:text-white'}`}
+                                        onClick={() => !existingWeekly && setScheduleType('weekly')}
+                                        disabled={existingWeekly}
+                                        title={existingWeekly ? "เครื่องนี้มีแผนรอบสัปดาห์แล้ว" : ""}
+                                        className={`flex-1 py-1.5 text-sm font-bold rounded-md transition-all ${
+                                            existingWeekly 
+                                                ? 'opacity-40 cursor-not-allowed bg-black/20 text-white/30' 
+                                                : scheduleType === 'weekly' ? 'bg-accent-blue text-white shadow-md' : 'text-text-muted hover:text-white'
+                                        }`}
                                     >
                                         {t("labelWeekly")}
                                     </button>
                                     <button
                                         type="button"
-                                        onClick={() => setScheduleType('yearly')}
-                                        className={`flex-1 py-1.5 text-sm font-bold rounded-md transition-all ${scheduleType === 'yearly' ? 'bg-accent-blue text-white shadow-md' : 'text-text-muted hover:text-white'}`}
+                                        onClick={() => !existingYearly && setScheduleType('yearly')}
+                                        disabled={existingYearly}
+                                        title={existingYearly ? "เครื่องนี้มีแผนรอบปีแล้ว" : ""}
+                                        className={`flex-1 py-1.5 text-sm font-bold rounded-md transition-all ${
+                                            existingYearly 
+                                                ? 'opacity-40 cursor-not-allowed bg-black/20 text-white/30' 
+                                                : scheduleType === 'yearly' ? 'bg-accent-blue text-white shadow-md' : 'text-text-muted hover:text-white'
+                                        }`}
                                     >
                                         {t("labelYearly")}
                                     </button>

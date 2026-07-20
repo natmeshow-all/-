@@ -732,6 +732,7 @@ export default function SchedulePage() {
                         onClose={() => setConfigModalOpen(false)}
                         machine={selectedMachine}
                         plan={selectedPlan || undefined} // Pass detailed plan if editing
+                        existingMachinePlans={plans.filter(p => p.machineId === selectedMachine.id)}
                         onSuccess={fetchData}
                     />
                 )
