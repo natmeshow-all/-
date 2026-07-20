@@ -4,7 +4,7 @@ import React, { useState, useEffect, useRef } from "react";
 import Modal from "../ui/Modal";
 import { useLanguage } from "../../contexts/LanguageContext";
 import { Machine, PMPlan } from "../../types";
-import { CalendarIcon, ClockIcon, CheckCircleIcon, SettingsIcon, ActivityIcon, MapPinIcon, ChevronDownIcon, FileTextIcon } from "../ui/Icons";
+import { CalendarIcon, ClockIcon, CheckCircleIcon, SettingsIcon, ActivityIcon, MapPinIcon, ChevronDownIcon, FileTextIcon, AlertTriangleIcon } from "../ui/Icons";
 import { addPMPlan, updatePMPlan, getParts, getPMPlans } from "../../lib/firebaseService";
 import { useToast } from "../../contexts/ToastContext";
 
@@ -582,10 +582,24 @@ export default function PMConfigModal({ isOpen, onClose, machine, plan, existing
                     <div className="grid grid-cols-1 sm:grid-cols-2 gap-6">
                         <div className="space-y-4">
                             <div className="space-y-2">
-                                <label className="text-xs font-bold text-text-muted uppercase tracking-wider flex items-center gap-2">
-                                    <ClockIcon size={14} className="text-accent-blue" />
-                                    {t("labelTimeFormat")}
-                                </label>
+                                <div className="flex items-center justify-between">
+                                    <label className="text-xs font-bold text-text-muted uppercase tracking-wider flex items-center gap-2">
+                                        <ClockIcon size={14} className="text-accent-blue" />
+                                        {t("labelTimeFormat")}
+                                    </label>
+                                    {(existingMonthly || existingWeekly || existingYearly) && (
+                                        <span className="text-[10px] font-bold text-accent-red flex items-center gap-1 bg-accent-red/10 px-2 py-0.5 rounded border border-accent-red/20 shadow-sm animate-pulse">
+                                            <AlertTriangleIcon size={12} />
+                                            มีแผน {
+                                                [
+                                                    existingMonthly ? "รอบเดือน" : null,
+                                                    existingWeekly ? "รอบสัปดาห์" : null,
+                                                    existingYearly ? "รอบปี" : null
+                                                ].filter(Boolean).join(", ")
+                                            } แล้ว
+                                        </span>
+                                    )}
+                                </div>
                                 <div className="flex bg-bg-tertiary p-1 rounded-lg border border-white/5">
                                     <button
                                         type="button"
