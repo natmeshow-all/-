@@ -3,7 +3,7 @@
 import React, { useState } from "react";
 import { useLanguage } from "../../contexts/LanguageContext";
 import { useToast } from "../../contexts/ToastContext";
-import { addMachine } from "../../lib/firebaseService";
+import { addMachine, getMachines } from "../../lib/firebaseService";
 import {
     XIcon,
     PlusIcon,
@@ -55,6 +55,25 @@ export default function AddMachineModal({ isOpen, onClose, onSuccess }: AddMachi
 
         setLoading(true);
         try {
+            // Check for duplicates
+            const existingMachines = await getMachines();
+            if (formData.code) {
+                const duplicateCode = existingMachines.find(m => m.code?.trim().toLowerCase() === formData.code.trim().toLowerCase());
+                if (duplicateCode) {
+                    toastError("เครื่องรหัสนี้มีในระบบแล้ว ห้ามสร้างซ้ำกัน");
+                    setLoading(false);
+                    return;
+                }
+            } else {
+                // If no code, check by exact name
+                const duplicateName = existingMachines.find(m => m.name.trim().toLowerCase() === formData.name.trim().toLowerCase() && !m.code);
+                if (duplicateName) {
+                    toastError("เครื่องจักรชื่อนี้มีในระบบแล้ว ห้ามสร้างซ้ำกัน");
+                    setLoading(false);
+                    return;
+                }
+            }
+
             await addMachine(formData as any);
             success(t("msgSaveSuccess"));
             onSuccess();

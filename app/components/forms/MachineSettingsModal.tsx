@@ -2,7 +2,7 @@ import React, { useState, useEffect } from "react";
 import { useLanguage } from "../../contexts/LanguageContext";
 import { useToast } from "../../contexts/ToastContext";
 import { Machine } from "../../types";
-import { updateMachine } from "../../lib/firebaseService";
+import { updateMachine, getMachines } from "../../lib/firebaseService";
 import {
     XIcon,
     SettingsIcon,
@@ -68,6 +68,25 @@ export default function MachineSettingsModal({ isOpen, onClose, machine, onSucce
         e.preventDefault();
         setLoading(true);
         try {
+            // Check for duplicates
+            const existingMachines = await getMachines();
+            if (formData.code) {
+                const duplicateCode = existingMachines.find(m => m.id !== machine.id && m.code?.trim().toLowerCase() === formData.code?.trim().toLowerCase());
+                if (duplicateCode) {
+                    toastError("เครื่องรหัสนี้มีในระบบแล้ว ห้ามแก้ไขเป็นรหัสซ้ำ");
+                    setLoading(false);
+                    return;
+                }
+            } else {
+                // If no code, check by exact name
+                const duplicateName = existingMachines.find(m => m.id !== machine.id && m.name.trim().toLowerCase() === formData.name?.trim().toLowerCase() && !m.code);
+                if (duplicateName) {
+                    toastError("เครื่องจักรชื่อนี้มีในระบบแล้ว ห้ามแก้ไขเป็นชื่อซ้ำ");
+                    setLoading(false);
+                    return;
+                }
+            }
+
             await updateMachine(machine.id, formData);
             success(t("msgSaveSuccess") || "Saved successfully");
             onSuccess();
