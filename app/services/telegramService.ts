@@ -16,9 +16,13 @@ export const telegramService = {
             const chatId = decodeSecret(settings?.telegramChatId || "");
 
             // If image is provided, we send a short caption instead of the full HTML
-            const htmlMessage = imageBase64 
+            let htmlMessage = imageBase64 
                 ? `<b>🔹 รหัสเครื่อง:</b> ${record.machineCode || '-'}\n<b>🔹 ชื่อเครื่องจักร:</b> ${record.machineName}` 
                 : this.createPMHtmlMessage(record);
+            
+            if (record.isEarlyPM) {
+                htmlMessage += `\n<b>✅ ทำ PM ก่อนกำหนด</b>`;
+            }
 
             const response = await fetch('/api/telegram', {
                 method: 'POST',

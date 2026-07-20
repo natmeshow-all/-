@@ -760,6 +760,13 @@ export default function PMExecutionModal({ isOpen, onClose, plan, onSuccess }: P
                 }
             }
 
+            // Calculate if PM is completed early (at least 1 day before due date)
+            const today = new Date();
+            today.setHours(0, 0, 0, 0);
+            const due = new Date(plan.nextDueDate);
+            due.setHours(0, 0, 0, 0);
+            const isEarlyPM = (due.getTime() - today.getTime()) > 0;
+
             const pmRecordId = await completePMTask(plan.id, {
                 machineId: plan.machineId,
                 machineName: plan.machineName,
@@ -773,6 +780,7 @@ export default function PMExecutionModal({ isOpen, onClose, plan, onSuccess }: P
                 checklist: structuredChecklist,
                 Location: plan.customLocation || "",
                 baseEfficiency: baseEfficiency,
+                isEarlyPM: isEarlyPM,
             }, telegramImageBase64);
 
             // Auto-create part replacement plans for confirmed due parts

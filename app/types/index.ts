@@ -159,6 +159,7 @@ export interface MaintenanceRecord {
     parentPmRecordId?: string; // Links an issue back to the original PM record
     resolvedAt?: string | Date; // When the issue was resolved
     resolutionLevel?: 1 | 2 | 3; // 1: Clean/Adjust, 2: Replace minor, 3: Overhaul
+    isEarlyPM?: boolean; // Flag to indicate if PM was completed before due date
 
     // Part specific fields
     partId?: string;

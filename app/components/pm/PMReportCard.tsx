@@ -52,10 +52,15 @@ export const PMReportCard = forwardRef<HTMLDivElement, PMReportCardProps>(({ rec
                             <span className="text-2xl text-[#00d4ff] font-medium opacity-90">({machineCode})</span>
                         )}
                     </h1>
-                    <div className="flex items-center gap-4 text-sm text-[#888888]">
+                    <div className="flex items-center gap-4 text-sm text-[#888888] flex-wrap">
                         {scheduleText && (
                             <span className="flex items-center gap-1.5 bg-white/5 px-2.5 py-1 rounded-md">
                                 <span className="text-[#a855f7]">รอบ:</span> {scheduleText}
+                            </span>
+                        )}
+                        {record.isEarlyPM && (
+                            <span className="flex items-center gap-1.5 bg-[#10b981]/15 border border-[#10b981]/30 text-[#10b981] px-2.5 py-1 rounded-md font-bold">
+                                ✓ ทำ PM ก่อนกำหนด
                             </span>
                         )}
                     </div>

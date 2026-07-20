@@ -461,15 +461,23 @@ export default function SchedulePage() {
                                             {/* Main Action (Execute) */}
                                             <button
                                                 onClick={() => handleExecuteClick(item)}
-                                                className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-bold transition-all shadow-md active:scale-95 whitespace-nowrap ${status.days <= 0
-                                                    ? "bg-accent-blue text-white hover:bg-accent-blue/90"
-                                                    : "bg-bg-tertiary text-text-primary hover:bg-white/10"
-                                                    }`}
+                                                className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-bold transition-all shadow-md active:scale-95 whitespace-nowrap ${
+                                                    status.days <= 0
+                                                        ? "bg-accent-blue text-white hover:bg-accent-blue/90"
+                                                        : (status.days > 0 && status.days <= 3)
+                                                            ? "bg-accent-green text-bg-primary hover:bg-accent-green/90"
+                                                            : "bg-bg-tertiary text-text-primary hover:bg-white/10"
+                                                }`}
                                             >
                                                 {status.days <= 0 ? (
                                                     <>
                                                         <CheckCircleIcon size={14} />
                                                         {t("actionCloseWork")}
+                                                    </>
+                                                ) : (status.days > 0 && status.days <= 3) ? (
+                                                    <>
+                                                        <CheckCircleIcon size={14} />
+                                                        เลื่อนปิดงานวันนี้
                                                     </>
                                                 ) : (
                                                     t("actionRecordPMResult")
