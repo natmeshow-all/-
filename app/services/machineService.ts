@@ -49,8 +49,6 @@ export function mapMachineData(key: string, data: any): Machine {
  */
 export async function getMachines(): Promise<Machine[]> {
     try {
-        const machinesMap = new Map<string, Machine>();
-
         // 1. Fetch explicit machine data first
         const machinesRef = ref(database, COLLECTIONS.MACHINES);
         // Use server-side sorting by name
@@ -63,6 +61,8 @@ export async function getMachines(): Promise<Machine[]> {
         ]);
 
         const hideUT = settings?.hideUtData;
+
+        const uniqueMachinesMap = new Map<string, Machine>();
 
         if (machinesSnapshot.exists()) {
             machinesSnapshot.forEach((child) => {
@@ -77,13 +77,16 @@ export async function getMachines(): Promise<Machine[]> {
                     }
                 }
                 
-                machinesMap.set(machine.id, machine);
+                // Deduplicate by code and name (prioritize keeping the first one found or one with an ID if any preference, here we just keep the first)
+                const uniqueKey = `${machine.code || ''}-${machine.name}`;
+                if (!uniqueMachinesMap.has(uniqueKey)) {
+                    uniqueMachinesMap.set(uniqueKey, machine);
+                }
             });
         }
 
         // Return values (already sorted by Firebase, but Map iteration order is insertion order usually, so it should be fine)
-        // Re-sort to be safe as Map iteration order is insertion order
-        return Array.from(machinesMap.values());
+        return Array.from(uniqueMachinesMap.values());
     } catch (error) {
         console.error("Error in getMachines:", error);
         throw error;
@@ -125,6 +128,7 @@ export async function getMachinesPaginated(
 
         const hideUT = settings?.hideUtData;
         const machines: Machine[] = [];
+        const uniqueMachinesSet = new Set<string>();
         let newLastItem = null;
 
         snapshot.forEach((childSnapshot) => {
@@ -139,8 +143,12 @@ export async function getMachinesPaginated(
                 }
             }
             
-            machines.push(machine);
-            newLastItem = { name: machine.name, id: machine.id };
+            const uniqueKey = `${machine.code || ''}-${machine.name}`;
+            if (!uniqueMachinesSet.has(uniqueKey)) {
+                uniqueMachinesSet.add(uniqueKey);
+                machines.push(machine);
+                newLastItem = { name: machine.name, id: machine.id };
+            }
         });
 
         return { machines, lastItem: newLastItem };
