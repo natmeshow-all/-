@@ -190,9 +190,25 @@ export default function PMConfigModal({ isOpen, onClose, machine, plan, existing
     const { success, error: showError } = useToast();
 
     // Compute existing plans to disable duplicate schedule types
-    const existingMonthly = existingMachinePlans.some(p => p.scheduleType === 'monthly' && p.id !== plan?.id);
-    const existingWeekly = existingMachinePlans.some(p => p.scheduleType === 'weekly' && p.id !== plan?.id);
-    const existingYearly = existingMachinePlans.some(p => p.scheduleType === 'yearly' && p.id !== plan?.id);
+    const existingMonthlyPlan = existingMachinePlans.find(p => p.scheduleType === 'monthly' && p.id !== plan?.id);
+    const existingWeeklyPlan = existingMachinePlans.find(p => p.scheduleType === 'weekly' && p.id !== plan?.id);
+    const existingYearlyPlan = existingMachinePlans.find(p => p.scheduleType === 'yearly' && p.id !== plan?.id);
+
+    const existingMonthly = !!existingMonthlyPlan;
+    const existingWeekly = !!existingWeeklyPlan;
+    const existingYearly = !!existingYearlyPlan;
+
+    const getDaysRemainingText = (p?: PMPlan) => {
+        if (!p || !p.nextDueDate) return "";
+        const now = new Date();
+        now.setHours(0,0,0,0);
+        const due = new Date(p.nextDueDate);
+        due.setHours(0,0,0,0);
+        const days = Math.ceil((due.getTime() - now.getTime()) / (1000 * 60 * 60 * 24));
+        if (days < 0) return "เลยกำหนด";
+        if (days === 0) return "ถึงกำหนดวันนี้";
+        return `อีก ${days} วัน`;
+    };
 
     // Initial default schedule type
     let defaultSchedule = plan?.scheduleType || "monthly";
@@ -588,15 +604,17 @@ export default function PMConfigModal({ isOpen, onClose, machine, plan, existing
                                         {t("labelTimeFormat")}
                                     </label>
                                     {(existingMonthly || existingWeekly || existingYearly) && (
-                                        <span className="text-[10px] font-bold text-accent-red flex items-center gap-1 bg-accent-red/10 px-2 py-0.5 rounded border border-accent-red/20 shadow-sm animate-pulse">
-                                            <AlertTriangleIcon size={12} />
-                                            มีแผน {
-                                                [
-                                                    existingMonthly ? "รอบเดือน" : null,
-                                                    existingWeekly ? "รอบสัปดาห์" : null,
-                                                    existingYearly ? "รอบปี" : null
-                                                ].filter(Boolean).join(", ")
-                                            } แล้ว
+                                        <span className="text-[10px] font-bold text-accent-red flex items-center gap-1 bg-accent-red/10 px-2 py-0.5 rounded border border-accent-red/20 shadow-sm animate-pulse whitespace-nowrap overflow-hidden text-ellipsis max-w-[200px] sm:max-w-[250px]" title={`มีแผน ${[existingMonthlyPlan ? `รอบเดือน (${getDaysRemainingText(existingMonthlyPlan)})` : null, existingWeeklyPlan ? `รอบสัปดาห์ (${getDaysRemainingText(existingWeeklyPlan)})` : null, existingYearlyPlan ? `รอบปี (${getDaysRemainingText(existingYearlyPlan)})` : null].filter(Boolean).join(", ")} แล้ว`}>
+                                            <AlertTriangleIcon size={12} className="shrink-0" />
+                                            <span className="truncate">
+                                                มีแผน {
+                                                    [
+                                                        existingMonthlyPlan ? `รอบเดือน (${getDaysRemainingText(existingMonthlyPlan)})` : null,
+                                                        existingWeeklyPlan ? `รอบสัปดาห์ (${getDaysRemainingText(existingWeeklyPlan)})` : null,
+                                                        existingYearlyPlan ? `รอบปี (${getDaysRemainingText(existingYearlyPlan)})` : null
+                                                    ].filter(Boolean).join(", ")
+                                                } แล้ว
+                                            </span>
                                         </span>
                                     )}
                                 </div>
