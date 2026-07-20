@@ -50,7 +50,14 @@ export default function MachinesPage() {
             setLoading(true);
             const { getMachines } = await import("../lib/firebaseService");
             const data = await getMachines();
-            setMachines(data);
+            const uniqueMachinesMap = new Map();
+            data.forEach(m => {
+                const key = `${m.code || ''}-${m.name}`;
+                if (!uniqueMachinesMap.has(key)) {
+                    uniqueMachinesMap.set(key, m);
+                }
+            });
+            setMachines(Array.from(uniqueMachinesMap.values()));
         } catch (error) {
             console.error("Failed to fetch machines:", error);
             showError(t("msgError") || "Error", "Failed to fetch machines");

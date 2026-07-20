@@ -67,7 +67,15 @@ export default function SchedulePage() {
                 getMachines()
             ]);
             setPlans(plansData);
-            setAllMachines(machinesData);
+            // Deduplicate machines by code and name to prevent duplicate displays
+            const uniqueMachinesMap = new Map();
+            machinesData.forEach(m => {
+                const key = `${m.code || ''}-${m.name}`;
+                if (!uniqueMachinesMap.has(key)) {
+                    uniqueMachinesMap.set(key, m);
+                }
+            });
+            setAllMachines(Array.from(uniqueMachinesMap.values()));
         } catch (error) {
             console.error("Error fetching data:", error);
         } finally {

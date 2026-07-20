@@ -709,8 +709,18 @@ export default function PredictivePage() {
                     getParts(),
                 ]);
 
+                // Deduplicate machines by code and name
+                const uniqueMachinesMap = new Map();
+                machines.forEach(m => {
+                    const key = `${m.code || ''}-${m.name}`;
+                    if (!uniqueMachinesMap.has(key)) {
+                        uniqueMachinesMap.set(key, m);
+                    }
+                });
+                const uniqueMachines = Array.from(uniqueMachinesMap.values());
+
                 // Analyze each machine
-                const allPredictions = machines.map(m =>
+                const allPredictions = uniqueMachines.map(m =>
                     analyzeMachine(m, records, pmPlans, parts)
                 );
 
