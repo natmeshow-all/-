@@ -386,6 +386,7 @@ export default function PMConfigModal({ isOpen, onClose, machine, plan, existing
         if (!startDate) {
             showError("กรุณาระบุวันที่เริ่มรอบแรก", "Validation Error");
             return;
+        }
         setLoading(true);
 
         try {
