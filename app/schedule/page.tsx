@@ -208,8 +208,8 @@ export default function SchedulePage() {
         const diffTime = due.getTime() - now.getTime();
         const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
 
-        if (diffDays > 0) {
-            showError(t("msgNotYetDue"), t("msgNotYetDue"));
+        if (diffDays > 3) {
+            showError(t("msgNotYetDue"), "สามารถทำ PM ล่วงหน้าได้ไม่เกิน 3 วันเท่านั้น");
             return;
         }
 
