@@ -195,11 +195,6 @@ export default function PMConfigModal({ isOpen, onClose, machine, plan, onSucces
     
     const checklistEndRef = useRef<HTMLDivElement>(null);
 
-    useEffect(() => {
-        if (checklistEndRef.current) {
-            checklistEndRef.current.scrollIntoView({ behavior: "smooth" });
-        }
-    }, [checklistItems.length]);
 
     const [scheduleType, setScheduleType] = useState<"monthly" | "weekly" | "yearly" | "custom">(plan?.scheduleType || "monthly");
     const [cycleMonths, setCycleMonths] = useState<number>(plan?.cycleMonths || 1);
