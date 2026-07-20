@@ -26,6 +26,7 @@ export default function SchedulePage() {
     const [machineSelectOpen, setMachineSelectOpen] = useState(false);
     const [selectedMachine, setSelectedMachine] = useState<Machine | null>(null);
     const [allMachines, setAllMachines] = useState<Machine[]>([]);
+    const [rawMachines, setRawMachines] = useState<Machine[]>([]);
     const [selectedLocation, setSelectedLocation] = useState<string>("all");
     const [searchQuery, setSearchQuery] = useState("");
 
@@ -67,6 +68,7 @@ export default function SchedulePage() {
                 getMachines()
             ]);
             setPlans(plansData);
+            setRawMachines(machinesData);
             // Deduplicate machines by code and name to prevent duplicate displays
             const uniqueMachinesMap = new Map();
             machinesData.forEach(m => {
@@ -748,7 +750,13 @@ export default function SchedulePage() {
                         onClose={() => setConfigModalOpen(false)}
                         machine={selectedMachine}
                         plan={selectedPlan || undefined} // Pass detailed plan if editing
-                        existingMachinePlans={plans.filter(p => p.machineId === selectedMachine.id)}
+                        existingMachinePlans={plans.filter(p => {
+                            // Find all duplicate IDs for the selected machine
+                            const targetIds = rawMachines
+                                .filter(m => m.code === selectedMachine.code && m.name === selectedMachine.name)
+                                .map(m => m.id);
+                            return targetIds.includes(p.machineId);
+                        })}
                         onSuccess={fetchData}
                     />
                 )

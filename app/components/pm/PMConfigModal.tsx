@@ -386,17 +386,14 @@ export default function PMConfigModal({ isOpen, onClose, machine, plan, existing
         if (!startDate) {
             showError("กรุณาระบุวันที่เริ่มรอบแรก", "Validation Error");
             return;
-        }
         setLoading(true);
 
         try {
-            // Check for duplicate plans
-            const allPlans = await getPMPlans();
+            // Check for duplicate plans using existingMachinePlans (which includes all duplicate machine IDs)
             let duplicateErrorMsg = "";
 
-            const isDuplicate = allPlans.some(p => {
-                // If it's a different machine, or we are editing this exact plan, skip
-                if (String(p.machineId) !== String(machine.id) || p.id === plan?.id) return false;
+            const isDuplicate = existingMachinePlans.some(p => {
+                if (p.id === plan?.id) return false;
                 
                 // 1. Check for unclosed tasks (due or overdue)
                 // If nextDueDate is in the past or today, the task is still pending/overdue
