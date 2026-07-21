@@ -132,7 +132,7 @@ export default function PartsPage() {
     const handleEditClick = (part: Part) => {
         if (!checkAuth()) return;
         if (!permissions.canManageParts) {
-            showError(t("msgNoPermission"), t("msgNoEditPermission"));
+            error(t("msgNoPermission") || "Permission Denied", t("msgNoEditPermission") || "No edit permission");
             return;
         }
         setDetailsModalOpen(false);
@@ -330,7 +330,7 @@ export default function PartsPage() {
 
                         {/* Add Button - Only for Logged In Users */}
                         <button
-                            onClick={() => { if (checkAuth() && permissions.canManageParts) setAddModalOpen(true); else if(checkAuth()) showError(t("msgNoPermission"), t("msgNoEditPermission")); }}
+                            onClick={() => { if (checkAuth() && permissions.canManageParts) setAddModalOpen(true); else if(checkAuth()) error(t("msgNoPermission") || "Permission Denied", t("msgNoEditPermission") || "No edit permission"); }}
                             className="btn btn-primary h-11 px-5 shadow-lg shadow-primary/20 hover:shadow-primary/30 hover:-translate-y-0.5 transition-all"
                         >
                             <PlusIcon size={20} />
@@ -523,7 +523,7 @@ export default function PartsPage() {
                                     {t("partsNoPartsDesc")}
                                 </p>
                                 <button
-                                    onClick={() => { if (checkAuth() && permissions.canManageParts) setAddModalOpen(true); else if(checkAuth()) showError(t("msgNoPermission"), t("msgNoEditPermission")); }}
+                                    onClick={() => { if (checkAuth() && permissions.canManageParts) setAddModalOpen(true); else if(checkAuth()) error(t("msgNoPermission") || "Permission Denied", t("msgNoEditPermission") || "No edit permission"); }}
                                     className="btn btn-primary shadow-lg shadow-primary/20"
                                 >
                                     <PlusIcon size={20} />
@@ -662,7 +662,7 @@ export default function PartsPage() {
                 isOpen={detailsModalOpen}
                 onClose={() => setDetailsModalOpen(false)}
                 part={viewPart}
-                onEdit={handleEditPart}
+                onEdit={handleEditClick}
                 onDelete={handleDeleteClick}
                 onRepair={handleRepairPart}
                 onViewHistory={openHistoryModal}

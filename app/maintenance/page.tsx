@@ -867,14 +867,14 @@ export default function MaintenancePage() {
                         </div>
                         <div className="flex items-center gap-2">
                             <button
-                                onClick={() => { if (checkAuth() && permissions.canExecuteTask) setMaintenanceModalOpen(true); else if(checkAuth()) showError(t("msgNoPermission"), t("msgNoEditPermission")); }}
+                                onClick={() => { if (checkAuth() && permissions.canExecuteTask) setMaintenanceModalOpen(true); else if(checkAuth()) error(t("msgNoPermission"), t("msgNoEditPermission")); }}
                                 className="flex-1 sm:flex-none min-w-[120px] btn btn-active bg-accent-yellow text-bg-primary hover:bg-accent-yellow/90 hover:scale-105 active:scale-95 border-none h-9 text-[11px] font-bold transition-all shadow-sm hover:shadow-accent-yellow/20"
                             >
                                 <HistoryIcon size={14} className="mr-1" />
                                 {t("actionRecordMaintenance") || "เปลี่ยนอะไหล่/Overhaul"}
                             </button>
                             <button
-                                onClick={() => { if (checkAuth() && permissions.canManageParts) setReplacementPlanOpen(true); else if(checkAuth()) showError(t("msgNoPermission"), t("msgNoEditPermission")); }}
+                                onClick={() => { if (checkAuth() && permissions.canManageParts) setReplacementPlanOpen(true); else if(checkAuth()) error(t("msgNoPermission"), t("msgNoEditPermission")); }}
                                 className="flex-1 sm:flex-none min-w-[120px] btn btn-active bg-accent-purple text-white hover:bg-accent-purple/90 hover:scale-105 active:scale-95 border-none h-9 text-[11px] font-bold transition-all shadow-sm hover:shadow-accent-purple/20"
                             >
                                 <RefreshCwIcon size={14} className="mr-1" />
