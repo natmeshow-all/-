@@ -20,7 +20,7 @@ interface PartReplacementPlanModalProps {
 
 export default function PartReplacementPlanModal({ isOpen, onClose, machineId: initialMachineId, machineName: initialMachineName, onViewHistory, fromPMHistory }: PartReplacementPlanModalProps) {
     const { t } = useLanguage();
-    const { user } = useAuth();
+    const { user, permissions } = useAuth();
     const { success, error: showError } = useToast();
 
     const [allParts, setAllParts] = useState<Part[]>([]);
@@ -472,18 +472,20 @@ export default function PartReplacementPlanModal({ isOpen, onClose, machineId: i
                                                 </div>
 
                                                 <div className="w-full sm:w-auto flex-shrink-0">
-                                                    <button
-                                                        onClick={() => handleReplacePart(part)}
-                                                        disabled={processingId === part.id}
-                                                        className="w-full sm:w-auto px-4 py-2 bg-accent-blue/10 hover:bg-accent-blue/20 text-accent-blue border border-accent-blue/30 rounded-lg text-sm font-bold flex items-center justify-center gap-2 transition-colors disabled:opacity-50"
-                                                    >
-                                                        {processingId === part.id ? (
-                                                            <span className="animate-spin rounded-full h-4 w-4 border-2 border-t-transparent border-accent-blue"></span>
-                                                        ) : (
-                                                            <RefreshCwIcon size={14} />
-                                                        )}
-                                                        บันทึกเปลี่ยนอะไหล่ชิ้นนี้
-                                                    </button>
+                                                    {permissions.canExecuteTask && (
+                                                        <button
+                                                            onClick={() => handleReplacePart(part)}
+                                                            disabled={processingId === part.id}
+                                                            className="w-full sm:w-auto px-4 py-2 bg-accent-blue/10 hover:bg-accent-blue/20 text-accent-blue border border-accent-blue/30 rounded-lg text-sm font-bold flex items-center justify-center gap-2 transition-colors disabled:opacity-50"
+                                                        >
+                                                            {processingId === part.id ? (
+                                                                <span className="animate-spin rounded-full h-4 w-4 border-2 border-t-transparent border-accent-blue"></span>
+                                                            ) : (
+                                                                <RefreshCwIcon size={14} />
+                                                            )}
+                                                            บันทึกเปลี่ยนอะไหล่ชิ้นนี้
+                                                        </button>
+                                                    )}
                                                 </div>
                                             </div>
                                         </div>

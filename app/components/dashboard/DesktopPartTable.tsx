@@ -2,6 +2,7 @@
 
 import React from "react";
 import { useLanguage } from "../../contexts/LanguageContext";
+import { useAuth } from "../../contexts/AuthContext";
 import {
   EditIcon,
   SettingsIcon,
@@ -46,6 +47,7 @@ export default React.memo(function DesktopPartTable({
   onOpenMachine,
 }: DesktopPartTableProps) {
   const { t, tData, language } = useLanguage();
+  const { permissions } = useAuth();
 
   const stickyClass = isFullscreen ? "sticky top-0 z-20 bg-bg-tertiary shadow-sm" : "";
 
@@ -113,27 +115,33 @@ export default React.memo(function DesktopPartTable({
                   </td>
                   <td className="py-3 px-4 text-center">
                     <div className="flex items-center justify-center gap-2">
-                      <button
-                        onClick={() => onEditPart(part)}
-                        className="p-1.5 rounded-lg text-accent-cyan hover:bg-accent-cyan/10 transition-colors"
-                        title={t("actionEdit")}
-                      >
-                        <EditIcon size={16} />
-                      </button>
-                      <button
-                        onClick={() => onMaintenancePart(part)}
-                        className="p-1.5 rounded-lg text-accent-yellow hover:bg-accent-yellow/10 transition-colors"
-                        title={t("actionMaintenance")}
-                      >
-                        <SettingsIcon size={16} />
-                      </button>
-                      <button
-                        onClick={() => onDeletePart(part)}
-                        className="p-1.5 rounded-lg text-accent-red hover:bg-accent-red/10 transition-colors"
-                        title={t("actionDelete")}
-                      >
-                        <BoxIcon size={16} className="rotate-45" />
-                      </button>
+                      {permissions.canManageParts && (
+                        <button
+                          onClick={() => onEditPart(part)}
+                          className="p-1.5 rounded-lg text-accent-cyan hover:bg-accent-cyan/10 transition-colors"
+                          title={t("actionEdit")}
+                        >
+                          <EditIcon size={16} />
+                        </button>
+                      )}
+                      {permissions.canExecuteTask && (
+                        <button
+                          onClick={() => onMaintenancePart(part)}
+                          className="p-1.5 rounded-lg text-accent-yellow hover:bg-accent-yellow/10 transition-colors"
+                          title={t("actionMaintenance")}
+                        >
+                          <SettingsIcon size={16} />
+                        </button>
+                      )}
+                      {(permissions.canDeleteData || permissions.canRequestDelete) && (
+                        <button
+                          onClick={() => onDeletePart(part)}
+                          className="p-1.5 rounded-lg text-accent-red hover:bg-accent-red/10 transition-colors"
+                          title={t("actionDelete")}
+                        >
+                          <BoxIcon size={16} className="rotate-45" />
+                        </button>
+                      )}
                     </div>
                   </td>
                 </tr>

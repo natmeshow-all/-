@@ -33,7 +33,7 @@ export default function MachineDetailsModal({
     onDeletePart
 }: MachineDetailsModalProps) {
     const { t, tData } = useLanguage();
-    const { checkAuth } = useAuth();
+    const { checkAuth, permissions } = useAuth();
     const [machine, setMachine] = useState<Machine | null>(null);
     const [parts, setParts] = useState<Part[]>([]);
     const [loading, setLoading] = useState(false);
@@ -135,7 +135,7 @@ export default function MachineDetailsModal({
                                     <p className="text-indigo-400/80 text-xs md:text-sm font-medium">
                                         {t("machineDetailsSubtitle")}
                                     </p>
-                                    {(machine || machineName) && (
+                                    {permissions.canManagePM && (machine || machineName) && (
                                         <button
                                             onClick={() => { if (checkAuth()) setPmConfigOpen(true); }}
                                             className="flex items-center gap-2 px-2 py-1 rounded bg-indigo-500/20 text-indigo-300 text-[10px] font-bold hover:bg-indigo-500/30 transition-all border border-indigo-500/30 shadow-lg active:scale-95"
@@ -144,7 +144,7 @@ export default function MachineDetailsModal({
                                             {t("actionPMSettings")}
                                         </button>
                                     )}
-                                    {(machine?.id || machineId) && (
+                                    {permissions.canManageParts && (machine?.id || machineId) && (
                                         <button
                                             onClick={() => setReplacementPlanOpen(true)}
                                             className="flex items-center gap-2 px-2 py-1 rounded bg-orange-500/20 text-orange-300 text-[10px] font-bold hover:bg-orange-500/30 transition-all border border-orange-500/30 shadow-lg active:scale-95"
@@ -357,27 +357,33 @@ export default function MachineDetailsModal({
 
                                                     {/* Actions */}
                                                     <div className="flex items-center justify-end gap-2 pt-2 border-t border-white/5 mt-2">
-                                                        <button
-                                                            onClick={() => { if (checkAuth()) onEditPart?.(part); }}
-                                                            className="p-2 rounded-lg bg-white/5 text-white/60 hover:bg-blue-500/20 hover:text-blue-400 transition-all border border-transparent hover:border-blue-500/30"
-                                                            title={t("actionEdit")}
-                                                        >
-                                                            <EditIcon size={16} />
-                                                        </button>
-                                                        <button
-                                                            onClick={() => { if (checkAuth()) onDeletePart?.(part); }}
-                                                            className="p-2 rounded-lg bg-white/5 text-white/60 hover:bg-red-500/20 hover:text-red-400 transition-all border border-transparent hover:border-red-500/30"
-                                                            title={t("actionDelete")}
-                                                        >
-                                                            <TrashIcon size={16} />
-                                                        </button>
-                                                        <button
-                                                            onClick={() => { if (checkAuth()) onRepairPart?.(part); }}
-                                                            className="flex items-center gap-2 px-4 py-1.5 bg-indigo-500/20 hover:bg-indigo-500/40 text-indigo-300 rounded-lg font-bold transition-all border border-indigo-500/30 text-xs"
-                                                        >
-                                                            <WrenchIcon size={14} />
-                                                            {t("actionRepair")}
-                                                        </button>
+                                                        {permissions.canManageParts && (
+                                                            <button
+                                                                onClick={() => { if (checkAuth()) onEditPart?.(part); }}
+                                                                className="p-2 rounded-lg bg-white/5 text-white/60 hover:bg-blue-500/20 hover:text-blue-400 transition-all border border-transparent hover:border-blue-500/30"
+                                                                title={t("actionEdit")}
+                                                            >
+                                                                <EditIcon size={16} />
+                                                            </button>
+                                                        )}
+                                                        {(permissions.canDeleteData || permissions.canRequestDelete) && (
+                                                            <button
+                                                                onClick={() => { if (checkAuth()) onDeletePart?.(part); }}
+                                                                className="p-2 rounded-lg bg-white/5 text-white/60 hover:bg-red-500/20 hover:text-red-400 transition-all border border-transparent hover:border-red-500/30"
+                                                                title={t("actionDelete")}
+                                                            >
+                                                                <TrashIcon size={16} />
+                                                            </button>
+                                                        )}
+                                                        {permissions.canExecuteTask && (
+                                                            <button
+                                                                onClick={() => { if (checkAuth()) onRepairPart?.(part); }}
+                                                                className="flex items-center gap-2 px-4 py-1.5 bg-indigo-500/20 hover:bg-indigo-500/40 text-indigo-300 rounded-lg font-bold transition-all border border-indigo-500/30 text-xs"
+                                                            >
+                                                                <WrenchIcon size={14} />
+                                                                {t("actionRepair")}
+                                                            </button>
+                                                        )}
                                                     </div>
                                                 </div>
                                             </div>
