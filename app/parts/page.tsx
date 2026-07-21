@@ -11,6 +11,8 @@ import ConfirmModal from "../components/ui/ConfirmModal";
 import { useLanguage } from "../contexts/LanguageContext";
 import { getPartsPaginated, searchSpareParts, deleteSparePart, getStockTransactionsPaginated } from "../lib/firebaseService";
 import { getMaintenanceRecordsPaginated } from "../services/maintenanceService";
+import { requestDeletion } from "../services/deletionService";
+import RequestDeletionModal from "../components/ui/RequestDeletionModal";
 import { Part } from "../types";
 import { useAuth } from "../contexts/AuthContext";
 import { useToast } from "../contexts/ToastContext";
@@ -26,6 +28,7 @@ export default function PartsPage() {
     const [historyModalOpen, setHistoryModalOpen] = useState(false);
     const [detailsModalOpen, setDetailsModalOpen] = useState(false);
     const [confirmDeleteOpen, setConfirmDeleteOpen] = useState(false);
+    const [requestDeleteModalOpen, setRequestDeleteModalOpen] = useState(false);
     const [selectedPart, setSelectedPart] = useState<Part | null>(null); // For actions
     const [viewPart, setViewPart] = useState<Part | null>(null); // For details view
     const [partToDelete, setPartToDelete] = useState<Part | null>(null);
@@ -142,30 +145,46 @@ export default function PartsPage() {
 
     const handleDeleteClick = (part: Part) => {
         if (!checkAuth()) return;
-        if (!permissions.canDeleteData) {
+        if (!permissions.canDeleteData && !permissions.canRequestDelete) {
             error(t("msgNoEditPermission") || "คุณไม่มีสิทธ์แก้ไข");
             return;
         }
         setPartToDelete(part);
-        setConfirmDeleteOpen(true);
-        setDetailsModalOpen(false);
+        if (permissions.canDeleteData) {
+            setConfirmDeleteOpen(true);
+        } else {
+            setRequestDeleteModalOpen(true);
+        }
     };
 
-    const confirmDelete = async () => {
-        if (partToDelete) {
-            try {
-                setLoading(true);
-                await deleteSparePart(partToDelete.id);
-                await loadParts(false);
-                success(t("msgDeleteSuccess") || "ลบข้อมูลเรียบร้อยแล้ว");
-            } catch (err) {
-                console.error("Error deleting part:", err);
-                error(t("msgDeleteError") || "เกิดข้อผิดพลาดในการลบข้อมูล");
-            } finally {
-                setLoading(false);
-                setConfirmDeleteOpen(false);
-                setPartToDelete(null);
-            }
+    const handleConfirmDelete = async () => {
+        if (!partToDelete) return;
+        try {
+            await deleteSparePart(partToDelete.id);
+            setParts(parts.filter(p => p.id !== partToDelete.id));
+            success(t("msgDeleteSuccess") || "ลบอะไหล่เรียบร้อยแล้ว");
+        } catch (err: any) {
+            console.error("Delete failed:", err);
+            error(t("msgDeleteError") || "ไม่สามารถลบอะไหล่ได้", err.message);
+        } finally {
+            setConfirmDeleteOpen(false);
+            setPartToDelete(null);
+        }
+    };
+
+    const handleRequestDeletion = async (reason: string) => {
+        if (!partToDelete || !user) return;
+        try {
+            await requestDeletion('spare_parts', partToDelete.id, reason, user.uid);
+            success("ส่งคำขอลบสำเร็จ", "รอผู้ดูแลระบบอนุมัติการลบข้อมูล");
+            // Mark locally
+            setParts(prev => prev.map(p => p.id === partToDelete.id ? { ...p, deleteRequested: true } : p));
+        } catch (err: any) {
+            console.error("Request delete failed", err);
+            error("ส่งคำขอลบล้มเหลว", err.message || "เกิดข้อผิดพลาด");
+        } finally {
+            setRequestDeleteModalOpen(false);
+            setPartToDelete(null);
         }
     };
 
@@ -200,10 +219,6 @@ export default function PartsPage() {
         return acc;
     }, {} as Record<string, Part[]>);
 
-    // Identify Low Stock Items - No longer used for banner but may be used elsewhere if needed
-    // const lowStockItems = parts.filter(p => p.quantity <= p.minStockThreshold);
-
-
     // Tab State
     const [activeTab, setActiveTab] = useState<'inventory' | 'history'>('inventory');
 
@@ -211,19 +226,10 @@ export default function PartsPage() {
     const [historyItems, setHistoryItems] = useState<any[]>([]);
     const [historyLoading, setHistoryLoading] = useState(false);
 
-    // We'll simplisticly reload history on tab switch for now to ensure freshness and simpler pagination merging
-    // A proper merged pagination is complex, so we'll fetch latest 50 of each and merge for "Recent Activity" 
-    // effectively disabling infinite scroll for history in this iteration for simplicity/robustness, 
-    // or we implement a "Load More" that blindly fetches next page of both and re-sorts.
-    // Let's go with "Load More" strategy fetching both.
-
     const [historyCursor, setHistoryCursor] = useState<{
         maintenance?: { date: string, key: string },
         stock?: { date: string, id: string }
     }>({});
-
-    // Import these dynamically or assumes they are imported
-    // We need to add imports for getMaintenanceRecordsPaginated, getStockTransactionsPaginated
 
     const loadHistory = async (isLoadMore = false) => {
         if (historyLoading) return;
@@ -397,6 +403,7 @@ export default function PartsPage() {
                                             {items.map(part => {
                                                 const theme = getPartTheme(part.category || "");
                                                 const isLowStock = part.quantity <= (part.minStockThreshold || 0);
+                                                const isPendingDelete = part.deleteRequested === true;
 
                                                 return (
                                                     <div
@@ -448,7 +455,7 @@ export default function PartsPage() {
                                                                         <ChevronDownIcon size={10} className={expandedParts[part.id] ? "rotate-180 transition-transform" : "transition-transform"} />
                                                                     </button>
                                                                 )}
-                                                                {permissions.canManageParts && (
+                                                                {(!isPendingDelete && (permissions.canDeleteData || permissions.canRequestDelete)) && (
                                                                     <button
                                                                         onClick={(e) => {
                                                                             e.stopPropagation();
@@ -673,12 +680,20 @@ export default function PartsPage() {
             <ConfirmModal
                 isOpen={confirmDeleteOpen}
                 onClose={() => setConfirmDeleteOpen(false)}
-                onConfirm={confirmDelete}
-                title={t("titleConfirmDelete") || "ยืนยันการลบ"}
-                message={`${t("msgConfirmDelete") || "คุณแน่ใจหรือไม่ว่าต้องการลบ?"} ${partToDelete ? `"${partToDelete.name}"` : ""}`}
+                onConfirm={handleConfirmDelete}
+                title={t("confirmDeleteTitle") || "Confirm Delete"}
+                message={`${t("msgConfirmDelete") || "Are you sure you want to delete"} ${partToDelete?.name || ""}?`}
                 isDestructive={true}
                 confirmText={t("actionDelete")}
                 cancelText={t("actionCancel")}
+            />
+
+            <RequestDeletionModal
+                isOpen={requestDeleteModalOpen}
+                onClose={() => setRequestDeleteModalOpen(false)}
+                onConfirm={handleRequestDeletion}
+                title="ขอลบข้อมูลอะไหล่"
+                itemName={partToDelete?.name || ""}
             />
         </div>
     );

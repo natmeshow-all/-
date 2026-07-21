@@ -10,17 +10,20 @@ import { PlusIcon, SettingsIcon, TrashIcon } from "../components/ui/Icons";
 import MachineSettingsModal from "../components/forms/MachineSettingsModal";
 import AddMachineModal from "../components/forms/AddMachineModal";
 import ConfirmModal from "../components/ui/ConfirmModal";
+import RequestDeletionModal from "../components/ui/RequestDeletionModal";
+import { requestDeletion } from "../services/deletionService";
 import MachineDetailsModal from "../components/machines/MachineDetailsModal";
 
 export default function MachinesPage() {
     const { t } = useLanguage();
-    const { checkAuth, permissions } = useAuth();
+    const { checkAuth, permissions, user } = useAuth();
     const { success, error: showError } = useToast();
     const [machines, setMachines] = React.useState<any[]>([]);
     const [loading, setLoading] = React.useState(true);
-    const [settingsModalOpen, setSettingsModalOpen] = React.useState(false);
     const [addModalOpen, setAddModalOpen] = React.useState(false);
+    const [settingsModalOpen, setSettingsModalOpen] = React.useState(false);
     const [deleteConfirmOpen, setDeleteConfirmOpen] = React.useState(false);
+    const [requestDeleteModalOpen, setRequestDeleteModalOpen] = React.useState(false);
     const [selectedMachine, setSelectedMachine] = React.useState<any>(null);
     const [machineToDelete, setMachineToDelete] = React.useState<any>(null);
     const [selectedLocation, setSelectedLocation] = React.useState("ALL");
@@ -82,12 +85,16 @@ export default function MachinesPage() {
 
     const handleOpenDelete = (machine: any) => {
         if (!checkAuth()) return;
-        if (!permissions.canDeleteData) {
+        if (!permissions.canDeleteData && !permissions.canRequestDelete) {
             showError(t("msgNoPermission"), t("msgNoEditPermission"));
             return;
         }
         setMachineToDelete(machine);
-        setDeleteConfirmOpen(true);
+        if (permissions.canDeleteData) {
+            setDeleteConfirmOpen(true);
+        } else {
+            setRequestDeleteModalOpen(true);
+        }
     };
 
     const handleDeleteMachine = async () => {
@@ -109,6 +116,21 @@ export default function MachinesPage() {
     const handleOpenDetails = (machine: any) => {
         setMachineForDetails(machine);
         setDetailsModalOpen(true);
+    };
+
+    const handleRequestDeletion = async (reason: string) => {
+        if (!machineToDelete || !user) return;
+        try {
+            await requestDeletion('machines', machineToDelete.id, reason, user.uid);
+            success("ส่งคำขอลบสำเร็จ", "รอผู้ดูแลระบบอนุมัติการลบข้อมูล");
+            fetchMachines();
+        } catch (error: any) {
+            console.error("Request delete failed", error);
+            showError("ส่งคำขอลบล้มเหลว", error.message || "เกิดข้อผิดพลาด");
+        } finally {
+            setRequestDeleteModalOpen(false);
+            setMachineToDelete(null);
+        }
     };
 
     return (
@@ -197,17 +219,26 @@ export default function MachinesPage() {
                 {/* Machine Grid */}
                 {!loading && (
                     <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-3">
-                        {filteredMachines.map((machine, index) => (
-                            <MachineCard
-                                key={machine.id || index}
-                                machine={machine}
-                                index={index}
-                                onRefresh={fetchMachines}
-                                onOpenSettings={() => handleOpenSettings(machine)}
-                                onOpenDelete={() => handleOpenDelete(machine)}
-                                onOpenDetails={() => handleOpenDetails(machine)}
-                            />
-                        ))}
+                        {filteredMachines.map((machine, index) => {
+                            const isPendingDelete = machine.deleteRequested === true;
+                            return (
+                                <div key={machine.id || index} className={isPendingDelete ? "opacity-50 grayscale relative" : ""}>
+                                    {isPendingDelete && (
+                                        <div className="absolute top-2 right-2 z-10 bg-accent-red text-white text-xs px-2 py-1 rounded-full font-bold shadow-md">
+                                            รออนุมัติการลบ
+                                        </div>
+                                    )}
+                                    <MachineCard
+                                        machine={machine}
+                                        index={index}
+                                        onRefresh={fetchMachines}
+                                        onOpenSettings={() => !isPendingDelete && handleOpenSettings(machine)}
+                                        onOpenDelete={() => !isPendingDelete && handleOpenDelete(machine)}
+                                        onOpenDetails={() => handleOpenDetails(machine)}
+                                    />
+                                </div>
+                            );
+                        })}
                     </div>
                 )}
 
@@ -244,6 +275,14 @@ export default function MachinesPage() {
                 confirmText={t("actionDelete")}
                 cancelText={t("actionCancel")}
                 isDestructive={true}
+            />
+
+            <RequestDeletionModal
+                isOpen={requestDeleteModalOpen}
+                onClose={() => setRequestDeleteModalOpen(false)}
+                onConfirm={handleRequestDeletion}
+                title="ขอลบข้อมูลเครื่องจักร"
+                itemName={machineToDelete?.name || ""}
             />
 
             <MachineDetailsModal

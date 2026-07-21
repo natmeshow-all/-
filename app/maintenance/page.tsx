@@ -12,6 +12,8 @@ import { useAuth } from "../contexts/AuthContext";
 import { useToast } from "../contexts/ToastContext";
 import { formatDateThai } from "../lib/dateUtils";
 import { getMaintenanceRecordsPaginated, deleteMaintenanceRecord, getMachines, updateMaintenanceRecord, addMaintenanceRecord, getMaintenanceRecordsByMachine, getSystemSettings, updateMachine, getPMPlans, updatePMPlan } from "../lib/firebaseService";
+import { requestDeletion } from "../services/deletionService";
+import RequestDeletionModal from "../components/ui/RequestDeletionModal";
 import MarqueeText from "../components/ui/MarqueeText";
 import { MaintenanceRecord, Machine, ChecklistItemResult, MaintenanceStatus } from "../types";
 import { lineService } from "../services/lineService";
@@ -55,7 +57,7 @@ const ExportExcelModal = dynamic(() => import("../components/forms/ExportExcelMo
 
 export default function MaintenancePage() {
     const { t } = useLanguage();
-    const { checkAuth, isAdmin, permissions } = useAuth();
+    const { checkAuth, isAdmin, permissions, user } = useAuth();
     const { success, error } = useToast();
     const [maintenanceModalOpen, setMaintenanceModalOpen] = useState(false);
     const [exportModalOpen, setExportModalOpen] = useState(false);
@@ -78,6 +80,7 @@ export default function MaintenancePage() {
 
     // Delete Confirmation State
     const [deleteConfirmOpen, setDeleteConfirmOpen] = useState(false);
+    const [requestDeleteModalOpen, setRequestDeleteModalOpen] = useState(false);
     const [recordToDelete, setRecordToDelete] = useState<MaintenanceRecord | null>(null);
     const [resolveConfirmOpen, setResolveConfirmOpen] = useState(false);
     const resolutionReportCardRef = useRef<HTMLDivElement>(null);
@@ -791,8 +794,16 @@ export default function MaintenancePage() {
     const getMonthOptions = () => uniqueMonths;
 
     const handleDeleteClick = (record: MaintenanceRecord) => {
+        if (!permissions.canDeleteData && !permissions.canRequestDelete) {
+            error(t("msgNoPermission") || "ไม่มีสิทธิ์ลบข้อมูล");
+            return;
+        }
         setRecordToDelete(record);
-        setDeleteConfirmOpen(true);
+        if (permissions.canDeleteData) {
+            setDeleteConfirmOpen(true);
+        } else {
+            setRequestDeleteModalOpen(true);
+        }
     };
 
     const handleConfirmDelete = async () => {
@@ -806,12 +817,27 @@ export default function MaintenancePage() {
         } catch (err) {
             console.error("Error deleting record:", err);
             error(t("msgDeleteError") || "เกิดข้อผิดพลาดในการลบข้อมูล");
+        } finally {
+            setDeleteConfirmOpen(false);
+            setRecordToDelete(null);
         }
     };
 
-
-
-    const getStatusColor = (status: string) => {
+    const handleRequestDeletion = async (reason: string) => {
+        if (!recordToDelete || !user) return;
+        try {
+            await requestDeletion('maintenance_records', recordToDelete.id, reason, user.uid);
+            success("ส่งคำขอลบสำเร็จ", "รอผู้ดูแลระบบอนุมัติการลบข้อมูล");
+            // Mark locally
+            setRecords(prev => prev.map(r => r.id === recordToDelete.id ? { ...r, deleteRequested: true } : r));
+        } catch (err: any) {
+            console.error("Request delete failed", err);
+            error("ส่งคำขอลบล้มเหลว", err.message || "เกิดข้อผิดพลาด");
+        } finally {
+            setRequestDeleteModalOpen(false);
+            setRecordToDelete(null);
+        }
+    };    const getStatusColor = (status: string) => {
         switch (status) {
             case "completed": return "badge-success";
             case "inProgress": return "badge-warning";
@@ -1170,6 +1196,7 @@ export default function MaintenancePage() {
                             };
                             return filteredRecords.map((record, index) => {
                                 const isExpanded = expandedRecords.has(record.id);
+                                const isPendingDelete = record.deleteRequested === true;
                             const hasMotorData = record.motorGearData && (record.motorGearData.motorSize || record.motorGearData.temperature || record.motorGearData.currentIdle || record.motorGearData.currentLoad || record.motorGearData.voltageL1);
                             const hasShaftData = record.motorGearData?.shaftData && (record.motorGearData.shaftData.shaftBend || record.motorGearData.shaftData.dialGauge);
                             const hasVibrationData = record.motorGearData && (record.motorGearData.vibrationX?.value || record.motorGearData.vibrationY?.value || record.motorGearData.vibrationZ?.value);
@@ -1389,9 +1416,14 @@ export default function MaintenancePage() {
                                 <div
                                     key={record.id}
                                     onClick={() => toggleExpand(record.id)} // Specific click handler logic below
-                                    className={`card overflow-hidden transition-all duration-300 ${isExpanded ? 'ring-1 ring-primary/50 shadow-lg scale-[1.01]' : 'hover:bg-white/5 cursor-pointer'}`}
+                                    className={`card overflow-hidden transition-all duration-300 ${isExpanded ? 'ring-1 ring-primary/50 shadow-lg scale-[1.01]' : 'hover:bg-white/5 cursor-pointer'} ${isPendingDelete ? "opacity-50 grayscale relative" : ""}`}
                                     style={{ animationDelay: `${index * 50}ms` }}
                                 >
+                                    {isPendingDelete && (
+                                        <div className="absolute top-4 right-4 z-10 bg-accent-red text-white text-xs px-2 py-1 rounded-full font-bold shadow-md">
+                                            รออนุมัติการลบ
+                                        </div>
+                                    )}
                                     {/* Compact Header - Clickable Area */}
                                     <div className="flex flex-col gap-2 relative">
                                         
@@ -1634,7 +1666,7 @@ export default function MaintenancePage() {
                                                             แก้ไขแล้ว
                                                         </button>
                                                     )}
-                                                    {permissions.canDeleteData && (
+                                                    {(!isPendingDelete && (permissions.canDeleteData || permissions.canRequestDelete)) && (
                                                         <button
                                                             onClick={(e) => {
                                                                 e.stopPropagation();
@@ -2528,6 +2560,24 @@ export default function MaintenancePage() {
                     </div>
                 </div>
             </Modal>
+            <ConfirmModal
+                isOpen={deleteConfirmOpen}
+                onClose={() => setDeleteConfirmOpen(false)}
+                onConfirm={handleConfirmDelete}
+                title={t("confirmDeleteTitle")}
+                message={t("confirmDeleteMessage")}
+                confirmText={t("actionDelete")}
+                cancelText={t("actionCancel")}
+                isDestructive={true}
+            />
+
+            <RequestDeletionModal
+                isOpen={requestDeleteModalOpen}
+                onClose={() => setRequestDeleteModalOpen(false)}
+                onConfirm={handleRequestDeletion}
+                title="ขอลบข้อมูลประวัติซ่อมบำรุง"
+                itemName={recordToDelete?.machineName || "งานนี้"}
+            />
             
             {/* Hidden Report Card for Telegram/LINE Export */}
             <div style={{ position: 'absolute', top: 0, left: 0, zIndex: -100, opacity: 0.01, pointerEvents: 'none' }}>

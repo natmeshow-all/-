@@ -54,6 +54,7 @@ const AuthContext = createContext<AuthContextType>({
         canManageParts: false,
         canManageMachines: false,
         canViewHistory: false,
+        canRequestDelete: false,
     },
     checkAuth: () => false,
     dismissWelcome: async () => {},
@@ -292,6 +293,7 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
         canManageParts: hasRole(["admin", "supervisor"]),
         canManageMachines: hasRole(["admin", "supervisor"]),
         canViewHistory: hasRole(["admin", "supervisor", "technician", "viewer"]),
+        canRequestDelete: hasRole(["supervisor", "technician"]),
     };
 
     const checkAuth = (): boolean => {

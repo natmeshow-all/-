@@ -23,6 +23,7 @@ import {
     deactivateUser,
     reactivateUser
 } from "../lib/firebaseService";
+import { getDeletionRequests, approveDeletion, rejectDeletion, DeletionRequest } from "../services/deletionService";
 import { UserProfile, PendingUser, UserRole } from "../types";
 import Modal from "../components/ui/Modal";
 import { useRouter } from "next/navigation";
@@ -36,8 +37,9 @@ export default function UsersPage() {
 
     const [users, setUsers] = useState<UserProfile[]>([]);
     const [pendingUsers, setPendingUsers] = useState<PendingUser[]>([]);
+    const [deletionRequests, setDeletionRequests] = useState<DeletionRequest[]>([]);
     const [loading, setLoading] = useState(true);
-    const [activeTab, setActiveTab] = useState<"users" | "pending" | "permissions">("users");
+    const [activeTab, setActiveTab] = useState<"users" | "pending" | "permissions" | "deletion_requests">("users");
     const [editingUser, setEditingUser] = useState<UserProfile | null>(null);
     const [approvalModal, setApprovalModal] = useState<PendingUser | null>(null);
     const [approvalRole, setApprovalRole] = useState<UserRole>("technician");
@@ -52,12 +54,14 @@ export default function UsersPage() {
     const fetchData = async () => {
         setLoading(true);
         try {
-            const [usersData, pendingData] = await Promise.all([
+            const [usersData, pendingData, requestsData] = await Promise.all([
                 getAllUsers(),
-                getPendingUsers()
+                getPendingUsers(),
+                getDeletionRequests()
             ]);
             setUsers(usersData);
             setPendingUsers(pendingData);
+            setDeletionRequests(requestsData);
         } catch (error) {
             console.error("Error fetching users:", error);
         } finally {
@@ -99,6 +103,29 @@ export default function UsersPage() {
             fetchData();
         } catch (error) {
             console.error("Error rejecting user:", error);
+        }
+    };
+
+    const handleApproveDeletion = async (req: DeletionRequest) => {
+        if (!confirm("คุณแน่ใจหรือไม่ว่าต้องการลบข้อมูลนี้ถาวร? การกระทำนี้ไม่สามารถย้อนกลับได้")) return;
+        try {
+            await approveDeletion(req.collection, req.id);
+            success("ลบข้อมูลถาวรสำเร็จ", "ข้อมูลถูกลบออกจากระบบแล้ว");
+            fetchData();
+        } catch (err: any) {
+            console.error(err);
+            showError("เกิดข้อผิดพลาด", err.message);
+        }
+    };
+
+    const handleRejectDeletion = async (req: DeletionRequest) => {
+        try {
+            await rejectDeletion(req.collection, req.id);
+            success("ปฏิเสธคำขอลบสำเร็จ", "ข้อมูลกลับคืนสู่สถานะปกติ");
+            fetchData();
+        } catch (err: any) {
+            console.error(err);
+            showError("เกิดข้อผิดพลาด", err.message);
         }
     };
 
@@ -209,6 +236,18 @@ export default function UsersPage() {
                                 : "bg-white/5 border-white/10 text-text-muted hover:bg-white/10"}`}
                     >
                         {t("rolePermissionsTitle") || "สิทธิ์การใช้งาน"}
+                    </button>
+                    <button
+                        onClick={() => setActiveTab("deletion_requests")}
+                        className={`px-4 py-2 rounded-xl text-sm font-bold transition-all border relative
+                            ${activeTab === "deletion_requests"
+                                ? "bg-accent-red/20 border-accent-red/40 text-white"
+                                : "bg-white/5 border-white/10 text-text-muted hover:bg-white/10"}`}
+                    >
+                        คำขอลบข้อมูล ({deletionRequests.length})
+                        {deletionRequests.length > 0 && (
+                            <span className="absolute -top-1 -right-1 w-3 h-3 bg-accent-red rounded-full animate-pulse" />
+                        )}
                     </button>
                 </div>
 
@@ -339,7 +378,7 @@ export default function UsersPage() {
                                 </div>
                             ))}
                         </div>
-                    ) : (
+                    ) : activeTab === "pending" ? (
                         /* Pending Users List */
                         <div className="grid gap-4">
                             {pendingUsers.length === 0 ? (
@@ -398,7 +437,55 @@ export default function UsersPage() {
                                 ))
                             )}
                         </div>
-                    )
+                    ) : activeTab === "deletion_requests" ? (
+                        <div className="space-y-4">
+                            {deletionRequests.length === 0 ? (
+                                <div className="card py-16 text-center text-text-muted bg-bg-secondary/30 border-dashed">
+                                    <div className="w-16 h-16 rounded-full bg-white/5 flex items-center justify-center mx-auto mb-4">
+                                        <CheckIcon size={32} className="text-white/20" />
+                                    </div>
+                                    <p className="font-medium text-lg">ไม่มีคำขอลบข้อมูล</p>
+                                </div>
+                            ) : (
+                                deletionRequests.map((req) => (
+                                    <div key={req.id} className="card p-5 bg-bg-secondary/40 border-white/5 hover:bg-bg-secondary/60 transition-all flex flex-col md:flex-row gap-4 items-start md:items-center">
+                                        <div className="flex-1 space-y-2">
+                                            <div className="flex items-center gap-2">
+                                                <span className="px-2 py-1 rounded bg-white/10 text-[10px] font-bold uppercase text-white">
+                                                    {req.collection === 'machines' ? 'เครื่องจักร' :
+                                                     req.collection === 'spare_parts' ? 'อะไหล่' :
+                                                     req.collection === 'pm_plans' ? 'แผน PM' : 'งานซ่อมบำรุง'}
+                                                </span>
+                                                <h3 className="font-bold text-text-primary text-base">
+                                                    {req.data.name || req.data.partName || req.data.taskName || req.data.machineName || 'ข้อมูลไม่ทราบชื่อ'}
+                                                </h3>
+                                            </div>
+                                            <div className="text-sm bg-accent-red/10 border border-accent-red/20 text-accent-red p-2 rounded-lg">
+                                                <strong>เหตุผลที่ขอลบ:</strong> {req.deleteReason}
+                                            </div>
+                                            <p className="text-xs text-text-muted">
+                                                ขอลบเมื่อ: {new Date(req.deletedAt).toLocaleString('th-TH')}
+                                            </p>
+                                        </div>
+                                        <div className="flex gap-2 w-full md:w-auto">
+                                            <button
+                                                onClick={() => handleRejectDeletion(req)}
+                                                className="flex-1 md:flex-none px-4 py-2 rounded-lg bg-white/10 hover:bg-white/20 text-text-primary text-sm font-bold transition-colors"
+                                            >
+                                                ปฏิเสธ
+                                            </button>
+                                            <button
+                                                onClick={() => handleApproveDeletion(req)}
+                                                className="flex-1 md:flex-none px-4 py-2 rounded-lg bg-accent-red hover:bg-accent-red/90 text-white text-sm font-bold transition-colors"
+                                            >
+                                                ลบถาวร
+                                            </button>
+                                        </div>
+                                    </div>
+                                ))
+                            )}
+                        </div>
+                    ) : null
                 }
             </main >
 

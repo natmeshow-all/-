@@ -12,10 +12,13 @@ import PMExecutionModal from "../components/pm/PMExecutionModal";
 import PMConfigModal from "../components/pm/PMConfigModal";
 import Modal from "../components/ui/Modal";
 import { useToast } from "../contexts/ToastContext";
+import RequestDeletionModal from "../components/ui/RequestDeletionModal";
+import ConfirmModal from "../components/ui/ConfirmModal";
+import { requestDeletion } from "../services/deletionService";
 
 export default function SchedulePage() {
     const { t, language } = useLanguage();
-    const { checkAuth, isAdmin, permissions } = useAuth();
+    const { checkAuth, isAdmin, permissions, user } = useAuth();
     const { success, error: showError } = useToast();
     const [mounted, setMounted] = useState(false);
     const [plans, setPlans] = useState<PMPlan[]>([]);
@@ -58,6 +61,7 @@ export default function SchedulePage() {
 
     // Delete Confirmation State
     const [deleteModalOpen, setDeleteModalOpen] = useState(false);
+    const [requestDeleteModalOpen, setRequestDeleteModalOpen] = useState(false);
     const [planToDelete, setPlanToDelete] = useState<PMPlan | null>(null);
 
     const fetchData = async (showSpinner = true) => {
@@ -243,12 +247,16 @@ export default function SchedulePage() {
 
     const handleDeleteClick = (plan: PMPlan) => {
         if (!checkAuth()) return;
-        if (!permissions.canDeleteData) {
+        if (!permissions.canDeleteData && !permissions.canRequestDelete) {
             showError(t("msgNoPermission"), t("msgNoEditPermission"));
             return;
         }
         setPlanToDelete(plan);
-        setDeleteModalOpen(true);
+        if (permissions.canDeleteData) {
+            setDeleteModalOpen(true);
+        } else {
+            setRequestDeleteModalOpen(true);
+        }
     };
 
     const confirmDelete = async () => {
@@ -263,6 +271,21 @@ export default function SchedulePage() {
         } catch (error: any) {
             console.error("Error deleting PM plan:", error);
             showError(t("msgDeleteError"), error.message || t("msgError"));
+        }
+    };
+
+    const handleRequestDeletion = async (reason: string) => {
+        if (!planToDelete || !user) return;
+        try {
+            await requestDeletion('pm_plans', planToDelete.id, reason, user.uid);
+            success("ส่งคำขอลบสำเร็จ", "รอผู้ดูแลระบบอนุมัติการลบข้อมูล");
+            fetchData(false);
+        } catch (error: any) {
+            console.error("Request delete failed", error);
+            showError("ส่งคำขอลบล้มเหลว", error.message || "เกิดข้อผิดพลาด");
+        } finally {
+            setRequestDeleteModalOpen(false);
+            setPlanToDelete(null);
         }
     };
 
@@ -769,38 +792,25 @@ export default function SchedulePage() {
             }
 
 
-            {/* Delete Confirmation Modal */}
-            <Modal
+            {/* Delete Confirmation Modals */}
+            <ConfirmModal
                 isOpen={deleteModalOpen}
                 onClose={() => setDeleteModalOpen(false)}
-                title={t("modalConfirmDeletePM")}
-            >
-                <div className="space-y-4">
-                    <div className="flex flex-col items-center justify-center p-6 text-center">
-                        <div className="w-16 h-16 rounded-full bg-accent-red/10 flex items-center justify-center mb-4">
-                            <TrashIcon size={32} className="text-accent-red" />
-                        </div>
-                        <h3 className="text-lg font-bold text-text-primary mb-2">{t("modalAreYouSure")}</h3>
-                        <p className="text-text-muted">
-                            {t("modalDeletePMConfirm", { name: planToDelete?.taskName || "" })}
-                        </p>
-                    </div>
-                    <div className="flex gap-3">
-                        <button
-                            onClick={() => setDeleteModalOpen(false)}
-                            className="flex-1 py-3 rounded-xl bg-bg-tertiary text-text-primary font-bold hover:bg-white/10"
-                        >
-                            {t("actionCancel")}
-                        </button>
-                        <button
-                            onClick={confirmDelete}
-                            className="flex-1 py-3 rounded-xl bg-accent-red text-white font-bold hover:bg-accent-red/90"
-                        >
-                            {t("actionDelete")}
-                        </button>
-                    </div>
-                </div>
-            </Modal>
+                onConfirm={confirmDelete}
+                title={t("confirmDeleteTitle")}
+                message={t("confirmDeleteMessage")}
+                confirmText={t("actionDelete")}
+                cancelText={t("actionCancel")}
+                isDestructive={true}
+            />
+
+            <RequestDeletionModal
+                isOpen={requestDeleteModalOpen}
+                onClose={() => setRequestDeleteModalOpen(false)}
+                onConfirm={handleRequestDeletion}
+                title="ขอลบแผน PM"
+                itemName={planToDelete?.taskName || ""}
+            />
 
             <MobileNav />
         </div >

@@ -12,6 +12,7 @@ export interface UserPermissions {
     canManageParts: boolean;
     canManageMachines: boolean;
     canViewHistory: boolean;
+    canRequestDelete: boolean;
 }
 
 export interface UserProfile {
@@ -59,6 +60,11 @@ export interface Machine {
     maintenanceCycle?: number;
     createdAt: Date;
     updatedAt: Date;
+    // Deletion Request
+    deleteRequested?: boolean;
+    deleteReason?: string;
+    deletedBy?: string;
+    deletedAt?: Date | string;
 }
 
 export interface Part {
@@ -86,6 +92,11 @@ export interface Part {
     lastReplacedDate?: Date | string; // When the part was last replaced
     createdAt: Date;
     updatedAt: Date;
+    // Deletion Request
+    deleteRequested?: boolean;
+    deleteReason?: string;
+    deletedBy?: string;
+    deletedAt?: Date | string;
 }
 
 export type PartCategory =
@@ -198,6 +209,11 @@ export interface MaintenanceRecord {
 
     createdAt: Date;
     updatedAt: Date;
+    // Deletion Request
+    deleteRequested?: boolean;
+    deleteReason?: string;
+    deletedBy?: string;
+    deletedAt?: Date | string;
 }
 
 export interface PMPlan {
@@ -228,6 +244,11 @@ export interface PMPlan {
     notes?: string;
     createdAt: Date;
     updatedAt: Date;
+    // Deletion Request
+    deleteRequested?: boolean;
+    deleteReason?: string;
+    deletedBy?: string;
+    deletedAt?: Date | string;
 }
 
 export interface MaintenanceSchedule {
