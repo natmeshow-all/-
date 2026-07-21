@@ -14,7 +14,7 @@ import MachineDetailsModal from "../components/machines/MachineDetailsModal";
 
 export default function MachinesPage() {
     const { t } = useLanguage();
-    const { checkAuth } = useAuth();
+    const { checkAuth, permissions } = useAuth();
     const { success, error: showError } = useToast();
     const [machines, setMachines] = React.useState<any[]>([]);
     const [loading, setLoading] = React.useState(true);
@@ -72,12 +72,20 @@ export default function MachinesPage() {
 
     const handleOpenSettings = (machine: any) => {
         if (!checkAuth()) return;
+        if (!permissions.canManageMachines) {
+            showError(t("msgNoPermission"), t("msgNoEditPermission"));
+            return;
+        }
         setSelectedMachine(machine);
         setSettingsModalOpen(true);
     };
 
     const handleOpenDelete = (machine: any) => {
         if (!checkAuth()) return;
+        if (!permissions.canDeleteData) {
+            showError(t("msgNoPermission"), t("msgNoEditPermission"));
+            return;
+        }
         setMachineToDelete(machine);
         setDeleteConfirmOpen(true);
     };
@@ -122,7 +130,7 @@ export default function MachinesPage() {
                         </div>
                     </div>
                     <button
-                        onClick={() => { if (checkAuth()) setAddModalOpen(true); }}
+                        onClick={() => { if (checkAuth() && permissions.canManageMachines) setAddModalOpen(true); else if(checkAuth()) showError(t("msgNoPermission"), t("msgNoEditPermission")); }}
                         className="btn btn-primary h-8"
                     >
                         <PlusIcon size={16} />

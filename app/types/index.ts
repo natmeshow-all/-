@@ -3,6 +3,17 @@
 // ===== User Management Types =====
 export type UserRole = "admin" | "supervisor" | "technician" | "viewer";
 
+export interface UserPermissions {
+    canManageUsers: boolean;
+    canManagePM: boolean;
+    canExecuteTask: boolean;
+    canDeleteData: boolean;
+    canExportData: boolean;
+    canManageParts: boolean;
+    canManageMachines: boolean;
+    canViewHistory: boolean;
+}
+
 export interface UserProfile {
     uid: string;
     email: string;
@@ -16,6 +27,7 @@ export interface UserProfile {
     createdAt: string;
     updatedAt: string;
     hasSeenWelcome?: boolean;
+    permissions?: UserPermissions;
 }
 
 export interface PendingUser {

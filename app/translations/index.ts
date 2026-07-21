@@ -489,6 +489,7 @@ export interface TranslationKeys {
     userManageTitle: string;
     userTotalCount: string;
     userPendingCount: string;
+    rolePermissionsTitle: string;
     userTabAll: string;
     userTabPending: string;
     userRoleAdmin: string;
@@ -1267,7 +1268,8 @@ const th: TranslationKeys = {
     // User Management
     userManageTitle: "จัดการผู้ใช้งาน",
     userTotalCount: "{count} ผู้ใช้",
-    userPendingCount: "{count} รออนุมัติ",
+    userPendingCount: "รออนุมัติ {count}",
+    rolePermissionsTitle: "สิทธิ์การใช้งาน",
     userTabAll: "ผู้ใช้ทั้งหมด",
     userTabPending: "รออนุมัติ",
     userRoleAdmin: "ผู้ดูแลระบบ",
@@ -2036,6 +2038,7 @@ const en: TranslationKeys = {
     userManageTitle: "User Management",
     userTotalCount: "{count} Users",
     userPendingCount: "{count} Pending",
+    rolePermissionsTitle: "Roles & Permissions",
     userTabAll: "All Users",
     userTabPending: "Pending Approval",
     userRoleAdmin: "Admin",

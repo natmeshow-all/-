@@ -37,7 +37,7 @@ export default function UsersPage() {
     const [users, setUsers] = useState<UserProfile[]>([]);
     const [pendingUsers, setPendingUsers] = useState<PendingUser[]>([]);
     const [loading, setLoading] = useState(true);
-    const [activeTab, setActiveTab] = useState<"users" | "pending">("users");
+    const [activeTab, setActiveTab] = useState<"users" | "pending" | "permissions">("users");
     const [editingUser, setEditingUser] = useState<UserProfile | null>(null);
     const [approvalModal, setApprovalModal] = useState<PendingUser | null>(null);
     const [approvalRole, setApprovalRole] = useState<UserRole>("technician");
@@ -201,12 +201,75 @@ export default function UsersPage() {
                             <span className="absolute -top-1 -right-1 w-3 h-3 bg-accent-yellow rounded-full animate-pulse" />
                         )}
                     </button>
+                    <button
+                        onClick={() => setActiveTab("permissions")}
+                        className={`px-4 py-2 rounded-xl text-sm font-bold transition-all border
+                            ${activeTab === "permissions"
+                                ? "bg-accent-purple/20 border-accent-purple/40 text-white"
+                                : "bg-white/5 border-white/10 text-text-muted hover:bg-white/10"}`}
+                    >
+                        {t("rolePermissionsTitle") || "สิทธิ์การใช้งาน"}
+                    </button>
                 </div>
 
                 {
                     loading ? (
                         <div className="flex justify-center py-12">
                             <div className="w-8 h-8 border-2 border-accent-blue border-t-transparent rounded-full animate-spin" />
+                        </div>
+                    ) : activeTab === "permissions" ? (
+                        <div className="card p-6 bg-bg-secondary/30 border-white/5">
+                            <h2 className="text-lg font-bold text-text-primary mb-4">{t("rolePermissionsTitle") || "สิทธิ์การใช้งานของแต่ละบทบาท (Role Permissions Matrix)"}</h2>
+                            <div className="overflow-x-auto">
+                                <table className="w-full text-left border-collapse">
+                                    <thead>
+                                        <tr className="border-b border-white/10 text-sm text-text-muted">
+                                            <th className="py-3 px-4 font-normal">ความสามารถ (Capabilities)</th>
+                                            <th className="py-3 px-4 font-normal text-center">Admin</th>
+                                            <th className="py-3 px-4 font-normal text-center">Supervisor</th>
+                                            <th className="py-3 px-4 font-normal text-center">Technician</th>
+                                            <th className="py-3 px-4 font-normal text-center">Viewer</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody className="text-sm">
+                                        {[
+                                            { name: "จัดการข้อมูลผู้ใช้งาน (Approve/Edit/Roles)", admin: true, sup: false, tech: false, view: false },
+                                            { name: "จัดการแผน PM (สร้าง/แก้ไข)", admin: true, sup: true, tech: false, view: false },
+                                            { name: "จัดการอะไหล่และสต๊อก (เพิ่ม/แก้ไข/เบิก)", admin: true, sup: true, tech: false, view: false },
+                                            { name: "จัดการข้อมูลเครื่องจักร (เพิ่ม/แก้ไข)", admin: true, sup: true, tech: false, view: false },
+                                            { name: "เพิ่ม/แก้ไข/ปิด งานซ่อมบำรุงและ PM ประจำวัน", admin: true, sup: true, tech: true, view: false },
+                                            { name: "ลบข้อมูล (Delete)", admin: true, sup: false, tech: false, view: false },
+                                            { name: "นำออกข้อมูลรายงาน (Export)", admin: true, sup: true, tech: false, view: false },
+                                            { name: "ดูข้อมูลและประวัติการทำงาน (View)", admin: true, sup: true, tech: true, view: true },
+                                        ].map((row, idx) => (
+                                            <tr key={idx} className="border-b border-white/5 hover:bg-white/5 transition-colors">
+                                                <td className="py-3 px-4 text-text-primary font-medium">{row.name}</td>
+                                                <td className="py-3 px-4 text-center">
+                                                    {row.admin ? <CheckIcon size={18} className="text-accent-green mx-auto" /> : <XIcon size={18} className="text-text-muted/30 mx-auto" />}
+                                                </td>
+                                                <td className="py-3 px-4 text-center">
+                                                    {row.sup ? <CheckIcon size={18} className="text-accent-green mx-auto" /> : <XIcon size={18} className="text-text-muted/30 mx-auto" />}
+                                                </td>
+                                                <td className="py-3 px-4 text-center">
+                                                    {row.tech ? <CheckIcon size={18} className="text-accent-green mx-auto" /> : <XIcon size={18} className="text-text-muted/30 mx-auto" />}
+                                                </td>
+                                                <td className="py-3 px-4 text-center">
+                                                    {row.view ? <CheckIcon size={18} className="text-accent-green mx-auto" /> : <XIcon size={18} className="text-text-muted/30 mx-auto" />}
+                                                </td>
+                                            </tr>
+                                        ))}
+                                    </tbody>
+                                </table>
+                            </div>
+                            <div className="mt-6 p-4 bg-accent-blue/10 border border-accent-blue/20 rounded-xl">
+                                <p className="text-sm text-accent-blue font-medium flex items-start gap-2">
+                                    <ShieldCheckIcon size={18} className="shrink-0 mt-0.5" />
+                                    <span>
+                                        สิทธิ์เหล่านี้ถูกกำหนดเป็นค่าเริ่มต้นสำหรับแต่ละบทบาท เพื่อความปลอดภัยและความถูกต้องของข้อมูล 
+                                        หากต้องการปรับเปลี่ยนสิทธิ์ คุณสามารถเปลี่ยนบทบาทของผู้ใช้ในหน้า <strong>ผู้ใช้ทั้งหมด</strong> ได้ทันที
+                                    </span>
+                                </p>
+                            </div>
                         </div>
                     ) : activeTab === "users" ? (
                         /* Users List */

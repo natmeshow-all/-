@@ -8,7 +8,7 @@ import {
     onAuthStateChanged
 } from "firebase/auth";
 import { auth, googleProvider } from "../lib/firebase";
-import { UserProfile, UserRole } from "../types";
+import { UserProfile, UserRole, UserPermissions } from "../types";
 import {
     getUserProfile,
     createPendingUser,
@@ -30,6 +30,7 @@ interface AuthContextType {
     refreshUserProfile: () => Promise<void>;
     hasRole: (roles: UserRole | UserRole[]) => boolean;
     isAdmin: boolean;
+    permissions: UserPermissions;
     checkAuth: () => boolean;
     dismissWelcome: () => Promise<void>;
 }
@@ -44,6 +45,16 @@ const AuthContext = createContext<AuthContextType>({
     refreshUserProfile: async () => { },
     hasRole: () => false,
     isAdmin: false,
+    permissions: {
+        canManageUsers: false,
+        canManagePM: false,
+        canExecuteTask: false,
+        canDeleteData: false,
+        canExportData: false,
+        canManageParts: false,
+        canManageMachines: false,
+        canViewHistory: false,
+    },
     checkAuth: () => false,
     dismissWelcome: async () => {},
 });
@@ -272,6 +283,17 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
 
     const isAdmin = userProfile?.role === "admin";
 
+    const permissions: UserPermissions = {
+        canManageUsers: isAdmin,
+        canManagePM: hasRole(["admin", "supervisor"]),
+        canExecuteTask: hasRole(["admin", "supervisor", "technician"]),
+        canDeleteData: isAdmin,
+        canExportData: hasRole(["admin", "supervisor"]),
+        canManageParts: hasRole(["admin", "supervisor"]),
+        canManageMachines: hasRole(["admin", "supervisor"]),
+        canViewHistory: hasRole(["admin", "supervisor", "technician", "viewer"]),
+    };
+
     const checkAuth = (): boolean => {
         if (!user) {
             loginRequired();
@@ -302,6 +324,7 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
             refreshUserProfile,
             hasRole,
             isAdmin,
+            permissions,
             checkAuth,
             dismissWelcome
         }}>
@@ -309,4 +332,3 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
         </AuthContext.Provider>
     );
 };
-

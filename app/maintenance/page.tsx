@@ -55,7 +55,7 @@ const ExportExcelModal = dynamic(() => import("../components/forms/ExportExcelMo
 
 export default function MaintenancePage() {
     const { t } = useLanguage();
-    const { checkAuth, isAdmin } = useAuth();
+    const { checkAuth, isAdmin, permissions } = useAuth();
     const { success, error } = useToast();
     const [maintenanceModalOpen, setMaintenanceModalOpen] = useState(false);
     const [exportModalOpen, setExportModalOpen] = useState(false);
@@ -671,7 +671,7 @@ export default function MaintenancePage() {
     };
 
     const handleUpdateDescription = async (recordId: string) => {
-        if (!isAdmin) return;
+        if (!permissions.canDeleteData) return;
         try {
             await updateMaintenanceRecord(recordId, { description: editingDescriptionText });
             
@@ -867,20 +867,20 @@ export default function MaintenancePage() {
                         </div>
                         <div className="flex items-center gap-2">
                             <button
-                                onClick={() => { if (checkAuth()) setMaintenanceModalOpen(true); }}
+                                onClick={() => { if (checkAuth() && permissions.canExecuteTask) setMaintenanceModalOpen(true); else if(checkAuth()) showError(t("msgNoPermission"), t("msgNoEditPermission")); }}
                                 className="flex-1 sm:flex-none min-w-[120px] btn btn-active bg-accent-yellow text-bg-primary hover:bg-accent-yellow/90 hover:scale-105 active:scale-95 border-none h-9 text-[11px] font-bold transition-all shadow-sm hover:shadow-accent-yellow/20"
                             >
                                 <HistoryIcon size={14} className="mr-1" />
                                 {t("actionRecordMaintenance") || "เปลี่ยนอะไหล่/Overhaul"}
                             </button>
                             <button
-                                onClick={() => { if (checkAuth()) setReplacementPlanOpen(true); }}
+                                onClick={() => { if (checkAuth() && permissions.canManageParts) setReplacementPlanOpen(true); else if(checkAuth()) showError(t("msgNoPermission"), t("msgNoEditPermission")); }}
                                 className="flex-1 sm:flex-none min-w-[120px] btn btn-active bg-accent-purple text-white hover:bg-accent-purple/90 hover:scale-105 active:scale-95 border-none h-9 text-[11px] font-bold transition-all shadow-sm hover:shadow-accent-purple/20"
                             >
                                 <RefreshCwIcon size={14} className="mr-1" />
                                 {t("actionMaintenanceHistory") || "แผนเปลี่ยนอะไหล่"}
                             </button>
-                            {(isAdmin || (checkAuth() && false)) && ( // We don't have userProfile in page.tsx right now, just isAdmin check is fine or just add it
+                            {permissions.canExportData && (
                                 <button
                                     onClick={() => { if (checkAuth()) setExportModalOpen(true); }}
                                     className="flex-1 sm:flex-none min-w-[120px] btn btn-active bg-accent-cyan text-white hover:bg-accent-cyan/90 hover:scale-105 active:scale-95 border-none h-9 text-[11px] font-bold transition-all shadow-sm hover:shadow-accent-cyan/20"
@@ -1460,7 +1460,7 @@ export default function MaintenancePage() {
                                                                     </div>
                                                                 )}
                                                             </div>
-                                                            {isAdmin && (
+                                                            {permissions.canExecuteTask && (
                                                                 <button 
                                                                     className="text-primary opacity-50 hover:opacity-100 transition-all shrink-0 mt-0.5 p-1 -m-1 rounded-md hover:bg-primary/10 cursor-pointer"
                                                                     onClick={(e) => {
@@ -1516,7 +1516,7 @@ export default function MaintenancePage() {
                                                          ) : (
                                                              <span>{mounted ? formatDateThai(record.date) : '--/--'}</span>
                                                          )}
-                                                         {isAdmin && editingRecordId !== record.id && (!record.checklist || record.checklist.length === 0) && (
+                                                         {permissions.canExecuteTask && editingRecordId !== record.id && (!record.checklist || record.checklist.length === 0) && (
                                                              <button 
                                                                  onClick={(e) => { e.stopPropagation(); handleStartEditChecklist(record); }}
                                                                  className="text-primary opacity-50 hover:opacity-100 p-0.5 rounded hover:bg-primary/20 ml-1"
@@ -1621,7 +1621,7 @@ export default function MaintenancePage() {
 
                                                 {/* Right side: Admin Delete + Chevron */}
                                                 <div className="flex items-center gap-2">
-                                                    {record.status === 'pending' && record.type !== 'preventive' && isAdmin && (
+                                                    {record.status === 'pending' && record.type !== 'preventive' && permissions.canExecuteTask && (
                                                         <button
                                                             onClick={(e) => {
                                                                 e.stopPropagation();
@@ -1634,7 +1634,7 @@ export default function MaintenancePage() {
                                                             แก้ไขแล้ว
                                                         </button>
                                                     )}
-                                                    {isAdmin && (
+                                                    {permissions.canDeleteData && (
                                                         <button
                                                             onClick={(e) => {
                                                                 e.stopPropagation();
@@ -1887,7 +1887,7 @@ export default function MaintenancePage() {
                                                         <h4 className="text-sm font-bold text-white flex items-center gap-2">
                                                             <span className="text-accent-cyan">📋</span> รายการตรวจสอบ ({record.checklist.length} รายการ)
                                                         </h4>
-                                                        {isAdmin && editingRecordId !== record.id && (
+                                                        {permissions.canExecuteTask && editingRecordId !== record.id && (
                                                             <button 
                                                                 onClick={(e) => { e.stopPropagation(); handleStartEditChecklist(record); }}
                                                                 className="px-3 py-1 rounded bg-accent-blue/20 text-accent-blue text-xs font-bold hover:bg-accent-blue hover:text-white transition-colors"
@@ -2055,7 +2055,7 @@ export default function MaintenancePage() {
                                                                         
                                                                         {(() => {
                                                                             const isNumericMeasurement = /(volt|amp|vibration|แรงดัน|กระแส|ความสั่นสะเทือน|อุณหภูมิ|temp|ความดัน|pressure|รอบ|rpm|ความเร็ว|speed)/i.test(item.item);
-                                                                            const showStandardInput = isAdmin && (isNumericMeasurement || item.standard?.min !== undefined || item.standard?.max !== undefined);
+                                                                            const showStandardInput = permissions.canExecuteTask && (isNumericMeasurement || item.standard?.min !== undefined || item.standard?.max !== undefined);
                                                                             
                                                                             if (!showStandardInput) return null;
                                                                             

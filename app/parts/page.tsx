@@ -18,7 +18,7 @@ import { BoxIcon, PlusIcon, SearchIcon, FilterIcon, ArrowUpIcon, ArrowDownIcon, 
 
 export default function PartsPage() {
     const { t } = useLanguage();
-    const { user, checkAuth, isAdmin } = useAuth();
+    const { user, checkAuth, isAdmin, permissions } = useAuth();
     const { success, error } = useToast();
     const [addModalOpen, setAddModalOpen] = useState(false);
     const [partToEdit, setPartToEdit] = useState<Part | null>(null);
@@ -129,10 +129,10 @@ export default function PartsPage() {
         setDetailsModalOpen(true);
     };
 
-    const handleEditPart = (part: Part) => {
+    const handleEditClick = (part: Part) => {
         if (!checkAuth()) return;
-        if (!isAdmin) {
-            error(t("msgNoEditPermission") || "คุณไม่มีสิทธ์แก้ไข");
+        if (!permissions.canManageParts) {
+            showError(t("msgNoPermission"), t("msgNoEditPermission"));
             return;
         }
         setDetailsModalOpen(false);
@@ -142,7 +142,7 @@ export default function PartsPage() {
 
     const handleDeleteClick = (part: Part) => {
         if (!checkAuth()) return;
-        if (!isAdmin) {
+        if (!permissions.canDeleteData) {
             error(t("msgNoEditPermission") || "คุณไม่มีสิทธ์แก้ไข");
             return;
         }
@@ -330,7 +330,7 @@ export default function PartsPage() {
 
                         {/* Add Button - Only for Logged In Users */}
                         <button
-                            onClick={() => { if (checkAuth()) setAddModalOpen(true); }}
+                            onClick={() => { if (checkAuth() && permissions.canManageParts) setAddModalOpen(true); else if(checkAuth()) showError(t("msgNoPermission"), t("msgNoEditPermission")); }}
                             className="btn btn-primary h-11 px-5 shadow-lg shadow-primary/20 hover:shadow-primary/30 hover:-translate-y-0.5 transition-all"
                         >
                             <PlusIcon size={20} />
@@ -448,7 +448,7 @@ export default function PartsPage() {
                                                                         <ChevronDownIcon size={10} className={expandedParts[part.id] ? "rotate-180 transition-transform" : "transition-transform"} />
                                                                     </button>
                                                                 )}
-                                                                {isAdmin && (
+                                                                {permissions.canManageParts && (
                                                                     <button
                                                                         onClick={(e) => {
                                                                             e.stopPropagation();
@@ -523,7 +523,7 @@ export default function PartsPage() {
                                     {t("partsNoPartsDesc")}
                                 </p>
                                 <button
-                                    onClick={() => { if (checkAuth()) setAddModalOpen(true); }}
+                                    onClick={() => { if (checkAuth() && permissions.canManageParts) setAddModalOpen(true); else if(checkAuth()) showError(t("msgNoPermission"), t("msgNoEditPermission")); }}
                                     className="btn btn-primary shadow-lg shadow-primary/20"
                                 >
                                     <PlusIcon size={20} />

@@ -15,7 +15,7 @@ import { useToast } from "../contexts/ToastContext";
 
 export default function SchedulePage() {
     const { t, language } = useLanguage();
-    const { checkAuth, isAdmin } = useAuth();
+    const { checkAuth, isAdmin, permissions } = useAuth();
     const { success, error: showError } = useToast();
     const [mounted, setMounted] = useState(false);
     const [plans, setPlans] = useState<PMPlan[]>([]);
@@ -229,6 +229,10 @@ export default function SchedulePage() {
 
     const handleEditClick = (plan: PMPlan) => {
         if (!checkAuth()) return;
+        if (!permissions.canManagePM) {
+            showError(t("msgNoPermission"), t("msgNoEditPermission"));
+            return;
+        }
         const machine = allMachines.find(m => m.id === plan.machineId || m.name === plan.machineName);
         if (machine) {
             setSelectedMachine(machine);
@@ -239,7 +243,7 @@ export default function SchedulePage() {
 
     const handleDeleteClick = (plan: PMPlan) => {
         if (!checkAuth()) return;
-        if (!isAdmin) {
+        if (!permissions.canDeleteData) {
             showError(t("msgNoPermission"), t("msgNoEditPermission"));
             return;
         }
@@ -281,16 +285,18 @@ export default function SchedulePage() {
                         </div>
                     </div>
 
-                    <div className="flex items-center gap-2">
-                        <button
-                            onClick={() => { if (checkAuth()) setMachineSelectOpen(true); }}
-                            className="flex items-center gap-2 px-3 py-1.5 rounded-lg bg-accent-blue/20 text-accent-blue hover:bg-accent-blue/30 transition-all shadow-md active:scale-95 border border-accent-blue/30"
-                            title="จัดการแผน PM"
-                        >
-                            <SettingsIcon size={16} />
-                            <span className="text-xs font-bold whitespace-nowrap">{t("actionManagePM")}</span>
-                        </button>
-                    </div>
+                    {permissions.canManagePM && (
+                        <div className="flex items-center gap-2">
+                            <button
+                                onClick={() => { if (checkAuth()) setMachineSelectOpen(true); }}
+                                className="flex items-center gap-2 px-3 py-1.5 rounded-lg bg-accent-blue/20 text-accent-blue hover:bg-accent-blue/30 transition-all shadow-md active:scale-95 border border-accent-blue/30"
+                                title="จัดการแผน PM"
+                            >
+                                <SettingsIcon size={16} />
+                                <span className="text-xs font-bold whitespace-nowrap">{t("actionManagePM")}</span>
+                            </button>
+                        </div>
+                    )}
                 </div>
 
                 {/* Alert for due items */}
