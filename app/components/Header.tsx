@@ -135,7 +135,7 @@ export default function Header({ className = "" }: HeaderProps) {
                                                 {t("actionSignOut")}
                                             </button>
 
-                                            <VersionDisplay />
+                                            {isAdmin && <VersionDisplay />}
                                         </div>
                                     </>
                                 )}
