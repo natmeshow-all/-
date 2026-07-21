@@ -278,13 +278,27 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
 
     const hasRole = (roles: UserRole | UserRole[]): boolean => {
         if (!userProfile) return false;
+        if (userProfile.isActive === false) {
+            const roleArray = Array.isArray(roles) ? roles : [roles];
+            return roleArray.includes("viewer"); // Can only act as viewer
+        }
         const roleArray = Array.isArray(roles) ? roles : [roles];
         return roleArray.includes(userProfile.role);
     };
 
-    const isAdmin = userProfile?.role === "admin";
+    const isAdmin = userProfile?.isActive === false ? false : userProfile?.role === "admin";
 
-    const permissions: UserPermissions = {
+    const permissions: UserPermissions = userProfile?.isActive === false ? {
+        canManageUsers: false,
+        canManagePM: false,
+        canExecuteTask: false,
+        canDeleteData: false,
+        canExportData: false,
+        canManageParts: false,
+        canManageMachines: false,
+        canViewHistory: true,
+        canRequestDelete: false,
+    } : {
         canManageUsers: isAdmin,
         canManagePM: hasRole(["admin", "supervisor"]),
         canExecuteTask: hasRole(["admin", "supervisor", "technician"]),
