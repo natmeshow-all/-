@@ -22,7 +22,9 @@ const PartReplacementPlanModal = dynamic(() => import("./components/pm/PartRepla
 const HelpModal = dynamic(() => import("./components/ui/HelpModal"));
 const Lightbox = dynamic(() => import("./components/ui/Lightbox"));
 const WelcomeGuide = dynamic(() => import("./components/onboarding/WelcomeGuide"));
+const RequestDeletionModal = dynamic(() => import("./components/ui/RequestDeletionModal"));
 const PriorityPMAlert = dynamic(() => import("./components/ui/PriorityPMAlert"));
+import { requestDeletion } from "./services/deletionService";
 import {
   PlusIcon,
   HistoryIcon,
@@ -36,7 +38,7 @@ import { Part, PartFilters, DashboardStats } from "./types";
 
 export default function Dashboard() {
   const { t, language, tData } = useLanguage();
-  const { user, checkAuth, loading: authLoading } = useAuth();
+  const { user, checkAuth, loading: authLoading, permissions } = useAuth();
   const { success, error: showError } = useToast();
 
   // Modal states
@@ -44,6 +46,7 @@ export default function Dashboard() {
   const [maintenanceModalOpen, setMaintenanceModalOpen] = useState(false);
   const [historyModalOpen, setHistoryModalOpen] = useState(false);
   const [confirmModalOpen, setConfirmModalOpen] = useState(false);
+  const [requestDeleteModalOpen, setRequestDeleteModalOpen] = useState(false);
   const [partToDelete, setPartToDelete] = useState<Part | null>(null);
   const [selectedPart, setSelectedPart] = useState<Part | null>(null);
   const [machineModalOpen, setMachineModalOpen] = useState(false);
@@ -92,8 +95,12 @@ export default function Dashboard() {
   const handleDeleteClick = useCallback((part: Part) => {
     if (!checkAuth()) return;
     setPartToDelete(part);
-    setConfirmModalOpen(true);
-  }, [checkAuth]);
+    if (permissions.canDeleteData) {
+      setConfirmModalOpen(true);
+    } else {
+      setRequestDeleteModalOpen(true);
+    }
+  }, [checkAuth, permissions.canDeleteData]);
 
   // ─── Data Fetching ─────────────────────────────────────────
   async function withTimeout<T>(promise: Promise<T>, ms: number = 45000): Promise<T> {
@@ -158,6 +165,21 @@ export default function Dashboard() {
       setPartToDelete(null);
     }
   }, [partToDelete, success, t, fetchData, showError]);
+
+  const handleRequestDeletion = useCallback(async (reason: string) => {
+    if (!partToDelete || !user) return;
+    try {
+      await requestDeletion('spare_parts', partToDelete.id, reason, user.uid);
+      success("ส่งคำขอลบสำเร็จ", "รอผู้ดูแลระบบอนุมัติการลบข้อมูล");
+      fetchData(); // Refresh parts to show the requested state if needed
+    } catch (error: any) {
+      console.error("Request delete failed", error);
+      showError("ส่งคำขอลบล้มเหลว", error.message || "เกิดข้อผิดพลาด");
+    } finally {
+      setRequestDeleteModalOpen(false);
+      setPartToDelete(null);
+    }
+  }, [partToDelete, user, success, showError, fetchData]);
 
   const openMachineDetails = useCallback((part: Part) => {
     setViewMachineId(part.machineId);
@@ -458,6 +480,16 @@ export default function Dashboard() {
         confirmText={t("actionDelete")}
         cancelText={t("actionCancel")}
         isDestructive={true}
+      />
+      <RequestDeletionModal
+        isOpen={requestDeleteModalOpen}
+        onClose={() => {
+            setRequestDeleteModalOpen(false);
+            setPartToDelete(null);
+        }}
+        onConfirm={handleRequestDeletion}
+        title="ขอลบอะไหล่"
+        itemName={partToDelete?.partName || ""}
       />
       <MachineDetailsModal
         isOpen={machineModalOpen}
