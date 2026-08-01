@@ -12,6 +12,7 @@ import AddMachineModal from "../components/forms/AddMachineModal";
 import ConfirmModal from "../components/ui/ConfirmModal";
 import RequestDeletionModal from "../components/ui/RequestDeletionModal";
 import { requestDeletion } from "../services/deletionService";
+import { getPMPlans } from "../services/maintenanceService";
 import MachineDetailsModal from "../components/machines/MachineDetailsModal";
 
 export default function MachinesPage() {
@@ -19,6 +20,7 @@ export default function MachinesPage() {
     const { checkAuth, permissions, user } = useAuth();
     const { success, error: showError } = useToast();
     const [machines, setMachines] = React.useState<any[]>([]);
+    const [machinesWithPM, setMachinesWithPM] = React.useState<Set<string>>(new Set());
     const [loading, setLoading] = React.useState(true);
     const [addModalOpen, setAddModalOpen] = React.useState(false);
     const [settingsModalOpen, setSettingsModalOpen] = React.useState(false);
@@ -37,22 +39,29 @@ export default function MachinesPage() {
             FZ: machines.filter(m => m.location?.toUpperCase() === 'FZ').length,
             RTE: machines.filter(m => m.location?.toUpperCase() === 'RTE').length,
             UT: machines.filter(m => m.location?.toUpperCase() === 'UT' || m.location?.toUpperCase() === 'UTILITY').length,
+            NO_PM: machines.filter(m => !machinesWithPM.has(m.id)).length,
         };
-    }, [machines]);
+    }, [machines, machinesWithPM]);
 
     const filteredMachines = React.useMemo(() => {
         if (selectedLocation === 'ALL') return machines;
+        if (selectedLocation === 'NO_PM') return machines.filter(m => !machinesWithPM.has(m.id));
         if (selectedLocation === 'UT') {
             return machines.filter(m => m.location?.toUpperCase() === 'UT' || m.location?.toUpperCase() === 'UTILITY');
         }
         return machines.filter(m => m.location?.toUpperCase() === selectedLocation);
-    }, [machines, selectedLocation]);
+    }, [machines, selectedLocation, machinesWithPM]);
 
     const fetchMachines = async () => {
         try {
             setLoading(true);
             const { getMachines } = await import("../lib/firebaseService");
             const data = await getMachines();
+            const pmPlans = await getPMPlans();
+            const pmSet = new Set<string>();
+            pmPlans.forEach(p => { if (p.machineId) pmSet.add(p.machineId); });
+            setMachinesWithPM(pmSet);
+            
             const uniqueMachinesMap = new Map();
             data.forEach(m => {
                 const key = `${m.code || ''}-${m.name}`;
@@ -171,14 +180,16 @@ export default function MachinesPage() {
                                 label: loc,
                                 color: ['accent-cyan', 'green-500', 'accent-yellow', 'accent-red', 'blue-500'][idx % 5]
                             })),
-                        // Add UT/UTILITY manually if they exist to group them
-                        ...(machines.some(m => m.location?.toUpperCase() === 'UT' || m.location?.toUpperCase() === 'UTILITY') ? [{ id: 'UT', label: 'UT', color: 'accent-yellow' }] : [])
+                        ...(machines.some(m => m.location?.toUpperCase() === 'UT' || m.location?.toUpperCase() === 'UTILITY') ? [{ id: 'UT', label: 'UT', color: 'accent-yellow' }] : []),
+                        { id: 'NO_PM', label: 'ไม่มีแผน PM', color: 'accent-red' }
                     ].map((loc) => {
                         const count = loc.id === 'ALL'
                             ? machines.length
-                            : loc.id === 'UT'
-                                ? machines.filter(m => m.location?.toUpperCase() === 'UT' || m.location?.toUpperCase() === 'UTILITY').length
-                                : machines.filter(m => m.location?.toUpperCase() === loc.id).length;
+                            : loc.id === 'NO_PM'
+                                ? counts.NO_PM
+                                : loc.id === 'UT'
+                                    ? counts.UT
+                                    : machines.filter(m => m.location?.toUpperCase() === loc.id).length;
 
                         return (
                             <button

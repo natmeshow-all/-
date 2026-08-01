@@ -15,6 +15,7 @@ import { useToast } from "../contexts/ToastContext";
 import RequestDeletionModal from "../components/ui/RequestDeletionModal";
 import ConfirmModal from "../components/ui/ConfirmModal";
 import { requestDeletion } from "../services/deletionService";
+import WeeklyWorkloadChart from "../components/pm/WeeklyWorkloadChart";
 
 export default function SchedulePage() {
     const { t, language } = useLanguage();
@@ -335,6 +336,11 @@ export default function SchedulePage() {
                             </div>
                         </div>
                     )}
+
+                {/* Workload Balance */}
+                {!loading && plans.length > 0 && (
+                    <WeeklyWorkloadChart plans={plans} />
+                )}
 
                 {/* Schedule Timeline */}
                 <div className="space-y-6">
