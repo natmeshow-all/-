@@ -339,7 +339,7 @@ export default function SchedulePage() {
 
                 {/* Workload Balance */}
                 {!loading && plans.length > 0 && (
-                    <WeeklyWorkloadChart plans={plans} />
+                    <WeeklyWorkloadChart plans={plans} onRefresh={() => fetchData(false)} />
                 )}
 
                 {/* Schedule Timeline */}

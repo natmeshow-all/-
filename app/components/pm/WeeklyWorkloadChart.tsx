@@ -1,14 +1,19 @@
-import React, { useMemo } from 'react';
+import React, { useMemo, useState } from 'react';
 import { PMPlan } from '../../types';
 import { useLanguage } from '../../contexts/LanguageContext';
-import { CalendarIcon, AlertTriangleIcon } from '../ui/Icons';
+import { CalendarIcon, AlertTriangleIcon, SettingsIcon } from '../ui/Icons';
+import { updatePMPlan } from '../../services/maintenanceService';
+import { useAuth } from '../../contexts/AuthContext';
 
 interface WeeklyWorkloadChartProps {
     plans: PMPlan[];
+    onRefresh?: () => void;
 }
 
-export default function WeeklyWorkloadChart({ plans }: WeeklyWorkloadChartProps) {
+export default function WeeklyWorkloadChart({ plans, onRefresh }: WeeklyWorkloadChartProps) {
     const { t } = useLanguage();
+    const { permissions } = useAuth();
+    const [isBalancing, setIsBalancing] = useState(false);
 
     const currentMonthData = useMemo(() => {
         const now = new Date();
@@ -51,6 +56,58 @@ export default function WeeklyWorkloadChart({ plans }: WeeklyWorkloadChartProps)
     const maxDiff = Math.max(...counts) - Math.min(...counts);
     const isUnbalanced = currentMonthData.totalThisMonth > 5 && maxDiff > (avg * 1.5); // Arbitrary threshold for warning
 
+    const handleAutoBalance = async () => {
+        if (!permissions.canManagePM) return;
+        if (!confirm("ระบบจะทำการกระจายงาน PM ของเดือนนี้ออกเป็น 4 สัปดาห์อัตโนมัติ โดยจะเปลี่ยนวันที่ Next Due Date และบันทึกหมายเหตุไว้ ยืนยันหรือไม่?")) return;
+        
+        setIsBalancing(true);
+        try {
+            const currentMonthPlans = plans.filter(p => {
+                const dueDate = new Date(p.nextDueDate);
+                return dueDate.getMonth() === currentMonthData.currentMonth && dueDate.getFullYear() === currentMonthData.currentYear;
+            });
+
+            // Sort them by existing date to minimize wild jumps
+            currentMonthPlans.sort((a, b) => new Date(a.nextDueDate).getTime() - new Date(b.nextDueDate).getTime());
+
+            // We only balance across 4 weeks to leave Week 5 empty or for catch-up
+            const targetPerWeek = Math.ceil(currentMonthPlans.length / 4);
+            const updates = [];
+
+            for (let i = 0; i < currentMonthPlans.length; i++) {
+                const plan = currentMonthPlans[i];
+                const weekIndex = Math.floor(i / targetPerWeek); // 0 to 3 (Week 1 to Week 4)
+                
+                // Set target days around the middle of each week: 4th, 11th, 18th, 25th
+                const targetDay = Math.min(4 + (weekIndex * 7), 28);
+                const newDate = new Date(currentMonthData.currentYear, currentMonthData.currentMonth, targetDay);
+                
+                // Skip if already exactly on that day to prevent spamming notes
+                const oldDate = new Date(plan.nextDueDate);
+                if (oldDate.getDate() === targetDay) continue;
+
+                const oldDateStr = oldDate.toLocaleDateString('th-TH');
+                const appendNote = `\n[เลื่อนปรับสมดุลอัตโนมัติ จากวันที่ ${oldDateStr}]`;
+                const newNotes = (plan.notes || "") + appendNote;
+
+                updates.push(updatePMPlan(plan.id, {
+                    nextDueDate: newDate,
+                    notes: newNotes.trim()
+                }));
+            }
+
+            if (updates.length > 0) {
+                await Promise.all(updates);
+                if (onRefresh) onRefresh();
+            }
+        } catch (error) {
+            console.error("Auto balance failed", error);
+            alert("เกิดข้อผิดพลาดในการปรับสมดุล");
+        } finally {
+            setIsBalancing(false);
+        }
+    };
+
     return (
         <div className="bg-bg-secondary/40 border border-white/5 rounded-2xl p-4 sm:p-6 mb-6">
             <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 mb-6">
@@ -66,9 +123,21 @@ export default function WeeklyWorkloadChart({ plans }: WeeklyWorkloadChartProps)
                     </div>
                 </div>
                 {isUnbalanced && (
-                    <div className="flex items-center gap-2 px-3 py-1.5 bg-accent-orange/10 border border-accent-orange/20 rounded-lg text-accent-orange text-xs font-semibold animate-pulse-glow">
-                        <AlertTriangleIcon size={14} />
-                        <span>งานบางสัปดาห์กระจุกตัว! ควรปรับสมดุล</span>
+                    <div className="flex flex-col sm:flex-row items-start sm:items-center gap-2">
+                        <div className="flex items-center gap-2 px-3 py-1.5 bg-accent-orange/10 border border-accent-orange/20 rounded-lg text-accent-orange text-xs font-semibold animate-pulse-glow">
+                            <AlertTriangleIcon size={14} />
+                            <span>งานบางสัปดาห์กระจุกตัว! ควรปรับสมดุล</span>
+                        </div>
+                        {permissions.canManagePM && (
+                            <button
+                                onClick={handleAutoBalance}
+                                disabled={isBalancing}
+                                className="flex items-center gap-1.5 px-3 py-1.5 bg-accent-blue hover:bg-accent-blue/80 text-white rounded-lg text-xs font-bold transition-all shadow-md disabled:opacity-50"
+                            >
+                                <SettingsIcon size={14} className={isBalancing ? "animate-spin" : ""} />
+                                {isBalancing ? "กำลังปรับสมดุล..." : "ปรับสมดุลอัตโนมัติ"}
+                            </button>
+                        )}
                     </div>
                 )}
             </div>
