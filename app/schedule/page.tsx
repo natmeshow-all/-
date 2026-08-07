@@ -77,7 +77,7 @@ export default function SchedulePage() {
             // Deduplicate machines by code and name to prevent duplicate displays
             const uniqueMachinesMap = new Map();
             machinesData.forEach(m => {
-                const key = `${m.code || ''}-${m.name}`;
+                const key = m.code ? `${m.code.trim().toLowerCase()}-${m.name.trim().toLowerCase()}` : `${m.id}-${m.name}-${m.Location || ''}-${m.location || ''}`;
                 if (!uniqueMachinesMap.has(key)) {
                     uniqueMachinesMap.set(key, m);
                 }
@@ -238,9 +238,30 @@ export default function SchedulePage() {
             showError(t("msgNoPermission"), t("msgNoEditPermission"));
             return;
         }
-        const machine = allMachines.find(m => m.id === plan.machineId || m.name === plan.machineName);
+        const machine = allMachines.find(m => m.id === plan.machineId || m.name?.trim().toLowerCase() === plan.machineName?.trim().toLowerCase());
         if (machine) {
             setSelectedMachine(machine);
+            setSelectedPlan(plan);
+            setConfigModalOpen(true);
+        } else {
+            setSelectedMachine({
+                id: plan.machineId,
+                name: plan.machineName,
+                code: '',
+                Location: plan.customLocation || 'FZ',
+                location: plan.customLocation || '',
+                status: 'active',
+                description: '',
+                serialNumber: '',
+                brandModel: '',
+                installationDate: '',
+                capacity: '',
+                powerRating: '',
+                operatingHours: 0,
+                maintenanceCycle: 0,
+                createdAt: new Date(),
+                updatedAt: new Date()
+            });
             setSelectedPlan(plan);
             setConfigModalOpen(true);
         }
@@ -312,7 +333,13 @@ export default function SchedulePage() {
                     {permissions.canManagePM && (
                         <div className="flex items-center gap-2">
                             <button
-                                onClick={() => { if (checkAuth()) setMachineSelectOpen(true); }}
+                                onClick={() => {
+                                    if (checkAuth()) {
+                                        setSelectedPlan(null);
+                                        setSelectedMachine(null);
+                                        setMachineSelectOpen(true);
+                                    }
+                                }}
                                 className="flex items-center gap-2 px-3 py-1.5 rounded-lg bg-accent-blue/20 text-accent-blue hover:bg-accent-blue/30 transition-all shadow-md active:scale-95 border border-accent-blue/30"
                                 title="จัดการแผน PM"
                             >
@@ -646,7 +673,7 @@ export default function SchedulePage() {
                                             accentBorder="border-accent-yellow/30"
                                         />
                                         <div className="space-y-3">
-                                            {dueSoonItems.map((item) => renderPlanCard(item, animCounter++))}
+                                        {dueSoonItems.map((item) => renderPlanCard(item, animCounter++))}
                                         </div>
                                     </div>
                                 )}
@@ -753,6 +780,7 @@ export default function SchedulePage() {
                             <button
                                 key={machine.id}
                                 onClick={() => {
+                                    setSelectedPlan(null);
                                     setSelectedMachine(machine);
                                     setMachineSelectOpen(false);
                                     setSearchQuery(""); // Clear search
@@ -786,17 +814,31 @@ export default function SchedulePage() {
                 selectedMachine && (
                     <PMConfigModal
                         isOpen={configModalOpen}
-                        onClose={() => setConfigModalOpen(false)}
+                        onClose={() => {
+                            setConfigModalOpen(false);
+                            setSelectedPlan(null);
+                        }}
                         machine={selectedMachine}
                         plan={selectedPlan || undefined} // Pass detailed plan if editing
                         existingMachinePlans={plans.filter(p => {
                             // Find all duplicate IDs for the selected machine
+                            const targetNames = [selectedMachine.name.trim().toLowerCase()];
                             const targetIds = rawMachines
-                                .filter(m => m.code === selectedMachine.code && m.name === selectedMachine.name)
+                                .filter(m => {
+                                    if (selectedMachine.code && m.code) {
+                                        return m.code.trim().toLowerCase() === selectedMachine.code.trim().toLowerCase();
+                                    }
+                                    return m.name.trim().toLowerCase() === selectedMachine.name.trim().toLowerCase();
+                                })
                                 .map(m => m.id);
-                            return targetIds.includes(p.machineId);
+                            return targetIds.includes(p.machineId) || 
+                                   p.machineId === selectedMachine.id ||
+                                   targetNames.includes(p.machineName?.trim().toLowerCase() || '');
                         })}
-                        onSuccess={fetchData}
+                        onSuccess={() => {
+                            setSelectedPlan(null);
+                            fetchData(false);
+                        }}
                     />
                 )
             }

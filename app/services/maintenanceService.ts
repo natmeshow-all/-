@@ -481,10 +481,19 @@ export async function getPMPlans(): Promise<PMPlan[]> {
         if (!snapshot.exists()) return [];
 
         const allowedMachineIds = new Set(machines.map(m => m.id));
+        const allowedMachineNames = new Set(machines.map(m => m.name?.trim().toLowerCase()).filter(Boolean));
+        const allowedMachineCodes = new Set(machines.map(m => m.code?.trim().toLowerCase()).filter(Boolean));
+
         const plans: PMPlan[] = [];
         snapshot.forEach((child) => {
             const data = child.val();
-            if (!allowedMachineIds.has(data.machineId)) return;
+            const machineIdMatch = data.machineId && allowedMachineIds.has(data.machineId);
+            const machineNameMatch = data.machineName && allowedMachineNames.has(data.machineName.trim().toLowerCase());
+            const machineCodeMatch = data.machineCode && allowedMachineCodes.has(data.machineCode.trim().toLowerCase());
+
+            if (!machineIdMatch && !machineNameMatch && !machineCodeMatch && machines.length > 0) {
+                return;
+            }
             
             plans.push({
                 id: child.key!,

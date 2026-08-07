@@ -64,7 +64,7 @@ export default function MachinesPage() {
             
             const uniqueMachinesMap = new Map();
             data.forEach(m => {
-                const key = `${m.code || ''}-${m.name}`;
+                const key = m.code ? `${m.code.trim().toLowerCase()}-${m.name.trim().toLowerCase()}` : `${m.id}-${m.name}-${m.Location || ''}-${m.location || ''}`;
                 if (!uniqueMachinesMap.has(key)) {
                     uniqueMachinesMap.set(key, m);
                 }
