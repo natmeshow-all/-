@@ -79,6 +79,29 @@ export async function GET(request: Request) {
             day: 'numeric',
         });
 
+        // Helper to format PM cycle badge text
+        const getPMCycleBadgeText = (plan: any) => {
+            if (plan.scheduleType === 'weekly') {
+                const days = ['อาทิตย์', 'จันทร์', 'อังคาร', 'พุธ', 'พฤหัสบดี', 'ศุกร์', 'เสาร์'];
+                const dayText = plan.weeklyDay !== undefined && days[plan.weeklyDay] ? ` (${days[plan.weeklyDay]})` : '';
+                return `PM: สัปดาห์${dayText}`;
+            }
+            if (plan.scheduleType === 'yearly') {
+                return `PM: ปี (1 ปี)`;
+            }
+            if (plan.scheduleType === 'monthly') {
+                const months = plan.cycleMonths || 1;
+                return `PM: เดือน (${months} เดือน)`;
+            }
+            if (plan.cycleMonths) {
+                return `PM: เดือน (${plan.cycleMonths} เดือน)`;
+            }
+            if (typeof plan.taskName === 'string' && (plan.taskName.startsWith('PM:') || plan.taskName.includes('เดือน') || plan.taskName.includes('สัปดาห์') || plan.taskName.includes('ปี'))) {
+                return plan.taskName;
+            }
+            return `PM: เดือน (1 เดือน)`;
+        };
+
         // 3. Generate Image using next/og
         const imageRes = new ImageResponse(
             (
@@ -141,7 +164,7 @@ export async function GET(request: Request) {
                                         </div>
                                         <div style={{ display: 'flex', padding: '8px 16px', backgroundColor: '#0284c7', borderRadius: '20px' }}>
                                             <span style={{ fontSize: '18px', fontWeight: 'bold', color: 'white' }}>
-                                                {plan.taskName || 'PM / ตรวจเช็คตามวาระ'}
+                                                {getPMCycleBadgeText(plan)}
                                             </span>
                                         </div>
                                     </div>

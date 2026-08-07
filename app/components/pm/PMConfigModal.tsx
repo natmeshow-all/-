@@ -354,8 +354,6 @@ export default function PMConfigModal({ isOpen, onClose, machine, plan, existing
     };
 
     const getTaskName = () => {
-        if (plan?.taskName) return plan.taskName;
-        
         if (scheduleType === 'monthly') {
             return `PM: ${t("labelMonthly") || "Monthly"} (${cycleMonths} ${t("unitMonth") || "Months"})`;
         } else if (scheduleType === 'weekly') {
@@ -364,6 +362,7 @@ export default function PMConfigModal({ isOpen, onClose, machine, plan, existing
         } else if (scheduleType === 'yearly') {
             return `PM: ${t("labelYearly") || "Yearly"}`;
         }
+        if (plan?.taskName) return plan.taskName;
         return `PM`;
     };
 
