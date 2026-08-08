@@ -92,7 +92,7 @@ export default function ExportExcelModal({ isOpen, onClose }: ExportExcelModalPr
 
             // Map data
             rawData = records.map(r => {
-                const machine = machines.find(m => m.id === r.machineId || m.name === r.machineName);
+                const machine = (r.machineId ? machines.find(m => m.id === r.machineId) : null) || machines.find(m => m.name === r.machineName);
                 const mCode = r.machineCode || (machine?.code) || "-";
                 const mName = r.machineName || (machine?.name) || "-";
 

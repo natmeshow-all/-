@@ -97,7 +97,7 @@ export default function GlobalMaintenanceHistoryModal({ isOpen, onClose }: Globa
             let recordLocation = record.location?.toUpperCase() || "";
 
             if (!recordLocation) {
-                const machine = machines.find(m => m.id === record.machineId || m.name === record.machineName);
+                const machine = (record.machineId ? machines.find(m => m.id === record.machineId) : null) || machines.find(m => m.name === record.machineName);
                 recordLocation = machine?.location?.toUpperCase() || "";
             }
 

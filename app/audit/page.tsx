@@ -226,7 +226,7 @@ export default function AuditPage() {
                                 </div>
                             ) : (
                                 filteredRecords.slice(0, 10).map((record) => {
-                                    const machine = machines.find(m => m.id === record.machineId || m.name === record.machineName);
+                                    const machine = (record.machineId ? machines.find(m => m.id === record.machineId) : null) || machines.find(m => m.name === record.machineName);
                                     return (
                                         <div key={record.id} className="card-glass p-4 hover:border-white/20 hover:translate-x-1 hover:shadow-lg transition-all duration-300 group cursor-pointer">
                                             <div className="flex gap-4">

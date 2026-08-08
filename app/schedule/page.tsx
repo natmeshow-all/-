@@ -211,6 +211,30 @@ export default function SchedulePage() {
         );
     };
 
+    const findMachineByPlan = (machineId?: string, machineName?: string) => {
+        if (machineId) {
+            // 1. Exact ID match in allMachines
+            const byId = allMachines.find(m => m.id === machineId);
+            if (byId) return byId;
+
+            // 2. Exact ID match in rawMachines (in case of deduplication differences)
+            const byRawId = rawMachines.find(m => m.id === machineId);
+            if (byRawId) return byRawId;
+
+            // 3. Match by machine code == machineId
+            const byCode = allMachines.find(m => m.code?.trim().toLowerCase() === machineId.trim().toLowerCase())
+                || rawMachines.find(m => m.code?.trim().toLowerCase() === machineId.trim().toLowerCase());
+            if (byCode) return byCode;
+        }
+
+        // 4. Fallback to matching by name ONLY if no machineId
+        if (machineName) {
+            return allMachines.find(m => m.name?.trim().toLowerCase() === machineName.trim().toLowerCase());
+        }
+
+        return undefined;
+    };
+
     const handleExecuteClick = (plan: PMPlan) => {
         if (!checkAuth()) return;
 
@@ -238,7 +262,7 @@ export default function SchedulePage() {
             showError(t("msgNoPermission"), t("msgNoEditPermission"));
             return;
         }
-        const machine = allMachines.find(m => m.id === plan.machineId || m.name?.trim().toLowerCase() === plan.machineName?.trim().toLowerCase());
+        const machine = findMachineByPlan(plan.machineId, plan.machineName);
         if (machine) {
             setSelectedMachine(machine);
             setSelectedPlan(plan);
@@ -477,7 +501,7 @@ export default function SchedulePage() {
                                                 {/* Name & Task */}
                                                 <div className="mb-2">
                                                     {(() => {
-                                                        const machine = allMachines.find(m => m.id === item.machineId || m.name === item.machineName);
+                                                        const machine = findMachineByPlan(item.machineId, item.machineName);
                                                         return (
                                                             <h3 className="font-bold text-sm sm:text-base text-text-primary leading-tight flex flex-wrap items-center gap-2 pr-16">
                                                                 <span className="truncate">{item.machineName}</span>
@@ -822,7 +846,6 @@ export default function SchedulePage() {
                         plan={selectedPlan || undefined} // Pass detailed plan if editing
                         existingMachinePlans={plans.filter(p => {
                             // Find all duplicate IDs for the selected machine
-                            const targetNames = [selectedMachine.name.trim().toLowerCase()];
                             const targetIds = rawMachines
                                 .filter(m => {
                                     if (selectedMachine.code && m.code) {
@@ -833,7 +856,7 @@ export default function SchedulePage() {
                                 .map(m => m.id);
                             return targetIds.includes(p.machineId) || 
                                    p.machineId === selectedMachine.id ||
-                                   targetNames.includes(p.machineName?.trim().toLowerCase() || '');
+                                   (!selectedMachine.code && p.machineName?.trim().toLowerCase() === selectedMachine.name.trim().toLowerCase());
                         })}
                         onSuccess={() => {
                             setSelectedPlan(null);

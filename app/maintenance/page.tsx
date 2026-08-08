@@ -234,7 +234,7 @@ export default function MaintenancePage() {
         } else {
             const record = records.find(r => r.id === recordId);
             if (record) {
-                const machine = allMachines.find(m => m.id === record.machineId || m.name === record.machineName);
+                const machine = (record.machineId ? allMachines.find(m => m.id === record.machineId) : null) || allMachines.find(m => m.name === record.machineName);
                 initialLoc = record.Location || record.location || machine?.Location || machine?.location || "";
             }
         }
@@ -302,7 +302,7 @@ export default function MaintenancePage() {
         
         // Update machine location if we have a real record and a valid machine
         if (recordToUpdate && locationToSave) {
-            const machine = allMachines.find(m => m.id === recordToUpdate.machineId || m.name === recordToUpdate.machineName);
+            const machine = (recordToUpdate.machineId ? allMachines.find(m => m.id === recordToUpdate.machineId) : null) || allMachines.find(m => m.name === recordToUpdate.machineName);
             if (machine && machine.id && machine.Location !== locationToSave) {
                 try {
                     await updateMachine(machine.id, { Location: locationToSave });
@@ -711,7 +711,7 @@ export default function MaintenancePage() {
 
         // 3. Fallback: Check Machine Schedule (for PM tasks)
         if (r.type === 'preventive') {
-            const machine = allMachines.find(m => m.id === r.machineId || m.name === r.machineName);
+            const machine = (r.machineId ? allMachines.find(m => m.id === r.machineId) : null) || allMachines.find(m => m.name === r.machineName);
             // Check legacy maintenanceCycle (days)
             if (machine?.maintenanceCycle) {
                 if (machine.maintenanceCycle <= 7) return 'weekly';
@@ -738,7 +738,7 @@ export default function MaintenancePage() {
             let recordLocation = record.location?.toUpperCase() || "";
 
             if (!recordLocation) {
-                const machine = allMachines.find(m => m.id === record.machineId || m.name === record.machineName);
+                const machine = (record.machineId ? allMachines.find(m => m.id === record.machineId) : null) || allMachines.find(m => m.name === record.machineName);
                 recordLocation = machine?.location?.toUpperCase() || machine?.Location?.toUpperCase() || "";
             }
 
@@ -1200,7 +1200,7 @@ export default function MaintenancePage() {
                             const hasMotorData = record.motorGearData && (record.motorGearData.motorSize || record.motorGearData.temperature || record.motorGearData.currentIdle || record.motorGearData.currentLoad || record.motorGearData.voltageL1);
                             const hasShaftData = record.motorGearData?.shaftData && (record.motorGearData.shaftData.shaftBend || record.motorGearData.shaftData.dialGauge);
                             const hasVibrationData = record.motorGearData && (record.motorGearData.vibrationX?.value || record.motorGearData.vibrationY?.value || record.motorGearData.vibrationZ?.value);
-                            const machine = allMachines.find(m => m.id === record.machineId || m.name === record.machineName);
+                            const machine = (record.machineId ? allMachines.find(m => m.id === record.machineId) : null) || allMachines.find(m => m.name === record.machineName);
 
                             // === Efficiency Calculation ===
                             const scoreValue = (val: string, itemLabel: string, standard?: {min?: number, max?: number}): number => {

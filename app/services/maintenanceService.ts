@@ -289,7 +289,7 @@ export async function addMaintenanceRecord(record: Omit<MaintenanceRecord, "id" 
         if (record.type === "preventive" || record.type === "oilChange" || record.type === "inspection") {
             try {
                 const machines = await getMachines();
-                const machine = machines.find(m => m.id === record.machineId || m.name === record.machineName);
+                const machine = (record.machineId ? machines.find(m => m.id === record.machineId) : null) || machines.find(m => m.name === record.machineName);
 
                 if (machine && machine.maintenanceCycle && machine.maintenanceCycle > 0) {
                     const nextDueDate = new Date(record.date);

@@ -112,7 +112,7 @@ async function recalculateAndSaveStats(): Promise<DashboardStats> {
                 
                 // If part location is missing or generic, check machine location
                 if (!loc || loc === 'UNDEFINED') {
-                    const machine = machines.find(m => m.name === p.machineName || m.id === p.machineId);
+                    const machine = (p.machineId ? machines.find(m => m.id === p.machineId) : null) || machines.find(m => m.name === p.machineName);
                     if (machine && machine.location) {
                         loc = machine.location.toUpperCase();
                     }
