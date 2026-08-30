@@ -5,11 +5,12 @@ import Header from "../components/Header";
 import MobileNav from "../components/MobileNav";
 import { useLanguage } from "../contexts/LanguageContext";
 import { useAuth } from "../contexts/AuthContext";
-import { CalendarIcon, ClockIcon, SettingsIcon, AlertTriangleIcon, BoxIcon, FolderIcon, CheckCircleIcon, PlusIcon, EditIcon, TrashIcon, SearchIcon, MapPinIcon } from "../components/ui/Icons";
+import { CalendarIcon, ClockIcon, SettingsIcon, AlertTriangleIcon, BoxIcon, FolderIcon, CheckCircleIcon, PlusIcon, EditIcon, TrashIcon, SearchIcon, MapPinIcon, ZapIcon } from "../components/ui/Icons";
 import { getPMPlans, deletePMPlan, getMachines } from "../lib/firebaseService";
 import { PMPlan, Machine } from "../types";
 import PMExecutionModal from "../components/pm/PMExecutionModal";
 import PMConfigModal from "../components/pm/PMConfigModal";
+import AutoGeneratePMModal from "../components/pm/AutoGeneratePMModal";
 import Modal from "../components/ui/Modal";
 import { useToast } from "../contexts/ToastContext";
 import RequestDeletionModal from "../components/ui/RequestDeletionModal";
@@ -27,6 +28,7 @@ export default function SchedulePage() {
     const [selectedPlan, setSelectedPlan] = useState<PMPlan | null>(null);
     const [executionModalOpen, setExecutionModalOpen] = useState(false);
     const [configModalOpen, setConfigModalOpen] = useState(false);
+    const [autoGenerateModalOpen, setAutoGenerateModalOpen] = useState(false);
     const [machineSelectOpen, setMachineSelectOpen] = useState(false);
     const [selectedMachine, setSelectedMachine] = useState<Machine | null>(null);
     const [allMachines, setAllMachines] = useState<Machine[]>([]);
@@ -356,6 +358,18 @@ export default function SchedulePage() {
 
                     {permissions.canManagePM && (
                         <div className="flex items-center gap-2">
+                            <button
+                                onClick={() => {
+                                    if (checkAuth()) {
+                                        setAutoGenerateModalOpen(true);
+                                    }
+                                }}
+                                className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-gradient-to-r from-accent-purple/20 to-accent-blue/20 text-accent-cyan hover:from-accent-purple/30 hover:to-accent-blue/30 transition-all shadow-md active:scale-95 border border-accent-cyan/30"
+                                title="สร้างแผน PM อัตโนมัติสำหรับเครื่องที่ยังไม่มีแผน"
+                            >
+                                <ZapIcon size={16} className="text-accent-cyan" />
+                                <span className="text-xs font-bold whitespace-nowrap">สร้างแผนอัตโนมัติ (42 แผน)</span>
+                            </button>
                             <button
                                 onClick={() => {
                                     if (checkAuth()) {
@@ -885,6 +899,14 @@ export default function SchedulePage() {
                 onConfirm={handleRequestDeletion}
                 title="ขอลบแผน PM"
                 itemName={planToDelete?.taskName || ""}
+            />
+
+            <AutoGeneratePMModal
+                isOpen={autoGenerateModalOpen}
+                onClose={() => setAutoGenerateModalOpen(false)}
+                machines={allMachines}
+                existingPlans={plans}
+                onSuccess={() => fetchData(false)}
             />
 
             <MobileNav />
