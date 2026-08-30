@@ -1,7 +1,7 @@
 import React, { useMemo, useState } from 'react';
 import { PMPlan } from '../../types';
 import { useLanguage } from '../../contexts/LanguageContext';
-import { CalendarIcon, AlertTriangleIcon, SettingsIcon } from '../ui/Icons';
+import { CalendarIcon, AlertTriangleIcon, SettingsIcon, ChevronLeftIcon, ChevronRightIcon } from '../ui/Icons';
 import { updatePMPlan } from '../../services/maintenanceService';
 import { useAuth } from '../../contexts/AuthContext';
 
@@ -10,15 +10,22 @@ interface WeeklyWorkloadChartProps {
     onRefresh?: () => void;
 }
 
+const THAI_MONTHS = [
+    "มกราคม", "กุมภาพันธ์", "มีนาคม", "เมษายน", "พฤษภาคม", "มิถุนายน",
+    "กรกฎาคม", "สิงหาคม", "กันยายน", "ตุลาคม", "พฤศจิกายน", "ธันวาคม"
+];
+
 export default function WeeklyWorkloadChart({ plans, onRefresh }: WeeklyWorkloadChartProps) {
     const { t } = useLanguage();
     const { permissions } = useAuth();
     const [isBalancing, setIsBalancing] = useState(false);
+    const [targetDate, setTargetDate] = useState(() => new Date());
 
-    const currentMonthData = useMemo(() => {
-        const now = new Date();
-        const currentMonth = now.getMonth();
-        const currentYear = now.getFullYear();
+    const monthData = useMemo(() => {
+        const currentMonth = targetDate.getMonth();
+        const currentYear = targetDate.getFullYear();
+        const monthName = `${THAI_MONTHS[currentMonth]} ${currentYear + 543}`;
+        const isCurrentMonth = currentMonth === new Date().getMonth() && currentYear === new Date().getFullYear();
 
         // Initialize weeks array (Week 1 to Week 5)
         const weeks = [
@@ -33,7 +40,6 @@ export default function WeeklyWorkloadChart({ plans, onRefresh }: WeeklyWorkload
 
         plans.forEach(plan => {
             const dueDate = new Date(plan.nextDueDate);
-            // Check if due date is in the current month and year
             if (dueDate.getMonth() === currentMonth && dueDate.getFullYear() === currentYear) {
                 totalThisMonth++;
                 const day = dueDate.getDate();
@@ -45,44 +51,68 @@ export default function WeeklyWorkloadChart({ plans, onRefresh }: WeeklyWorkload
             }
         });
 
-        return { weeks, totalThisMonth, currentMonth, currentYear };
+        return { weeks, totalThisMonth, currentMonth, currentYear, monthName, isCurrentMonth };
+    }, [plans, targetDate]);
+
+    // Calculate plan counts for current month (ส.ค.) vs next month (ก.ย.) for quick switching
+    const monthCounts = useMemo(() => {
+        const now = new Date();
+        const thisMonthIdx = now.getMonth();
+        const thisYear = now.getFullYear();
+        const nextMonthDate = new Date(thisYear, thisMonthIdx + 1, 1);
+        const nextMonthIdx = nextMonthDate.getMonth();
+        const nextYear = nextMonthDate.getFullYear();
+
+        let thisCount = 0;
+        let nextCount = 0;
+
+        plans.forEach(p => {
+            const d = new Date(p.nextDueDate);
+            if (d.getMonth() === thisMonthIdx && d.getFullYear() === thisYear) thisCount++;
+            if (d.getMonth() === nextMonthIdx && d.getFullYear() === nextYear) nextCount++;
+        });
+
+        return {
+            thisMonthLabel: `${THAI_MONTHS[thisMonthIdx]} ${thisYear + 543}`,
+            thisMonthCount: thisCount,
+            nextMonthLabel: `${THAI_MONTHS[nextMonthIdx]} ${nextYear + 543}`,
+            nextMonthCount: nextCount,
+            nextMonthDate
+        };
     }, [plans]);
 
-    const maxCount = Math.max(...currentMonthData.weeks.map(w => w.count), 1); // Avoid division by zero
+    const maxCount = Math.max(...monthData.weeks.map(w => w.count), 1);
 
     // Calculate variance to warn about imbalance
-    const counts = currentMonthData.weeks.map(w => w.count);
-    const avg = currentMonthData.totalThisMonth / 5;
+    const counts = monthData.weeks.map(w => w.count);
+    const avg = monthData.totalThisMonth / 5;
     const maxDiff = Math.max(...counts) - Math.min(...counts);
-    const isUnbalanced = currentMonthData.totalThisMonth > 5 && maxDiff > (avg * 1.5); // Arbitrary threshold for warning
+    const isUnbalanced = monthData.totalThisMonth > 5 && maxDiff > (avg * 1.5);
 
     const handleAutoBalance = async () => {
         if (!permissions.canManagePM) return;
-        if (!confirm("ระบบจะทำการกระจายงาน PM ของเดือนนี้ออกเป็น 4 สัปดาห์อัตโนมัติ โดยจะเปลี่ยนวันที่ Next Due Date และบันทึกหมายเหตุไว้ ยืนยันหรือไม่?")) return;
+        if (!confirm(`ระบบจะทำการกระจายงาน PM ของเดือน ${monthData.monthName} ออกเป็น 4 สัปดาห์อัตโนมัติ โดยจะเปลี่ยนวันที่ Next Due Date และบันทึกหมายเหตุไว้ ยืนยันหรือไม่?`)) return;
         
         setIsBalancing(true);
         try {
             const currentMonthPlans = plans.filter(p => {
                 const dueDate = new Date(p.nextDueDate);
-                return dueDate.getMonth() === currentMonthData.currentMonth && dueDate.getFullYear() === currentMonthData.currentYear;
+                return dueDate.getMonth() === monthData.currentMonth && dueDate.getFullYear() === monthData.currentYear;
             });
 
             // Sort them by existing date to minimize wild jumps
             currentMonthPlans.sort((a, b) => new Date(a.nextDueDate).getTime() - new Date(b.nextDueDate).getTime());
 
-            // We only balance across 4 weeks to leave Week 5 empty or for catch-up
             const targetPerWeek = Math.ceil(currentMonthPlans.length / 4);
             const updates = [];
 
             for (let i = 0; i < currentMonthPlans.length; i++) {
                 const plan = currentMonthPlans[i];
-                const weekIndex = Math.floor(i / targetPerWeek); // 0 to 3 (Week 1 to Week 4)
+                const weekIndex = Math.floor(i / targetPerWeek);
                 
-                // Set target days around the middle of each week: 4th, 11th, 18th, 25th
                 const targetDay = Math.min(4 + (weekIndex * 7), 28);
-                const newDate = new Date(currentMonthData.currentYear, currentMonthData.currentMonth, targetDay);
+                const newDate = new Date(monthData.currentYear, monthData.currentMonth, targetDay);
                 
-                // Skip if already exactly on that day to prevent spamming notes
                 const oldDate = new Date(plan.nextDueDate);
                 if (oldDate.getDate() === targetDay) continue;
 
@@ -116,34 +146,89 @@ export default function WeeklyWorkloadChart({ plans, onRefresh }: WeeklyWorkload
                         <CalendarIcon size={20} className="text-accent-blue" />
                     </div>
                     <div>
-                        <h2 className="text-lg font-bold text-text-primary">สมดุลงาน PM เดือนปัจจุบัน</h2>
+                        <div className="flex items-center gap-2">
+                            <h2 className="text-lg font-bold text-text-primary">สมดุลงาน PM: {monthData.monthName}</h2>
+                            {monthData.isCurrentMonth && (
+                                <span className="px-2 py-0.5 rounded-full bg-accent-blue/20 text-accent-blue text-[10px] font-bold">
+                                    เดือนปัจจุบัน
+                                </span>
+                            )}
+                        </div>
                         <p className="text-xs text-text-muted">
-                            แผนบำรุงรักษาทั้งหมด {currentMonthData.totalThisMonth} งาน ในเดือนนี้
+                            แผนบำรุงรักษาทั้งหมด <strong className="text-text-primary font-bold">{monthData.totalThisMonth} งาน</strong> ในเดือนนี้
                         </p>
                     </div>
                 </div>
-                {isUnbalanced && (
-                    <div className="flex flex-col sm:flex-row items-start sm:items-center gap-2">
-                        <div className="flex items-center gap-2 px-3 py-1.5 bg-accent-orange/10 border border-accent-orange/20 rounded-lg text-accent-orange text-xs font-semibold animate-pulse-glow">
-                            <AlertTriangleIcon size={14} />
-                            <span>งานบางสัปดาห์กระจุกตัว! ควรปรับสมดุล</span>
-                        </div>
-                        {permissions.canManagePM && (
-                            <button
-                                onClick={handleAutoBalance}
-                                disabled={isBalancing}
-                                className="flex items-center gap-1.5 px-3 py-1.5 bg-accent-blue hover:bg-accent-blue/80 text-white rounded-lg text-xs font-bold transition-all shadow-md disabled:opacity-50"
-                            >
-                                <SettingsIcon size={14} className={isBalancing ? "animate-spin" : ""} />
-                                {isBalancing ? "กำลังปรับสมดุล..." : "ปรับสมดุลอัตโนมัติ"}
-                            </button>
-                        )}
+
+                <div className="flex flex-wrap items-center gap-2 w-full sm:w-auto justify-between sm:justify-end">
+                    {/* Month Picker / Switcher */}
+                    <div className="flex items-center gap-1 bg-bg-tertiary px-2 py-1 rounded-xl border border-white/10 shadow-inner">
+                        <button
+                            onClick={() => {
+                                const d = new Date(targetDate);
+                                d.setMonth(d.getMonth() - 1);
+                                setTargetDate(d);
+                            }}
+                            className="p-1 rounded hover:bg-white/10 text-text-muted hover:text-text-primary transition-all active:scale-95"
+                            title="เดือนก่อนหน้า"
+                        >
+                            <ChevronLeftIcon size={16} />
+                        </button>
+                        <span className="text-xs font-bold text-text-primary px-2 min-w-[100px] text-center select-none">
+                            {monthData.monthName}
+                        </span>
+                        <button
+                            onClick={() => {
+                                const d = new Date(targetDate);
+                                d.setMonth(d.getMonth() + 1);
+                                setTargetDate(d);
+                            }}
+                            className="p-1 rounded hover:bg-white/10 text-text-muted hover:text-text-primary transition-all active:scale-95"
+                            title="เดือนถัดไป"
+                        >
+                            <ChevronRightIcon size={16} />
+                        </button>
                     </div>
-                )}
+
+                    {/* Quick Month Jump Chips */}
+                    <div className="flex items-center gap-1.5">
+                        <button
+                            onClick={() => setTargetDate(new Date())}
+                            className={`px-2.5 py-1 rounded-lg text-xs font-bold transition-all border ${monthData.isCurrentMonth ? 'bg-accent-blue text-white border-accent-blue shadow-md' : 'bg-bg-tertiary text-text-muted border-white/5 hover:text-text-primary'}`}
+                        >
+                            {monthCounts.thisMonthLabel} ({monthCounts.thisMonthCount})
+                        </button>
+                        <button
+                            onClick={() => setTargetDate(monthCounts.nextMonthDate)}
+                            className={`px-2.5 py-1 rounded-lg text-xs font-bold transition-all border ${!monthData.isCurrentMonth && targetDate.getMonth() === monthCounts.nextMonthDate.getMonth() ? 'bg-accent-cyan text-bg-primary border-accent-cyan shadow-md' : 'bg-bg-tertiary text-text-muted border-white/5 hover:text-text-primary'}`}
+                        >
+                            {monthCounts.nextMonthLabel} ({monthCounts.nextMonthCount})
+                        </button>
+                    </div>
+
+                    {isUnbalanced && (
+                        <div className="flex items-center gap-2">
+                            <div className="flex items-center gap-1.5 px-2.5 py-1 bg-accent-orange/10 border border-accent-orange/20 rounded-lg text-accent-orange text-xs font-semibold animate-pulse-glow">
+                                <AlertTriangleIcon size={14} />
+                                <span>งานบางสัปดาห์กระจุกตัว!</span>
+                            </div>
+                            {permissions.canManagePM && (
+                                <button
+                                    onClick={handleAutoBalance}
+                                    disabled={isBalancing}
+                                    className="flex items-center gap-1.5 px-3 py-1 bg-accent-blue hover:bg-accent-blue/80 text-white rounded-lg text-xs font-bold transition-all shadow-md disabled:opacity-50"
+                                >
+                                    <SettingsIcon size={14} className={isBalancing ? "animate-spin" : ""} />
+                                    {isBalancing ? "กำลังปรับสมดุล..." : "ปรับสมดุลอัตโนมัติ"}
+                                </button>
+                            )}
+                        </div>
+                    )}
+                </div>
             </div>
 
             <div className="flex flex-col gap-3">
-                {currentMonthData.weeks.map((week, index) => {
+                {monthData.weeks.map((week, index) => {
                     const percentage = (week.count / maxCount) * 100;
                     return (
                         <div key={index} className="flex items-center gap-3">

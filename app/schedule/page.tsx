@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useMemo } from "react";
 import Header from "../components/Header";
 import MobileNav from "../components/MobileNav";
 import { useLanguage } from "../contexts/LanguageContext";
@@ -61,6 +61,28 @@ export default function SchedulePage() {
         }
         return loc === selectedLocation.toUpperCase();
     });
+
+    // Machines in production without PM plans
+    const missingPMMachines = useMemo(() => {
+        const EXCLUDED_PREFIXES = ['CL', 'SG', 'RB'];
+        return allMachines.filter(m => {
+            if (m.status === 'inactive') return false;
+            const loc = (m.Location || m.location || '').trim().toUpperCase();
+            if (loc === 'UT' || loc === 'UTILITY' || loc.includes('UTILITY') || loc.includes('UT')) return false;
+            const code = (m.code || '').trim().toUpperCase();
+            const prefix = code.match(/^([A-Z]+)/)?.[1] || '';
+            if (EXCLUDED_PREFIXES.includes(prefix)) return false;
+            if (m.name?.toLowerCase().includes('pizza') && code === 'FM04') return false;
+
+            const hasPlan = plans.some(p => {
+                if (p.machineId === m.id) return true;
+                const pCode = (p.machineCode || '').trim().toUpperCase();
+                if (code && pCode && code === pCode) return true;
+                return false;
+            });
+            return !hasPlan;
+        });
+    }, [allMachines, plans]);
 
     // Delete Confirmation State
     const [deleteModalOpen, setDeleteModalOpen] = useState(false);
@@ -358,18 +380,33 @@ export default function SchedulePage() {
 
                     {permissions.canManagePM && (
                         <div className="flex items-center gap-2">
-                            <button
-                                onClick={() => {
-                                    if (checkAuth()) {
-                                        setAutoGenerateModalOpen(true);
-                                    }
-                                }}
-                                className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-gradient-to-r from-accent-purple/20 to-accent-blue/20 text-accent-cyan hover:from-accent-purple/30 hover:to-accent-blue/30 transition-all shadow-md active:scale-95 border border-accent-cyan/30"
-                                title="สร้างแผน PM อัตโนมัติสำหรับเครื่องที่ยังไม่มีแผน"
-                            >
-                                <ZapIcon size={16} className="text-accent-cyan" />
-                                <span className="text-xs font-bold whitespace-nowrap">สร้างแผนอัตโนมัติ (41 แผน)</span>
-                            </button>
+                            {missingPMMachines.length > 0 ? (
+                                <button
+                                    onClick={() => {
+                                        if (checkAuth()) {
+                                            setAutoGenerateModalOpen(true);
+                                        }
+                                    }}
+                                    className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-gradient-to-r from-accent-purple/20 to-accent-blue/20 text-accent-cyan hover:from-accent-purple/30 hover:to-accent-blue/30 transition-all shadow-md active:scale-95 border border-accent-cyan/30 animate-pulse-glow"
+                                    title={`มี ${missingPMMachines.length} เครื่องจักรที่ยังไม่มีแผน PM - คลิกเพื่อสร้างอัตโนมัติ`}
+                                >
+                                    <ZapIcon size={16} className="text-accent-cyan" />
+                                    <span className="text-xs font-bold whitespace-nowrap">สร้างแผนอัตโนมัติ ({missingPMMachines.length} เครื่อง)</span>
+                                </button>
+                            ) : (
+                                <button
+                                    onClick={() => {
+                                        if (checkAuth()) {
+                                            setAutoGenerateModalOpen(true);
+                                        }
+                                    }}
+                                    className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-accent-green/10 text-accent-green hover:bg-accent-green/20 border border-accent-green/20 text-xs font-bold transition-all"
+                                    title="เครื่องจักรโซนการผลิตทั้งหมดมีแผน PM ครบถ้วนแล้ว (คลิกเพื่อดูสรุปหรือวิเคราะห์สมดุล)"
+                                >
+                                    <CheckCircleIcon size={15} />
+                                    <span className="whitespace-nowrap">แผน PM ครบทุกเครื่องแล้ว</span>
+                                </button>
+                            )}
                             <button
                                 onClick={() => {
                                     if (checkAuth()) {
