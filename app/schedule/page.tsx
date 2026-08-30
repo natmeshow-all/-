@@ -368,7 +368,7 @@ export default function SchedulePage() {
                                 title="สร้างแผน PM อัตโนมัติสำหรับเครื่องที่ยังไม่มีแผน"
                             >
                                 <ZapIcon size={16} className="text-accent-cyan" />
-                                <span className="text-xs font-bold whitespace-nowrap">สร้างแผนอัตโนมัติ (42 แผน)</span>
+                                <span className="text-xs font-bold whitespace-nowrap">สร้างแผนอัตโนมัติ (41 แผน)</span>
                             </button>
                             <button
                                 onClick={() => {

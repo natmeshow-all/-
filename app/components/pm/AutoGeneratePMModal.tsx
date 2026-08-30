@@ -143,11 +143,11 @@ export default function AutoGeneratePMModal({
     const [statusText, setStatusText] = useState('');
 
     // Saturday target codes
-    const saturdayCodes = ['HT02', 'HT03', 'HT04', 'HT09'];
+    const saturdayCodes = ['HT02', 'HT03', 'HT04', 'HT09', 'SL01'];
     // Sunday target codes
     const sundayCodes = ['FM02', 'FM03', 'FM04'];
 
-    // Monthly groups by day
+    // Monthly groups by day (Pizza line excluded)
     const monthlyGroups = [
         {
             day: 1,
@@ -210,13 +210,16 @@ export default function AutoGeneratePMModal({
 
             setProgress(20);
 
-            // 2. Create Saturday Weekly Plans (HT02, HT03, HT04, HT09)
-            setStatusText("กำลังสร้างแผนรายสัปดาห์วันเสาร์ (HT02, HT03, HT04, HT09)...");
-            const saturdayChecklist = [
+            // 2. Create Saturday Weekly Plans (HT02, HT03, HT04, HT09, SL01)
+            setStatusText("กำลังสร้างแผนรายสัปดาห์วันเสาร์ (HT02-HT04, HT09, SL01)...");
+            const saturdayOvenChecklist = [
                 "ตู้คอนโทรล: ทำความสะอาดและตรวจเช็คพัดลมระบายความร้อน",
                 "ประตูเตา: ตรวจเช็คระบบล็อกประตู ซีลยางขอบเตา และลูกล้อแขวน",
                 "หัวเผา/ฮีตเตอร์: ตรวจเช็คหัวเผา/ฮีตเตอร์ และกลไกการหมุนของ Rack",
                 "Electrical: ตรวจเช็คกระแสและแรงดันไฟฟ้า"
+            ];
+            const saturdaySiloChecklist = [
+                "Vacuum Filter: เป่ากรองเครื่องแว็คคัม 2 จุด และบริเวณชั้น 4 อีก 2 จุด"
             ];
             const saturdayStartDate = new Date("2026-09-05T00:00:00.000Z");
 
@@ -225,6 +228,7 @@ export default function AutoGeneratePMModal({
                 if (mach) {
                     const hasWeekly = existingPlans.some(p => p.machineId === mach.id && p.scheduleType === 'weekly');
                     if (!hasWeekly) {
+                        const isSilo = code === 'SL01';
                         await addPMPlan({
                             machineId: mach.id,
                             machineName: mach.name,
@@ -233,12 +237,12 @@ export default function AutoGeneratePMModal({
                             weeklyDay: 6,
                             startDate: saturdayStartDate,
                             nextDueDate: saturdayStartDate,
-                            checklistItems: saturdayChecklist,
+                            checklistItems: isSilo ? saturdaySiloChecklist : saturdayOvenChecklist,
                             locationType: "machine_Location",
-                            customLocation: mach.Location || mach.location || "RTE",
+                            customLocation: mach.Location || mach.location || (isSilo ? "FZ" : "RTE"),
                             status: "active",
                             completedCount: 0,
-                            notes: "สร้างแผนรายสัปดาห์ (ส) อัตโนมัติ - รอ Admin ตรวจสอบ"
+                            notes: isSilo ? "สร้างแผนรายสัปดาห์ Silo (ส) เป่ากรองแว็คคัม - รอ Admin ตรวจสอบ" : "สร้างแผนรายสัปดาห์ (ส) อัตโนมัติ - รอ Admin ตรวจสอบ"
                         });
                         createdCount++;
                     }
@@ -247,8 +251,8 @@ export default function AutoGeneratePMModal({
 
             setProgress(40);
 
-            // 3. Create Sunday Weekly Plans (FM02, FM03, FM04)
-            setStatusText("กำลังสร้างแผนรายสัปดาห์วันอาทิตย์ (FM02, FM03, FM04)...");
+            // 3. Create Sunday Weekly Plans (FM02, FM03, FM04 - excluding Pizza Line)
+            setStatusText("กำลังสร้างแผนรายสัปดาห์วันอาทิตย์ (FM02, FM03, FM04 Mlc)...");
             const sundayFmChecklist = [
                 "Inverter Cabinet: เป่าฝุ่นตู้ inverter",
                 "Cross Roller & Chain: อัดจาระบีชุด Cross Roller + เช็คความตึงโซ่",
@@ -257,7 +261,7 @@ export default function AutoGeneratePMModal({
             const sundayStartDate = new Date("2026-09-06T00:00:00.000Z");
 
             for (const code of sundayCodes) {
-                const matchingMachines = machines.filter(m => (m.code || '').trim().toUpperCase() === code);
+                const matchingMachines = machines.filter(m => (m.code || '').trim().toUpperCase() === code && !m.name?.toLowerCase().includes('pizza'));
                 for (const mach of matchingMachines) {
                     const hasWeekly = existingPlans.some(p => p.machineId === mach.id && p.scheduleType === 'weekly');
                     if (!hasWeekly) {
@@ -283,14 +287,14 @@ export default function AutoGeneratePMModal({
 
             setProgress(60);
 
-            // 4. Create Monthly PM Plans for 34 target machines
+            // 4. Create Monthly PM Plans for 33 target machines (Pizza Line excluded)
             setStatusText("กำลังสร้างแผนรายเดือนสำหรับเครื่องจักรโซนการผลิต...");
             let processedMonthly = 0;
-            const totalMonthlyTarget = 34;
+            const totalMonthlyTarget = 33;
 
             for (const group of monthlyGroups) {
                 for (const code of group.codes) {
-                    const matchingMachines = machines.filter(m => (m.code || '').trim().toUpperCase() === code);
+                    const matchingMachines = machines.filter(m => (m.code || '').trim().toUpperCase() === code && !m.name?.toLowerCase().includes('pizza'));
                     for (const mach of matchingMachines) {
                         const hasMonthly = existingPlans.some(p => p.machineId === mach.id && p.scheduleType === 'monthly');
                         if (!hasMonthly) {
@@ -365,7 +369,7 @@ export default function AutoGeneratePMModal({
                         onClick={() => setActiveTab('monthly')}
                         className={`flex-1 py-2 rounded-lg text-xs font-bold transition-all ${activeTab === 'monthly' ? 'bg-accent-blue text-white shadow' : 'text-text-muted hover:text-text-primary'}`}
                     >
-                        แผนรายเดือน (34 แผน)
+                        แผนรายเดือน (33 แผน)
                     </button>
                     <button
                         onClick={() => setActiveTab('congestion')}
@@ -382,10 +386,10 @@ export default function AutoGeneratePMModal({
                         <div className="card-glass p-4 rounded-xl border border-accent-blue/20">
                             <div className="flex items-center gap-2 mb-2">
                                 <CalendarIcon size={16} className="text-accent-blue" />
-                                <h5 className="text-xs font-bold text-accent-blue">วันเสาร์: เพิ่มแผนรายสัปดาห์ (HT02, HT03, HT04, HT09)</h5>
+                                <h5 className="text-xs font-bold text-accent-blue">วันเสาร์: เพิ่มแผนรายสัปดาห์ (HT02-HT04, HT09, SL01)</h5>
                             </div>
                             <p className="text-[11px] text-text-muted mb-2">
-                                เครื่องเตาอบ Rack Oven No.1 - No.4 ตรวจเช็คระบบพัดลม, ล็อกประตู, หัวเผา/ฮีตเตอร์, กระแสไฟฟ้า
+                                เตาอบ Rack Oven No.1-4 (ตรวจพัดลม, ประตู, ฮีตเตอร์, ไฟฟ้า) + SL01 Silo (เป่ากรองเครื่องแว็คคัม 2 จุด และบริเวณชั้น 4 อีก 2 จุด)
                             </p>
                             <div className="flex flex-wrap gap-1.5">
                                 {saturdayCodes.map(code => (
@@ -400,10 +404,10 @@ export default function AutoGeneratePMModal({
                         <div className="card-glass p-4 rounded-xl border border-accent-purple/20">
                             <div className="flex items-center gap-2 mb-2">
                                 <CalendarIcon size={16} className="text-accent-purple" />
-                                <h5 className="text-xs font-bold text-accent-purple">วันอาทิตย์: เพิ่มแผนรายสัปดาห์ (FM02, FM03, FM04)</h5>
+                                <h5 className="text-xs font-bold text-accent-purple">วันอาทิตย์: เพิ่มแผนรายสัปดาห์ (FM02, FM03, FM04 Mlc)</h5>
                             </div>
                             <div className="text-[11px] text-text-muted mb-2 space-y-1">
-                                <p className="font-semibold text-text-primary">Checklist 3 รายการเฉพาะ:</p>
+                                <p className="font-semibold text-text-primary">Pie Line, Croissant Line, Mlc Line (Checklist 3 รายการ):</p>
                                 <p>1. Inverter Cabinet: เป่าฝุ่นตู้ inverter</p>
                                 <p>2. Cross Roller & Chain: อัดจาระบีชุด Cross Roller + เช็คความตึงโซ่</p>
                                 <p>3. Satellite Unit: ขันแน่นชุด Satellite</p>
@@ -532,7 +536,7 @@ export default function AutoGeneratePMModal({
                         ) : (
                             <>
                                 <ZapIcon size={14} />
-                                <span>เริ่มสร้างแผนงานอัตโนมัติ (42 แผน)</span>
+                                <span>เริ่มสร้างแผนงานอัตโนมัติ (41 แผน)</span>
                             </>
                         )}
                     </button>
