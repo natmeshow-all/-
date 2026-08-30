@@ -198,7 +198,7 @@ export default function AutoGeneratePMModal({
 
             for (const p of existingPlans) {
                 const pMach = machines.find(m => m.id === p.machineId);
-                const code = (p.machineCode || pMach?.code || '').trim().toUpperCase();
+                const code = (pMach?.code || '').trim().toUpperCase();
                 if (sfSpCodes.includes(code) && p.scheduleType === 'weekly') {
                     await updatePMPlan(p.id, {
                         checklistItems: sfSpChecklist,
