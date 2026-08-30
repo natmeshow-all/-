@@ -136,7 +136,7 @@ export default function AutoGeneratePMModal({
     existingPlans,
     onSuccess
 }: AutoGeneratePMModalProps) {
-    const { success, showError } = useToast();
+    const { success, error: showError } = useToast();
     const [activeTab, setActiveTab] = useState<'weekly' | 'monthly' | 'congestion'>('weekly');
     const [isGenerating, setIsGenerating] = useState(false);
     const [progress, setProgress] = useState(0);
