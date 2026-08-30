@@ -179,6 +179,61 @@ export default function AutoGeneratePMModal({
         }
     ];
 
+    const stats = React.useMemo(() => {
+        let toCreate = 0;
+        let toUpdate = 0;
+
+        // 1. Weekly Updates
+        const sfSpCodes = ['SF01', 'SF02', 'SP01'];
+        for (const p of existingPlans) {
+            const pMach = machines.find(m => m.id === p.machineId);
+            const code = (pMach?.code || '').trim().toUpperCase();
+            if (sfSpCodes.includes(code) && p.scheduleType === 'weekly') {
+                // If it doesn't have the updated checklist, count it.
+                // Assuming we can't easily check checklist items without deep equal, 
+                // but we know we always update if it's there. Just for button text, 
+                // we only care if they are missing or need balance. Let's not overcount updates for SF/SP.
+            }
+        }
+
+        // 2. Saturday Weekly
+        for (const code of saturdayCodes) {
+            const mach = machines.find(m => (m.code || '').trim().toUpperCase() === code);
+            if (mach) {
+                const hasWeekly = existingPlans.some(p => p.machineId === mach.id && p.scheduleType === 'weekly');
+                if (!hasWeekly) toCreate++;
+            }
+        }
+
+        // 3. Sunday Weekly
+        for (const code of sundayCodes) {
+            const matchingMachines = machines.filter(m => (m.code || '').trim().toUpperCase() === code && !m.name?.toLowerCase().includes('pizza'));
+            for (const mach of matchingMachines) {
+                const hasWeekly = existingPlans.some(p => p.machineId === mach.id && p.scheduleType === 'weekly');
+                if (!hasWeekly) toCreate++;
+            }
+        }
+
+        // 4. Monthly Plans
+        for (const group of monthlyGroups) {
+            for (const code of group.codes) {
+                const matchingMachines = machines.filter(m => (m.code || '').trim().toUpperCase() === code && !m.name?.toLowerCase().includes('pizza'));
+                for (const mach of matchingMachines) {
+                    const existingPlan = existingPlans.find(p => p.machineId === mach.id && p.scheduleType === 'monthly');
+                    if (!existingPlan) {
+                        toCreate++;
+                    } else if (existingPlan.taskName?.includes('[Auto-Generated]')) {
+                        const currDate = new Date(existingPlan.nextDueDate);
+                        if (currDate.getDate() !== group.day) {
+                            toUpdate++;
+                        }
+                    }
+                }
+            }
+        }
+        return { toCreate, toUpdate };
+    }, [machines, existingPlans, saturdayCodes, sundayCodes, monthlyGroups]);
+
     const handleRunAutoGenerate = async () => {
         setIsGenerating(true);
         setProgress(5);
@@ -536,8 +591,8 @@ export default function AutoGeneratePMModal({
                     </button>
                     <button
                         onClick={handleRunAutoGenerate}
-                        disabled={isGenerating}
-                        className="btn-primary text-xs px-5 py-2 flex items-center gap-2 shadow-lg shadow-accent-blue/20"
+                        disabled={isGenerating || (stats.toCreate === 0 && stats.toUpdate === 0)}
+                        className="btn-primary text-xs px-5 py-2 flex items-center gap-2 shadow-lg shadow-accent-blue/20 disabled:opacity-50"
                     >
                         {isGenerating ? (
                             <>
@@ -547,7 +602,13 @@ export default function AutoGeneratePMModal({
                         ) : (
                             <>
                                 <ZapIcon size={14} />
-                                <span>เริ่มสร้างแผนงานอัตโนมัติ (41 แผน)</span>
+                                <span>
+                                    {stats.toCreate > 0 
+                                        ? `เริ่มสร้างแผนงานใหม่ (${stats.toCreate} แผน)` 
+                                        : stats.toUpdate > 0 
+                                            ? `ปรับสมดุลแผนงาน (${stats.toUpdate} แผน)` 
+                                            : `ไม่มีแผนที่ต้องจัดการ`}
+                                </span>
                             </>
                         )}
                     </button>
