@@ -67,7 +67,7 @@ export default function SchedulePage() {
         const EXCLUDED_PREFIXES = ['CL', 'SG', 'RB'];
         return allMachines.filter(m => {
             if (m.status === 'inactive') return false;
-            if (!m.code && !m.name) return false;
+            if ((!m.code && !m.name) || m.name === 'undefined') return false;
             const loc = (m.Location || m.location || '').trim().toUpperCase();
             if (loc === 'UT' || loc === 'UTILITY' || loc.includes('UTILITY') || loc.includes('UT')) return false;
             const code = (m.code || '').trim().toUpperCase();
