@@ -67,6 +67,7 @@ export default function SchedulePage() {
         const EXCLUDED_PREFIXES = ['CL', 'SG', 'RB'];
         return allMachines.filter(m => {
             if (m.status === 'inactive') return false;
+            if (!m.code && !m.name) return false;
             const loc = (m.Location || m.location || '').trim().toUpperCase();
             if (loc === 'UT' || loc === 'UTILITY' || loc.includes('UTILITY') || loc.includes('UT')) return false;
             const code = (m.code || '').trim().toUpperCase();
@@ -76,14 +77,15 @@ export default function SchedulePage() {
 
             const hasPlan = plans.some(p => {
                 if (p.machineId === m.id) return true;
-                const pMachine = allMachines.find(x => x.id === p.machineId);
+                const pMachine = rawMachines.find(x => x.id === p.machineId);
                 const pCode = ((p as any).machineCode || pMachine?.code || '').trim().toUpperCase();
                 if (code && pCode && code === pCode) return true;
+                if (m.name && (p.machineName || pMachine?.name) && m.name.trim().toLowerCase() === (p.machineName || pMachine?.name || '').trim().toLowerCase()) return true;
                 return false;
             });
             return !hasPlan;
         });
-    }, [allMachines, plans]);
+    }, [allMachines, rawMachines, plans]);
 
     // Delete Confirmation State
     const [deleteModalOpen, setDeleteModalOpen] = useState(false);

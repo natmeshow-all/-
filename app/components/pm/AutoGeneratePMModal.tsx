@@ -147,42 +147,42 @@ export default function AutoGeneratePMModal({
     // Sunday target codes
     const sundayCodes = ['FM02', 'FM03', 'FM04'];
 
-    // Monthly groups by day (Pizza line excluded)
+    // Monthly groups by day distributed across 4 weeks (Pizza line excluded)
     const monthlyGroups = [
         {
             day: 1,
-            label: "วันที่ 1 ของเดือน (เริ่ม 1 ก.ย.)",
+            label: "วันที่ 1 ของเดือน (สัปดาห์ที่ 1 - เริ่ม 1 ก.ย.)",
             zone: "โซน FZ (Lines & Mixers)",
             codes: ['MX01', 'FM01', 'FM02', 'FM03', 'FM04', 'FM08'],
             date: new Date("2026-09-01T00:00:00.000Z")
         },
         {
-            day: 2,
-            label: "วันที่ 2 ของเดือน (เริ่ม 2 ก.ย.)",
+            day: 8,
+            label: "วันที่ 8 ของเดือน (สัปดาห์ที่ 2 - เริ่ม 8 ก.ย.)",
             zone: "โซน FZ (Conveyors & Lift Dough)",
             codes: ['CV01', 'CV14', 'CV19', 'LF01', 'LF03', 'LF06', 'LF10', 'LF13', 'LF14'],
-            date: new Date("2026-09-02T00:00:00.000Z")
+            date: new Date("2026-09-08T00:00:00.000Z")
         },
         {
-            day: 5,
-            label: "วันที่ 5 ของเดือน (เริ่ม 5 ก.ย.)",
+            day: 15,
+            label: "วันที่ 15 ของเดือน (สัปดาห์ที่ 3 - เริ่ม 15 ก.ย.)",
             zone: "โซน RTE (Ovens & Slicers)",
             codes: ['HT05', 'HT08', 'HT10', 'HT17', 'HT19', 'HT23', 'CT01', 'CT13'],
-            date: new Date("2026-09-05T00:00:00.000Z")
+            date: new Date("2026-09-15T00:00:00.000Z")
         },
         {
-            day: 9,
-            label: "วันที่ 9 ของเดือน (เริ่ม 9 ก.ย.)",
-            zone: "โซน RTE, แซนวิช & Load RM",
+            day: 22,
+            label: "วันที่ 22 ของเดือน (สัปดาห์ที่ 4 - เริ่ม 22 ก.ย.)",
+            zone: "โซน RTE, แซนวิช & Special",
             codes: ['FM07', 'MX04', 'DP02', 'LF11', 'CV23', 'PK10', 'PK18', 'CN01', 'VC01', 'AT01'],
-            date: new Date("2026-09-09T00:00:00.000Z")
+            date: new Date("2026-09-22T00:00:00.000Z")
         }
     ];
 
     const handleRunAutoGenerate = async () => {
         setIsGenerating(true);
         setProgress(5);
-        setStatusText("กำลังเริ่มต้นสร้างแผนงาน...");
+        setStatusText("กำลังเริ่มต้นสร้างและปรับสมดุลแผนงาน...");
 
         try {
             let createdCount = 0;
@@ -287,8 +287,8 @@ export default function AutoGeneratePMModal({
 
             setProgress(60);
 
-            // 4. Create Monthly PM Plans for 33 target machines (Pizza Line excluded)
-            setStatusText("กำลังสร้างแผนรายเดือนสำหรับเครื่องจักรโซนการผลิต...");
+            // 4. Create Monthly PM Plans & Balance across 4 weeks (Days 1, 8, 15, 22)
+            setStatusText("กำลังจัดแผนรายเดือนกระจาย 4 สัปดาห์ (วันที่ 1, 8, 15, 22)...");
             let processedMonthly = 0;
             const totalMonthlyTarget = 33;
 
@@ -296,8 +296,8 @@ export default function AutoGeneratePMModal({
                 for (const code of group.codes) {
                     const matchingMachines = machines.filter(m => (m.code || '').trim().toUpperCase() === code && !m.name?.toLowerCase().includes('pizza'));
                     for (const mach of matchingMachines) {
-                        const hasMonthly = existingPlans.some(p => p.machineId === mach.id && p.scheduleType === 'monthly');
-                        if (!hasMonthly) {
+                        const existingPlan = existingPlans.find(p => p.machineId === mach.id && p.scheduleType === 'monthly');
+                        if (!existingPlan) {
                             const prefix = code.match(/^([A-Z]+)/)?.[1] || 'CV';
                             const checklist = TEMPLATES[prefix] || TEMPLATES.CV;
 
@@ -317,6 +317,17 @@ export default function AutoGeneratePMModal({
                                 notes: `สร้างแผนรายเดือนอัตโนมัติจากกลุ่มซีรีส์ ${prefix} - รอ Admin ตรวจสอบ`
                             });
                             createdCount++;
+                        } else if (existingPlan.taskName?.includes('[Auto-Generated]')) {
+                            // Update existing auto-generated monthly plans to balanced week dates
+                            const currDate = new Date(existingPlan.nextDueDate);
+                            if (currDate.getDate() !== group.day) {
+                                await updatePMPlan(existingPlan.id, {
+                                    nextDueDate: group.date,
+                                    startDate: group.date,
+                                    notes: (existingPlan.notes || "") + `\n[ปรับวันทำ PM ให้สมดุลสัปดาห์ เป็นวันที่ ${group.day}]`
+                                });
+                                updatedCount++;
+                            }
                         }
                         processedMonthly++;
                         setProgress(60 + Math.floor((processedMonthly / totalMonthlyTarget) * 35));
@@ -326,7 +337,7 @@ export default function AutoGeneratePMModal({
 
             setProgress(100);
             setStatusText("สร้างและปรับปรุงแผนงานสำเร็จสมบูรณ์!");
-            success(`สร้างแผน PM อัตโนมัติสำเร็จ ${createdCount} แผน และปรับปรุง ${updatedCount} แผน`);
+            success(`สร้างแผน PM ${createdCount} แผน และปรับสมดุล ${updatedCount} แผน สำเร็จเรียบร้อย`);
 
             setTimeout(() => {
                 onSuccess();
@@ -438,7 +449,7 @@ export default function AutoGeneratePMModal({
                 {activeTab === 'monthly' && (
                     <div className="space-y-3">
                         <p className="text-xs text-text-muted">
-                            จัดสรรลงใน **วันที่มีแผนเดิมน้อย (วันที่ 1, 2, 5, 9 ของเดือน)** และจัดกลุ่มตามห้อง/โซน:
+                            จัดสรรกระจายสมดุลออกเป็น **4 สัปดาห์ (วันที่ 1, 8, 15, 22 ของเดือน)** และจัดกลุ่มตามห้อง/โซน:
                         </p>
                         {monthlyGroups.map(grp => (
                             <div key={grp.day} className="card-glass p-3.5 rounded-xl border border-white/10">
