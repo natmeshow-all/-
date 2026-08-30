@@ -76,7 +76,8 @@ export default function SchedulePage() {
 
             const hasPlan = plans.some(p => {
                 if (p.machineId === m.id) return true;
-                const pCode = (p.machineCode || '').trim().toUpperCase();
+                const pMachine = allMachines.find(x => x.id === p.machineId);
+                const pCode = ((p as any).machineCode || pMachine?.code || '').trim().toUpperCase();
                 if (code && pCode && code === pCode) return true;
                 return false;
             });
