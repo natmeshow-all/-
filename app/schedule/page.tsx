@@ -35,6 +35,8 @@ export default function SchedulePage() {
     const [rawMachines, setRawMachines] = useState<Machine[]>([]);
     const [selectedLocation, setSelectedLocation] = useState<string>("all");
     const [searchQuery, setSearchQuery] = useState("");
+    const [autoCloseConfirmOpen, setAutoCloseConfirmOpen] = useState(false);
+    const [isAutoClosing, setIsAutoClosing] = useState(false);
 
     const locations = [
         { id: 'all', label: t("labelAll") || 'ทั้งหมด', color: 'accent-blue' },
@@ -283,17 +285,20 @@ export default function SchedulePage() {
         setExecutionModalOpen(true);
     };
 
-    const handleAutoCloseOverdue = async () => {
-        if (!confirm("คุณต้องการปิดงานค้าง (ที่ยังไม่เคยทำ PM เลย) ทั้งหมดแบบอัตโนมัติหรือไม่? ระบบจะใส่ค่ามาตรฐานให้และเลื่อนรอบถัดไปให้ทันที")) return;
-        
+    const handleAutoCloseOverdue = () => {
+        const targetPlans = plans.filter(p => p.status === 'active' && (!p.completedCount || p.completedCount === 0));
+        if (targetPlans.length === 0) {
+            showError("ไม่มีงานค้าง", "ไม่มีงานค้างที่ยังไม่เคยปิดเลยในขณะนี้");
+            return;
+        }
+        setAutoCloseConfirmOpen(true);
+    };
+
+    const performAutoClose = async () => {
+        setIsAutoClosing(true);
         try {
             // Find all active plans that have 0 completed counts (never executed)
             const targetPlans = plans.filter(p => p.status === 'active' && (!p.completedCount || p.completedCount === 0));
-            
-            if (targetPlans.length === 0) {
-                alert("ไม่มีงานค้างที่ยังไม่เคยปิดเลย");
-                return;
-            }
 
             let successCount = 0;
             // Iterate and close them
@@ -329,11 +334,14 @@ export default function SchedulePage() {
                 successCount++;
             }
             
-            alert(`ปิดงานอัตโนมัติสำเร็จ ${successCount} งาน`);
+            success(`ปิดงานอัตโนมัติสำเร็จ ${successCount} งาน`);
             fetchData(false);
         } catch (err) {
             console.error("Auto close failed", err);
-            alert("เกิดข้อผิดพลาดในการปิดงานอัตโนมัติ");
+            showError("เกิดข้อผิดพลาด", "ไม่สามารถปิดงานอัตโนมัติได้");
+        } finally {
+            setIsAutoClosing(false);
+            setAutoCloseConfirmOpen(false);
         }
     };
 
@@ -1013,6 +1021,16 @@ export default function SchedulePage() {
                 onConfirm={handleRequestDeletion}
                 title="ขอลบแผน PM"
                 itemName={planToDelete?.taskName || ""}
+            />
+
+            <ConfirmModal
+                isOpen={autoCloseConfirmOpen}
+                onClose={() => setAutoCloseConfirmOpen(false)}
+                onConfirm={performAutoClose}
+                title="ปิดงานค้างอัตโนมัติ"
+                message="ระบบจะทำการปิดงานค้างทั้งหมดที่ยังไม่เคยทำ PM โดยจะใส่ค่ามาตรฐานให้โดยอัตโนมัติ และเลื่อนรอบทำงานไปเป็นรอบถัดไป คุณต้องการดำเนินการต่อหรือไม่?"
+                confirmText={isAutoClosing ? "กำลังทำงาน..." : "ยืนยันการปิดงาน"}
+                cancelText="ยกเลิก"
             />
 
             <AutoGeneratePMModal
