@@ -382,13 +382,11 @@ export default function SchedulePage() {
                 showError("ไม่ได้ปิดงานใดๆ", "พบงานตามเงื่อนไข แต่ไม่สามารถปิดงานได้สำเร็จ");
             } else {
                 success(`ปิดงานอัตโนมัติสำเร็จ ${successCount} งาน`);
-                alert(`ทำงานเสร็จสิ้น: ปิดงานไปทั้งหมด ${successCount} งาน`);
             }
             fetchData(false);
         } catch (err) {
             console.error("Auto close failed", err);
             showError("เกิดข้อผิดพลาด", "ไม่สามารถปิดงานอัตโนมัติได้");
-            alert("เกิดข้อผิดพลาด: " + String(err));
         } finally {
             setIsAutoClosing(false);
             setAutoCloseConfirmOpen(false);

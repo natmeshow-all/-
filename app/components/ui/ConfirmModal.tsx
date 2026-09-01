@@ -57,7 +57,12 @@ export default function ConfirmModal({
                         disabled={loading}
                         className={`btn ${isDestructive ? "btn-danger" : "btn-primary"} ${loading ? "opacity-70 cursor-not-allowed" : ""}`}
                     >
-                        {loading ? "..." : displayConfirmText}
+                        {loading ? (
+                            <div className="flex items-center gap-2">
+                                <div className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin" />
+                                <span>กำลังทำงาน...</span>
+                            </div>
+                        ) : displayConfirmText}
                     </button>
                 </>
             }
