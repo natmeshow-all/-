@@ -17,6 +17,8 @@ import RequestDeletionModal from "../components/ui/RequestDeletionModal";
 import ConfirmModal from "../components/ui/ConfirmModal";
 import { requestDeletion } from "../services/deletionService";
 import { getMaintenanceRecordsByPMPlan } from "../services/maintenanceService";
+import { database } from "../lib/firebase";
+import { ref, get, update, remove } from "firebase/database";
 import WeeklyWorkloadChart from "../components/pm/WeeklyWorkloadChart";
 
 export default function SchedulePage() {
@@ -120,9 +122,47 @@ export default function SchedulePage() {
         }
     };
 
+    const runRevert = async () => {
+        if (localStorage.getItem("reverted_autoclose_2")) return;
+        try {
+            const recordsSnapshot = await get(ref(database, 'maintenance_records'));
+            const records = recordsSnapshot.val();
+            if (!records) return;
+            const plansSnapshot = await get(ref(database, 'pm_plans'));
+            const pmPlans = plansSnapshot.val();
+            
+            for (const [recordId, record] of Object.entries(records)) {
+                if ((record as any).notes === "ปิดงานอัตโนมัติตามมาตรฐาน" && (record as any).type === "preventive") {
+                    const planId = (record as any).pmPlanId;
+                    if (!planId || !pmPlans[planId]) continue;
+                    const plan = pmPlans[planId];
+                    const originalNextDue = new Date(plan.nextDueDate);
+                    if (plan.scheduleType === 'weekly') originalNextDue.setDate(originalNextDue.getDate() - 7);
+                    else if (plan.scheduleType === 'yearly') originalNextDue.setFullYear(originalNextDue.getFullYear() - 1);
+                    else originalNextDue.setMonth(originalNextDue.getMonth() - (plan.cycleMonths || 1));
+                    
+                    const today = new Date();
+                    today.setHours(0,0,0,0);
+                    if (originalNextDue >= today) {
+                        await update(ref(database, `pm_plans/${planId}`), {
+                            nextDueDate: originalNextDue.toISOString(),
+                            completedCount: Math.max(0, (plan.completedCount || 1) - 1)
+                        });
+                        await remove(ref(database, `maintenance_records/${recordId}`));
+                    }
+                }
+            }
+            localStorage.setItem("reverted_autoclose_2", "true");
+            fetchData(false);
+        } catch(e) {
+            console.error(e);
+        }
+    };
+
     useEffect(() => {
         setMounted(true);
         fetchData(true);
+        runRevert();
     }, []);
 
     const getStatusInfo = (nextDueDate: Date) => {
