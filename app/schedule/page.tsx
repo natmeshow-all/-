@@ -313,17 +313,24 @@ export default function SchedulePage() {
             // Find all active plans that are due today or in the past
             const targetPlans = plans.filter(isPlanTargeted);
 
-            let successCount = 0;
-            // Iterate and close them
-            for (const plan of targetPlans) {
+            if (targetPlans.length === 0) {
+                showError("ไม่มีงานค้าง", "ไม่มีงานค้างหรือถึงกำหนดในขณะนี้");
+                return;
+            }
+
+            // Execute all tasks in parallel for speed
+            const promises = targetPlans.map(async (plan) => {
                 // Fetch previous records to use as reference if available
                 let previousResults: any[] | undefined;
                 if (plan.completedCount && plan.completedCount > 0) {
-                    const oldRecords = await getMaintenanceRecordsByPMPlan(plan.id);
-                    if (oldRecords && oldRecords.length > 0) {
-                        // Sort to get the latest
-                        oldRecords.sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime());
-                        previousResults = oldRecords[0].checklist;
+                    try {
+                        const oldRecords = await getMaintenanceRecordsByPMPlan(plan.id);
+                        if (oldRecords && oldRecords.length > 0) {
+                            oldRecords.sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime());
+                            previousResults = oldRecords[0].checklist;
+                        }
+                    } catch(e) {
+                        console.warn("Failed to fetch old record for", plan.id);
                     }
                 }
 
@@ -332,11 +339,9 @@ export default function SchedulePage() {
                     const label = typeof item === 'string' ? item.toLowerCase() : (item as any).text?.toLowerCase() || "";
                     let val = "";
                     
-                    // If we have old record data, try to reuse the same value
                     if (previousResults && previousResults[index]) {
                         val = previousResults[index].value;
                     } else {
-                        // Default logic
                         if (label.includes("ทำความสะอาด") || label.includes("หล่อลื่น") || label.includes("เปลี่ยนไส้กรอง") || label.includes("calibrat")) val = "เรียบร้อย";
                         else if (label.includes("ตรวจสภาพ") || label.includes("ตรวจสอบ")) val = "สมบูรณ์";
                         else if (label.includes("ความตึง")) val = "เหมาะสม";
@@ -367,9 +372,12 @@ export default function SchedulePage() {
                 };
 
                 await completePMTask(plan.id, record as any);
-                successCount++;
-            }
-            
+                return true;
+            });
+
+            await Promise.all(promises);
+            const successCount = promises.length;
+
             if (successCount === 0) {
                 showError("ไม่ได้ปิดงานใดๆ", "พบงานตามเงื่อนไข แต่ไม่สามารถปิดงานได้สำเร็จ");
             } else {
