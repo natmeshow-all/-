@@ -41,16 +41,20 @@ export default function WeeklyWorkloadChart({ plans, onRefresh, getMachineName }
 
         const THAI_DAYS = ['จันทร์', 'อังคาร', 'พุธ', 'พฤหัสบดี', 'ศุกร์', 'เสาร์', 'อาทิตย์'];
         const COLORS = ['bg-accent-yellow', 'bg-accent-purple', 'bg-accent-green', 'bg-accent-orange', 'bg-accent-blue', 'bg-accent-purple', 'bg-accent-red'];
+        const today = new Date();
+        today.setHours(0,0,0,0);
 
         const days = Array.from({length: 7}).map((_, i) => {
             const d = new Date(startOfWeek);
             d.setDate(startOfWeek.getDate() + i);
+            const isToday = d.getTime() === today.getTime();
             return {
                 dayIndex: i,
                 date: d,
                 label: `${THAI_DAYS[i]} (${d.getDate()})`,
                 color: COLORS[i % COLORS.length],
                 count: 0,
+                isToday,
                 plans: [] as PMPlan[]
             };
         });
@@ -258,9 +262,13 @@ export default function WeeklyWorkloadChart({ plans, onRefresh, getMachineName }
                 <div className="flex flex-col gap-3">
                     {weekData.days.map((day, index) => {
                         return (
-                            <div key={index} className="flex items-start sm:items-center gap-3 bg-bg-tertiary p-3 rounded-xl border border-white/5">
-                                <div className="w-20 sm:w-28 text-[11px] sm:text-xs font-bold text-text-muted text-right whitespace-nowrap shrink-0 mt-1 sm:mt-0">
-                                    {day.label}
+                            <div key={index} className={`flex items-start sm:items-center gap-3 p-3 rounded-xl border ${day.isToday ? 'bg-accent-blue/10 border-accent-blue/40 shadow-[0_0_15px_rgba(59,130,246,0.15)] ring-1 ring-accent-blue/30 relative overflow-hidden' : 'bg-bg-tertiary border-white/5'}`}>
+                                {day.isToday && (
+                                    <div className="absolute top-0 left-0 w-1 h-full bg-accent-blue" />
+                                )}
+                                <div className={`w-20 sm:w-28 text-[11px] sm:text-xs font-bold text-right whitespace-nowrap shrink-0 mt-1 sm:mt-0 flex flex-col items-end gap-0.5 ${day.isToday ? 'text-accent-blue drop-shadow-md' : 'text-text-muted'}`}>
+                                    <span>{day.label}</span>
+                                    {day.isToday && <span className="text-[9px] bg-accent-blue text-white px-1.5 py-0.5 rounded shadow-sm">วันนี้</span>}
                                 </div>
                                 <div className="flex-1 flex flex-wrap gap-2 items-center">
                                     {day.plans.length > 0 ? (
