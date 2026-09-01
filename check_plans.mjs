@@ -19,24 +19,30 @@ const db = getDatabase(app);
 async function run() {
     try {
         const userCred = await signInAnonymously(auth);
-        
-        const machSnap = await get(ref(db, "machines"));
         const planSnap = await get(ref(db, "pm_plans"));
-        
-        const machines = [];
-        machSnap.forEach(c => { machines.push({...c.val(), id: c.key}); });
-        
         const plans = [];
         planSnap.forEach(c => { plans.push({...c.val(), id: c.key}); });
 
-        // Let's look at all Auto-Generated plans
-        const autoPlans = plans.filter(p => p.taskName && p.taskName.includes("[Auto-Generated]"));
-        
-        console.log("Total Auto-Generated Plans:", autoPlans.length);
-        
-        autoPlans.forEach(p => {
-            console.log(`- ${p.machineName} (${p.scheduleType}): nextDueDate=${p.nextDueDate}`);
+        let otherPlans = plans.filter(p => {
+            const date = new Date(p.nextDueDate);
+            return !(date.getMonth() === 8 && date.getFullYear() === 2026);
         });
+
+        console.log(`Found ${otherPlans.length} plans NOT in Sep 2026.`);
+        
+        let byType = {};
+        otherPlans.forEach(p => {
+            byType[p.scheduleType] = (byType[p.scheduleType] || 0) + 1;
+        });
+        console.log("By scheduleType:", byType);
+
+        let byMonth = {};
+        otherPlans.forEach(p => {
+            const date = new Date(p.nextDueDate);
+            const m = `${date.getFullYear()}-${date.getMonth()+1}`;
+            byMonth[m] = (byMonth[m] || 0) + 1;
+        });
+        console.log("By Month:", byMonth);
 
     } catch (err) {
         console.error("Error:", err);

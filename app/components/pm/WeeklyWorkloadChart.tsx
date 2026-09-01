@@ -95,8 +95,12 @@ export default function WeeklyWorkloadChart({ plans, onRefresh }: WeeklyWorkload
         setIsBalancing(true);
         try {
             const currentMonthPlans = plans.filter(p => {
+                // Include plans currently in this month, OR overdue plans from previous months
                 const dueDate = new Date(p.nextDueDate);
-                return p.scheduleType === 'monthly' && dueDate.getMonth() === monthData.currentMonth && dueDate.getFullYear() === monthData.currentYear;
+                const isThisMonth = dueDate.getMonth() === monthData.currentMonth && dueDate.getFullYear() === monthData.currentYear;
+                const isOverdue = dueDate.getTime() < new Date(monthData.currentYear, monthData.currentMonth, 1).getTime();
+                
+                return p.scheduleType === 'monthly' && p.status === 'active' && (isThisMonth || isOverdue);
             });
 
             // Sort them by existing date to minimize wild jumps
