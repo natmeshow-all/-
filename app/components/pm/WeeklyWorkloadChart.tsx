@@ -114,7 +114,7 @@ export default function WeeklyWorkloadChart({ plans, onRefresh }: WeeklyWorkload
             // Sort them by existing date to minimize wild jumps
             currentMonthPlans.sort((a, b) => new Date(a.nextDueDate).getTime() - new Date(b.nextDueDate).getTime());
 
-            const startDay = 2;
+            const startDay = 1;
             const daysInMonth = new Date(monthData.currentYear, monthData.currentMonth + 1, 0).getDate();
             const endDay = Math.min(30, daysInMonth);
             const availableDays = endDay - startDay + 1;
