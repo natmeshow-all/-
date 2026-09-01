@@ -147,36 +147,37 @@ export default function AutoGeneratePMModal({
     // Sunday target codes
     const sundayCodes = ['FM02', 'FM03', 'FM04'];
 
-    // Monthly groups by day distributed across 4 weeks (Pizza line excluded)
+    // Monthly groups by day distributed across every day starting Sept 2
     const monthlyGroups = [
-        {
-            day: 1,
-            label: "วันที่ 1 ของเดือน (สัปดาห์ที่ 1 - เริ่ม 1 ก.ย.)",
-            zone: "โซน FZ (Lines & Mixers)",
-            codes: ['MX01', 'FM01', 'FM02', 'FM03', 'FM04', 'FM08'],
-            date: new Date("2026-09-01T00:00:00.000Z")
-        },
-        {
-            day: 8,
-            label: "วันที่ 8 ของเดือน (สัปดาห์ที่ 2 - เริ่ม 8 ก.ย.)",
-            zone: "โซน FZ (Conveyors & Lift Dough)",
-            codes: ['CV01', 'CV14', 'CV19', 'LF01', 'LF03', 'LF06', 'LF10', 'LF13', 'LF14'],
-            date: new Date("2026-09-08T00:00:00.000Z")
-        },
-        {
-            day: 15,
-            label: "วันที่ 15 ของเดือน (สัปดาห์ที่ 3 - เริ่ม 15 ก.ย.)",
-            zone: "โซน RTE (Ovens & Slicers)",
-            codes: ['HT05', 'HT08', 'HT10', 'HT17', 'HT19', 'HT23', 'CT01', 'CT13'],
-            date: new Date("2026-09-15T00:00:00.000Z")
-        },
-        {
-            day: 22,
-            label: "วันที่ 22 ของเดือน (สัปดาห์ที่ 4 - เริ่ม 22 ก.ย.)",
-            zone: "โซน RTE, แซนวิช & Special",
-            codes: ['FM07', 'MX04', 'DP02', 'LF11', 'CV23', 'PK10', 'PK18', 'CN01', 'VC01', 'AT01'],
-            date: new Date("2026-09-22T00:00:00.000Z")
-        }
+        { day: 2, label: "วันที่ 2 (FZ)", zone: "FZ", codes: ['MX01', 'FM01'], date: new Date("2026-09-02T00:00:00.000Z") },
+        { day: 3, label: "วันที่ 3 (FZ)", zone: "FZ", codes: ['FM02'], date: new Date("2026-09-03T00:00:00.000Z") },
+        { day: 4, label: "วันที่ 4 (FZ)", zone: "FZ", codes: ['FM03'], date: new Date("2026-09-04T00:00:00.000Z") },
+        { day: 5, label: "วันที่ 5 (FZ)", zone: "FZ", codes: ['FM04'], date: new Date("2026-09-05T00:00:00.000Z") },
+        { day: 6, label: "วันที่ 6 (FZ)", zone: "FZ", codes: ['FM08'], date: new Date("2026-09-06T00:00:00.000Z") },
+        { day: 7, label: "วันที่ 7 (FZ)", zone: "FZ", codes: ['CV01'], date: new Date("2026-09-07T00:00:00.000Z") },
+        { day: 8, label: "วันที่ 8 (FZ)", zone: "FZ", codes: ['CV14'], date: new Date("2026-09-08T00:00:00.000Z") },
+        { day: 9, label: "วันที่ 9 (FZ)", zone: "FZ", codes: ['CV19'], date: new Date("2026-09-09T00:00:00.000Z") },
+        { day: 10, label: "วันที่ 10 (FZ)", zone: "FZ", codes: ['LF01'], date: new Date("2026-09-10T00:00:00.000Z") },
+        { day: 11, label: "วันที่ 11 (FZ)", zone: "FZ", codes: ['LF03'], date: new Date("2026-09-11T00:00:00.000Z") },
+        { day: 12, label: "วันที่ 12 (FZ)", zone: "FZ", codes: ['LF06'], date: new Date("2026-09-12T00:00:00.000Z") },
+        { day: 13, label: "วันที่ 13 (FZ)", zone: "FZ", codes: ['LF10'], date: new Date("2026-09-13T00:00:00.000Z") },
+        { day: 14, label: "วันที่ 14 (FZ)", zone: "FZ", codes: ['LF13'], date: new Date("2026-09-14T00:00:00.000Z") },
+        { day: 15, label: "วันที่ 15 (FZ)", zone: "FZ", codes: ['LF14'], date: new Date("2026-09-15T00:00:00.000Z") },
+        { day: 16, label: "วันที่ 16 (RTE)", zone: "RTE", codes: ['HT05', 'HT08'], date: new Date("2026-09-16T00:00:00.000Z") },
+        { day: 17, label: "วันที่ 17 (RTE)", zone: "RTE", codes: ['HT10'], date: new Date("2026-09-17T00:00:00.000Z") },
+        { day: 18, label: "วันที่ 18 (RTE)", zone: "RTE", codes: ['HT17'], date: new Date("2026-09-18T00:00:00.000Z") },
+        { day: 19, label: "วันที่ 19 (RTE)", zone: "RTE", codes: ['HT19'], date: new Date("2026-09-19T00:00:00.000Z") },
+        { day: 20, label: "วันที่ 20 (RTE)", zone: "RTE", codes: ['HT23'], date: new Date("2026-09-20T00:00:00.000Z") },
+        { day: 21, label: "วันที่ 21 (RTE)", zone: "RTE", codes: ['CT01'], date: new Date("2026-09-21T00:00:00.000Z") },
+        { day: 22, label: "วันที่ 22 (RTE)", zone: "RTE", codes: ['CT13'], date: new Date("2026-09-22T00:00:00.000Z") },
+        { day: 23, label: "วันที่ 23 (RTE)", zone: "RTE", codes: ['FM07'], date: new Date("2026-09-23T00:00:00.000Z") },
+        { day: 24, label: "วันที่ 24 (RTE)", zone: "RTE", codes: ['MX04'], date: new Date("2026-09-24T00:00:00.000Z") },
+        { day: 25, label: "วันที่ 25 (RTE)", zone: "RTE", codes: ['DP02'], date: new Date("2026-09-25T00:00:00.000Z") },
+        { day: 26, label: "วันที่ 26 (RTE)", zone: "RTE", codes: ['LF11'], date: new Date("2026-09-26T00:00:00.000Z") },
+        { day: 27, label: "วันที่ 27 (RTE)", zone: "RTE", codes: ['CV23', 'PK10'], date: new Date("2026-09-27T00:00:00.000Z") },
+        { day: 28, label: "วันที่ 28 (RTE)", zone: "RTE", codes: ['PK18'], date: new Date("2026-09-28T00:00:00.000Z") },
+        { day: 29, label: "วันที่ 29 (RTE)", zone: "RTE", codes: ['CN01'], date: new Date("2026-09-29T00:00:00.000Z") },
+        { day: 30, label: "วันที่ 30 (RTE)", zone: "RTE", codes: ['VC01', 'AT01'], date: new Date("2026-09-30T00:00:00.000Z") }
     ];
 
     const stats = React.useMemo(() => {
@@ -342,8 +343,8 @@ export default function AutoGeneratePMModal({
 
             setProgress(60);
 
-            // 4. Create Monthly PM Plans & Balance across 4 weeks (Days 1, 8, 15, 22)
-            setStatusText("กำลังจัดแผนรายเดือนกระจาย 4 สัปดาห์ (วันที่ 1, 8, 15, 22)...");
+            // 4. Create Monthly PM Plans & Balance across every day
+            setStatusText("กำลังจัดแผนรายเดือนกระจายทุกวันตั้งแต่วันที่ 2 ถึง 30...");
             let processedMonthly = 0;
             const totalMonthlyTarget = 33;
 
@@ -504,7 +505,7 @@ export default function AutoGeneratePMModal({
                 {activeTab === 'monthly' && (
                     <div className="space-y-3">
                         <p className="text-xs text-text-muted">
-                            จัดสรรกระจายสมดุลออกเป็น **4 สัปดาห์ (วันที่ 1, 8, 15, 22 ของเดือน)** และจัดกลุ่มตามห้อง/โซน:
+                            จัดสรรกระจายสมดุลออกเป็น **ทุกวัน (ตั้งแต่วันที่ 2 ถึง 30 ของเดือน)** และจัดกลุ่มตามห้อง/โซน:
                         </p>
                         {monthlyGroups.map(grp => (
                             <div key={grp.day} className="card-glass p-3.5 rounded-xl border border-white/10">

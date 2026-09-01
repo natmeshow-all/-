@@ -96,20 +96,24 @@ export default function WeeklyWorkloadChart({ plans, onRefresh }: WeeklyWorkload
         try {
             const currentMonthPlans = plans.filter(p => {
                 const dueDate = new Date(p.nextDueDate);
-                return dueDate.getMonth() === monthData.currentMonth && dueDate.getFullYear() === monthData.currentYear;
+                return p.scheduleType === 'monthly' && dueDate.getMonth() === monthData.currentMonth && dueDate.getFullYear() === monthData.currentYear;
             });
 
             // Sort them by existing date to minimize wild jumps
             currentMonthPlans.sort((a, b) => new Date(a.nextDueDate).getTime() - new Date(b.nextDueDate).getTime());
 
-            const targetPerWeek = Math.ceil(currentMonthPlans.length / 4);
+            const startDay = 2;
+            const daysInMonth = new Date(monthData.currentYear, monthData.currentMonth + 1, 0).getDate();
+            const endDay = Math.min(30, daysInMonth);
+            const availableDays = endDay - startDay + 1;
+            const plansPerDay = Math.max(1, Math.ceil(currentMonthPlans.length / availableDays));
+
             const updates = [];
 
             for (let i = 0; i < currentMonthPlans.length; i++) {
                 const plan = currentMonthPlans[i];
-                const weekIndex = Math.floor(i / targetPerWeek);
-                
-                const targetDay = Math.min(4 + (weekIndex * 7), 28);
+                const dayOffset = Math.floor(i / plansPerDay);
+                const targetDay = Math.min(startDay + dayOffset, endDay);
                 const newDate = new Date(monthData.currentYear, monthData.currentMonth, targetDay);
                 
                 const oldDate = new Date(plan.nextDueDate);
