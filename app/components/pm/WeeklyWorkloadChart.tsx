@@ -137,14 +137,13 @@ export default function WeeklyWorkloadChart({ plans, onRefresh, getMachineName }
             const daysInMonth = new Date(targetYear, targetMonth + 1, 0).getDate();
             const endDay = Math.min(30, daysInMonth);
             const availableDays = endDay - startDay + 1;
-            const plansPerDay = Math.max(1, Math.ceil(currentMonthPlans.length / availableDays));
 
             const updates = [];
 
             for (let i = 0; i < currentMonthPlans.length; i++) {
                 const plan = currentMonthPlans[i];
-                const dayOffset = Math.floor(i / plansPerDay);
-                const targetDay = Math.min(startDay + dayOffset, endDay);
+                // Use float division to perfectly distribute across the month
+                const targetDay = startDay + Math.floor(i * availableDays / currentMonthPlans.length);
                 const newDate = new Date(targetYear, targetMonth, targetDay);
                 
                 const oldDate = new Date(plan.nextDueDate);
