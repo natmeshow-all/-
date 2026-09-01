@@ -23,44 +23,62 @@ export default function WeeklyWorkloadChart({ plans, onRefresh }: WeeklyWorkload
     const [targetDate, setTargetDate] = useState(() => new Date());
     const [showConfirm, setShowConfirm] = useState(false);
 
-    const monthData = useMemo(() => {
-        const currentMonth = targetDate.getMonth();
-        const currentYear = targetDate.getFullYear();
-        const monthName = `${THAI_MONTHS[currentMonth]} ${currentYear + 543}`;
-        const isCurrentMonth = currentMonth === new Date().getMonth() && currentYear === new Date().getFullYear();
+    const weekData = useMemo(() => {
+        // Calculate Monday of the targetDate's week
+        const dayOfWeek = targetDate.getDay();
+        const diffToMonday = targetDate.getDate() - dayOfWeek + (dayOfWeek === 0 ? -6 : 1);
+        const startOfWeek = new Date(targetDate.getFullYear(), targetDate.getMonth(), diffToMonday);
+        startOfWeek.setHours(0,0,0,0);
+        
+        const endOfWeek = new Date(startOfWeek);
+        endOfWeek.setDate(startOfWeek.getDate() + 6);
+        endOfWeek.setHours(23,59,59,999);
 
-        // Initialize weeks array (Week 1 to Week 5)
-        const weeks = [
-            { week: 1, count: 0, label: 'W1 (1-7)', color: 'bg-accent-blue' },
-            { week: 2, count: 0, label: 'W2 (8-14)', color: 'bg-accent-green' },
-            { week: 3, count: 0, label: 'W3 (15-21)', color: 'bg-accent-yellow' },
-            { week: 4, count: 0, label: 'W4 (22-28)', color: 'bg-accent-orange' },
-            { week: 5, count: 0, label: 'W5 (29+)', color: 'bg-accent-purple' },
-        ];
+        const isCurrentWeek = new Date() >= startOfWeek && new Date() <= endOfWeek;
 
-        let totalThisMonth = 0;
+        const dateRangeStr = `${startOfWeek.getDate()} ${THAI_MONTHS[startOfWeek.getMonth()]} - ${endOfWeek.getDate()} ${THAI_MONTHS[endOfWeek.getMonth()]} ${endOfWeek.getFullYear() + 543}`;
+
+        const THAI_DAYS = ['จันทร์', 'อังคาร', 'พุธ', 'พฤหัสบดี', 'ศุกร์', 'เสาร์', 'อาทิตย์'];
+        const COLORS = ['bg-accent-yellow', 'bg-accent-purple', 'bg-accent-green', 'bg-accent-orange', 'bg-accent-blue', 'bg-accent-purple', 'bg-accent-red'];
+
+        const days = Array.from({length: 7}).map((_, i) => {
+            const d = new Date(startOfWeek);
+            d.setDate(startOfWeek.getDate() + i);
+            return {
+                dayIndex: i,
+                date: d,
+                label: `${THAI_DAYS[i]} (${d.getDate()})`,
+                color: COLORS[i % COLORS.length],
+                count: 0
+            };
+        });
+
+        let totalThisWeek = 0;
 
         plans.forEach(plan => {
             if (plan.status !== 'active') return;
             const dueDate = new Date(plan.nextDueDate);
-            const isThisMonth = dueDate.getMonth() === currentMonth && dueDate.getFullYear() === currentYear;
-            const isOverdue = dueDate.getTime() < new Date(currentYear, currentMonth, 1).getTime();
+            dueDate.setHours(0,0,0,0);
 
-            if (isThisMonth || isOverdue) {
-                totalThisMonth++;
-                const day = dueDate.getDate();
-                if (day >= 1 && day <= 7) weeks[0].count++;
-                else if (day >= 8 && day <= 14) weeks[1].count++;
-                else if (day >= 15 && day <= 21) weeks[2].count++;
-                else if (day >= 22 && day <= 28) weeks[3].count++;
-                else if (day >= 29) weeks[4].count++;
+            // Check if it falls exactly in this week
+            if (dueDate >= startOfWeek && dueDate <= endOfWeek) {
+                totalThisWeek++;
+                // Find which day
+                const diffDays = Math.floor((dueDate.getTime() - startOfWeek.getTime()) / (1000 * 60 * 60 * 24));
+                if (diffDays >= 0 && diffDays < 7) {
+                    days[diffDays].count++;
+                }
+            } else if (dueDate < startOfWeek) {
+                // If it's overdue, but we want to map it to the current month's day...
+                // Actually, since they click auto balance, the dates will be physically moved.
+                // For now, let's just do exact dates. If it's overdue, it won't show in THIS week, unless they Auto Balance it into this week.
             }
         });
 
-        return { weeks, totalThisMonth, currentMonth, currentYear, monthName, isCurrentMonth };
+        return { days, totalThisWeek, dateRangeStr, isCurrentWeek, startOfWeek };
     }, [plans, targetDate]);
 
-    // Calculate plan counts for current month vs next month for quick switching
+    // Calculate plan counts for current month vs next month for quick switching (keeping this logic for now but might rename)
     const monthCounts = useMemo(() => {
         const now = new Date();
         const thisMonthIdx = now.getMonth();
@@ -91,22 +109,24 @@ export default function WeeklyWorkloadChart({ plans, onRefresh }: WeeklyWorkload
         };
     }, [plans]);
 
-    const maxCount = Math.max(...monthData.weeks.map(w => w.count), 1);
+    const maxCount = Math.max(...weekData.days.map(w => w.count), 1);
 
     // Calculate variance to warn about imbalance
-    const counts = monthData.weeks.map(w => w.count);
-    const avg = monthData.totalThisMonth / 5;
+    const counts = weekData.days.map(w => w.count);
+    const avg = weekData.totalThisWeek / 7;
     const maxDiff = Math.max(...counts) - Math.min(...counts);
-    const isUnbalanced = monthData.totalThisMonth > 5 && maxDiff > (avg * 1.5);
+    const isUnbalanced = weekData.totalThisWeek > 10 && maxDiff > (avg * 1.5);
 
     const handleAutoBalance = async () => {
         setIsBalancing(true);
         try {
+            const targetMonth = targetDate.getMonth();
+            const targetYear = targetDate.getFullYear();
+            
             const currentMonthPlans = plans.filter(p => {
-                // Include plans currently in this month, OR overdue plans from previous months
                 const dueDate = new Date(p.nextDueDate);
-                const isThisMonth = dueDate.getMonth() === monthData.currentMonth && dueDate.getFullYear() === monthData.currentYear;
-                const isOverdue = dueDate.getTime() < new Date(monthData.currentYear, monthData.currentMonth, 1).getTime();
+                const isThisMonth = dueDate.getMonth() === targetMonth && dueDate.getFullYear() === targetYear;
+                const isOverdue = dueDate.getTime() < new Date(targetYear, targetMonth, 1).getTime();
                 
                 return p.scheduleType === 'monthly' && p.status === 'active' && (isThisMonth || isOverdue);
             });
@@ -115,7 +135,7 @@ export default function WeeklyWorkloadChart({ plans, onRefresh }: WeeklyWorkload
             currentMonthPlans.sort((a, b) => new Date(a.nextDueDate).getTime() - new Date(b.nextDueDate).getTime());
 
             const startDay = 1;
-            const daysInMonth = new Date(monthData.currentYear, monthData.currentMonth + 1, 0).getDate();
+            const daysInMonth = new Date(targetYear, targetMonth + 1, 0).getDate();
             const endDay = Math.min(30, daysInMonth);
             const availableDays = endDay - startDay + 1;
             const plansPerDay = Math.max(1, Math.ceil(currentMonthPlans.length / availableDays));
@@ -126,7 +146,7 @@ export default function WeeklyWorkloadChart({ plans, onRefresh }: WeeklyWorkload
                 const plan = currentMonthPlans[i];
                 const dayOffset = Math.floor(i / plansPerDay);
                 const targetDay = Math.min(startDay + dayOffset, endDay);
-                const newDate = new Date(monthData.currentYear, monthData.currentMonth, targetDay);
+                const newDate = new Date(targetYear, targetMonth, targetDay);
                 
                 const oldDate = new Date(plan.nextDueDate);
                 if (oldDate.getDate() === targetDay) continue;
@@ -163,44 +183,44 @@ export default function WeeklyWorkloadChart({ plans, onRefresh }: WeeklyWorkload
                         </div>
                         <div>
                             <div className="flex items-center gap-2">
-                                <h2 className="text-lg font-bold text-text-primary">สมดุลงาน PM: {monthData.monthName}</h2>
-                                {monthData.isCurrentMonth && (
+                                <h2 className="text-lg font-bold text-text-primary">สมดุลงาน PM: {weekData.dateRangeStr}</h2>
+                                {weekData.isCurrentWeek && (
                                     <span className="px-2 py-0.5 rounded-full bg-accent-blue/20 text-accent-blue text-[10px] font-bold">
-                                        เดือนปัจจุบัน
+                                        สัปดาห์นี้
                                     </span>
                                 )}
                             </div>
                             <p className="text-xs text-text-muted">
-                                แผนบำรุงรักษาทั้งหมด <strong className="text-text-primary font-bold">{monthData.totalThisMonth} งาน</strong> ในเดือนนี้
+                                แผนบำรุงรักษาทั้งหมด <strong className="text-text-primary font-bold">{weekData.totalThisWeek} งาน</strong> ในสัปดาห์นี้
                             </p>
                         </div>
                     </div>
 
                     <div className="flex flex-wrap items-center gap-2 w-full sm:w-auto justify-between sm:justify-end">
-                        {/* Month Picker / Switcher */}
+                        {/* Week Picker / Switcher */}
                         <div className="flex items-center gap-1 bg-bg-tertiary px-2 py-1 rounded-xl border border-white/10 shadow-inner">
                             <button
                                 onClick={() => {
                                     const d = new Date(targetDate);
-                                    d.setMonth(d.getMonth() - 1);
+                                    d.setDate(d.getDate() - 7);
                                     setTargetDate(d);
                                 }}
                                 className="p-1 rounded hover:bg-white/10 text-text-muted hover:text-text-primary transition-all active:scale-95"
-                                title="เดือนก่อนหน้า"
+                                title="สัปดาห์ก่อนหน้า"
                             >
                                 <ChevronLeftIcon size={16} />
                             </button>
-                            <span className="text-xs font-bold text-text-primary px-2 min-w-[100px] text-center select-none">
-                                {monthData.monthName}
+                            <span className="text-xs font-bold text-text-primary px-2 min-w-[150px] text-center select-none">
+                                {weekData.dateRangeStr}
                             </span>
                             <button
                                 onClick={() => {
                                     const d = new Date(targetDate);
-                                    d.setMonth(d.getMonth() + 1);
+                                    d.setDate(d.getDate() + 7);
                                     setTargetDate(d);
                                 }}
                                 className="p-1 rounded hover:bg-white/10 text-text-muted hover:text-text-primary transition-all active:scale-95"
-                                title="เดือนถัดไป"
+                                title="สัปดาห์ถัดไป"
                             >
                                 <ChevronRightIcon size={16} />
                             </button>
@@ -210,15 +230,9 @@ export default function WeeklyWorkloadChart({ plans, onRefresh }: WeeklyWorkload
                         <div className="flex items-center gap-1.5">
                             <button
                                 onClick={() => setTargetDate(new Date())}
-                                className={`px-2.5 py-1 rounded-lg text-xs font-bold transition-all border ${monthData.isCurrentMonth ? 'bg-accent-blue text-white border-accent-blue shadow-md' : 'bg-bg-tertiary text-text-muted border-white/5 hover:text-text-primary'}`}
+                                className={`px-2.5 py-1 rounded-lg text-xs font-bold transition-all border ${weekData.isCurrentWeek ? 'bg-accent-blue text-white border-accent-blue shadow-md' : 'bg-bg-tertiary text-text-muted border-white/5 hover:text-text-primary'}`}
                             >
-                                {monthCounts.thisMonthLabel} ({monthCounts.thisMonthCount})
-                            </button>
-                            <button
-                                onClick={() => setTargetDate(monthCounts.nextMonthDate)}
-                                className={`px-2.5 py-1 rounded-lg text-xs font-bold transition-all border ${!monthData.isCurrentMonth && targetDate.getMonth() === monthCounts.nextMonthDate.getMonth() ? 'bg-accent-cyan text-bg-primary border-accent-cyan shadow-md' : 'bg-bg-tertiary text-text-muted border-white/5 hover:text-text-primary'}`}
-                            >
-                                {monthCounts.nextMonthLabel} ({monthCounts.nextMonthCount})
+                                สัปดาห์นี้ ({weekData.totalThisWeek})
                             </button>
                         </div>
 
@@ -244,44 +258,27 @@ export default function WeeklyWorkloadChart({ plans, onRefresh }: WeeklyWorkload
                 </div>
 
                 <div className="flex flex-col gap-3">
-                    {monthData.weeks.map((week, index) => {
-                        const percentage = (week.count / maxCount) * 100;
+                    {weekData.days.map((day, index) => {
+                        const maxCount = Math.max(...weekData.days.map(d => d.count), 1);
+                        const percentage = (day.count / maxCount) * 100;
                         return (
                             <div key={index} className="flex items-center gap-3">
-                                <div className="w-16 sm:w-24 text-xs font-medium text-text-muted text-right whitespace-nowrap">
-                                    {week.label}
+                                <div className="w-20 sm:w-28 text-[11px] sm:text-xs font-medium text-text-muted text-right whitespace-nowrap">
+                                    {day.label}
                                 </div>
                                 <div className="flex-1 h-8 sm:h-10 bg-bg-tertiary rounded-lg overflow-hidden relative border border-white/5 flex items-center">
                                     <div 
-                                        className={`h-full ${week.color} transition-all duration-1000 ease-out flex items-center px-3`}
-                                        style={{ width: `${Math.max(percentage, 2)}%`, opacity: week.count === 0 ? 0.3 : 1 }}
+                                        className={`h-full ${day.color} transition-all duration-1000 ease-out flex items-center px-3`}
+                                        style={{ width: `${Math.max(percentage, 2)}%`, opacity: day.count === 0 ? 0.3 : 1 }}
                                     >
                                     </div>
-                                    <span className={`absolute left-3 text-xs font-bold z-10 ${week.count > 0 ? 'text-bg-primary' : 'text-text-muted'}`}>
-                                        {week.count > 0 ? `${week.count} งาน` : '-'}
+                                    <span className={`absolute left-3 text-xs font-bold z-10 ${day.count > 0 ? 'text-bg-primary' : 'text-text-muted'}`}>
+                                        {day.count > 0 ? `${day.count} งาน` : '-'}
                                     </span>
                                 </div>
                             </div>
                         );
                     })}
-                </div>
-                
-                <div className="mt-4 pt-4 border-t border-white/5 flex flex-wrap gap-4 text-[10px] sm:text-xs text-text-muted">
-                    <div className="flex items-center gap-1.5">
-                        <div className="w-2 h-2 rounded-full bg-accent-blue"></div> W1 (วันที่ 1-7)
-                    </div>
-                    <div className="flex items-center gap-1.5">
-                        <div className="w-2 h-2 rounded-full bg-accent-green"></div> W2 (วันที่ 8-14)
-                    </div>
-                    <div className="flex items-center gap-1.5">
-                        <div className="w-2 h-2 rounded-full bg-accent-yellow"></div> W3 (วันที่ 15-21)
-                    </div>
-                    <div className="flex items-center gap-1.5">
-                        <div className="w-2 h-2 rounded-full bg-accent-orange"></div> W4 (วันที่ 22-28)
-                    </div>
-                    <div className="flex items-center gap-1.5">
-                        <div className="w-2 h-2 rounded-full bg-accent-purple"></div> W5 (วันที่ 29 เป็นต้นไป)
-                    </div>
                 </div>
             </div>
 
@@ -290,7 +287,7 @@ export default function WeeklyWorkloadChart({ plans, onRefresh }: WeeklyWorkload
                 onClose={() => setShowConfirm(false)}
                 onConfirm={handleAutoBalance}
                 title="ยืนยันการปรับสมดุลงาน"
-                message={`ระบบจะทำการกระจายงาน PM ของเดือน ${monthData.monthName} ออกเป็น 4 สัปดาห์อัตโนมัติ โดยจะเปลี่ยนวันที่ Next Due Date และบันทึกหมายเหตุไว้ ยืนยันหรือไม่?`}
+                message={`ระบบจะทำการกระจายงาน PM ของเดือนนี้ออกเป็นรายวันตลอดทั้งเดือน (วันที่ 1 ถึง 30) โดยอัตโนมัติ โดยจะเปลี่ยนวันที่ และบันทึกหมายเหตุไว้ ยืนยันหรือไม่?`}
                 confirmText="ยืนยันการปรับสมดุล"
                 cancelText="ยกเลิก"
             />
