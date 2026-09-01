@@ -9,6 +9,7 @@ import ConfirmModal from '../ui/ConfirmModal';
 interface WeeklyWorkloadChartProps {
     plans: PMPlan[];
     onRefresh?: () => void;
+    getMachineName?: (machineId?: string, machineName?: string) => string;
 }
 
 const THAI_MONTHS = [
@@ -16,7 +17,7 @@ const THAI_MONTHS = [
     "กรกฎาคม", "สิงหาคม", "กันยายน", "ตุลาคม", "พฤศจิกายน", "ธันวาคม"
 ];
 
-export default function WeeklyWorkloadChart({ plans, onRefresh }: WeeklyWorkloadChartProps) {
+export default function WeeklyWorkloadChart({ plans, onRefresh, getMachineName }: WeeklyWorkloadChartProps) {
     const { t } = useLanguage();
     const { permissions } = useAuth();
     const [isBalancing, setIsBalancing] = useState(false);
@@ -266,16 +267,15 @@ export default function WeeklyWorkloadChart({ plans, onRefresh }: WeeklyWorkload
                                     {day.plans.length > 0 ? (
                                         <>
                                             {day.plans.map(p => {
-                                                const mName = p.machineName || p.taskName?.replace(/\[.*?\]\s*/, "") || "ไม่ระบุ";
-                                                const mCode = mName.split(" ")[0]; // Just a quick parse to maybe get the code
-                                                // Actually we have p.taskName which usually contains the machine code and name
+                                                const mName = getMachineName ? getMachineName(p.machineId, p.machineName) : (p.machineName || p.taskName?.replace(/\[.*?\]\s*/, "") || "ไม่ระบุ");
+                                                const finalName = mName === "ไม่ระบุ" && p.taskName ? p.taskName : mName;
                                                 return (
                                                     <span 
                                                         key={p.id} 
                                                         className={`px-2.5 py-1 text-[10px] font-bold rounded-md bg-white/5 border border-white/10 text-white truncate max-w-[200px]`}
-                                                        title={p.taskName || mName}
+                                                        title={finalName}
                                                     >
-                                                        {p.taskName || mName}
+                                                        {finalName}
                                                     </span>
                                                 )
                                             })}

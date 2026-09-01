@@ -444,7 +444,15 @@ export default function SchedulePage() {
 
                 {/* Workload Balance */}
                 {!loading && plans.length > 0 && (
-                    <WeeklyWorkloadChart plans={plans} onRefresh={() => fetchData(false)} />
+                    <WeeklyWorkloadChart 
+                        plans={plans} 
+                        onRefresh={() => fetchData(false)} 
+                        getMachineName={(id, name) => {
+                            const machine = findMachineByPlan(id, name);
+                            if (machine) return `[${machine.code || '-'}] ${machine.name}`;
+                            return name || "ไม่ระบุ";
+                        }}
+                    />
                 )}
 
                 {/* Schedule Timeline */}
