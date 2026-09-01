@@ -16,6 +16,7 @@ import { useToast } from "../contexts/ToastContext";
 import RequestDeletionModal from "../components/ui/RequestDeletionModal";
 import ConfirmModal from "../components/ui/ConfirmModal";
 import { requestDeletion } from "../services/deletionService";
+import { getMaintenanceRecordsByPMPlan } from "../services/maintenanceService";
 import WeeklyWorkloadChart from "../components/pm/WeeklyWorkloadChart";
 
 export default function SchedulePage() {
@@ -286,9 +287,10 @@ export default function SchedulePage() {
     };
 
     const handleAutoCloseOverdue = () => {
-        const targetPlans = plans.filter(p => p.status === 'active' && (!p.completedCount || p.completedCount === 0));
+        // Find plans that are due today or in the past
+        const targetPlans = plans.filter(p => p.status === 'active' && new Date(p.nextDueDate) <= new Date());
         if (targetPlans.length === 0) {
-            showError("ไม่มีงานค้าง", "ไม่มีงานค้างที่ยังไม่เคยปิดเลยในขณะนี้");
+            showError("ไม่มีงานค้าง", "ไม่มีงานค้างหรือถึงกำหนดในขณะนี้");
             return;
         }
         setAutoCloseConfirmOpen(true);
@@ -297,36 +299,59 @@ export default function SchedulePage() {
     const performAutoClose = async () => {
         setIsAutoClosing(true);
         try {
-            // Find all active plans that have 0 completed counts (never executed)
-            const targetPlans = plans.filter(p => p.status === 'active' && (!p.completedCount || p.completedCount === 0));
+            // Find all active plans that are due today or in the past
+            const targetPlans = plans.filter(p => p.status === 'active' && new Date(p.nextDueDate) <= new Date());
 
             let successCount = 0;
             // Iterate and close them
             for (const plan of targetPlans) {
-                const results = plan.checklistItems?.map(item => {
+                // Fetch previous records to use as reference if available
+                let previousResults: any[] | undefined;
+                if (plan.completedCount && plan.completedCount > 0) {
+                    const oldRecords = await getMaintenanceRecordsByPMPlan(plan.id);
+                    if (oldRecords && oldRecords.length > 0) {
+                        // Sort to get the latest
+                        oldRecords.sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime());
+                        previousResults = oldRecords[0].checklist;
+                    }
+                }
+
+                // Generate checklist results based on defaults or previous data
+                const results = plan.checklistItems?.map((item, index) => {
                     const label = typeof item === 'string' ? item.toLowerCase() : (item as any).text?.toLowerCase() || "";
                     let val = "";
-                    if (label.includes("ทำความสะอาด") || label.includes("หล่อลื่น") || label.includes("เปลี่ยนไส้กรอง") || label.includes("calibrat")) val = "เรียบร้อย";
-                    else if (label.includes("ตรวจสภาพ") || label.includes("ตรวจสอบ")) val = "สมบูรณ์";
-                    else if (label.includes("ความตึง")) val = "เหมาะสม";
-                    else if (label.includes("แรงดัน") || label.includes("ระดับ") || label.includes("เสียงผิดปกติ") || label.includes("sound") || label.includes("level")) val = "ปกติ";
-                    else if (label.includes("รอยรั่ว") || label.includes("leak") || label.includes("crack")) val = "ไม่มี";
                     
-                    return { completed: true, value: val };
+                    // If we have old record data, try to reuse the same value
+                    if (previousResults && previousResults[index]) {
+                        val = previousResults[index].value;
+                    } else {
+                        // Default logic
+                        if (label.includes("ทำความสะอาด") || label.includes("หล่อลื่น") || label.includes("เปลี่ยนไส้กรอง") || label.includes("calibrat")) val = "เรียบร้อย";
+                        else if (label.includes("ตรวจสภาพ") || label.includes("ตรวจสอบ")) val = "สมบูรณ์";
+                        else if (label.includes("ความตึง")) val = "เหมาะสม";
+                        else if (label.includes("แรงดัน") || label.includes("ระดับ") || label.includes("เสียงผิดปกติ") || label.includes("sound") || label.includes("level")) val = "ปกติ";
+                        else if (label.includes("รอยรั่ว") || label.includes("leak") || label.includes("crack")) val = "ไม่มี";
+                    }
+                    
+                    return { 
+                        item: typeof item === 'string' ? item : (item as any).text || "", 
+                        completed: true, 
+                        value: val 
+                    };
                 }) || [];
 
                 const record = {
                     machineId: plan.machineId,
                     machineName: plan.machineName || "Unknown",
                     type: "preventive" as const,
+                    priority: "normal" as const,
                     description: `ปิดงานอัตโนมัติ (Auto-Closed) สำหรับ ${plan.taskName}`,
                     date: new Date().toISOString(),
                     technician: "System (Auto)",
                     cost: 0,
                     status: "completed" as const,
-                    partsUsed: [],
                     notes: "ปิดงานอัตโนมัติตามมาตรฐาน",
-                    checklistResults: results,
+                    checklist: results,
                     durationMinutes: 30, // Standard 30 mins
                 };
 
@@ -479,10 +504,10 @@ export default function SchedulePage() {
                                     }
                                 }}
                                 className="flex items-center gap-2 px-3 py-1.5 rounded-lg bg-accent-orange/20 text-accent-orange hover:bg-accent-orange/30 transition-all shadow-md active:scale-95 border border-accent-orange/30"
-                                title="ปิดงานค้าง (ครั้งแรก)"
+                                title="ปิดงานค้างอัตโนมัติ"
                             >
                                 <CheckCircleIcon size={16} />
-                                <span className="text-xs font-bold whitespace-nowrap">ปิดงานค้าง (ครั้งแรก)</span>
+                                <span className="text-xs font-bold whitespace-nowrap">ปิดงานค้างอัตโนมัติ</span>
                             </button>
                             <button
                                 onClick={() => {
@@ -1028,7 +1053,7 @@ export default function SchedulePage() {
                 onClose={() => setAutoCloseConfirmOpen(false)}
                 onConfirm={performAutoClose}
                 title="ปิดงานค้างอัตโนมัติ"
-                message="ระบบจะทำการปิดงานค้างทั้งหมดที่ยังไม่เคยทำ PM โดยจะใส่ค่ามาตรฐานให้โดยอัตโนมัติ และเลื่อนรอบทำงานไปเป็นรอบถัดไป คุณต้องการดำเนินการต่อหรือไม่?"
+                message="ระบบจะทำการปิดงานที่ค้างทั้งหมด (รวมถึงงานที่เคยทำไปแล้ว) โดยจะดึงค่าจากประวัติเดิมมาใส่ให้ หรือใส่ค่ามาตรฐานให้โดยอัตโนมัติ และเลื่อนรอบทำงานไปเป็นรอบถัดไป คุณต้องการดำเนินการต่อหรือไม่?"
                 confirmText={isAutoClosing ? "กำลังทำงาน..." : "ยืนยันการปิดงาน"}
                 cancelText="ยกเลิก"
             />
