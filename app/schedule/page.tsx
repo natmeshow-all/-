@@ -6,7 +6,7 @@ import MobileNav from "../components/MobileNav";
 import { useLanguage } from "../contexts/LanguageContext";
 import { useAuth } from "../contexts/AuthContext";
 import { CalendarIcon, ClockIcon, SettingsIcon, AlertTriangleIcon, BoxIcon, FolderIcon, CheckCircleIcon, PlusIcon, EditIcon, TrashIcon, SearchIcon, MapPinIcon, ZapIcon } from "../components/ui/Icons";
-import { getPMPlans, deletePMPlan, getMachines } from "../lib/firebaseService";
+import { getPMPlans, deletePMPlan, getMachines, completePMTask } from "../lib/firebaseService";
 import { PMPlan, Machine } from "../types";
 import PMExecutionModal from "../components/pm/PMExecutionModal";
 import PMConfigModal from "../components/pm/PMConfigModal";
@@ -283,6 +283,60 @@ export default function SchedulePage() {
         setExecutionModalOpen(true);
     };
 
+    const handleAutoCloseOverdue = async () => {
+        if (!confirm("คุณต้องการปิดงานค้าง (ที่ยังไม่เคยทำ PM เลย) ทั้งหมดแบบอัตโนมัติหรือไม่? ระบบจะใส่ค่ามาตรฐานให้และเลื่อนรอบถัดไปให้ทันที")) return;
+        
+        try {
+            // Find all active plans that have 0 completed counts (never executed)
+            const targetPlans = plans.filter(p => p.status === 'active' && (!p.completedCount || p.completedCount === 0));
+            
+            if (targetPlans.length === 0) {
+                alert("ไม่มีงานค้างที่ยังไม่เคยปิดเลย");
+                return;
+            }
+
+            let successCount = 0;
+            // Iterate and close them
+            for (const plan of targetPlans) {
+                const results = plan.checklistItems?.map(item => {
+                    const label = typeof item === 'string' ? item.toLowerCase() : (item as any).text?.toLowerCase() || "";
+                    let val = "";
+                    if (label.includes("ทำความสะอาด") || label.includes("หล่อลื่น") || label.includes("เปลี่ยนไส้กรอง") || label.includes("calibrat")) val = "เรียบร้อย";
+                    else if (label.includes("ตรวจสภาพ") || label.includes("ตรวจสอบ")) val = "สมบูรณ์";
+                    else if (label.includes("ความตึง")) val = "เหมาะสม";
+                    else if (label.includes("แรงดัน") || label.includes("ระดับ") || label.includes("เสียงผิดปกติ") || label.includes("sound") || label.includes("level")) val = "ปกติ";
+                    else if (label.includes("รอยรั่ว") || label.includes("leak") || label.includes("crack")) val = "ไม่มี";
+                    
+                    return { completed: true, value: val };
+                }) || [];
+
+                const record = {
+                    machineId: plan.machineId,
+                    machineName: plan.machineName || "Unknown",
+                    type: "preventive" as const,
+                    description: `ปิดงานอัตโนมัติ (Auto-Closed) สำหรับ ${plan.taskName}`,
+                    date: new Date().toISOString(),
+                    technician: "System (Auto)",
+                    cost: 0,
+                    status: "completed" as const,
+                    partsUsed: [],
+                    notes: "ปิดงานอัตโนมัติตามมาตรฐาน",
+                    checklistResults: results,
+                    durationMinutes: 30, // Standard 30 mins
+                };
+
+                await completePMTask(plan.id, record as any);
+                successCount++;
+            }
+            
+            alert(`ปิดงานอัตโนมัติสำเร็จ ${successCount} งาน`);
+            fetchData(false);
+        } catch (err) {
+            console.error("Auto close failed", err);
+            alert("เกิดข้อผิดพลาดในการปิดงานอัตโนมัติ");
+        }
+    };
+
     const handleEditClick = (plan: PMPlan) => {
         if (!checkAuth()) return;
         if (!permissions.canManagePM) {
@@ -410,6 +464,18 @@ export default function SchedulePage() {
                                     <span className="whitespace-nowrap">แผน PM ครบทุกเครื่องแล้ว</span>
                                 </button>
                             )}
+                            <button
+                                onClick={() => {
+                                    if (checkAuth()) {
+                                        handleAutoCloseOverdue();
+                                    }
+                                }}
+                                className="flex items-center gap-2 px-3 py-1.5 rounded-lg bg-accent-orange/20 text-accent-orange hover:bg-accent-orange/30 transition-all shadow-md active:scale-95 border border-accent-orange/30"
+                                title="ปิดงานค้าง (ครั้งแรก)"
+                            >
+                                <CheckCircleIcon size={16} />
+                                <span className="text-xs font-bold whitespace-nowrap">ปิดงานค้าง (ครั้งแรก)</span>
+                            </button>
                             <button
                                 onClick={() => {
                                     if (checkAuth()) {
