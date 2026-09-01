@@ -294,14 +294,14 @@ export default function SchedulePage() {
         due.setHours(0, 0, 0, 0);
         const diffTime = due.getTime() - now.getTime();
         const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
-        return diffDays <= 7; // งานค้าง หรือถึงกำหนดในสัปดาห์นี้
+        return diffDays < 0; // เฉพาะงานเกินกำหนดเท่านั้น
     };
 
     const handleAutoCloseOverdue = () => {
-        // Find plans that are due today or in the past
+        // Find plans that are overdue
         const targetPlans = plans.filter(isPlanTargeted);
         if (targetPlans.length === 0) {
-            showError("ไม่มีงานค้าง", "ไม่มีงานค้างหรือถึงกำหนดในขณะนี้");
+            showError("ไม่มีงานค้าง", "ไม่มีงานเกินกำหนดในขณะนี้");
             return;
         }
         setAutoCloseConfirmOpen(true);
@@ -310,7 +310,7 @@ export default function SchedulePage() {
     const performAutoClose = async () => {
         setIsAutoClosing(true);
         try {
-            // Find all active plans that are due today or in the past
+            // Find all active plans that are overdue
             const targetPlans = plans.filter(isPlanTargeted);
 
             if (targetPlans.length === 0) {
@@ -1076,7 +1076,7 @@ export default function SchedulePage() {
                 onClose={() => setAutoCloseConfirmOpen(false)}
                 onConfirm={performAutoClose}
                 title="ปิดงานค้างอัตโนมัติ"
-                message="ระบบจะทำการปิดงานที่ค้างทั้งหมด (รวมถึงงานที่เคยทำไปแล้ว) โดยจะดึงค่าจากประวัติเดิมมาใส่ให้ หรือใส่ค่ามาตรฐานให้โดยอัตโนมัติ และเลื่อนรอบทำงานไปเป็นรอบถัดไป คุณต้องการดำเนินการต่อหรือไม่?"
+                message="ระบบจะทำการปิดเฉพาะ 'งานที่เลยกำหนดไปแล้ว (Overdue)' เท่านั้น โดยจะดึงค่าจากประวัติเดิมมาใส่ให้ หรือใส่ค่ามาตรฐานให้โดยอัตโนมัติ และเลื่อนรอบทำงานไปเป็นรอบถัดไป คุณต้องการดำเนินการต่อหรือไม่?"
                 confirmText={isAutoClosing ? "กำลังทำงาน..." : "ยืนยันการปิดงาน"}
                 cancelText="ยกเลิก"
             />
