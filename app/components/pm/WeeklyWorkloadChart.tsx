@@ -41,8 +41,12 @@ export default function WeeklyWorkloadChart({ plans, onRefresh }: WeeklyWorkload
         let totalThisMonth = 0;
 
         plans.forEach(plan => {
+            if (plan.status !== 'active') return;
             const dueDate = new Date(plan.nextDueDate);
-            if (dueDate.getMonth() === currentMonth && dueDate.getFullYear() === currentYear) {
+            const isThisMonth = dueDate.getMonth() === currentMonth && dueDate.getFullYear() === currentYear;
+            const isOverdue = dueDate.getTime() < new Date(currentYear, currentMonth, 1).getTime();
+
+            if (isThisMonth || isOverdue) {
                 totalThisMonth++;
                 const day = dueDate.getDate();
                 if (day >= 1 && day <= 7) weeks[0].count++;
@@ -56,7 +60,7 @@ export default function WeeklyWorkloadChart({ plans, onRefresh }: WeeklyWorkload
         return { weeks, totalThisMonth, currentMonth, currentYear, monthName, isCurrentMonth };
     }, [plans, targetDate]);
 
-    // Calculate plan counts for current month (ส.ค.) vs next month (ก.ย.) for quick switching
+    // Calculate plan counts for current month vs next month for quick switching
     const monthCounts = useMemo(() => {
         const now = new Date();
         const thisMonthIdx = now.getMonth();
@@ -69,8 +73,12 @@ export default function WeeklyWorkloadChart({ plans, onRefresh }: WeeklyWorkload
         let nextCount = 0;
 
         plans.forEach(p => {
+            if (p.status !== 'active') return;
             const d = new Date(p.nextDueDate);
-            if (d.getMonth() === thisMonthIdx && d.getFullYear() === thisYear) thisCount++;
+            const isThisMonth = d.getMonth() === thisMonthIdx && d.getFullYear() === thisYear;
+            const isOverdue = d.getTime() < new Date(thisYear, thisMonthIdx, 1).getTime();
+            
+            if (isThisMonth || isOverdue) thisCount++;
             if (d.getMonth() === nextMonthIdx && d.getFullYear() === nextYear) nextCount++;
         });
 
