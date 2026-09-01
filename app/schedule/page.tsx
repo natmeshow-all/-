@@ -286,9 +286,20 @@ export default function SchedulePage() {
         setExecutionModalOpen(true);
     };
 
+    const isPlanTargeted = (p: any) => {
+        if (p.status !== 'active') return false;
+        const now = new Date();
+        now.setHours(0, 0, 0, 0);
+        const due = new Date(p.nextDueDate);
+        due.setHours(0, 0, 0, 0);
+        const diffTime = due.getTime() - now.getTime();
+        const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
+        return diffDays <= 7; // งานค้าง หรือถึงกำหนดในสัปดาห์นี้
+    };
+
     const handleAutoCloseOverdue = () => {
         // Find plans that are due today or in the past
-        const targetPlans = plans.filter(p => p.status === 'active' && new Date(p.nextDueDate) <= new Date());
+        const targetPlans = plans.filter(isPlanTargeted);
         if (targetPlans.length === 0) {
             showError("ไม่มีงานค้าง", "ไม่มีงานค้างหรือถึงกำหนดในขณะนี้");
             return;
@@ -300,7 +311,7 @@ export default function SchedulePage() {
         setIsAutoClosing(true);
         try {
             // Find all active plans that are due today or in the past
-            const targetPlans = plans.filter(p => p.status === 'active' && new Date(p.nextDueDate) <= new Date());
+            const targetPlans = plans.filter(isPlanTargeted);
 
             let successCount = 0;
             // Iterate and close them
@@ -359,11 +370,17 @@ export default function SchedulePage() {
                 successCount++;
             }
             
-            success(`ปิดงานอัตโนมัติสำเร็จ ${successCount} งาน`);
+            if (successCount === 0) {
+                showError("ไม่ได้ปิดงานใดๆ", "พบงานตามเงื่อนไข แต่ไม่สามารถปิดงานได้สำเร็จ");
+            } else {
+                success(`ปิดงานอัตโนมัติสำเร็จ ${successCount} งาน`);
+                alert(`ทำงานเสร็จสิ้น: ปิดงานไปทั้งหมด ${successCount} งาน`);
+            }
             fetchData(false);
         } catch (err) {
             console.error("Auto close failed", err);
             showError("เกิดข้อผิดพลาด", "ไม่สามารถปิดงานอัตโนมัติได้");
+            alert("เกิดข้อผิดพลาด: " + String(err));
         } finally {
             setIsAutoClosing(false);
             setAutoCloseConfirmOpen(false);

@@ -1,4 +1,4 @@
-import React from "react";
+import React, { useState } from "react";
 import Modal from "./Modal";
 import { useLanguage } from "../../contexts/LanguageContext";
 import { AlertTriangleIcon } from "./Icons";
@@ -6,7 +6,7 @@ import { AlertTriangleIcon } from "./Icons";
 interface ConfirmModalProps {
     isOpen: boolean;
     onClose: () => void;
-    onConfirm: () => void;
+    onConfirm: () => void | Promise<void>;
     title: string;
     message: string;
     confirmText?: string;
@@ -25,29 +25,39 @@ export default function ConfirmModal({
     isDestructive = false,
 }: ConfirmModalProps) {
     const { t } = useLanguage();
+    const [loading, setLoading] = useState(false);
+    
     const displayConfirmText = confirmText || t("actionConfirm");
     const displayCancelText = cancelText || t("actionCancel");
+
+    const handleConfirm = async () => {
+        setLoading(true);
+        try {
+            await onConfirm();
+        } finally {
+            setLoading(false);
+            onClose();
+        }
+    };
 
     return (
         <Modal
             isOpen={isOpen}
-            onClose={onClose}
+            onClose={loading ? () => {} : onClose}
             title={title}
             titleIcon={<AlertTriangleIcon size={24} className={isDestructive ? "text-accent-red" : "text-accent-yellow"} />}
             size="sm"
             footer={
                 <>
-                    <button onClick={onClose} className="btn btn-outline">
+                    <button onClick={onClose} className="btn btn-outline" disabled={loading}>
                         {displayCancelText}
                     </button>
                     <button
-                        onClick={() => {
-                            onConfirm();
-                            onClose();
-                        }}
-                        className={`btn ${isDestructive ? "btn-danger" : "btn-primary"}`}
+                        onClick={handleConfirm}
+                        disabled={loading}
+                        className={`btn ${isDestructive ? "btn-danger" : "btn-primary"} ${loading ? "opacity-70 cursor-not-allowed" : ""}`}
                     >
-                        {displayConfirmText}
+                        {loading ? "..." : displayConfirmText}
                     </button>
                 </>
             }
