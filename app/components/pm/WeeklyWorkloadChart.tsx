@@ -49,7 +49,8 @@ export default function WeeklyWorkloadChart({ plans, onRefresh }: WeeklyWorkload
                 date: d,
                 label: `${THAI_DAYS[i]} (${d.getDate()})`,
                 color: COLORS[i % COLORS.length],
-                count: 0
+                count: 0,
+                plans: [] as PMPlan[]
             };
         });
 
@@ -67,11 +68,8 @@ export default function WeeklyWorkloadChart({ plans, onRefresh }: WeeklyWorkload
                 const diffDays = Math.floor((dueDate.getTime() - startOfWeek.getTime()) / (1000 * 60 * 60 * 24));
                 if (diffDays >= 0 && diffDays < 7) {
                     days[diffDays].count++;
+                    days[diffDays].plans.push(plan);
                 }
-            } else if (dueDate < startOfWeek) {
-                // If it's overdue, but we want to map it to the current month's day...
-                // Actually, since they click auto balance, the dates will be physically moved.
-                // For now, let's just do exact dates. If it's overdue, it won't show in THIS week, unless they Auto Balance it into this week.
             }
         });
 
@@ -259,22 +257,35 @@ export default function WeeklyWorkloadChart({ plans, onRefresh }: WeeklyWorkload
 
                 <div className="flex flex-col gap-3">
                     {weekData.days.map((day, index) => {
-                        const maxCount = Math.max(...weekData.days.map(d => d.count), 1);
-                        const percentage = (day.count / maxCount) * 100;
                         return (
-                            <div key={index} className="flex items-center gap-3">
-                                <div className="w-20 sm:w-28 text-[11px] sm:text-xs font-medium text-text-muted text-right whitespace-nowrap">
+                            <div key={index} className="flex items-start sm:items-center gap-3 bg-bg-tertiary p-3 rounded-xl border border-white/5">
+                                <div className="w-20 sm:w-28 text-[11px] sm:text-xs font-bold text-text-muted text-right whitespace-nowrap shrink-0 mt-1 sm:mt-0">
                                     {day.label}
                                 </div>
-                                <div className="flex-1 h-8 sm:h-10 bg-bg-tertiary rounded-lg overflow-hidden relative border border-white/5 flex items-center">
-                                    <div 
-                                        className={`h-full ${day.color} transition-all duration-1000 ease-out flex items-center px-3`}
-                                        style={{ width: `${Math.max(percentage, 2)}%`, opacity: day.count === 0 ? 0.3 : 1 }}
-                                    >
-                                    </div>
-                                    <span className={`absolute left-3 text-xs font-bold z-10 ${day.count > 0 ? 'text-bg-primary' : 'text-text-muted'}`}>
-                                        {day.count > 0 ? `${day.count} งาน` : '-'}
-                                    </span>
+                                <div className="flex-1 flex flex-wrap gap-2 items-center">
+                                    {day.plans.length > 0 ? (
+                                        <>
+                                            {day.plans.map(p => {
+                                                const mName = p.machineName || p.taskName?.replace(/\[.*?\]\s*/, "") || "ไม่ระบุ";
+                                                const mCode = mName.split(" ")[0]; // Just a quick parse to maybe get the code
+                                                // Actually we have p.taskName which usually contains the machine code and name
+                                                return (
+                                                    <span 
+                                                        key={p.id} 
+                                                        className={`px-2.5 py-1 text-[10px] font-bold rounded-md bg-white/5 border border-white/10 text-white truncate max-w-[200px]`}
+                                                        title={p.taskName || mName}
+                                                    >
+                                                        {p.taskName || mName}
+                                                    </span>
+                                                )
+                                            })}
+                                            <span className="text-[10px] text-text-muted font-semibold ml-auto px-2 bg-white/5 rounded-full">
+                                                รวม {day.count} งาน
+                                            </span>
+                                        </>
+                                    ) : (
+                                        <span className="text-xs text-white/20 italic font-medium px-2 py-0.5">ไม่มีแผนงาน</span>
+                                    )}
                                 </div>
                             </div>
                         );
