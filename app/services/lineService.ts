@@ -13,6 +13,10 @@ export const lineService = {
         try {
             // Get settings for dynamic tokens if available
             const settings = await getSystemSettings();
+            if (settings && settings.lineNotificationsEnabled === false) {
+                console.log('🔇 [LINE Service] LINE notifications are disabled by admin. Skipping PM notification.');
+                return;
+            }
             let channelAccessToken = undefined;
             let targetId = undefined;
             
@@ -337,6 +341,10 @@ export const lineService = {
     async sendResolutionNotification(record: MaintenanceRecord, imageUrl?: string) {
         try {
             const settings = await getSystemSettings();
+            if (settings && settings.lineNotificationsEnabled === false) {
+                console.log('🔇 [LINE Service] LINE notifications are disabled by admin. Skipping resolution notification.');
+                return;
+            }
             let channelAccessToken = undefined;
             let targetId = undefined;
             

@@ -30,6 +30,7 @@ import AuditLogTab from "../components/admin/AuditLogTab";
 import SystemSettingsTab from "../components/admin/SystemSettingsTab";
 import SystemMonitorTab from "../components/admin/SystemMonitorTab";
 import TranslationManagementTab from "../components/admin/TranslationManagementTab";
+import AdminNotificationControl from "../components/admin/AdminNotificationControl";
 
 type AdminTab = "analytics" | "technicians" | "approvals" | "auditlog" | "settings" | "monitor" | "translations";
 
@@ -92,6 +93,11 @@ export default function AdminPage() {
                             <p className="text-sm text-text-muted">{t("adminDashboardSubtitle")}</p>
                         </div>
                     </div>
+                </div>
+
+                {/* Admin External Notification Quick Controls */}
+                <div className="mb-8">
+                    <AdminNotificationControl variant="full" />
                 </div>
 
                 {/* Top Stats Overview */}

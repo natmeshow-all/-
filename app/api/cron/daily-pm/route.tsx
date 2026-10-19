@@ -259,7 +259,10 @@ export async function GET(request: Request) {
 
         let lineStatus: any = "Not configured or no image URL";
         // 6. Send to LINE
-        if (publicImageUrl) {
+        const isLineEnabled = settings ? settings.lineNotificationsEnabled !== false : true;
+        if (!isLineEnabled) {
+            lineStatus = "Disabled in system settings by admin";
+        } else if (publicImageUrl) {
             try {
                 const lineAccessToken = settings ? decodeSecret(settings.lineChannelAccessToken || "") : "";
                 const lineUserId = settings ? decodeSecret(settings.lineTargetId || "") : "";

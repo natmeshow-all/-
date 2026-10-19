@@ -20,6 +20,7 @@ import { getMaintenanceRecordsByPMPlan } from "../services/maintenanceService";
 import { database } from "../lib/firebase";
 import { ref, get, update, remove } from "firebase/database";
 import WeeklyWorkloadChart from "../components/pm/WeeklyWorkloadChart";
+import AdminNotificationControl from "../components/admin/AdminNotificationControl";
 
 export default function SchedulePage() {
     const { t, language } = useLanguage();
@@ -532,7 +533,10 @@ export default function SchedulePage() {
                     </div>
 
                     {permissions.canManagePM && (
-                        <div className="flex items-center gap-2">
+                        <div className="flex flex-wrap items-center gap-2">
+                            {isAdmin && (
+                                <AdminNotificationControl variant="compact" />
+                            )}
                             {missingPMMachines.length > 0 ? (
                                 <button
                                     onClick={() => {
@@ -1116,7 +1120,7 @@ export default function SchedulePage() {
                 onClose={() => setAutoCloseConfirmOpen(false)}
                 onConfirm={performAutoClose}
                 title="ปิดงานค้างอัตโนมัติ"
-                message="ระบบจะทำการปิดเฉพาะ 'งานที่เลยกำหนดไปแล้ว (Overdue)' เท่านั้น โดยจะดึงค่าจากประวัติเดิมมาใส่ให้ หรือใส่ค่ามาตรฐานให้โดยอัตโนมัติ และเลื่อนรอบทำงานไปเป็นรอบถัดไป คุณต้องการดำเนินการต่อหรือไม่?"
+                message="ระบบจะทำการปิดเฉพาะ 'งานที่เลยกำหนดไปแล้ว (Overdue)' เท่านั้น โดยจะดึงค่าจากประวัติเดิมมาใส่ให้ หรือใส่ค่ามาตรฐานให้โดยอัตโนมัติ และเลื่อนรอบทำงานไปเป็นรอบถัดไป (ระบบจะอ้างอิงการตั้งค่าเปิด/ปิดแจ้งเตือน LINE และ Telegram ของผู้ดูแลระบบ หากปิดไว้จะไม่ส่งข้อความรบกวนในกลุ่ม) คุณต้องการดำเนินการต่อหรือไม่?"
                 confirmText={isAutoClosing ? "กำลังทำงาน..." : "ยืนยันการปิดงาน"}
                 cancelText="ยกเลิก"
             />

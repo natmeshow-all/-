@@ -12,6 +12,10 @@ export const telegramService = {
     async sendPMCompletionNotification(record: MaintenanceRecord, imageBase64?: string) {
         try {
             const settings = await getSystemSettings();
+            if (!settings?.telegramNotificationsEnabled) {
+                console.log('🔇 [Telegram Service] Telegram notifications are disabled by admin. Skipping PM notification.');
+                return;
+            }
             const botToken = decodeSecret(settings?.telegramBotToken || "");
             const chatId = decodeSecret(settings?.telegramChatId || "");
 
@@ -148,6 +152,10 @@ export const telegramService = {
     async sendResolutionNotification(record: MaintenanceRecord, imageBase64?: string) {
         try {
             const settings = await getSystemSettings();
+            if (!settings?.telegramNotificationsEnabled) {
+                console.log('🔇 [Telegram Service] Telegram notifications are disabled by admin. Skipping resolution notification.');
+                return;
+            }
             const botToken = decodeSecret(settings?.telegramBotToken || "");
             const chatId = decodeSecret(settings?.telegramChatId || "");
 

@@ -666,8 +666,13 @@ export const completePMTask = async (
                 } as MaintenanceRecord;
 
                 const settings = await getSystemSettings();
-                const lineEnabled = settings?.lineNotificationsEnabled ?? true; // Default true if not set
-                const telegramEnabled = settings?.telegramNotificationsEnabled ?? false;
+                const lineEnabled = settings?.lineNotificationsEnabled !== false;
+                const telegramEnabled = Boolean(settings?.telegramNotificationsEnabled);
+
+                if (!lineEnabled && !telegramEnabled) {
+                    console.log("🔇 All notifications disabled by admin. Skipping LINE and Telegram.");
+                    return recordRef.key as string;
+                }
 
                 let uploadedImageUrl = undefined;
                 if (lineEnabled && telegramImageBase64) {
